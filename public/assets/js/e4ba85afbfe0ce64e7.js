@@ -11,6 +11,9 @@ const calculatorLocation = new Proxy(actualLocation, { get(target,key) {
 const calculatorWindow = new Proxy(globalThis, { get(target,key) {
   if(key==='location') return calculatorLocation;
   const value=Reflect.get(target,key,target); return typeof value==='function' ? value.bind(target) : value;
+}, set(target,key,value) {
+  // Native Window setters need the real Window as their receiver.
+  return Reflect.set(target,key,value,target);
 }});
 const calculatorDocument = new Proxy(globalThis.document, { get(target,key) {
   if(key==='location') return calculatorLocation;
