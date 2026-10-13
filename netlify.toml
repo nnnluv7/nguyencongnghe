@@ -1,0 +1,4 @@
+# Netlify tự giải nén website.zip và xuất bản thư mục public.
+[build]
+  command = "python3 -m zipfile -e website.zip public"
+  publish = "public"
