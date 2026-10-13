@@ -1,0 +1,1 @@
+var noThumb = "/assets/vendor/b16e8a70d63d2035d4.png";
