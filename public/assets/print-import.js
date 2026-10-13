@@ -70,7 +70,7 @@
       clone.querySelectorAll('textarea').forEach(element=>element.textContent=element.value);
       sheets.push(`<section class="cg-print-sheet">${clone.outerHTML}</section>`);
     }
-    target.document.write(`<!doctype html><html lang="vi"><head><meta charset="utf-8"><base href="${location.origin}/"><title>In mẫu Chuyengia.vip</title>${styles}<style>body{background:#fff!important;margin:0!important;padding:0!important}.cg-print-sheet{break-after:page;page-break-after:always}.cg-print-sheet:last-child{break-after:auto;page-break-after:auto}.cg-print-sheet .post-body{margin:0!important}input[type=file],button,.cg-batchnav{display:none!important}@media print{body{background:#fff!important}}</style></head><body class="item item-view"><main class="item-post">${sheets.join('')}</main></body></html>`);
+    target.document.write(`<!doctype html><html lang="vi"><head><meta charset="utf-8"><base href="${location.origin}/"><title>In mẫu nguyencongnghe.com</title>${styles}<style>body{background:#fff!important;margin:0!important;padding:0!important}.cg-print-sheet{break-after:page;page-break-after:always}.cg-print-sheet:last-child{break-after:auto;page-break-after:auto}.cg-print-sheet .post-body{margin:0!important}input[type=file],button,.cg-batchnav{display:none!important}@media print{body{background:#fff!important}}</style></head><body class="item item-view"><main class="item-post">${sheets.join('')}</main></body></html>`);
     target.document.close();
     target.addEventListener('load',()=>{target.focus();target.print();},{once:true});
   });

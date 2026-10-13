@@ -1,4 +1,4 @@
-/* Chuyengia.vip: local navigation, search and compatibility fixes. */
+/* nguyencongnghe.com: local navigation, search and compatibility fixes. */
 (() => {
   'use strict';
   const posts = window.CG_CATALOG || [];

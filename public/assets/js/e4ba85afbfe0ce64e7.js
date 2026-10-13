@@ -1,5 +1,5 @@
 (() => {
-const original = new URL(window.CG_CONFIG.originalOrigin);
+const original = new URL("https://www.chuyengia.vip");
 const actualLocation = globalThis.location;
 const calculatorLocation = new Proxy(actualLocation, { get(target,key) {
   if(key==='hostname') return original.hostname;

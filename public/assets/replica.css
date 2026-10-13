@@ -4,3 +4,11 @@
 .cg-local-note{font-size:13px;color:var(--snippet-color);margin-bottom:15px}.cg-comment{padding:12px 0;border-bottom:1px solid var(--solid-border)}.cg-comment small{display:block;font-size:11px;color:var(--snippet-color);margin:5px 0}.cg-comment p{white-space:pre-wrap;overflow-wrap:anywhere}.cg-comment-form{display:grid;gap:15px;margin-top:20px}.cg-comment-form label{display:grid;gap:6px;font-weight:600;font-size:14px}.cg-comment-form input,.cg-comment-form textarea{box-sizing:border-box;background:var(--body-bg-color,#fff);color:var(--text-font-color);border:1px solid var(--solid-border);border-radius:6px;padding:10px;font:inherit;width:100%}.cg-comment-form button{justify-self:start}.cg-contact-link{display:inline-block;background:#3e55fa;color:white!important;padding:12px 20px;border-radius:6px;margin-top:12px}.cg-contact-note{font-size:13px;margin-top:10px}
 .cg-batchnav{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;padding:12px 0;font-size:13px}.cg-batchnav button{background:#008cba;border:0;border-radius:5px;color:white;padding:8px 12px;cursor:pointer}.cg-batchnav button:disabled{opacity:.4;cursor:default}.cg-batchnav span{min-width:125px;text-align:center}
 @media print{#cg-toast,.cg-batchnav,.cg-comment-form,.cg-local-note,.cg-comment-list{display:none!important}}
+
+/* NCN BRAND HEADER */
+#darkroom2 {
+  width: auto !important;
+  max-width: 160px !important;
+  height: 42px !important;
+  object-fit: contain;
+}
