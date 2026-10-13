@@ -1,0 +1,229 @@
+.item-post .post-body,
+    .item-post h1.entry-title {
+        text-align: center;
+
+    }
+
+    #printMe {
+        position: relative;
+        background-image: var(--a5-tuy-chinh);
+        background-size: cover;
+        display: inline-block;
+        width: 775px;
+        height: 1080px;
+    }
+
+    .in {
+        border: none;
+    }
+
+
+ /* CSS cho nd trên */    
+        #nd1 {
+        position: Absolute;
+        top: 174px;
+        left: 23px;
+        width: 733px;
+        margin: 0 auto;
+        height: 120px;
+        line-height: 120px;
+        font-size: 90px;
+        font-weight: 300;
+        text-decoration: line-through;
+        text-transform: uppercase;
+        text-align: center;
+        background: none;
+          }
+      
+        #nd2 {
+        caret-color: black;
+        position: Absolute;
+        top: 294px;
+        left: 23px;
+        width: 733px;
+        margin: 0 auto;
+        height: 200px;
+        line-height: 200px;
+        font-size: 130px;
+        font-weight: 900;
+        color: white;
+        height: 135px;
+        text-align: center;
+        background: none;
+        -webkit-text-stroke: 8px black;}
+      
+      
+        #ghichu1 {
+        position: Absolute;
+        top: 429px;
+        left: 23px;
+        width: 733px;
+        margin: 0 auto;
+        height: 60px;
+        line-height: 60px;
+        font-size: 30px;
+        text-align: center;
+        font-weight: 900;
+        background: none;}
+      
+        #tensp1 {
+        position: Absolute;
+        top: 502px;
+        left: 24px;
+        width: 435px;
+        margin: 0 auto;
+        height: 30px;
+        line-height: 30px;
+        font-size: 18px;
+        font-weight: 900;
+        text-align: center;
+        background: none;}
+      
+        #ngayad1 {
+        position: Absolute;
+        top: 502px;
+        left: 601px;
+        width: 154px;
+        margin: 0 auto;
+        height: 30px;
+        line-height: 30px;
+        font-size: 18px;
+        font-weight: 900;
+        text-align: center;
+        background: none;}
+      
+      /* CSS cho nd dưới */
+      
+        #nd3 {
+        position: Absolute;
+        top: 713px;
+        left: 23px;
+        width: 733px;
+        margin: 0 auto;
+        height: 120px;
+        line-height: 120px;
+        font-size: 90px;
+        font-weight: 300;
+        text-decoration: line-through;
+        text-transform: uppercase;
+        text-align: center;
+        background: none;}
+      
+        #nd4 {
+        caret-color: black;
+        position: Absolute;
+        top: 832px;
+        left: 23px;
+        width: 733px;
+        margin: 0 auto;
+        height: 200px;
+        line-height: 200px;
+        font-size: 130px;
+        font-weight: 900;
+        color: white;
+        height: 135px;
+        text-align: center;
+        background: none;
+        -webkit-text-stroke: 8px black;}
+      
+        #ghichu2 {
+        position: Absolute;
+        top: 967px;
+        left: 23px;
+        width: 733px;
+        margin: 0 auto;
+        height: 60px;
+        line-height: 60px;
+        font-size: 30px;
+        text-align: center;
+        font-weight: 900;
+        background: none;}
+      
+        #tensp2 {
+        position: Absolute;
+        top: 1041px;
+        left: 24px;
+        width: 435px;
+        margin: 0 auto;
+        height: 30px;
+        line-height: 30px;
+        font-size: 18px;
+        font-weight: 900;
+        text-align: center;
+        background: none;}
+      
+        #ngayad2 {
+        position: Absolute;
+        top: 1041px;
+        left: 601px;
+        width: 154px;
+        margin: 0 auto;
+        height: 30px;
+        line-height: 30px;
+        font-size: 18px;
+        font-weight: 900;
+        text-align: center;
+        background: none;}
+      
+        
+   .title-cover-1 {
+    	z-index: 20;
+      	height: 169px;
+    	width: 750px;
+    	box-sizing: border-box;
+    	margin: 0;
+    	padding: 0;
+  		background: var(--title-cover);
+  		background-size: 100% 100%;
+    	position: absolute;
+    	top: 5px;
+    	left: 13px;
+    	
+  
+  }   
+      
+     .title-cover-2 {
+    	z-index: 20;
+      	height: 169px;
+    	width: 750px;
+    	box-sizing: border-box;
+    	margin: 0;
+    	padding: 0;
+  		background: var(--title-cover);
+  		background-size: 100% 100%;
+    	position: absolute;
+    	top: 543px;
+    	left: 13px;
+  }    
+      
+          
+.item-post .post-body {
+    overflow-x: scroll;
+    }
+  
+@media print {
+.item-post .post-body {
+    overflow-x: auto;
+    }	
+.top-ads, .below-ads, .hamburger-section, .entry-title, .label-container, .feed-share, .primary-nav, .post-footer, .comments-section,
+#breadcrumb, #main-ads-post, #sidebar-container, #footer-wrapper, #khungnhap {
+   	display: none !important;
+   	}
+  
+.post-inner-area {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 98;
+    background: white;
+   }
+
+#printMe {
+  	position: fixed;
+    top: 20px;
+    left: 10px;
+    z-index: 99;
+	}
+}
