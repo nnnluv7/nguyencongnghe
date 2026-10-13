@@ -1,0 +1,4 @@
+# Xuất bản trực tiếp các tệp rời; chỉnh HTML/CSS/JS trên GitHub rồi commit.
+[build]
+  command = "test -f public/index.html"
+  publish = "public"
