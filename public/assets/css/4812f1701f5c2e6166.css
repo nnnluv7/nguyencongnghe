@@ -1,0 +1,280 @@
+.item-post .post-body,
+    .item-post h1.entry-title {
+        text-align: center;
+
+    }
+
+    #printMe {
+        position: relative;
+        background-image: var(--sticker-12pcs);
+        background-size: cover;
+        display: inline-block;
+        width: 765px;
+        height: 1090px;
+    }
+
+    .in-edit {
+      	position: absolute;
+      	background: none;
+      	border: none;
+      	
+    }
+  
+/* CSS cột 1 */    
+      #tensp1, #tensp2, #tensp3, #tensp4 {
+      left: 43px;}
+
+  	  #nd1, #nd2, #nd3, #nd4 {
+      left: 34px;}  
+  		
+  	  #giagoc1, #giagoc2, #giagoc3, #giagoc4 {
+      left: 28px;}  
+
+  
+  	 #giamcon1, #giamcon2, #giamcon3, #giamcon4 {
+      left: 42px;
+  		}
+
+  	  #textngayad1, #textngayad2, #textngayad3, #textngayad4 {
+      left: 70px;        
+  		}
+
+   	  #ngayad1, #ngayad2, #ngayad3, #ngayad4 {
+      left: 88px;
+  		}
+
+
+  
+/* CSS cột 2 */   
+
+      #tensp5, #tensp6, #tensp7, #tensp8 {
+      left: 293px;}
+
+  	  #nd5, #nd6, #nd7, #nd8 {
+      left: 284px;}  
+  		
+  	  #giagoc5, #giagoc6, #giagoc7, #giagoc8 {
+      left: 278px;}  
+
+  
+  	 #giamcon5, #giamcon6, #giamcon7, #giamcon8 {
+      left: 292px;
+  		}
+
+  	  #textngayad5, #textngayad6, #textngayad7, #textngayad8 {
+      left: 321px;        
+  		}
+
+   	  #ngayad5, #ngayad6, #ngayad7, #ngayad8 {
+      left: 338px;
+  		}  
+/* CSS cột 3 */   
+
+      #tensp9, #tensp10, #tensp11, #tensp12 {
+      left: 545px;}
+
+  	  #nd9, #nd10, #nd11, #nd12 {
+      left: 536px;}  
+  		
+  	  #giagoc9, #giagoc10, #giagoc11, #giagoc12 {
+      left: 530px;}  
+
+  
+  	 #giamcon9, #giamcon10, #giamcon11, #giamcon12 {
+      left: 544px;
+  		}
+
+  	  #textngayad9, #textngayad10, #textngayad11, #textngayad12 {
+      left: 573px;        
+  		}
+
+   	  #ngayad9, #ngayad10, #ngayad11, #ngayad12 {
+      left: 589px;
+  		}        
+  
+  /* CSS hàng 1 */
+
+ 	  #tensp1, #tensp5, #tensp9 {
+  	  top: 97px;}
+  
+  	  #nd1, #nd5, #nd9 {
+  	  top: 126px;}
+  
+  	  #giagoc1, #giagoc5, #giagoc9 {
+  	  top: 164px;
+  		}
+  
+  	  #giamcon1, #giamcon5, #giamcon9 {
+  	  top: 194px;
+  		}
+
+	  #textngayad1, #textngayad5, #textngayad9 {
+      top: 228px;        
+  		} 
+  	  #ngayad1, #ngayad5, #ngayad9 {
+  	  top: 248px;
+  		}  	
+  /* CSS hàng 2 */
+
+ 	  #tensp2, #tensp6, #tensp10 {
+  	  top: 348px;}
+  
+  	  #nd2, #nd6, #nd10 {
+  	  top: 376px;}
+  
+  	  #giagoc2, #giagoc6, #giagoc10 {
+  	  top: 415px;
+  		}
+  
+  	  #giamcon2, #giamcon6, #giamcon10 {
+  	  top: 444px;
+  		}
+
+	  #textngayad2, #textngayad6, #textngayad10 {
+      top: 478px;        
+  		} 
+  	  #ngayad2, #ngayad6, #ngayad10 {
+  	  top: 500px;
+  		}  
+  
+  /* CSS hàng 3 */
+
+ 	  #tensp3, #tensp7, #tensp11 {
+  	  top: 600px;}
+  
+  	  #nd3, #nd7, #nd11 {
+  	  top: 629px;}
+  
+  	  #giagoc3, #giagoc7, #giagoc11 {
+  	  top: 668px;
+  		}
+  
+  	  #giamcon3, #giamcon7, #giamcon11 {
+  	  top: 697px;
+  		}
+
+	  #textngayad3, #textngayad7, #textngayad11 {
+      top: 731px;        
+  		} 
+  	  #ngayad3, #ngayad7, #ngayad11 {
+  	  top: 753px;
+  		}  
+  	   
+  /* CSS hàng 4 */
+
+ 	  #tensp4, #tensp8, #tensp12 {
+  	  top: 853px;}
+  
+  	  #nd4, #nd8, #nd12 {
+  	  top: 881px;}
+  
+  	  #giagoc4, #giagoc8, #giagoc12 {
+  	  top: 920px;
+  		}
+  
+  	  #giamcon4, #giamcon8, #giamcon12 {
+  	  top: 949px;
+  		}
+
+	  #textngayad4, #textngayad8, #textngayad12 {
+      top: 983px;        
+  		} 
+  	  #ngayad4, #ngayad8, #ngayad12 {
+  	  top: 1005px;
+  		}   
+  /* CSS kích thước */ 
+      #tensp1, #tensp2, #tensp3, #tensp4, #tensp5, #tensp6, #tensp7, #tensp8, #tensp9, #tensp10, #tensp11, #tensp12 {
+      width: 187px;
+      margin: 0 auto;
+      height: 30px;
+      line-height: 30px;
+      font-size: 16px;      
+      text-align: center;
+      text-transform: uppercase;
+      background: none;}
+
+      #nd1, #nd2, #nd3, #nd4, #nd5, #nd6, #nd7, #nd8, #nd9, #nd10, #nd11, #nd12 {
+      width: 205px;
+      margin: 0 auto;
+      height: 40px;
+      font-size: 28px;
+      line-height: 40px;
+      font-weight: 900;
+      text-transform: uppercase;
+      text-align: center;
+      background: none;}
+
+      #giagoc1, #giagoc2, #giagoc3, #giagoc4, #giagoc5, #giagoc6, #giagoc7, #giagoc8, #giagoc9, #giagoc10, #giagoc11, #giagoc12 {
+      width: 218px;
+      margin: 0 auto;
+      height: 30px;
+      line-height: 30px;
+      font-size: 22px;
+      text-decoration: line-through;
+      text-align: center;
+      background: none;}   
+  
+
+      #giamcon1, #giamcon2, #giamcon3, #giamcon4, #giamcon5, #giamcon6, #giamcon7, #giamcon8, #giamcon9, #giamcon10, #giamcon11, #giamcon12{
+      width: 190px;
+      margin: 0 auto;
+      height: 35px;
+      line-height: 35px;
+      font-size: 35px;
+      font-weight: 900;
+      text-align: center;
+      background: none;}
+  
+      #textngayad1, #textngayad2, #textngayad3, #textngayad4, #textngayad5, #textngayad6, #textngayad7, #textngayad8, #textngayad9, #textngayad10, #textngayad11, #textngayad12 {
+      width: 133px;
+      margin: 0 auto;
+      height: 22px;
+      line-height: 22px;
+      font-size: 16px;
+      text-align: center;
+      background: none;}   
+    
+      
+      #ngayad1, #ngayad2, #ngayad3, #ngayad4, #ngayad5, #ngayad6, #ngayad7, #ngayad8, #ngayad9, #ngayad10, #ngayad11, #ngayad12 {
+      width: 100px;
+      margin: 0 auto;
+      height: 20px;
+      line-height: 20px;
+      font-size: 16px;
+      font-weight: 600;
+      text-align: center;
+      text-transform: uppercase;
+      background: none;}
+  
+ 
+        	
+.item-post .post-body {
+    overflow-x: scroll;
+    }
+  
+@media print {
+.item-post .post-body {
+    overflow-x: auto;
+    }	
+.top-ads, .below-ads, .hamburger-section, .entry-title, .label-container, .feed-share, .primary-nav, .post-footer, .comments-section,
+#breadcrumb, #main-ads-post, #sidebar-container, #footer-wrapper, #khungnhap {
+   	display: none !important;
+   	}
+  
+.post-inner-area {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 98;
+    background: white;
+   }
+
+#printMe {
+  	position: fixed;
+    top: 20px;
+    left: 10px;
+    z-index: 99;
+	}
+}

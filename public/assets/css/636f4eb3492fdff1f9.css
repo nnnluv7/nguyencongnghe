@@ -1,0 +1,116 @@
+h1.entry-title {
+		margin: 0px;
+      	text-align: center;
+    }
+  	.post-inner-area {
+  		padding: 5px 10px;
+  	}
+    .item-post .post-body {
+		line-height: 20px;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 80%;
+      margin: 20px 0;
+      background-color: #fff;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: center;
+    }
+
+    th {
+      background-color: #f2f2f2;
+      color: #333;
+      border: 1px solid;
+    }
+	.total-column {
+      width: 300px;
+    }
+  
+    .input-soluong {
+      position: relative;
+    }
+  
+  	.input-soluong input{
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+    input {
+      border: none;
+      height: 100%;
+      width: 100%;
+      padding: 6px;
+      text-align: center;
+    }
+
+    button {
+      background-color: #4caf50;
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    #grandTotal {
+      font-size: 18px;
+      margin-top: 10px;
+      display: inline;
+    }
+  
+  	.row-kq {
+            display: block;
+            height: 30px;
+            box-sizing: border-box;
+            font-size: 20px;
+            line-height: 30px;
+      		margin-top: 10px;
+        }
+        .row-kq input {
+            line-height: 30px;
+            font-size: 20px;
+            display: inline-block;
+            height: 100%;
+            width: unset;
+            padding: 0;
+
+        }
+        .row-kq span {
+            width: 130px;
+            line-height: 30px;
+            font-size: 20px;
+            display: inline-block;
+            height: 100%;
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0 4px;
+        }
+		
+  		#danggiu {
+  			width: 230px;
+          	border-bottom: 1px solid;
+  		}
+  
+        #danggiu, #chenhlech {
+            display: inline-block;
+          	background: none;
+            font-size: 18px;
+            text-align: left;
+            line-height: 18px;
+          	color: var(--text-font-color);
+        }
+  
+@media only screen and (max-width: 600px) {
+    .total-column {
+      width: 150px;
+    }
+}

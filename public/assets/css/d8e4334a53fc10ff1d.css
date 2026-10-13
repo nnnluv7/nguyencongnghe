@@ -1,0 +1,166 @@
+.chuyengia-row {
+        display: flex;
+        position: relative;
+        width: 100%;
+        padding-top: 10px;
+        box-sizing: border-box;
+        text-align: center;
+    }
+  
+  	.chuyengia-row-full {
+  		display: block;
+        position: relative;
+        width: 100%;
+        padding-top: 10px;
+      	border-top: 2px solid black;
+        box-sizing: border-box;
+        text-align: center;
+      	margin-bottom: 30px;
+  	}
+
+    .khungtrai {
+        display: inline-block;
+        box-sizing: border-box;
+        border: none;
+        width: 35%;
+        float: left;
+    }
+
+    .khungphai {
+        display: inline-block;
+      	padding-left: 4px;
+        box-sizing: border-box;
+        font-size: 16px;
+        width: 65%;
+      	text-align: justify;
+    }
+
+    #tbl_exporttable_to_xls {
+        display: none;
+    }
+  
+    .nhaplieu {
+        color: red;
+    }
+  .huongdankk {
+  		color: blue;
+    	text-align: center;
+  }
+    .chuyengia-btn {
+        display: inline-block;
+        width: 92px;
+        color: #000;
+        line-height: 30px;
+        height: 30px;
+        background: none;
+        box-sizing: unset;
+        border: 1px solid #000;
+        margin: 5px auto;
+    }
+  
+  	.chuyengia-btn:hover {
+  		background-color: green;
+  	}
+  
+    #input {
+        padding-left: 10px;
+        color: red;
+        height: 30px;
+        width: 100%;
+        box-sizing: border-box;
+  }
+	#input::file-selector-button {
+       height: 100%;
+       width: 90px;
+       color: blue;
+       box-sizing: border-box;
+      	
+  	}
+  #qrcode {
+    display: block;
+    height: 150px;
+    width: 150px;
+    box-sizing: border-box;
+    margin: 0 auto;
+    padding: 15px;
+    border: 1px solid;
+}
+  
+  #masanpham {
+  	display: block;
+    background: none;
+    font-size: 16px;
+    height: 30px;
+    line-height: 30px;
+    width: 200px;
+    margin: 3px auto 0px auto;
+    padding: 0;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+  }
+    
+ 
+  	#tensanpham {
+      display: block;
+      background: none;
+      font-size: 16px;
+      height: 34px;
+      width: 100%;
+      margin: 40px auto 0px auto;
+      padding: 4px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+      overflow: hidden;
+  	}
+  	
+  	#soluong::before {
+  		content: "Số lượng:";
+      	position: absolute;
+      	left: 5px;
+  	}
+  
+  	#soluong {
+        position: relative;
+        display: block;
+        background: none;
+        font-size: 20px;
+        height: 34px;
+        width: 100%;
+        margin: 40px auto 0px auto;
+        padding: 4px 94px;
+        border: 1px solid #ccc;
+        box-sizing: border-box;
+  	}
+
+  .chuyengia-col-2 {
+	border: 1px solid #ccc;
+    width: 50%;
+    background: none;
+    font-size: 20px;
+    height: 34px;
+    padding: 4px;
+    box-sizing: border-box;
+    margin: 0 5px;
+  }
+  
+  #current {
+  	position: relative;
+    padding-left: 155px;
+  }
+  
+  #total {
+  	position: relative;
+    padding-left: 165px;
+  }
+  
+  #current::before {
+  		content: "Đang kiểm SP thứ:";
+      	position: absolute;
+      	left: 5px;
+  	}
+  
+  #total::before {
+  		content: "Tổng số lượng SP:";
+      	position: absolute;
+      	left: 5px;
+  	}

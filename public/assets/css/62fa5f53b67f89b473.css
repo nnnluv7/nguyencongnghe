@@ -1,0 +1,50 @@
+.item-post .post-body,
+    .item-post h1.entry-title {
+        text-align: center;
+
+    }
+
+    #printMe {
+        position: relative;
+        background-image: url('/assets/vendor/b29fe79d2efde49653.png');
+        background-size: cover;
+        display: inline-block;
+        width: 775px;
+        height: 1080px;
+    }
+
+    .in {
+        border: none;
+    }
+      			
+ 
+.item-post .post-body {
+    overflow-x: scroll;
+    }
+  
+@media print {
+.item-post .post-body {
+    overflow-x: auto;
+    }	
+.top-ads, .below-ads, .hamburger-section, .entry-title, .label-container, .feed-share, .primary-nav, .post-footer, .comments-section,
+#breadcrumb, #main-ads-post, #sidebar-container, #footer-wrapper, #khungnhap {
+   	display: none !important;
+   	}
+  
+.post-inner-area {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 98;
+    background: white;
+   }
+
+#printMe {
+  	position: fixed;
+    top: 20px;
+    left: 10px;
+    z-index: 99;
+	}
+}

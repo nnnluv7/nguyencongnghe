@@ -1,0 +1,155 @@
+.item-post .post-body, .item-post h1.entry-title {
+  	text-align: center;
+  	
+  }
+  
+  .in {
+  	border: none;
+  }
+  
+	#printMe {
+    position: relative;
+    background-image: var(--sticker-1pc);
+    background-size: cover;
+  	display: inline-block;
+    width: 775px;
+  	height: 1080px;}
+
+  
+  
+  
+/* CSS trên */    
+      #tensp1 {
+      position: Absolute;
+      left: 111px;
+  	  top: 343px;
+      width: 553px;
+  	  }
+  
+  	  #nd1 {
+      position: Absolute;
+      left: 86px;
+  	  top: 422px;
+      width: 606px;
+  	  }
+  
+  	  
+  	  #giamngay1 {
+      position: Absolute;
+      left: 64px;
+  	  top: 522px;
+      width: 651px;
+  		}
+  
+  	  #giamcon1 {
+      position: Absolute;
+      left: 66px;
+  	  top: 606px;
+      width: 650px;
+  		}
+  
+  	  #textngayad1 {
+      position: Absolute;
+      left: 152px;
+  	  top: 726px;  
+      width: 475px;
+  		}
+  
+  	  #ngayad1 {
+  	  position: Absolute;
+      left: 244px;
+  	  top: 803px;
+      width: 293px;
+  		}  
+
+  	   
+  /* CSS kích thước */ 
+      #tensp1 {
+      margin: 0 auto;
+      height: 80px;
+      line-height: 80px;
+      left: 111px;
+      top: 343px;
+      font-size: 30px;      
+      text-align: center;
+      text-transform: uppercase;
+      background: none;}
+
+      #nd1 {
+      margin: 0 auto;
+      height: 100px;
+      line-height: 100px;
+      font-size: 60px;
+      font-weight: 900;
+      text-transform: uppercase;
+      text-align: center;
+      background: none;}
+
+      #giamngay1 {
+      margin: 0 auto;
+      height: 79px;
+      line-height: 79px;
+      font-size: 60px;
+      text-decoration: line-through;
+      text-align: center;
+      background: none;}
+  
+  	  #giamcon1 {
+      margin: 0 auto;
+      height: 120px;
+      line-height: 100px;
+      font-size: 100px;
+      font-weight: 900;
+      text-align: center;
+      background: none;}
+  
+      #textngayad1 {
+      margin: 0 auto;
+      height: 60px;
+      line-height: 60px;
+      font-size: 40px;
+      text-align: center;
+      background: none;}   
+    
+      
+      #ngayad1 {
+      margin: 0 auto;
+      height: 50px;
+      font-size: 26px;
+      font-weight: 600;
+      text-align: center;
+      text-transform: uppercase;
+      background: none;}
+  
+
+        	
+.item-post .post-body {
+    overflow-x: scroll;
+    }
+  
+@media print {
+.item-post .post-body {
+    overflow-x: auto;
+    }	
+.top-ads, .below-ads, .hamburger-section, .entry-title, .label-container, .feed-share, .primary-nav, .post-footer, .comments-section,
+#breadcrumb, #main-ads-post, #sidebar-container, #footer-wrapper {
+   	display: none !important;
+   	}
+  
+.post-inner-area {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 98;
+    background: white;
+   }
+
+#printMe {
+  	position: fixed;
+    top: 20px;
+    left: 10px;
+    z-index: 99;
+	}
+}

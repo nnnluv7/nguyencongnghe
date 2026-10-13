@@ -1,0 +1,317 @@
+.item-post .post-body,
+    .item-post h1.entry-title {
+        text-align: center;
+    }
+
+    #printMe {
+        position: relative;
+        background-image: var(--a5-tuy-chinh);
+        background-size: cover;
+        display: inline-block;
+        width: 765px;
+        height: 1090px;
+    }
+
+    .in-edit {
+      	position: absolute;
+      	background: none;
+        font-family: 'Tahoma', sans-serif;
+      	text-align: center;
+      	border: none;
+    }
+      
+ #khungnhap {
+        display: block;
+        position: relative;
+        left: 20px;
+        width: 752px;
+        box-sizing: border-box;
+    }
+
+    .khungtrai {
+        display: block;
+        box-sizing: border-box;
+        border: none;
+        width: 35%;
+        float: left;
+    }
+
+    .intudong {
+        color: red !important;
+        font-size: 23px !important;
+        height: 50px;
+        line-height: 50px !important;
+        font-weight: 900;
+        text-align: center;
+    }
+
+    .khungphai {
+        display: block;
+        box-sizing: border-box;
+        border-left: 1px solid rgba(0, 0, 0, 0.2);
+        font-size: 16px;
+        width: 60%;
+        float: left;
+    }
+
+    .khungphai p {
+        font-size: 16px;
+    }
+
+    #khungnhap::after {
+        content: "";
+        display: block;
+        clear: both;
+    }
+
+    .alert-message.success {
+        font-size: 16px;
+        color: black;
+        padding: 10px;
+        margin: 0px 15px;
+        box-sizing: boder-box;
+        border: 1px solid rgba(0, 0, 0, 0.2);
+    }
+
+    #tbl_exporttable_to_xls {
+        display: none;
+    }
+  
+    .form-control {
+        color: #000;
+        line-height: 30px;
+        height: 30px;
+        background-color: none;
+        font-size: 15px;
+        margin: 5px 0px;
+    }
+
+    .btn-upload,
+    .btn-ex {
+        width: 92px;
+        color: #000;
+        line-height: 30px;
+        height: 30px;
+        background-color: none;
+        box-sizing: unset;
+        border: 1px solid #000;
+        margin: 5px 0px;
+    }
+
+    .form-control:hover {
+        cursor: pointer;
+        background-color: #000;
+        color: #fff;
+    }
+
+    .btn-upload:hover {
+        cursor: pointer;
+        color: #fff;
+        background-color: #000;
+    }
+
+    .btn-ex:hover {
+        cursor: pointer;
+        color: #fff;
+        background-color: #000;
+    }
+
+    .btn-ex {
+        float: right;
+        margin-right: 10px;
+    }
+      
+ /* CSS cho nd trên */    
+        #nd1 {
+        top: 184px;
+        left: 23px;
+        width: 729px;
+        margin: 0;
+        height: 80px;
+        line-height: 80px;
+        font-size: 60px;
+        font-weight: 900;
+        text-transform: uppercase;
+          }
+      
+        #nd2 {
+        caret-color: black;
+        top: 263px;
+        left: 23px;
+        width: 729px;
+        margin: 0;
+        height: 100px;
+        line-height: 100px;
+        font-size: 90px;
+        font-weight: 900;
+        color: white;
+        -webkit-text-stroke: 5px black;}
+      
+        #nd3 {
+        top: 362px;
+        left: 23px;
+        width: 729px;
+        margin: 0;
+        height: 87px;
+        line-height: 87px;
+        font-size: 60px;
+        font-weight: 900;}
+      
+        #nd4 {
+        top: 447px;
+        left: 23px;
+        width: 729px;
+        margin: 0 auto;
+        height: 60px;
+        line-height: 60px;
+        font-size: 30px;
+        font-weight: 900;}
+      
+        #ghichu1 {
+        top: 506px;
+        left: 23px;
+        width: 433px;
+        margin: 0 auto;
+        height: 30px;
+        line-height: 30px;
+        font-size: 18px;
+        font-weight: 900;}
+      
+        #ngayad1 {
+        top: 507px;
+        left: 597px;
+        width: 153px;
+        margin: 0 auto;
+        height: 30px;
+        line-height: 30px;
+        font-size: 18px;
+        font-weight: 900;}
+      
+      /* CSS cho nd dưới */
+      
+        #nd6 {
+        top: 718px;
+        left: 23px;
+        width: 729px;
+        margin: 0;
+        height: 80px;
+        line-height: 80px;
+        font-size: 60px;
+        font-weight: 900;
+        text-transform: uppercase;}
+      
+        #nd7 {
+        caret-color: black;
+        top: 796px;
+        left: 23px;
+        width: 729px;
+        margin: 0;
+        height: 100px;
+        line-height: 100px;
+        font-size: 90px;
+        font-weight: 900;
+        color: white;
+        -webkit-text-stroke: 5px black;}
+      
+        #nd8 {
+        top: 894px;
+        left: 23px;
+        width: 729px;
+        margin: 0;
+        height: 87px;
+        line-height: 87px;
+        font-size: 60px;
+        font-weight: 900;}
+      
+        #nd9 {
+        top: 979px;
+        left: 23px;
+        width: 729px;
+        margin: 0 auto;
+        height: 60px;
+        line-height: 60px;
+        font-size: 30px;
+        font-weight: 900;}
+      
+        #ghichu2 {
+        top: 1042px;
+        left: 23px;
+        width: 433px;
+        margin: 0 auto;
+        height: 30px;
+        line-height: 30px;
+        font-size: 18px;
+        font-weight: 900;}
+      
+        #ngayad2 {
+        top: 1042px;
+        left: 598px;
+        width: 153px;
+        margin: 0 auto;
+        height: 30px;
+        line-height: 30px;
+        font-size: 18px;
+        font-weight: 900;}
+      
+      .title-cover-1 {
+    	z-index: 20;
+        height: 169px;
+        width: 746px;
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        background: var(--title-cover);
+        background-size: 100% 100%;
+        position: absolute;
+    	top: 15px;
+    	left: 13px;
+    	
+  
+  }   
+      
+     .title-cover-2 {
+    	z-index: 20;
+        height: 169px;
+        width: 744px;
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        background: var(--title-cover);
+        background-size: 100% 100%;
+        position: absolute;
+    	top: 549px;
+    	left: 13px;
+    	  
+  }    
+
+          
+.item-post .post-body {
+    overflow-x: scroll;
+    }
+  
+@media print {
+.item-post .post-body {
+    overflow-x: auto;
+    }	
+.top-ads, .below-ads, .hamburger-section, .entry-title, .label-container, .feed-share, .primary-nav, .post-footer, .comments-section,
+#breadcrumb, #main-ads-post, #sidebar-container, #footer-wrapper, #khungnhap {
+   	display: none !important;
+   	}
+  
+.post-inner-area {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 98;
+    background: white;
+   }
+
+#printMe {
+  	position: fixed;
+    top: 20px;
+    left: 10px;
+    z-index: 99;
+	}
+}

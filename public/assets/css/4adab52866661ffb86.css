@@ -1,0 +1,211 @@
+.item-post .post-body,
+    .item-post h1.entry-title {
+        text-align: center;
+
+    }
+
+    #printMe {
+        position: relative;
+        background-image: var(--popup-btn-gia-gach);
+        background-size: cover;
+        display: inline-block;
+        width: 775px;
+        height: 1080px;
+    }
+
+    .in {
+        border: none;
+    }
+
+
+      
+     /* CSS cho vị trí bên trái */    
+            #tensp1, #tensp3, #giagoc1, #giagoc3, #giamcon1, #giamcon3, #ngayad1, #ngayad3, #note1, #note3 {
+            position: Absolute;
+            left: 127px;}
+          
+          
+        /* CSS cho vị trí bên phải */ 
+            #tensp2, #tensp4, #giagoc2, #giagoc4, #giamcon2, #giamcon4, #ngayad2, #ngayad4, #note2, #note4 {
+            position: Absolute;
+            left: 408px;}
+          
+
+          
+        /* CSS cho vị trí bên trên */ 
+            #tensp1, #tensp2{
+            top: 174px;} 
+  
+  			#giagoc1, #giagoc2{
+            top: 243px;}
+  
+            #giamcon1, #giamcon2{
+            top: 318px;}  
+          
+  			#note1, #note2{
+            top: 399px;}
+                              
+        
+            #ngayad1, #ngayad2{
+            top: 452px;}
+          
+        /* CSS cho vị trí bên dưới */ 
+            #tensp3, #tensp4{
+            top: 565px;}
+  
+          	#giagoc3, #giagoc4{
+            top: 632px;}
+  
+            #giamcon3, #giamcon4 {
+            top: 706px;}  
+          
+            #note3, #note4{
+            top: 788px;}         
+
+          
+             #ngayad3, #ngayad4{
+            top: 842px;}
+          
+        /* CSS kích thước */ 
+            #tensp1, #tensp2, #tensp3, #tensp4{
+            width: 267px;
+            margin: 0 auto;
+            height: 50px;
+            line-height: 50px;
+            font-size: 20px;
+            text-align: center;
+            text-transform: uppercase;
+            font-weight: 900;      
+            background: none;}
+          
+            #giagoc1, #giagoc2, #giagoc3, #giagoc4{
+            width: 267px;
+            margin: 0 auto;
+            height: 75px;
+            font-size: 44px;
+            font-weight: 900;
+            text-align: center;
+            line-height: 100px;
+            background: none;}
+
+          
+            #giamcon1, #giamcon2, #giamcon3, #giamcon4 {
+            width: 267px;
+            margin: 0 auto;
+            height: 60px;
+            font-size: 50px;
+            font-weight: 900;
+            text-align: center;
+            line-height: 60px;
+            background: none;}
+  
+  			#note1, #note2, #note3, #note4{
+            width: 267px;
+            margin: 0 auto;
+            height: 26px;
+            font-size: 18px;
+            line-height: 26px;
+            text-align: center;
+            text-transform: uppercase;
+            font-weight: 900;
+            background: none;}
+             
+            #ngayad1, #ngayad2, #ngayad3, #ngayad4{
+            width: 267px;
+            margin: 0 auto;
+            height: 26px;
+            font-size: 18px;
+            text-align: center;
+            text-transform: uppercase;
+            font-weight: 900;
+            background: none;}
+
+  
+            .title-cover-1 {
+              z-index: 20;
+              height: 81px;
+              width: 278px;
+              box-sizing: border-box;
+              margin: 0;
+              padding: 0;
+              background: var(--title-cover);
+              background-size: 100% 100%;
+              position: absolute;
+              top: 93px;
+              left: 122px;
+            }  
+
+              .title-cover-2 {
+              z-index: 20;
+              height: 81px;
+              width: 278px;
+              box-sizing: border-box;
+              margin: 0;
+              padding: 0;
+              background: var(--title-cover);
+              background-size: 100% 100%;
+              position: absolute;
+              top: 93px;
+              left: 403px;
+            } 
+
+              .title-cover-3 {
+              z-index: 20;
+              height: 81px;
+              width: 278px;
+              box-sizing: border-box;
+              margin: 0;
+              padding: 0;
+              background: var(--title-cover);
+              background-size: 100% 100%;
+              position: absolute;
+              top: 484px;
+              left: 122px;
+            } 
+
+
+                .title-cover-4 {
+                z-index: 20;
+                height: 81px;
+                width: 278px;
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+                background: var(--title-cover);
+                background-size: 100% 100%;
+                position: absolute;
+                top: 484px;
+                left: 403px;
+            }
+      
+       
+.item-post .post-body {
+    overflow-x: scroll;
+    }
+  
+@media print {
+.item-post .post-body {
+    overflow-x: auto;
+    }	
+.top-ads, .below-ads, .hamburger-section, .entry-title, .label-container, .feed-share, .primary-nav, .post-footer, .comments-section,
+#breadcrumb, #main-ads-post, #sidebar-container, #footer-wrapper, #khungnhap {
+   	display: none !important;
+   	}
+  
+.post-inner-area {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 98;
+    background: white;
+   }
+
+#printMe {
+  	position: fixed;
+    top: 20px;
+    left: 10px;
+    z-index: 99;
+	}
+}

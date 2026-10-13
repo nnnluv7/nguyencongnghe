@@ -1,0 +1,201 @@
+.item-post .post-body,
+    .item-post h1.entry-title {
+        text-align: center;
+
+    }
+
+    #printMe {
+        position: relative;
+        background-image: var(--sticker-6pcs);
+        background-size: cover;
+        display: inline-block;
+        width: 765px;
+        height: 1090px;
+    }
+
+    .in-edit {
+      	position: absolute;
+      	background: none;
+      	border: none;
+    }
+  
+/* CSS hang 1 */    
+      #tensp1, #tensp2 {
+  	  top: 112px;}
+
+  	  #nd1, #nd2{
+  	  top: 141px;}
+  
+  	  #giagoc1, #giagoc2 {
+      	top: 184px;} 
+  		
+  	  #giamcon1, #giamcon2 {
+  	  top: 215px;}
+
+  	  #textngayad1, #textngayad2 {
+        top: 275px;}
+  
+   	  #ngayad1, #ngayad2 {
+  	  top: 306px;}
+
+  
+/* CSS hang 2 */    
+      #tensp3, #tensp4 {
+  	  top: 462px;}
+
+  	  #nd3, #nd4 {
+  	  top: 491px;}
+  
+  	  #giagoc3, #giagoc4 {
+      	top: 533px;} 
+  
+  	  #giamcon3, #giamcon4 {
+        top: 563px;}
+  
+  	  #textngayad3, #textngayad4 {
+  	  top: 623px;}
+  
+   	  #ngayad3, #ngayad4 {
+  	  top: 654px;}
+  	 
+/* CSS hang 3 */    
+      #tensp5, #tensp6 {
+  	  top: 811px;}
+  
+  	  #nd5, #nd6 {
+  	  top: 840px;}
+  
+  	  #giagoc5, #giagoc6 {
+      	top: 882px;} 
+  
+  	  #giamcon5, #giamcon6 {
+        top: 912px;}
+
+  	  #textngayad5, #textngayad6 {
+        top: 972px;}       
+
+  	  #ngayad5, #ngayad6 {
+        top: 1004px;}
+  
+/* CSS cot trai */
+  
+  #tensp1, #tensp3, #tensp5 {
+    left: 85px;}
+  #nd1, #nd3, #nd5{
+    left: 76px;}
+  #giagoc1, #giagoc3, #giagoc5 {
+     left: 73px;} 
+  #giamcon1, #giamcon3, #giamcon5 {
+    left: 73px;}
+  #textngayad1, #textngayad3, #textngayad5 {
+    left: 120px;}
+  #ngayad1, #ngayad3, #ngayad5 {
+      left: 142px;}
+  
+/* CSS cot phai */   
+  
+      #tensp2, #tensp4, #tensp6 {
+        left: 446px;}
+      #nd2, #nd4, #nd6 {
+        left: 433px;}
+  
+  	  #giagoc2, #giagoc4, #giagoc6 {
+      	left: 433px;} 
+  	  #giamcon2, #giamcon4, #giamcon6 {
+      	left: 433px;} 
+  	  #textngayad2, #textngayad4, #textngayad6 {
+      	left: 484px;}
+  	   #ngayad2, #ngayad4, #ngayad6 {
+         left: 503px;}
+  	   
+  	   
+  /* CSS kích thước */ 
+      #tensp1, #tensp2, #tensp3, #tensp4, #tensp5, #tensp6{
+      width: 239px;
+      margin: 0 auto;
+      height: 30px;
+      line-height: 30px;
+      font-size: 18px;      
+      text-align: center;
+      text-transform: uppercase;
+      background: none;}
+
+      #nd1, #nd2, #nd3, #nd4, #nd5, #nd6 {
+      width: 258px;
+      margin: 0 auto;
+      height: 44px;
+      font-size: 31px;
+      line-height: 44px;
+      font-weight: 900;
+      text-transform: uppercase;
+      text-align: center;
+      background: none;}
+
+      #giagoc1, #giagoc2, #giagoc3, #giagoc4, #giagoc5, #giagoc6{
+      width: 264px;
+      margin: 0 auto;
+      height: 32px;
+      font-size: 30px;
+      text-decoration: line-through;
+      text-align: center;
+      background: none;}   
+  
+
+      #giamcon1, #giamcon2, #giamcon3, #giamcon4, #giamcon5, #giamcon6{
+      width: 264px;
+      margin: 0 auto;
+      height: 60px;
+      font-size: 48px;
+      font-weight: 900;
+      text-align: center;
+      background: none;}
+  
+      #textngayad1, #textngayad2, #textngayad3, #textngayad4, #textngayad5, #textngayad6{
+      width: 170px;
+      margin: 0 auto;
+      height: 29px;
+      font-size: 16px;
+      text-align: center;
+      background: none;}   
+    
+      
+      #ngayad1, #ngayad2, #ngayad3, #ngayad4, #ngayad5, #ngayad6{
+      width: 128px;
+      margin: 0 auto;
+      height: 25px;
+      font-size: 18px;
+      font-weight: 600;
+      text-align: center;
+      text-transform: uppercase;
+      background: none;}
+    	
+.item-post .post-body {
+    overflow-x: scroll;
+    }
+  
+@media print {
+.item-post .post-body {
+    overflow-x: auto;
+    }	
+.top-ads, .below-ads, .hamburger-section, .entry-title, .label-container, .feed-share, .primary-nav, .post-footer, .comments-section,
+#breadcrumb, #main-ads-post, #sidebar-container, #footer-wrapper, #khungnhap {
+   	display: none !important;
+   	}
+  
+.post-inner-area {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 98;
+    background: white;
+   }
+
+#printMe {
+  	position: fixed;
+    top: 20px;
+    left: 10px;
+    z-index: 99;
+	}
+}

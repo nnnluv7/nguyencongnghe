@@ -1,0 +1,125 @@
+.custom-input {
+      border: 2px solid rebeccapurple;
+      height: 100%;
+      width: 70px;
+      position: absolute;
+      top: 0;
+      right: 0;
+      box-sizing: border-box;
+    }
+
+    /* Tùy chỉnh kiểu dáng cho input */
+    .custom-input input {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      box-sizing: border-box;
+      padding: 2px;
+      text-align: center;
+      font-size: 20px;
+      font-weight: bold;
+      border: none;
+    }
+  
+  .item-post h1.entry-title {
+  	  position: relative;
+      font-size: 20px;
+
+  }
+  
+
+
+
+  .row-container {
+    display: block;
+    width: 300px;
+    margin: 0 auto;
+  }
+.row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 220px;
+      height: 24px;
+      margin-bottom: 10px;
+      background-color: #f0f0f0;
+      padding: 10px;
+      border-radius: 8px;
+      position: relative;
+    }
+
+    .number1, .number2 {
+      height: 40px;
+      width: 36px;
+      line-height: 40px;
+      text-align: center;
+      font-size: 20px;
+      border: 1px solid black;
+    }
+
+.operator {
+  flex: 0.5; /* Để cộng chiếm một nửa chiều rộng */
+  text-align: center;
+  font-size: 20px;
+  margin: 0 5px; /* Khoảng cách giữa số và dấu cộng */
+}
+
+.result {
+  width: 100px;
+  text-align: center;
+  font-size: 20px;
+  padding: 5px; /* Thêm padding cho ô kết quả */
+}
+
+.button-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px; /* Ajust margin as needed */
+}
+
+.checkButton,
+.newExerciseButton {
+  margin: 0 10px;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  min-width: 160px;
+}
+
+.checkButton {
+  background-color: #4caf50; /* Green color for "Check" button */
+  color: white;
+  border: none;
+  border-radius: 5px;
+}
+
+.newExerciseButton {
+  background-color: #9e0071; /* Blue color for "Tạo bài tập mới" button */
+  color: white;
+  border: none;
+  border-radius: 5px;
+}
+
+    .feedback {
+        font-size: 20px;
+    }
+
+    .correct {
+      color: green;
+      position: absolute;
+      right: -56px;
+    }
+
+    .incorrect {
+      color: red;
+      position: absolute;
+      right: -38px;
+    }
+
+    .icon.correct {
+      color: green;
+    }
+
+    .icon.incorrect {
+      color: red;
+    }

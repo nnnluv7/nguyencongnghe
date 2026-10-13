@@ -1,0 +1,93 @@
+.modal {
+  	position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 21;
+    display: none;
+  }  
+  
+  .modal__overlay {
+  	position: absolute;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.8);
+  }
+  
+  .modal__body {
+  	position: relative;
+    min-width: 800px;
+    max-width: 1000px;
+    height: auto;
+    margin: auto;
+    border-radius: 4px;
+    background-color: white;
+    animation: modalFadeIn ease 0.5s;
+  
+  }
+  
+  .modal__body-header {
+  	padding: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #070707;
+  
+  }
+  
+  .modal__body-left {
+  	color: white;
+    font-size: 20px;
+    font-weight: 400;
+  
+  }
+  
+  .modal__body-right {
+  	color: white;
+    font-size: 20px;
+    font-weight: 400;
+    background: none;
+    border: solid 1px;
+    border-color: white;
+    cursor: pointer;
+  
+  }
+  
+  .modal__body_mid {
+  	padding: 0px 20px;
+    text-align: left;
+  
+  }
+  
+  .huongdan {
+  	width: 400px;
+    height: 440px;
+  
+  }
+
+  
+  
+  
+  .modal-open {
+  	display: flex;
+  }
+  
+  
+  .show-x {
+  	display: block;
+  }
+  
+ 
+  
+  
+  @keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-100px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0px);
+    }
+}

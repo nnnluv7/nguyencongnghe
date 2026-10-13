@@ -1,0 +1,1 @@
+var tMessages ={fixedMenu:true,fixedSidebar:true,isRTL:false,showMore:"Hiện thêm",noTitle:"Không có tiêu đề",noResults:"Không tìm thấy kết quả nào",postAuthorLabel: "Tác giả -",dateIco:"post-date"}

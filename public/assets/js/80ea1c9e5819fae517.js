@@ -1,0 +1,1 @@
+window.CG_ROUTE = "retired";

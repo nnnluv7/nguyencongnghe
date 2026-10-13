@@ -1,0 +1,32 @@
+#breadcrumb, .post-footer {
+
+	display: none !important;
+  }
+  
+  .item-post .post-body {
+  	text-align: left;
+  }
+  
+  .item-post .post-body a {
+    	display: inline-block;
+    	width: 194px!important;
+    	height: 260px!important;
+    	margin: 15px;
+    	transition: opacity .30s ease, transform .30s ease;
+  	}
+  .item-post .post-body a:hover {
+  		transform: scale3d(1.1,1.1,1);
+  }
+  .item-post .post-body img {
+    	margin: 4px!important;
+    	width: 100%;
+    	height: 100%;
+
+  	}
+  
+@media only screen and (max-width: 600px) {
+  .item-post .post-body a {
+    width: 160px!important;
+    height: 240px!important;
+	}
+}

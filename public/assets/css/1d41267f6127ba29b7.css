@@ -1,0 +1,87 @@
+.item-post .post-body, .item-post h1.entry-title {
+  	text-align: center;
+  	
+  }
+  
+  .in-edit {
+    position: absolute;
+  	border: none;
+  }
+  
+	#printMe {
+    position: relative;
+    background-image: url('/assets/vendor/26bc325044674af466.png');
+    background-size: cover;
+  	display: inline-block;
+    width: 775px;
+  	height: 1080px;}
+  
+/*  bên trái */    
+    #ghichu1, #ghichu4 {
+    left: 67px;}
+  
+  
+/*  giữa */    
+    #ghichu2, #ghichu5 {
+    left: 295px;}
+  
+/* bên phải */    
+	#ghichu3, #ghichu6 {
+    left: 523px;}
+    
+/*  bên trên */ 
+
+  
+ 	#ghichu1, #ghichu2, #ghichu3{
+  	top: 470px;}
+
+  
+/* bên dưới */ 
+
+  
+ 	#ghichu4, #ghichu5, #ghichu6{
+  	top: 880px;}
+
+/*  kích thước */ 
+
+  
+  	#ghichu1, #ghichu2, #ghichu3, #ghichu4, #ghichu5, #ghichu6{
+    	width: 207px;
+        margin: 0 auto;
+        height: 30px;
+        font-size: 15px;
+        font-weight: 900;
+        text-align: center;
+        background: none;
+        }
+
+.item-post .post-body {
+    overflow-x: scroll;
+    }
+  
+@media print {
+.item-post .post-body {
+    overflow-x: auto;
+    }	
+.top-ads, .below-ads, .hamburger-section, .entry-title, .label-container, .feed-share, .primary-nav, .post-footer, .comments-section,
+#breadcrumb, #main-ads-post, #sidebar-container, #footer-wrapper, #khungnhap {
+   	display: none !important;
+   	}
+  
+.post-inner-area {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 98;
+    background: white;
+   }
+
+#printMe {
+  	position: fixed;
+    top: 20px;
+    left: 10px;
+    z-index: 99;
+	}
+}

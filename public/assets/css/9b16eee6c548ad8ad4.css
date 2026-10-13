@@ -1,0 +1,230 @@
+/*<![CDATA[*/
+:root{--qz-primary:#4e54c8;--qz-sec:#8f94fb;--qz-ok:#2ecc71;--qz-err:#e74c3c;--qz-text:#333;--qz-bg:#f8f9fa}
+
+/* --- 1. HEADER & AUTH LAYOUT (Giữ của V18 - Chuẩn đẹp) --- */
+.headerify .search-toggle{position:relative!important;float:right!important;top:auto!important;right:auto!important;z-index:20}
+.auth-wrap-desktop{float:right!important;height:40px;display:flex;align-items:center;position:relative;z-index:30;margin-left:10px}
+.auth-btn{padding:8px 18px;border-radius:20px;border:none;cursor:pointer;font-weight:bold;font-size:14px;transition:0.3s;white-space:nowrap;text-decoration:none;display:inline-flex;align-items:center;gap:5px}
+.btn-login{background:#fff;border:1px solid var(--qz-primary);color:var(--qz-primary)}
+.btn-reg{background:var(--qz-primary);color:#fff;box-shadow:0 4px 10px rgba(78,84,200,0.3)}
+.btn-user{background:#eef2ff;color:var(--qz-primary);border:1px solid var(--qz-primary);display:flex;align-items:center;gap:8px;position:relative}
+
+.user-dropdown{position:absolute;top:50px;right:0;background:#fff;border-radius:8px;box-shadow:0 5px 15px rgba(0,0,0,0.15);width:180px;display:none;overflow:hidden;border:1px solid #eee;z-index:99999}
+.user-dropdown.show{display:block;animation:fadeInDown 0.2s}
+.user-item{padding:10px 15px;cursor:pointer;display:flex;align-items:center;gap:10px;color:#555;transition:0.2s;font-size:14px;text-decoration:none;border-bottom:1px solid #f9f9f9}
+.user-item:hover{background:#f8f9fa;color:var(--qz-primary)}
+
+/* Mobile Auth */
+@media (max-width:880px){.auth-wrap-desktop{display:none!important}.auth-wrap-mobile{display:block!important}}
+.auth-wrap-mobile{display:none;padding:15px;border-top:1px solid #eee;background:#fdfdfd}
+.mobile-auth-btns{display:flex;gap:10px;justify-content:center}
+.mobile-auth-btns .auth-btn { flex: 1; justify-content: center; }
+.mobile-user-row{display:flex;justify-content:space-between;padding:10px;background:#f0f2f5;border-radius:8px;font-weight:bold;color:var(--qz-primary)}
+.mobile-user-menu{display:none;margin-top:10px;background:#fff;border:1px solid #eee;border-radius:8px;overflow:hidden}
+.mobile-user-menu.open{display:block;animation:slideDown 0.3s}
+@keyframes fadeInDown { from{opacity:0;transform:translateY(-10px)} to{opacity:1;transform:translateY(0)} }
+@keyframes slideDown { from{opacity:0;transform:translateY(-10px)} to{opacity:1;transform:translateY(0)} }
+@keyframes slideDownModal { from{opacity:0;transform:translateY(-20px)} to{opacity:1;transform:translateY(0)} }
+
+/* --- 2. QUIZ CSS (Có Style Match V16) --- */
+.quiz-module *{box-sizing:border-box}
+.quiz-module{font-family:'Segoe UI',sans-serif;width:100%;margin:20px auto;background:#fff;border-radius:12px;box-shadow:0 0 15px rgba(0,0,0,.1);overflow:hidden;min-height:400px;color:var(--qz-text);position:relative;border:1px solid #eee}
+.qz-screen{display:none;padding:30px;animation:fadeIn .3s} .qz-screen.active{display:block}
+.qz-welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:400px;text-align:center}
+.qz-header{background:#f1f3f5;padding:15px 20px;display:flex;justify-content:space-between;align-items:center;font-weight:bold;color:var(--qz-primary)}
+.qz-timer{background:#fff;padding:5px 15px;border-radius:20px;min-width:80px;text-align:center;box-shadow:0 2px 4px rgba(0,0,0,.05)}
+.qz-q-text{font-size:1.3em;font-weight:600;margin-bottom:20px;line-height:1.5}
+.qz-img{max-width:100%;max-height:250px;border-radius:8px;display:block;margin:0 auto 15px}
+
+.qz-btn{background:linear-gradient(to right,var(--qz-primary),var(--qz-sec));color:#fff;border:none;padding:12px 30px;border-radius:30px;font-size:16px;font-weight:bold;cursor:pointer;margin:5px}
+.qz-btn-outline{background:#fff;color:var(--qz-primary);border:2px solid var(--qz-primary);box-shadow:none}
+
+/* Options Standard */
+.qz-opts{display:flex;gap:15px;flex-wrap:wrap}
+.qz-opt-label{border:2px solid #eee;border-radius:10px;padding:15px;cursor:pointer;position:relative;display:flex;align-items:center;transition:.2s}
+.qz-opt-label:hover{background:#f8f9fa;border-color:#ccc}
+.qz-opt-label.selected{border-color:var(--qz-primary);background:#eef2ff}
+.qz-opt-label input{margin-right:15px;transform:scale(1.3)}
+.layout-list .qz-opt-label{width:100%} 
+.layout-grid .qz-opt-label,.layout-cards .qz-opt-label{width:calc(50% - 8px)}
+.layout-pills{flex-direction:row;justify-content:center} .layout-pills .qz-opt-label{width:auto;border-radius:50px;min-width:80px;justify-content:center}
+.layout-cards .qz-opt-label{flex-direction:column;text-align:center;background:#f9f9f9;border:none;box-shadow:0 2px 4px rgba(0,0,0,.05)}
+@media(max-width:600px){.layout-grid .qz-opt-label, .layout-cards .qz-opt-label{width:100%}}
+
+/* MATCH UI (Restore V16 Style) */
+.qz-match-container{display:flex;justify-content:space-between;gap:40px;margin-top:20px;position:relative}
+.qz-match-col{width:45%;display:flex;flex-direction:column;gap:20px;z-index: 2;} /* Z-Index 2 để đè lên SVG */
+.qz-match-item{padding:15px;background:#fff;border:2px solid #ddd;border-radius:8px;cursor:pointer;text-align:center;font-weight:500;min-height:50px;display:flex;align-items:center;justify-content:center;position:relative}
+.qz-match-item:hover{border-color:#bbb;background:#f9f9f9}
+.qz-match-item.active{border-color:var(--qz-primary);background:#eef2ff;box-shadow:0 0 0 2px rgba(78,84,200,.2)}
+.qz-match-item.matched{border-color:var(--qz-ok);background:#e6fffa;color:var(--qz-ok);opacity:1;cursor:pointer}
+.qz-match-item.matched:hover{border-color:var(--qz-err);color:var(--qz-err);background:#fff5f5}
+.qz-match-item.matched:hover::after{content:'\f00d';font-family:"Font Awesome 6 Free";font-weight:900;position:absolute;top:-8px;right:-8px;background:#ff4d4f;color:#fff;border-radius:50%;width:20px;height:20px;font-size:12px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 5px rgba(0,0,0,.2)}
+
+/* SVG Layer */
+.match-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+.match-line { stroke: var(--qz-primary); stroke-width: 2px; }
+
+/* Text Input */
+.qz-inline-input{border:none;border-bottom:2px solid var(--qz-primary);background:#f0f4ff;padding:5px 10px;font-weight:bold;color:var(--qz-primary);width:120px;text-align:center;outline:none}
+.qz-input{width:100%;max-width:300px;padding:12px;border:2px solid #ddd;border-radius:8px;margin-bottom:10px;font-size:16px;text-align:left;}
+
+.qz-footer{margin-top:30px;display:flex;justify-content:space-between;padding-top:20px;border-top:1px solid #eee}
+.qz-btn-next{background:var(--qz-primary);color:#fff;opacity:0.5;pointer-events:none;border-radius:6px;border:none;padding:10px 25px;font-weight:bold} 
+.qz-btn-next.active{opacity:1;pointer-events:all}
+.qz-btn-back,.qz-btn-skip{border-radius:6px;padding:10px 20px;font-weight:bold;border:none;cursor:pointer}
+.qz-btn-back{background:#eee} .qz-btn-skip{background:#fff;border:1px solid #ccc}
+
+.qz-score-box{width:130px;height:130px;background:var(--qz-primary);color:#fff;border-radius:50%;display:flex;justify-content:center;align-items:center;font-size:38px;font-weight:bold;margin:0 auto 20px}
+.qz-history-table{width:100%;border-collapse:collapse;min-width:600px}
+.qz-history-table th,.qz-history-table td{padding:12px;border:1px solid #eee;text-align:left;font-size:0.9em}
+.table-wrap{overflow-x:auto}
+.qz-match-review-row{display:flex;justify-content:space-between;padding:8px;border-bottom:1px dashed #eee}
+.qz-explain{background:#e3f2fd;padding:15px;margin-top:15px;border-radius:8px;border-left:4px solid var(--qz-primary);color:#0d47a1}
+
+/* --- NEW: CIRCLE QUESTION STYLE (Hand-drawn Effect) --- */
+.qz-circle-container { display: flex; flex-direction: column; gap: 15px; margin-top: 15px; }
+.qz-circle-item { display: flex; align-items: center; gap: 15px; cursor: pointer; padding: 8px 15px; border-radius: 12px; transition: background 0.2s; border: 1px solid transparent; }
+.qz-circle-item:hover { background: #f8f9fa; border-color: #eee; }
+
+/* Phần chữ cái A, B, C, D */
+.qz-circle-mark { position: relative; width: 50px; height: 50px; display: flex; justify-content: center; align-items: center; font-size: 22px; font-weight: 700; color: #555; user-select: none; flex-shrink: 0; }
+.qz-circle-item.selected .qz-circle-mark { color: #2e3192; /* Màu chữ khi chọn */ }
+
+/* SVG Vòng tròn */
+.qz-circle-svg { position: absolute; top: -5px; left: -5px; width: 60px; height: 60px; pointer-events: none; z-index: 1; overflow: visible; }
+.qz-circle-path { 
+    fill: none; 
+    stroke: #4e54c8; /* Màu mực khoanh tròn */
+    stroke-width: 3; 
+    stroke-linecap: round; 
+    stroke-linejoin: round; 
+    stroke-dasharray: 200; 
+    stroke-dashoffset: 200; /* Ẩn nét vẽ ban đầu */
+    transition: stroke-dashoffset 0.5s ease-out; 
+    opacity: 0;
+}
+/* Khi được chọn (class selected) thì chạy animation vẽ vòng tròn */
+.qz-circle-item.selected .qz-circle-path { stroke-dashoffset: 0; opacity: 1; }
+
+.qz-circle-text { font-size: 1.1em; line-height: 1.4; flex: 1; color: var(--qz-text); }
+
+/* Modals */
+.qz-blocker,.auth-modal{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99999;display:none;justify-content:center;align-items:center;flex-direction:column;color:#fff}
+.auth-box{background:#fff;padding:30px;border-radius:12px;width:90%;max-width:380px;color:#333;position:relative}
+.auth-close{position:absolute;top:10px;right:15px;font-size:24px;cursor:pointer}
+.auth-input{width:100%;padding:12px;margin:5px 0 15px;border:1px solid #ddd;border-radius:6px;box-sizing:border-box}
+.auth-submit{width:100%;padding:12px;background:var(--qz-primary);color:#fff;border:none;border-radius:6px;font-weight:bold;cursor:pointer}
+.auth-link{text-align:center;font-size:13px;margin-top:10px;color:var(--qz-primary);cursor:pointer}
+.qz-spinner{width:40px;height:40px;border:4px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin 1s linear infinite;margin-bottom:15px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+
+/* --- UNIVERSAL REVIEW STYLES (Dùng chung cho tất cả) --- */
+/* Item cơ bản trong phần review */
+.qz-review-item .qz-review-opt, 
+.qz-circle-item, 
+.qz-match-review-row,
+.qz-text-review-row {
+    padding: 10px 15px;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    border: 1px solid #eee;
+    background: #fff;
+    display: flex;
+    justify-content: space-between; /* Đẩy icon sang phải */
+    align-items: center;
+    font-size: 15px;
+}
+
+/* Trạng thái ĐÚNG: Xanh lá, viền xanh, nền xanh nhạt */
+.qz-review-opt.correct, 
+.qz-circle-item.correct, 
+.qz-match-review-row.correct,
+.qz-text-review-row.correct {
+    border: 2px solid var(--qz-ok);
+    background: #e6fffa;
+    color: #055037; /* Chữ đậm hơn chút cho dễ đọc */
+}
+
+/* Trạng thái SAI: Đỏ, viền đỏ, nền đỏ nhạt */
+.qz-review-opt.wrong, 
+.qz-circle-item.wrong, 
+.qz-match-review-row.wrong,
+.qz-text-review-row.wrong {
+    border: 2px solid var(--qz-err);
+    background: #fff5f5;
+    color: #781d1d;
+}
+
+/* Icon trạng thái (Check/Cross) */
+.qz-status-icon {
+    font-weight: bold;
+    font-size: 1.2em;
+    margin-left: 10px;
+}
+.qz-status-icon .fa-check { color: var(--qz-ok); }
+.qz-status-icon .fa-times { color: var(--qz-err); }
+
+/* Riêng cho text input review */
+.qz-text-review-row span { margin-right: 10px; }
+
+
+/* --- UNDERLINE QUESTION STYLE --- */
+.qz-underline-box {
+    line-height: 2.2; /* Tăng khoảng cách dòng để dễ nhìn gạch chân */
+    font-size: 1.2em;
+    color: #333;
+    padding: 10px;
+    background: #fafafa;
+    border-radius: 8px;
+    border: 1px solid #eee;
+}
+.qz-word {
+    display: inline-block;
+    cursor: pointer;
+    padding: 0 4px;
+    margin: 0 2px;
+    border-bottom: 3px solid transparent; /* Gạch chân ẩn */
+    transition: all 0.2s;
+    border-radius: 4px;
+    user-select: none;
+}
+.qz-word:hover {
+    background: #eef2ff;
+}
+/* Trạng thái được chọn (Gạch chân xanh) */
+.qz-word.selected {
+    border-bottom-color: var(--qz-primary);
+    color: var(--qz-primary);
+    background: rgba(78, 84, 200, 0.1);
+    font-weight: 600;
+}
+
+/* CSS CHO PHẦN REVIEW */
+/* 1. Gạch đúng (Người dùng chọn và đúng đáp án) */
+.qz-word.r-correct {
+    border-bottom-color: var(--qz-ok);
+    color: var(--qz-ok);
+    background: #e6fffa;
+    position: relative;
+}
+.qz-word.r-correct::after {
+    content: '\f00c'; font-family: "Font Awesome 6 Free"; font-weight: 900;
+    font-size: 10px; position: absolute; top: -10px; right: -5px;
+}
+
+/* 2. Gạch sai (Người dùng chọn nhưng không có trong đáp án) */
+.qz-word.r-wrong {
+    border-bottom-color: var(--qz-err);
+    color: var(--qz-err);
+    background: #fff5f5;
+    text-decoration: line-through; /* Gạch ngang chữ cho rõ là sai */
+}
+
+/* 3. Bỏ sót (Đáp án đúng nhưng người dùng không chọn) */
+.qz-word.r-missed {
+    border-bottom: 2px dashed var(--qz-ok);
+    color: #555;
+}
+/*]]>*/
