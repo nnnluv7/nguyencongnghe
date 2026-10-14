@@ -1,17 +1,3 @@
-// ==UserScript==
-// @name         NCN - Ket noi gia Event Mien Tay 2
-// @namespace    https://nguyencongnghe.com/
-// @version      1.0.0
-// @description  Doc bang gia event bang phien dang nhap cua ban; khong luu mat khau, khong gui du lieu len may chu NCN.
-// @match        https://nguyencongnghe.com/in-event*
-// @match        https://www.nguyencongnghe.com/in-event*
-// @connect      mientay2.pro
-// @grant        GM_xmlhttpRequest
-// @run-at       document-end
-// @noframes
-// @downloadURL  https://nguyencongnghe.com/downloads/ncn-event-bridge.user.js
-// @updateURL    https://nguyencongnghe.com/downloads/ncn-event-bridge.user.js
-// ==/UserScript==
 /* NCN Event tools: file matching, source parsing and printable labels. */
 (function (root, factory) {
   'use strict';
@@ -174,62 +160,37 @@
     if(!columns||!rows)throw new Error('Nhãn không vừa khổ A4.');
     return {width:width,height:height,columns:columns,rows:rows,perPage:columns*rows};
   }
-  function printable(items,settings) {
+  function qrMarkup(code,assets){
+    var m=assets.qr(code),n=m.size,parts=[];
+    for(var y=0;y<n;y++)for(var x=0;x<n;x++)if(m.get(y,x))parts.push('M'+(x+4)+' '+(y+4)+'h1v1h-1z');
+    return '<svg class="qr" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+(n+8)+' '+(n+8)+'" shape-rendering="crispEdges" aria-label="QR '+esc(code)+'"><rect width="100%" height="100%" fill="white"/><path d="'+parts.join('')+'" fill="black"/></svg>';
+  }
+  function printable(items,settings,assets) {
     var l=layout(settings.width,settings.height),labels=[];
+    if(Math.abs(l.width-l.height)>.5)throw new Error('Mẫu bát giác cần chiều rộng bằng chiều cao. Chọn cỡ nhỏ, vừa hoặc lớn.');
+    if(!assets||!assets.frame||!assets.font||!assets.qr)throw new Error('Chưa tải được mẫu sticker gốc. Tạo bản in qua máy chủ.');
     items.forEach(function(p){
       if(!p.code||!p.name||!Number.isInteger(p.qty)||p.qty<1||!(p.originalPrice>0&&p.eventPrice>0&&p.originalPrice>=p.eventPrice))throw new Error('Kiểm tra lại tên, số lượng và giá của mã '+p.code+'.');
-      if(labels.length+p.qty>12000)throw new Error('Một lần tạo tối đa 12.000 nhãn. Chia danh sách hoặc giới hạn số lượng mỗi mã.');
+      if(labels.length+p.qty>12000)throw new Error('Một lần tạo tối đa 12.000 nhãn. Chia nhỏ danh sách in.');
       for(var n=0;n<p.qty;n++)labels.push(p);
     });
     if(!labels.length)throw new Error('Chưa có sản phẩm để in.');
-    var pages=[];
+    var pages=[],cache=new Map();
     for(var i=0;i<labels.length;i+=l.perPage){
       pages.push('<section class="sheet">'+labels.slice(i,i+l.perPage).map(function(p){
-        var discount=p.originalPrice>p.eventPrice?Math.round((1-p.eventPrice/p.originalPrice)*100):0;
-        return '<article class="label"><header><b>'+esc(settings.store||'nguyencongnghe.com')+'</b><span>'+esc(settings.title||'GIÁ EVENT')+'</span></header><div class="product">'+esc(p.name)+'</div><div class="prices"><span class="original">'+money(p.originalPrice)+'₫</span><strong>'+money(p.eventPrice)+'<small>₫</small></strong></div><div class="bottom"><span>MSP: '+esc(p.code)+'</span><b>'+(discount?'Giảm '+discount+'%':'')+'</b></div><footer>'+esc(settings.period||'')+'</footer></article>';
+        if(cache.has(p.code))return cache.get(p.code);
+        var productSize=Math.min(19,Math.max(8,240/(p.name.length*.42)));
+        var text='<article class="label"><svg class="frame" viewBox="0 0 335 335" aria-label="Sticker bát giác"><use href="#ncn-frame"/></svg><div class="product" style="font-size:'+(l.width*productSize/335)+'mm">'+esc(p.name)+'</div><div class="original">'+money(p.originalPrice)+'đ</div><div class="event">'+money(p.eventPrice)+'đ</div>'+qrMarkup(p.code,assets)+'<div class="code">'+esc(p.code)+'</div></article>';
+        cache.set(p.code,text);return text;
       }).join('')+'</section>');
     }
-    var css='*{box-sizing:border-box}html,body{margin:0;font-family:Arial,sans-serif;color:#111}body{background:#e8ebf0}.sheet{width:210mm;min-height:297mm;padding:5mm;margin:10px auto;background:white;display:grid;grid-template-columns:repeat('+l.columns+','+l.width+'mm);grid-auto-rows:'+l.height+'mm;align-content:start;justify-content:center;gap:1mm;break-after:page}.sheet:last-child{break-after:auto}.label{width:'+l.width+'mm;height:'+l.height+'mm;padding:2mm;border:.2mm '+(settings.cut?'dashed':'solid')+' #888;overflow:hidden;display:flex;flex-direction:column;break-inside:avoid}header{display:flex;justify-content:space-between;gap:2mm;align-items:center;font-size:6pt;border-bottom:.2mm solid #777;padding-bottom:1mm}header b{max-width:60%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}header span{font-weight:700}.product{font-size:8pt;font-weight:bold;line-height:1.18;height:7mm;overflow:hidden;margin:1mm 0}.prices{display:flex;gap:2mm;align-items:center;justify-content:space-between;flex:1}.original{text-decoration:line-through;font-size:9pt;color:#555}.prices strong{font-size:'+Math.min(25,Math.max(11,l.width*.24))+'pt;color:'+(settings.color?'#cf202e':'#111')+';white-space:nowrap;letter-spacing:-.6pt}.prices small{font-size:8pt;margin-left:1mm}.bottom{display:flex;justify-content:space-between;font-size:6.5pt;gap:1mm}.bottom b{white-space:nowrap}footer{font-size:6pt;text-align:center;min-height:2mm;margin-top:1mm}'+(l.height>=60?'.product{font-size:12pt;height:22mm}.prices{display:block;text-align:center}.original{display:block;font-size:14pt}.prices strong{display:block;font-size:27pt}.bottom,footer{font-size:8pt}':'')+'@page{size:A4 portrait;margin:0}@media print{html,body{background:white;width:210mm}.sheet{margin:0;height:297mm;min-height:297mm;box-shadow:none;-webkit-print-color-adjust:exact;print-color-adjust:exact}}';
-    return {html:'<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc(settings.name||'Sticker Event NCN')+'</title><style>'+css+'</style></head><body>'+pages.join('')+'</body></html>',labels:labels.length,pages:pages.length,perPage:l.perPage};
+    // Embed the frame once in CSS, rather than repeating a large data URL for every label.
+    var bg='data:image/png;base64,'+assets.frame;
+    var css='@font-face{font-family:NCNMinCap;src:url(data:font/woff2;base64,'+assets.font+') format("woff2")}*{box-sizing:border-box}html,body{margin:0;color:#000}body{background:#e8ebf0}.sheet{width:210mm;height:297mm;padding:5mm;margin:10px auto;background:white;display:grid;grid-template-columns:repeat('+l.columns+','+l.width+'mm);grid-auto-rows:'+l.height+'mm;align-content:start;justify-content:center;gap:1mm;break-after:page;overflow:hidden}.sheet:last-child{break-after:auto}.label{width:'+l.width+'mm;height:'+l.height+'mm;position:relative;break-inside:avoid;overflow:hidden}.frame{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}.product,.original,.event,.code{position:absolute;text-align:center;font-family:NCNMinCap,Impact,sans-serif;white-space:nowrap;line-height:1.25}.product{left:12%;width:76%;top:29.85%;overflow:hidden}.original{left:10%;width:80%;top:34.63%;font-size:'+(l.width*45/335)+'mm}.event{left:9%;width:82%;top:47.76%;font-size:'+(l.width*58/335)+'mm;font-weight:bold}.qr{position:absolute;left:44.328%;top:76.119%;width:11.344%;height:11.344%}.code{left:14%;width:72%;top:86.866%;font-size:'+(l.width*11/335)+'mm}'+(settings.cut?'.label:after{content:"";position:absolute;inset:.2mm;clip-path:polygon(50% 0,85% 15%,100% 50%,85% 85%,50% 100%,15% 85%,0 50%,15% 15%);pointer-events:none}':'')+'@page{size:A4 portrait;margin:0}@media print{html,body{background:white;width:210mm}.sheet{margin:0;box-shadow:none;-webkit-print-color-adjust:exact;print-color-adjust:exact}}';
+    // Inline SVG symbols preserve a single shared PNG and remain usable offline.
+    var symbol='<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden"><defs><symbol id="ncn-frame" viewBox="0 0 335 335"><image href="'+bg+'" width="335" height="335"/></symbol></defs></svg>';
+    return {html:'<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc(settings.name||'Sticker bát giác NCN')+'</title><style>'+css+'</style></head><body>'+symbol+pages.join('')+'</body></html>',labels:labels.length,pages:pages.length,perPage:l.perPage};
   }
+
   return {fold:fold,esc:esc,code:code,numeric:numeric,money:money,parseRows:parseRows,matchStock:matchStock,mergeItems:mergeItems,search:search,decodePackedScript:decodePackedScript,extractCatalogue:extractCatalogue,parseProviderDocument:parseProviderDocument,layout:layout,printable:printable};
 });
-
-/* Only reads the event page using the user's existing browser session. */
-(function () {
-  'use strict';
-  var C=globalThis.NCNEventCore;
-  var CHANNEL='NCN_EVENT_SOURCE_V1',ORIGIN=location.origin,BASE='https://mientay2.pro/in-online/auto/event/';
-  if(!['https://nguyencongnghe.com','https://www.nguyencongnghe.com'].includes(ORIGIN)||!/^\/in-event(?:\/|$)/.test(location.pathname))return;
-  function reply(id,result,error) {window.postMessage({channel:CHANNEL,role:'response',id:id,result:result,error:error||null},ORIGIN);}
-  function ready() {window.postMessage({channel:CHANNEL,role:'ready',version:'1.0.0'},ORIGIN);}
-  var busy=false;
-  window.addEventListener('message',function(event){
-    var request=event.data;
-    if(event.source!==window||event.origin!==ORIGIN||!request||request.channel!==CHANNEL||request.role!=='request')return;
-    if(request.action==='ping'){ready();return;}
-    if(typeof request.id!=='string'||request.id.length>100||!['discover','catalog'].includes(request.action))return;
-    if(busy){reply(request.id,null,'Đang lấy giá. Chờ lần cập nhật hiện tại hoàn tất.');return;}
-    var campaign=request.campaign;
-    if(request.action==='catalog'&&!/^[a-z0-9_-]{1,40}$/i.test(campaign||'')){reply(request.id,null,'Chọn chương trình event hợp lệ.');return;}
-    busy=true;
-    GM_xmlhttpRequest({
-      method:'GET',url:BASE+(request.action==='catalog'?'?p='+encodeURIComponent(campaign):''),anonymous:false,
-      timeout:30000,headers:{Accept:'text/html'},
-      onload:function(response){
-        busy=false;
-        try{
-          var final=new URL(response.finalUrl||BASE);
-          if(final.origin!=='https://mientay2.pro')throw new Error('Nguồn chuyển sang địa chỉ khác. Mở Miền Tây 2 để kiểm tra đăng nhập.');
-          if(response.status<200||response.status>=300)throw new Error('Miền Tây 2 trả lỗi '+response.status+'. Thử lại sau.');
-          var doc=new DOMParser().parseFromString(response.responseText,'text/html');
-          var result=C.parseProviderDocument(doc,request.action==='catalog');
-          result.loadedAt=new Date().toISOString();reply(request.id,result);
-        }catch(error){reply(request.id,null,error.message||'Không đọc được bảng giá.');}
-      },
-      onerror:function(){busy=false;reply(request.id,null,'Không kết nối được Miền Tây 2. Kiểm tra mạng và phiên đăng nhập.');},
-      ontimeout:function(){busy=false;reply(request.id,null,'Nguồn chưa phản hồi sau 30 giây. Thử lại sau.');}
-    });
-  });
-  ready();
-})();

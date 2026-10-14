@@ -2,3 +2,34 @@
 [build]
   command = "test -f public/index.html"
   publish = "public"
+
+[functions]
+  directory = "netlify/functions"
+
+# BEGIN NCN EVENT VIP
+[build.environment]
+  NODE_VERSION = "22"
+
+[functions."ncn-event"]
+  node_bundler = "esbuild"
+  included_files = ["netlify/lib/ncn-event-private/**"]
+  external_node_modules = ["@netlify/identity", "@netlify/blobs", "qrcode"]
+
+[[redirects]]
+  from = "/assets/ncn-event-core.js"
+  to = "/.netlify/functions/ncn-event?route=asset&name=core"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/assets/ncn-event.js"
+  to = "/.netlify/functions/ncn-event?route=asset&name=ui"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/downloads/ncn-event-bridge.user.js"
+  to = "/.netlify/functions/ncn-event?route=asset&name=bridge"
+  status = 200
+  force = true
+# END NCN EVENT VIP

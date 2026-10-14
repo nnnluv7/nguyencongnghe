@@ -1,3 +1,17 @@
+// ==UserScript==
+// @name         NCN - Ket noi gia Event Mien Tay 2
+// @namespace    https://nguyencongnghe.com/
+// @version      2.0.0
+// @description  Doc bang gia event bang phien dang nhap cua ban; khong luu mat khau, khong gui du lieu len may chu NCN.
+// @match        https://nguyencongnghe.com/in-event*
+// @match        https://www.nguyencongnghe.com/in-event*
+// @connect      mientay2.pro
+// @grant        GM_xmlhttpRequest
+// @run-at       document-end
+// @noframes
+// @downloadURL  https://nguyencongnghe.com/downloads/ncn-event-bridge.user.js
+// @updateURL    https://nguyencongnghe.com/downloads/ncn-event-bridge.user.js
+// ==/UserScript==
 /* NCN Event tools: file matching, source parsing and printable labels. */
 (function (root, factory) {
   'use strict';
@@ -180,3 +194,42 @@
   }
   return {fold:fold,esc:esc,code:code,numeric:numeric,money:money,parseRows:parseRows,matchStock:matchStock,mergeItems:mergeItems,search:search,decodePackedScript:decodePackedScript,extractCatalogue:extractCatalogue,parseProviderDocument:parseProviderDocument,layout:layout,printable:printable};
 });
+
+/* Only reads the event page using the user's existing browser session. */
+(function () {
+  'use strict';
+  var C=globalThis.NCNEventCore;
+  var CHANNEL='NCN_EVENT_SOURCE_V1',ORIGIN=location.origin,BASE='https://mientay2.pro/in-online/auto/event/';
+  if(!['https://nguyencongnghe.com','https://www.nguyencongnghe.com'].includes(ORIGIN)||!/^\/in-event(?:\/|$)/.test(location.pathname))return;
+  function reply(id,result,error) {window.postMessage({channel:CHANNEL,role:'response',id:id,result:result,error:error||null},ORIGIN);}
+  function ready() {window.postMessage({channel:CHANNEL,role:'ready',version:'1.0.0'},ORIGIN);}
+  var busy=false;
+  window.addEventListener('message',function(event){
+    var request=event.data;
+    if(event.source!==window||event.origin!==ORIGIN||!request||request.channel!==CHANNEL||request.role!=='request')return;
+    if(request.action==='ping'){ready();return;}
+    if(typeof request.id!=='string'||request.id.length>100||!['discover','catalog'].includes(request.action))return;
+    if(busy){reply(request.id,null,'Đang lấy giá. Chờ lần cập nhật hiện tại hoàn tất.');return;}
+    var campaign=request.campaign;
+    if(request.action==='catalog'&&!/^[a-z0-9_-]{1,40}$/i.test(campaign||'')){reply(request.id,null,'Chọn chương trình event hợp lệ.');return;}
+    busy=true;
+    GM_xmlhttpRequest({
+      method:'GET',url:BASE+(request.action==='catalog'?'?p='+encodeURIComponent(campaign):''),anonymous:false,
+      timeout:30000,headers:{Accept:'text/html'},
+      onload:function(response){
+        busy=false;
+        try{
+          var final=new URL(response.finalUrl||BASE);
+          if(final.origin!=='https://mientay2.pro')throw new Error('Nguồn chuyển sang địa chỉ khác. Mở Miền Tây 2 để kiểm tra đăng nhập.');
+          if(response.status<200||response.status>=300)throw new Error('Miền Tây 2 trả lỗi '+response.status+'. Thử lại sau.');
+          var doc=new DOMParser().parseFromString(response.responseText,'text/html');
+          var result=C.parseProviderDocument(doc,request.action==='catalog');
+          result.loadedAt=new Date().toISOString();reply(request.id,result);
+        }catch(error){reply(request.id,null,error.message||'Không đọc được bảng giá.');}
+      },
+      onerror:function(){busy=false;reply(request.id,null,'Không kết nối được Miền Tây 2. Kiểm tra mạng và phiên đăng nhập.');},
+      ontimeout:function(){busy=false;reply(request.id,null,'Nguồn chưa phản hồi sau 30 giây. Thử lại sau.');}
+    });
+  });
+  ready();
+})();

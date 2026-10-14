@@ -1,0 +1,8 @@
+{
+  "private": true,
+  "dependencies": {
+    "@netlify/identity": "2.0.0",
+    "@netlify/blobs": "11.1.4",
+    "qrcode": "1.5.4"
+  }
+}

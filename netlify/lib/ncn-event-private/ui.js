@@ -2,8 +2,9 @@
   'use strict';
   function init() {
     if(!document.getElementById('ncn-event-app'))return;
-    var C=window.NCNEventCore,CHANNEL='NCN_EVENT_SOURCE_V1',HISTORY='ncn:event:history:v1';
+    var C=window.NCNEventCore,CHANNEL='NCN_EVENT_SOURCE_V1',HISTORY='ncn:event:history:v2:'+window.NCN_VIP.user.id;
     var state={catalog:[],stock:[],selected:[],missing:[],campaigns:[],kind:'',campaign:'',undo:null,print:null,history:[]};
+    var VIP=window.NCN_VIP, isAdmin=VIP.user.admin, publishedId='', publishedVersion='', publishedName='';
     var pending=new Map(),bridge=false,results=[];
     function el(id){return document.getElementById('ev-'+id);}
     function message(text,bad){var e=el('status');e.hidden=false;e.classList.toggle('ev-error',!!bad);e.textContent=text;}
@@ -44,7 +45,7 @@
       el('count').textContent=state.selected.length;
       el('label-count').textContent=state.selected.reduce(function(n,p){return n+p.qty;},0).toLocaleString('vi-VN');
       el('undo').hidden=!state.undo;
-      el('export-prices').disabled=!state.catalog.length;
+      if(el('export-prices'))el('export-prices').disabled=!state.catalog.length;
       el('missing').hidden=!state.missing.length;
       el('missing-title').textContent=state.missing.length+' mã chưa áp dụng / cần kiểm tra';
       el('missing-rows').innerHTML=state.missing.map(function(p){return '<tr><td>'+C.esc(p.code)+'</td><td>'+C.esc(p.name)+'</td><td>'+C.esc(p.qty||'')+'</td><td>'+C.esc(p.reason)+'</td></tr>';}).join('');
@@ -75,7 +76,7 @@
     window.addEventListener('message',function(e){
       var d=e.data;
       if(e.source!==window||e.origin!==location.origin||!d||d.channel!==CHANNEL)return;
-      if(d.role==='ready'){bridge=true;el('connect').classList.add('ev-connected');return;}
+      if(d.role==='ready'&&isAdmin){bridge=true;el('connect').classList.add('ev-connected');return;}
       if(d.role!=='response'||!pending.has(d.id))return;
       var p=pending.get(d.id);pending.delete(d.id);clearTimeout(p.timer);
       if(d.error)p.reject(new Error(d.error));else p.resolve(d.result);
@@ -87,7 +88,8 @@
         var matched=C.matchStock(state.selected,items,0);
         state.selected=matched.items;state.missing=matched.missing;
       }
-      el('source-info').textContent=name+' · '+items.length.toLocaleString('vi-VN')+' sản phẩm'+(details?' · '+details:'');
+      if(el('source-info'))el('source-info').textContent=name+' · '+items.length.toLocaleString('vi-VN')+' sản phẩm'+(details?' · '+details:'');
+      if(kind!=='saved'&&isAdmin){if(!publishedId)el('publish-id').value=kind==='mt2'?'mt2-'+state.campaign:'';el('publish-name').value=publishedName||name;}
       render();showResults();
     }
     async function loadCampaign(id){
@@ -103,6 +105,7 @@
         message('Đã lấy '+catalog.length.toLocaleString('vi-VN')+' sản phẩm. Có thể nhập tồn kho hoặc tìm model để in.'+(data.invalid?' '+data.invalid+' dòng giá không hợp lệ đã được bỏ qua.':''));
       }finally{el('connect').disabled=false;el('campaign').disabled=false;}
     }
+    if(isAdmin){
     el('connect').addEventListener('click',guarded(async function(){
       el('connect').disabled=true;
       try{
@@ -132,6 +135,7 @@
         state.missing=parsed.rejected;render();
       }finally{el('price-file').value='';}
     }));
+    }
     el('stock-file').addEventListener('change',guarded(async function(){
       var file=el('stock-file').files[0];if(!file)return;
       try{
@@ -163,10 +167,10 @@
     el('rows').addEventListener('click',function(e){var b=e.target.closest('[data-remove]');if(!b)return;state.undo=state.selected.map(function(p){return Object.assign({},p);});state.selected.splice(Number(b.dataset.remove),1);render();});
     el('clear').addEventListener('click',function(){if(!state.selected.length)return;state.undo=state.selected.map(function(p){return Object.assign({},p);});state.selected=[];render();message('Đã làm mới danh sách. Có thể bấm “Khôi phục” để lấy lại.');});
     el('undo').addEventListener('click',function(){if(!state.undo)return;state.selected=state.undo;state.undo=null;render();});
-    el('manual-form').addEventListener('submit',guarded(function(e){
+    if(isAdmin)el('manual-form').addEventListener('submit',guarded(function(e){
       e.preventDefault();
       var p={code:C.code(el('manual-code').value),name:el('manual-name').value.trim(),originalPrice:C.numeric(el('manual-original').value),eventPrice:C.numeric(el('manual-event').value),qty:Number(el('manual-qty').value)};
-      C.printable([p],settings());
+      if(!p.code||!p.name||!Number.isInteger(p.qty)||p.qty<1||!(p.originalPrice>0&&p.eventPrice>0&&p.originalPrice>=p.eventPrice))throw new Error('Kiểm tra tên, số lượng và hai mức giá.');
       var old=state.selected.find(function(item){return item.code===p.code;});
       if(old&&(old.originalPrice!==p.originalPrice||old.eventPrice!==p.eventPrice))throw new Error('Mã này đã có mức giá khác trong danh sách. Bỏ dòng cũ trước khi thêm giá mới.');
       add([p]);el('manual-form').reset();message('Đã thêm '+p.code+' vào danh sách in.');
@@ -181,12 +185,12 @@
         message('Đã thêm '+result.items.length+' mã từ ERP. '+result.missing.length+' mã chưa áp dụng.');
       }finally{el('list-file').value='';}
     }));
-    el('price-template').addEventListener('click',guarded(function(){exportExcel([['Mã sản phẩm','Tên sản phẩm','Giá gốc','Giá event']],'mau-bang-gia-event');}));
+    if(isAdmin)el('price-template').addEventListener('click',guarded(function(){exportExcel([['Mã sản phẩm','Tên sản phẩm','Giá gốc','Giá event']],'mau-bang-gia-event');}));
     el('stock-template').addEventListener('click',guarded(function(){exportExcel([['Mã sản phẩm','Tên sản phẩm','Số lượng']],'mau-ton-kho-event');}));
-    el('export-prices').addEventListener('click',guarded(function(){if(!state.catalog.length)throw new Error('Chưa có bảng giá.');exportExcel(listRows(state.catalog),'bang-gia-event');}));
+    if(isAdmin)el('export-prices').addEventListener('click',guarded(function(){if(!state.catalog.length)throw new Error('Chưa có bảng giá.');exportExcel(listRows(state.catalog),'bang-gia-event');}));
     el('export-list').addEventListener('click',guarded(function(){if(!state.selected.length)throw new Error('Danh sách đang trống.');exportExcel(listRows(state.selected),el('name').value||'danh-sach-in-event');}));
     el('export-missing').addEventListener('click',guarded(function(){exportExcel([['Mã sản phẩm','Tên sản phẩm','Số lượng','Lý do']].concat(state.missing.map(function(p){return [p.code,p.name,p.qty||'',p.reason];})),'event-chua-ap-dung');}));
-    function settings(){return {name:el('name').value||'Sticker Event NCN',store:el('store').value,title:el('title').value,period:el('period').value,width:Number(el('width').value),height:Number(el('height').value),cut:el('cut').checked,color:el('color').checked};}
+    function settings(){return {catalogueId:publishedId,name:el('name').value||'Sticker Event NCN',store:el('store').value,title:el('title').value,period:el('period').value,width:Number(el('width').value),height:Number(el('height').value),cut:el('cut').checked,color:el('color').checked};}
     function applySettings(s){['name','store','title','period','width','height'].forEach(function(key){if(s[key]!=null)el(key).value=s[key];});el('cut').checked=!!s.cut;el('color').checked=!!s.color;el('size').value='custom';}
     el('size').addEventListener('change',function(){var v=el('size').value;if(v==='custom')return;var p=v.split('x');el('width').value=p[0];el('height').value=p[1];updateEstimate();});
     ['width','height'].forEach(function(id){el(id).addEventListener('input',function(){el('size').value='custom';updateEstimate();});});
@@ -194,29 +198,61 @@
       el('history').innerHTML=state.history.length?state.history.map(function(h,i){return '<div class="ev-history-item"><div><strong>'+C.esc(h.settings.name)+'</strong><small>'+C.esc(new Date(h.createdAt).toLocaleString('vi-VN'))+' · '+h.labels+' nhãn · '+h.pages+' trang</small></div><button type="button" data-history="'+i+'" class="ev-button ev-secondary ev-small">Mở lại</button><button type="button" data-delete-history="'+i+'" class="ev-remove" aria-label="Bỏ lịch sử '+C.esc(h.settings.name)+'">×</button></div>';}).join(''):'<p class="ev-note">Chưa có bản in. Lịch sử sẽ xuất hiện sau khi tạo mẫu.</p>';
     }
     function persistHistory(){try{localStorage.setItem(HISTORY,JSON.stringify(state.history));}catch(error){message('Đã tạo mẫu in. Thiết bị không đủ dung lượng lưu lịch sử; tải bản in để giữ lại.',true);}historyRender();}
-    function preview(record){
+    async function preview(record){
       var s=record?record.settings:settings(),items=record?record.items:state.selected;
-      state.print=C.printable(items,s);el('preview-frame').srcdoc=state.print.html;
+      state.print=await VIP.call('print',{items:items,settings:s});var frame=el('preview-frame');state.printReady=new Promise(function(resolve){frame.onload=function(){Promise.resolve(frame.contentDocument.fonts?frame.contentDocument.fonts.ready:null).then(resolve);};});frame.srcdoc=state.print.html;
       el('dialog-title').textContent=s.name;el('preview-info').textContent=state.print.labels+' nhãn · '+state.print.pages+' trang A4 · '+s.width+' × '+s.height+' mm';
       if(typeof el('dialog').showModal==='function')el('dialog').showModal();else el('dialog').setAttribute('open','');
       if(!record){state.history.unshift({createdAt:new Date().toISOString(),settings:s,items:items.map(function(p){return Object.assign({},p);}),labels:state.print.labels,pages:state.print.pages});state.history=state.history.slice(0,15);persistHistory();}
     }
-    el('preview').addEventListener('click',guarded(function(){preview();}));
+    el('preview').addEventListener('click',guarded(async function(){await preview();}));
     el('close').addEventListener('click',function(){if(typeof el('dialog').close==='function')el('dialog').close();else el('dialog').removeAttribute('open');});
-    el('print').addEventListener('click',guarded(function(){var f=el('preview-frame');if(!state.print||!f.contentWindow)throw new Error('Mở xem trước trước khi in.');f.contentWindow.focus();f.contentWindow.print();}));
+    el('print').addEventListener('click',guarded(async function(){var f=el('preview-frame');if(!state.print||!f.contentWindow)throw new Error('Mở xem trước trước khi in.');await state.printReady;f.contentWindow.focus();f.contentWindow.print();}));
     el('save-html').addEventListener('click',guarded(function(){if(!state.print)throw new Error('Chưa có bản in.');var url=URL.createObjectURL(new Blob([state.print.html],{type:'text/html;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download=cleanName(el('dialog-title').textContent)+'.html';a.click();setTimeout(function(){URL.revokeObjectURL(url);},10000);}));
-    el('history').addEventListener('click',guarded(function(e){
+    el('history').addEventListener('click',guarded(async function(e){
       var open=e.target.closest('[data-history]'),del=e.target.closest('[data-delete-history]');
-      if(open){var h=state.history[Number(open.dataset.history)];if(h)preview(h);}
+      if(open){var h=state.history[Number(open.dataset.history)];if(h)await preview(h);}
       if(del){state.history.splice(Number(del.dataset.deleteHistory),1);persistHistory();}
     }));
     try{
       var history=JSON.parse(localStorage.getItem(HISTORY)||'[]');
       if(Array.isArray(history))state.history=history.filter(function(h){return h&&h.settings&&Array.isArray(h.items)&&h.createdAt&&Number.isFinite(h.labels)&&Number.isFinite(h.pages);}).slice(0,15);
     }catch(error){}
+    async function savedList(pick){
+      var data=await VIP.call('catalogues');
+      el('saved-campaign').innerHTML='<option value="">Chọn chương trình đã được ADMIN lưu</option>'+data.catalogues.map(function(p){return '<option value="'+C.esc(p.id)+'">'+C.esc(p.name)+' · '+p.count+' sản phẩm</option>';}).join('');
+      if(pick&&data.catalogues.some(function(p){return p.id===pick;})){el('saved-campaign').value=pick;await loadSaved(pick);}
+      else if(data.catalogues.length&&!state.catalog.length){el('saved-campaign').value=data.catalogues[0].id;await loadSaved(data.catalogues[0].id);}
+      else if(!data.catalogues.length)el('shared-info').textContent='ADMIN chưa lưu bảng giá. Vui lòng quay lại sau.';
+    }
+    async function loadSaved(id){
+      if(!id)return;
+      var data=await VIP.call('catalogue&id='+encodeURIComponent(id));
+      useCatalog(data.items,data.name,'saved','');
+      publishedId=data.id;publishedVersion=data.version;publishedName=data.name;
+      el('shared-info').textContent=data.name+' · '+data.items.length+' sản phẩm · Cập nhật '+new Date(data.updatedAt).toLocaleString('vi-VN');
+      if(isAdmin){el('publish-id').value=data.id;el('publish-name').value=data.name;}
+      message('Đã tải bảng giá do ADMIN cập nhật. Nhập tồn kho hoặc tìm model để in.');
+    }
+    el('saved-campaign').addEventListener('change',guarded(function(){return loadSaved(el('saved-campaign').value);}));
+    el('refresh-shared').addEventListener('click',guarded(function(){return savedList(publishedId||el('saved-campaign').value);}));
+    if(isAdmin)el('publish').addEventListener('click',guarded(async function(){
+      if(!state.catalog.length)throw new Error('Lấy giá hoặc nhập Excel trước khi lưu.');
+      var id=el('publish-id').value.trim()||(state.kind==='mt2'?'mt2-'+state.campaign:'');
+      var name=el('publish-name').value.trim();
+      if(!id||!name)throw new Error('Nhập mã và tên chương trình trước khi lưu.');
+      el('publish').disabled=true;
+      try{
+        var data=await VIP.call('publish',{id:id,name:name,items:state.catalog,version:id===publishedId?publishedVersion:null});
+        publishedId=data.id;publishedVersion=data.version;publishedName=data.name;
+        await savedList(data.id);message('Đã lưu '+data.count+' sản phẩm. Thành viên VIP đã có thể chọn bảng giá này.');
+      }finally{el('publish').disabled=false;}
+    }));
+    savedList().catch(function(error){message(error.message,true);});
+
     historyRender();render();
-    window.postMessage({channel:CHANNEL,role:'request',action:'ping'},location.origin);
-    setTimeout(function(){window.postMessage({channel:CHANNEL,role:'request',action:'ping'},location.origin);},1200);
+    if(isAdmin)window.postMessage({channel:CHANNEL,role:'request',action:'ping'},location.origin);
+    setTimeout(function(){if(isAdmin)window.postMessage({channel:CHANNEL,role:'request',action:'ping'},location.origin);},1200);
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
