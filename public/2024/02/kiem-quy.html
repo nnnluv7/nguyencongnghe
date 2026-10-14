@@ -64,8 +64,9 @@
 <!-- Google Analytics -->
 <noscript></noscript>
 <script src="/assets/site-config.js"></script><script src="/assets/catalog.js"></script><script src="/assets/js/1cc87d3c87abd588bf.js"></script><script src="/assets/vendor/8ec8dce35a344a43af.js" type="text/javascript"></script><script src="/assets/site-bridge.js"></script><link href="/assets/replica.css" rel="stylesheet"/><!-- BEGIN NCN MODERN STYLE --><link rel="stylesheet" href="/assets/ncn-theme/theme.css?v=20261014-modern-1"/><!-- END NCN MODERN STYLE -->
+<!-- BEGIN NCN CASH STYLE --><link rel="stylesheet" href="/assets/ncn-cash/style.css?v=20261014-cash-1"/><!-- END NCN CASH STYLE -->
 </head>
-<body class="item item-view ncn-modern" id="mainContent">
+<body class="item item-view ncn-modern ncn-cash-page" id="mainContent">
 <!-- BEGIN NCN MODERN SHELL -->
 <a class="ncn-skip" href="#feed-view">Bỏ qua menu, đến nội dung</a>
 <div id="ncn-site-shell" class="ncn-ui">
@@ -185,74 +186,17 @@ Kiểm quỹ
 </div>
 </div>
 <div class="post-body entry-content" id="postBody">
-<div class="top-ads"></div>
-<link href="/assets/css/636f4eb3492fdff1f9.css" rel="stylesheet"/>
-<div class="hide" style="clear: both;"><img alt="Kiểm quỹ" src="/assets/vendor/e1c78769e499fd432d.jpg"/></div>
-<table>
-<thead>
-<tr>
-<th>Loại Tiền</th>
-<th>Số Lượng</th>
-<th class="total-column">Tổng Tiền</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>500.000</td>
-<td class="input-soluong"><input id="qty500k" oninput="formatInput(this)" pattern="[0-9]*" type="text" value="0"/></td>
-<td class="total-column" id="total500k">0</td>
-</tr>
-<tr>
-<td>200.000</td>
-<td class="input-soluong"><input id="qty200k" oninput="formatInput(this)" pattern="[0-9]*" type="text" value="0"/></td>
-<td class="total-column" id="total200k">0</td>
-</tr>
-<tr>
-<td>100.000</td>
-<td class="input-soluong"><input id="qty100k" oninput="formatInput(this)" pattern="[0-9]*" type="text" value="0"/></td>
-<td class="total-column" id="total100k">0</td>
-</tr>
-<tr>
-<td>50.000</td>
-<td class="input-soluong"><input id="qty50k" oninput="formatInput(this)" pattern="[0-9]*" type="text" value="0"/></td>
-<td class="total-column" id="total50k">0</td>
-</tr>
-<tr>
-<td>20.000</td>
-<td class="input-soluong"><input id="qty20k" oninput="formatInput(this)" pattern="[0-9]*" type="text" value="0"/></td>
-<td class="total-column" id="total20k">0</td>
-</tr>
-<tr>
-<td>10.000</td>
-<td class="input-soluong"><input id="qty10k" oninput="formatInput(this)" pattern="[0-9]*" type="text" value="0"/></td>
-<td class="total-column" id="total10k">0</td>
-</tr>
-<tr>
-<td>5.000</td>
-<td class="input-soluong"><input id="qty5k" oninput="formatInput(this)" pattern="[0-9]*" type="text" value="0"/></td>
-<td class="total-column" id="total5k">0</td>
-</tr>
-<tr>
-<td>2.000</td>
-<td class="input-soluong"><input id="qty2k" oninput="formatInput(this)" pattern="[0-9]*" type="text" value="0"/></td>
-<td class="total-column" id="total2k">0</td>
-</tr>
-<tr>
-<td>1.000</td>
-<td class="input-soluong"><input id="qty1k" oninput="formatInput(this)" pattern="[0-9]*" type="text" value="0"/></td>
-<td class="total-column" id="total1k">0</td>
-</tr>
-<tr>
-<td>500</td>
-<td class="input-soluong"><input id="qty5" oninput="formatInput(this)" pattern="[0-9]*" type="text" value="0"/></td>
-<td class="total-column" id="total5">0</td>
-</tr>
-</tbody>
-</table>
-<div class="row-kq"><span>Tổng cộng: </span><div id="grandTotal">0</div></div>
-<div class="row-kq"><span>Đang giữ: </span><input id="danggiu" oninput="formatInput(this)" pattern="[0-9]*" type="text" value="0"/></div>
-<div class="row-kq"><span>Chênh lệch: </span><div id="chenhlech">Chênh lệch: </div></div>
-<script src="/assets/js/ef21ce575d72e50f22.js"></script>
+<section id="ncn-cash-app" aria-labelledby="cq-title">
+ <div class="cq-screen">
+  <header class="cq-hero"><div><span class="cq-kicker">THU NGÂN · NCN</span><h2 id="cq-title">Kiểm quỹ</h2><p>Nhập số tờ, tổng tiền và chênh lệch ERP cập nhật ngay.</p></div><div class="cq-actions"><button id="cq-copy" type="button" class="cq-button cq-secondary">Sao chép</button><button id="cq-csv" type="button" class="cq-button cq-secondary">Tải CSV</button><button id="cq-print" type="button" class="cq-button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v7H6z"/></svg>In phiếu</button></div></header>
+  <div class="cq-summary"><article class="cq-metric cq-metric-main"><span>Tiền thực tế</span><strong id="cq-actual">0 ₫</strong><small>Tổng tiền đã đếm</small></article><article class="cq-metric"><span>Tổng số tờ</span><strong id="cq-count">0</strong><small>10 mệnh giá</small></article><article id="cq-delta-card" class="cq-metric"><span>Chênh lệch ERP − thực tế</span><strong id="cq-delta">Chưa nhập ERP</strong><small id="cq-delta-caption">Nhập tiền ERP để đối chiếu</small></article></div>
+  <div class="cq-workspace"><section class="cq-panel cq-count-panel" aria-label="Đếm tiền theo mệnh giá"><div class="cq-panel-heading"><div><h3>Bảng đếm tiền</h3><p>Nhập số tờ của từng mệnh giá.</p></div><button id="cq-reset" class="cq-text-button" type="button">Xóa số liệu</button></div><div class="cq-table-scroll"><table class="cq-table"><thead><tr><th>Mệnh giá</th><th>Số tờ</th><th>Thành tiền</th></tr></thead><tbody id="cq-rows"></tbody><tfoot><tr><th>Tổng cộng</th><th id="cq-table-count">0</th><th id="cq-table-total">0 ₫</th></tr></tfoot></table></div><p class="cq-keyboard-note">Enter / ↓: dòng tiếp theo · ↑: dòng trước</p></section>
+  <aside class="cq-side"><section class="cq-panel"><span class="cq-step">ĐỐI CHIẾU</span><h3>Tiền giữ ERP</h3><p class="cq-help">Nhập số tiền đang giữ trên hệ thống.</p><label class="cq-field" for="cq-erp">Số tiền (VND)<input id="cq-erp" type="text" inputmode="numeric" autocomplete="off" placeholder="Ví dụ: 5.000.000" maxlength="32" aria-describedby="cq-erp-error"></label><p id="cq-erp-error" class="cq-error" hidden></p><div id="cq-status-box" class="cq-balance"><strong id="cq-balance-label">Chờ nhập ERP</strong><p id="cq-balance-description">Nhập tiền giữ ERP để đối chiếu với tiền thực tế.</p></div><p class="cq-formula">Chênh lệch = ERP − tiền thực tế.<br>Dương: thiếu tiền · Âm: thừa tiền.</p></section><section class="cq-panel cq-print-panel"><h3>Phiếu kiểm quỹ</h3><p class="cq-help">Phiếu gồm bảng mệnh giá, tổng tiền và thời điểm kiểm.</p><label class="cq-check"><input id="cq-include-erp" type="checkbox">Kèm số ERP và chênh lệch trên phiếu</label><p class="cq-help">Dùng Tải CSV để lưu kết quả trước khi đóng trang.</p></section></aside></div>
+  <footer class="cq-bottom"><span>Kiểm lúc: <time id="cq-time"></time></span><p id="cq-message" role="status" aria-live="polite"></p></footer>
+  <dialog id="cq-copy-dialog" aria-labelledby="cq-copy-title"><h3 id="cq-copy-title">Sao chép bảng kiểm quỹ</h3><p>Chọn nội dung bên dưới rồi nhấn Cmd + C hoặc Ctrl + C.</p><textarea id="cq-copy-text" readonly aria-label="Nội dung bảng kiểm quỹ"></textarea><button id="cq-copy-close" type="button" class="cq-button">Đóng</button></dialog>
+ </div>
+ <div id="cq-direct-print" class="cq-direct-print"></div>
+</section>
 </div>
 <div class="below-ads"></div>
 <div class="label-container">
@@ -504,5 +448,6 @@ Liên kết bài đăng</span>
 <!--It is your responsibility to notify your visitors about cookies used and data collected on your blog. Blogger makes a standard notification available for you to use on your blog, and you can customise it or replace it with your own notice. See http://www.blogger.com/go/cookiechoices for more details.-->
 <script type="module" src="/assets/ncn-vip-auth.js"></script>
 <!-- BEGIN NCN MODERN SCRIPT --><script type="module" src="/assets/ncn-theme/theme.js?v=20261014-modern-1"></script><!-- END NCN MODERN SCRIPT -->
+<!-- BEGIN NCN CASH SCRIPT --><script type="module" src="/assets/ncn-cash/app.js?v=20261014-cash-1"></script><!-- END NCN CASH SCRIPT -->
 </body>
 </html>
