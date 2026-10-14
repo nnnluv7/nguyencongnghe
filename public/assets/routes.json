@@ -216,18 +216,6 @@
     "kind": "post"
   },
   {
-    "path": "/2023/11/sticker-giam-gia-1pc.html",
-    "file": "2023/11/sticker-giam-gia-1pc.html",
-    "title": "Sticker Giảm Giá - 1PC (Size to)",
-    "kind": "post"
-  },
-  {
-    "path": "/2023/10/sticker-giam-gia-2pcs.html",
-    "file": "2023/10/sticker-giam-gia-2pcs.html",
-    "title": "Sticker Giảm Giá - 2PCs (Size vừa)",
-    "kind": "post"
-  },
-  {
     "path": "/2023/10/a4-combo-gia-dung.html",
     "file": "2023/10/a4-combo-gia-dung.html",
     "title": "A4 COMBO GIA DỤNG",
@@ -288,39 +276,9 @@
     "kind": "post"
   },
   {
-    "path": "/2022/11/sticker-giam-phan-tram-12pcs.html",
-    "file": "2022/11/sticker-giam-phan-tram-12pcs.html",
-    "title": "Sticker - Giảm % - 12PCs",
-    "kind": "post"
-  },
-  {
-    "path": "/2022/11/sticker-giam-phan-tram-6pcs.html",
-    "file": "2022/11/sticker-giam-phan-tram-6pcs.html",
-    "title": "Sticker - Giảm % - 6PCs",
-    "kind": "post"
-  },
-  {
-    "path": "/2022/11/sticker-giam-gia-12-pcs-a4.html",
-    "file": "2022/11/sticker-giam-gia-12-pcs-a4.html",
-    "title": "Sticker - Giảm giá - 12 PCs",
-    "kind": "post"
-  },
-  {
-    "path": "/2022/11/sticker-giam-gia-6pcs-a4.html",
-    "file": "2022/11/sticker-giam-gia-6pcs-a4.html",
-    "title": "Sticker - Giảm giá - 6PCs",
-    "kind": "post"
-  },
-  {
     "path": "/2022/09/popup-a4-dien-may-giam-ngay.html",
     "file": "2022/09/popup-a4-dien-may-giam-ngay.html",
     "title": "Popup Full Trang A4",
-    "kind": "post"
-  },
-  {
-    "path": "/2022/09/a4-gia-cheo-1.html",
-    "file": "2022/09/a4-gia-cheo-1.html",
-    "title": "GIÁ CHÉO - DÙNG GIẤY A4",
     "kind": "post"
   },
   {
@@ -366,12 +324,6 @@
     "kind": "post"
   },
   {
-    "path": "/2022/09/sticker-may-cu-tu-phone.html",
-    "file": "2022/09/sticker-may-cu-tu-phone.html",
-    "title": "Sticker Thế Giới Di Động Tủ Phone",
-    "kind": "post"
-  },
-  {
     "path": "/2022/09/chu-treo-tran-a4-1.html",
     "file": "2022/09/chu-treo-tran-a4-1.html",
     "title": "Chữ Treo Trần - 1",
@@ -387,12 +339,6 @@
     "path": "/2022/07/phieu-tu-van-tra-gop.html",
     "file": "2022/07/phieu-tu-van-tra-gop.html",
     "title": "Phiếu Tư Vấn Trả Góp",
-    "kind": "post"
-  },
-  {
-    "path": "/2022/06/sticker-bao-hiem-xe-may-dan-ao-66k.html",
-    "file": "2022/06/sticker-bao-hiem-xe-may-dan-ao-66k.html",
-    "title": "Sticker Bảo Hiểm Xe Máy Dán Áo 66K",
     "kind": "post"
   },
   {
@@ -590,7 +536,7 @@
   {
     "path": "/p/sticker.html",
     "file": "p/sticker.html",
-    "title": "STICKER",
+    "title": "Bộ sticker",
     "kind": "page"
   },
   {
@@ -633,7 +579,8 @@
     "path": "/sticker",
     "file": "sticker/index.html",
     "alias": "/p/sticker.html",
-    "kind": "alias"
+    "kind": "page",
+    "title": "Bộ sticker"
   },
   {
     "path": "/trang-tri",
@@ -814,5 +761,11 @@
     "file": "in-event/index.html",
     "title": "Event: Sticker gạch giá",
     "kind": "tool"
+  },
+  {
+    "path": "/sticker/",
+    "file": "sticker/index.html",
+    "title": "Bộ sticker",
+    "kind": "page"
   }
 ]
