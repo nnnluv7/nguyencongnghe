@@ -767,5 +767,11 @@
     "file": "sticker/index.html",
     "title": "Bộ sticker",
     "kind": "page"
+  },
+  {
+    "path": "/thu-vien/",
+    "file": "thu-vien/index.html",
+    "title": "Thư viện NCN",
+    "kind": "page"
   }
 ]

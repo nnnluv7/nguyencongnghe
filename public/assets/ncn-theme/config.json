@@ -1,0 +1,160 @@
+{
+  "brand": "NCN",
+  "siteName": "nguyencongnghe.com",
+  "logo": "/assets/ncn-theme/logo.png",
+  "tagline": "Không gian công cụ của bạn",
+  "hero": {
+    "eyebrow": "CỔNG CÔNG CỤ NCN",
+    "title": "Mọi công cụ.\nTrong một nơi.",
+    "description": "Tạo sticker, in popup, mở bảng giá Event và tìm các tiện ích cho ngày làm việc của bạn.",
+    "primaryText": "Khám phá công cụ",
+    "secondaryText": "Mở Event VIP"
+  },
+  "announcement": {
+    "title": "Từ nội dung đến bản in, chỉ vài bước.",
+    "description": "Chọn mẫu → nhập nội dung → kiểm tra xem trước → in. Bắt đầu với bộ Sticker và Popup.",
+    "href": "/sticker/"
+  },
+  "contactUrl": "/p/contact-us.html",
+  "groups": [
+    {
+      "id": "in-an",
+      "name": "In ấn",
+      "icon": "printer"
+    },
+    {
+      "id": "ban-hang",
+      "name": "Bán hàng",
+      "icon": "bag"
+    },
+    {
+      "id": "kho",
+      "name": "Kho & thu ngân",
+      "icon": "box"
+    },
+    {
+      "id": "tien-ich",
+      "name": "Tiện ích",
+      "icon": "spark"
+    }
+  ],
+  "tools": [
+    {
+      "id": "sticker",
+      "title": "Bộ Sticker",
+      "description": "Mẫu giảm giá, bảo hiểm và đặc quyền. Điền nội dung và tạo bản in.",
+      "href": "/sticker/",
+      "group": "in-an",
+      "icon": "sticker",
+      "tone": "blue",
+      "featured": true,
+      "image": "/assets/ncn-theme/sample-sticker.png"
+    },
+    {
+      "id": "popup-a7",
+      "title": "Popup A7 / LED",
+      "description": "Nhãn giá cho bàn trải nghiệm, điện thoại, phụ kiện và gia dụng.",
+      "href": "/popup-a7/",
+      "group": "in-an",
+      "icon": "panel",
+      "tone": "violet",
+      "featured": true,
+      "image": "/assets/ncn-theme/sample-popup.png"
+    },
+    {
+      "id": "popup-large",
+      "title": "Popup A4 / A5 / A6",
+      "description": "Mẫu giá, trả chậm và dịch vụ cho quầy điện máy.",
+      "href": "/popup-a4-a5-a6/",
+      "group": "in-an",
+      "icon": "layers",
+      "tone": "teal",
+      "featured": true
+    },
+    {
+      "id": "event",
+      "title": "Event VIP",
+      "description": "Mở bảng giá được ADMIN lưu và in sticker cho chương trình Event.",
+      "href": "/in-event/",
+      "group": "in-an",
+      "icon": "bolt",
+      "tone": "navy",
+      "featured": true,
+      "access": "vip"
+    },
+    {
+      "id": "insurance",
+      "title": "Tư vấn bán hàng",
+      "description": "Mở bộ công cụ tư vấn và tra cứu bảo hiểm hiện có.",
+      "href": "/2025/05/tu-van.html",
+      "group": "ban-hang",
+      "icon": "shield",
+      "tone": "amber",
+      "featured": true
+    },
+    {
+      "id": "sales",
+      "title": "Hỗ trợ bán hàng",
+      "description": "Phiếu, biểu mẫu và tài liệu hỗ trợ tại quầy.",
+      "href": "/ban-hang/",
+      "group": "ban-hang",
+      "icon": "bag",
+      "tone": "coral",
+      "featured": true
+    },
+    {
+      "id": "warehouse",
+      "title": "File kho",
+      "description": "Mở các file và công cụ hỗ trợ công việc kho.",
+      "href": "/2020/10/kho-ver-52-all-tools-ho-tro-kho.html",
+      "group": "kho",
+      "icon": "box",
+      "tone": "blue"
+    },
+    {
+      "id": "fifo",
+      "title": "In FIFO",
+      "description": "Tạo nhãn FIFO cho hàng hóa và công việc kho.",
+      "href": "/2024/01/in-fifo.html",
+      "group": "kho",
+      "icon": "tag",
+      "tone": "teal"
+    },
+    {
+      "id": "cash",
+      "title": "Kiểm quỹ",
+      "description": "Mở công cụ kiểm quỹ và đối chiếu tiền tại quầy.",
+      "href": "/2024/02/kiem-quy.html",
+      "group": "kho",
+      "icon": "wallet",
+      "tone": "amber"
+    },
+    {
+      "id": "inventory",
+      "title": "Kiểm kê bằng QR",
+      "description": "Hỗ trợ kiểm kê sản phẩm từ tệp Excel và mã QR.",
+      "href": "/2024/01/ban-kiem-ke-san-pham-theo-file-excel.html",
+      "group": "kho",
+      "icon": "qr",
+      "tone": "violet"
+    },
+    {
+      "id": "qr",
+      "title": "Tạo mã QR",
+      "description": "Mở trình tạo mã QR cho liên kết và nội dung.",
+      "href": "/2024/04/qrcode-generator-tao-ma-qrcode.html",
+      "group": "tien-ich",
+      "icon": "qr",
+      "tone": "blue"
+    },
+    {
+      "id": "decor",
+      "title": "Trang trí",
+      "description": "Tìm các mẫu trang trí và vật phẩm in sẵn.",
+      "href": "/trang-tri/",
+      "group": "tien-ich",
+      "icon": "spark",
+      "tone": "coral"
+    }
+  ]
+}
