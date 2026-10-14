@@ -1,0 +1,69 @@
+/* NCN page titles: keep the legacy floated content inside its new card.
+   Screen only. The original tool and print styles remain in charge on paper. */
+@media screen {
+  body.ncn-modern #feed-view .item-post-wrap {
+    display: flow-root;
+    height: auto;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  body.ncn-modern #feed-view .item-post-wrap > .hentry {
+    display: flow-root;
+    float: none;
+    width: 100%;
+    min-width: 0;
+  }
+
+  body.ncn-modern #feed-view .item-post-wrap > .hentry > .post-inner-area {
+    display: flow-root;
+    float: none;
+    width: 100%;
+    height: auto;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body.ncn-modern #feed-view .item-post-wrap > .hentry > .post-inner-area > h1.entry-title {
+    position: static;
+    float: none;
+    clear: both;
+    max-width: 100%;
+    box-sizing: border-box;
+    margin: 0 0 20px;
+    line-height: 1.35;
+    text-align: left;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+
+  /* Long page names must not push the search or account buttons off screen. */
+  body.ncn-modern #ncn-topbar .ncn-topbar-left {
+    min-width: 0;
+    flex: 0 1 34%;
+  }
+  body.ncn-modern #ncn-topbar .ncn-location {
+    min-width: 0;
+  }
+  body.ncn-modern #ncn-topbar #ncn-page-title {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  body.ncn-modern #ncn-topbar .ncn-topbar-right {
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 620px) {
+    body.ncn-modern #feed-view .item-post-wrap > .hentry > .post-inner-area > h1.entry-title {
+      margin-bottom: 16px;
+      letter-spacing: -0.35px;
+    }
+    body.ncn-modern #ncn-topbar .ncn-topbar-left {
+      flex: 1 1 auto;
+    }
+  }
+}
