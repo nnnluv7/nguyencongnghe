@@ -1,0 +1,57 @@
+name: Sua tieu de NCN
+on:
+  workflow_dispatch:
+    inputs:
+      tac_vu:
+        description: 'Sua tieu de cac trang hoac khoi phuc ban truoc'
+        type: choice
+        options:
+          - cap-nhat
+          - khoi-phuc
+        default: cap-nhat
+permissions:
+  contents: write
+concurrency:
+  group: ncn-theme-install
+  cancel-in-progress: false
+jobs:
+  sua-tieu-de:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      NCN_ACTION: ${{ inputs.tac_vu }}
+      NCN_BRANCH: ${{ github.event.repository.default_branch }}
+    steps:
+      - name: Lay ma nguon moi nhat
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+      - name: Sua bo cuc va doi ten trang bao hiem
+        shell: python
+        run: |
+          import base64,gzip,json,os
+          from pathlib import Path
+          payload=json.loads(gzip.decompress(base64.b64decode("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")))
+          namespace={"__name__":"ncn_title_installer"}
+          exec(compile(payload["installer"],"ncn-title-install.py","exec"),namespace)
+          if os.environ.get("NCN_ACTION")=="khoi-phuc":namespace["restore"](Path.cwd())
+          else:namespace["install"](Path.cwd(),{name:base64.b64decode(data) for name,data in payload["files"].items()})
+      - name: Kiem tra tep va giu nguyen cac cong cu
+        run: |
+          test -f public/2025/05/tu-van.html
+          if [ "$NCN_ACTION" = "cap-nhat" ]; then
+            test -f public/assets/ncn-theme/title-fix.css
+          fi
+          git diff --quiet -- .github/workflows netlify package.json package-lock.json netlify.toml
+          git diff --quiet -- public/assets/js public/assets/css public/assets/vendor public/assets/ncn-sticker public/assets/ncn-popup public/assets/ncn-cash public/assets/ncn-theme/theme.js public/assets/ncn-theme/theme.css public/assets/ncn-vip-auth.js
+      - name: Luu sua doi len nhanh cua website
+        run: |
+          git add public ncn-title-backup
+          if git diff --cached --quiet; then
+            echo "Tieu de da o dung phien ban."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Sua bo cuc tieu de va doi ten Bao Hiem Tra Cham"
+          git push origin HEAD:"$NCN_BRANCH"
