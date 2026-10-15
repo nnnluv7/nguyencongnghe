@@ -64,7 +64,7 @@
     {
       "id": "popup-large",
       "title": "Popup A4 / A5 / A6",
-      "description": "Mẫu giá, trả chậm và dịch vụ cho quầy điện máy.",
+      "description": "Popup A4/A5/A6, thêm mẫu Giờ Vàng giá sốc 2 với 5 ô nhập riêng.",
       "href": "/popup-a4-a5-a6/",
       "group": "in-an",
       "icon": "layers",
@@ -95,7 +95,7 @@
     {
       "id": "sales",
       "title": "Hỗ trợ bán hàng",
-      "description": "Phiếu, biểu mẫu và tài liệu hỗ trợ tại quầy.",
+      "description": "Tem triển khai, bảng tên, biên bản và biểu mẫu hỗ trợ bán hàng.",
       "href": "/ban-hang/",
       "group": "ban-hang",
       "icon": "bag",
@@ -150,7 +150,7 @@
     {
       "id": "decor",
       "title": "Trang trí",
-      "description": "Tìm các mẫu trang trí và vật phẩm in sẵn.",
+      "description": "30 mẫu dây treo, hoa, sao, ong và bướm; nhập chữ và in theo khổ A4/A5.",
       "href": "/trang-tri/",
       "group": "tien-ich",
       "icon": "spark",
