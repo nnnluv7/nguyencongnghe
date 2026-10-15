@@ -1,4 +1,5 @@
-import {escapeHTML,normalize,parseCSV} from '../ncn-popup/core.js?v=20261014-popup-1';
+import {escapeHTML,normalize,parseCSV} from '../ncn-popup/core.js?v=20261015-direct-1';
+import {editableInput,editableStyles} from '../ncn-direct/preview.js?v=20261015-direct-1';
 export {escapeHTML,normalize,parseCSV};
 export const MAX_COPIES=1500,MAX_PAGES=300;
 export function defaultRow(layout,id='row-1',now=new Date()) {
@@ -26,30 +27,35 @@ export function paginate(layout,rows) {
 export function paperSize(layout,paper='A4') {
   if(!['A4','A5'].includes(paper))throw new Error('Khổ giấy không hợp lệ.');const landscape=layout.defaultOrientation==='landscape',w=paper==='A4'?210:148,h=paper==='A4'?297:210;return {w:landscape?h:w,h:landscape?w:h,orientation:landscape?'landscape':'portrait',ratio:paper==='A4'?1:148/210};
 }
-export function renderFrame(layout,row,{preview=false,position=0}={}) {
-  const values=row.values.map((v,i)=>preview&&!v&&layout.fields[i].type!=='checkbox'?(layout.fields[i].example||''):v);
+export function renderFrame(layout,row,{preview=false,position=0,editable=false,copyIndex=0}={}) {
+  const values=row.values.map((v,i)=>preview&&!editable&&!v&&layout.fields[i].type!=='checkbox'?(layout.fields[i].example||''):v);
   let prototype=layout.prototypes?.[position]||layout.prototype;
   prototype=prototype.replace(/<input\b[^>]*>/g,tag=>{
     const match=tag.match(/\bdata-field="(\d+)"/);if(!match)return tag;const i=Number(match[1]),field=layout.fields[i];if(!field)throw new Error('Trường nhập của mẫu chưa hợp lệ.');
     tag=tag.replace(/\svalue=("[^"]*"|'[^']*')/g,'').replace(/\schecked(?:=("[^"]*"|'[^']*'))?/g,'');
-    if(field.type==='checkbox')return tag.replace(/\s*\/?\s*>$/,`${values[i]?' checked':''} aria-readonly="true" tabindex="-1" style="pointer-events:none">`);
+    if(field.type==='checkbox'){
+      const rendered=tag.replace(/\s*\/?\s*>$/,`${values[i]?' checked':''} aria-readonly="true" tabindex="-1" style="pointer-events:none">`);
+      return editable?editableInput(rendered,field,copyIndex):rendered;
+    }
     let style=tag.match(/\sstyle="([^"]*)"/)?.[1]||'';
     if((row.scales[i]??100)!==100)style+=`;font-size:${(field.fontSize||16)*(row.scales[i]/100)}px!important`;
     if(row.outline&&layout.outlineTextSupported)style+=';color:white!important;-webkit-text-stroke:1px black';tag=tag.replace(/\sstyle="[^"]*"/g,'');
-    return tag.replace(/\s*\/?\s*>$/,` value="${escapeHTML(values[i])}"${style?` style="${escapeHTML(style)}"`:''} readonly>`);
+    const rendered=tag.replace(/\s*\/?\s*>$/,` value="${escapeHTML(values[i])}"${style?` style="${escapeHTML(style)}"`:''} readonly>`);
+    return editable?editableInput(rendered,field,copyIndex):rendered;
   });
-  return prototype.replace(/\{\{field:(\d+)\}\}/g,(_,i)=>escapeHTML(values[Number(i)]||''));
+  return prototype.replace(/\{\{field:(\d+)\}\}/g,(_,i)=>editable?`<span data-ncn-copy="${copyIndex}" data-ncn-mirror="${i}">${escapeHTML(values[Number(i)]||'')}</span>`:escapeHTML(values[Number(i)]||''));
 }
-export function renderDocument(layout,rows,{paper='A4',fontCSS='',assets={},preview=false,pageIndex=0,pageLimit=MAX_PAGES,title='In ấn · NCN'}={}) {
+export function renderDocument(layout,rows,{paper='A4',fontCSS='',assets={},preview=false,pageIndex=0,pageLimit=MAX_PAGES,title='In ấn · NCN',editable=false}={}) {
   const pages=paginate(layout,rows),size=paperSize(layout,paper),selected=pages.slice(preview?pageIndex:0,(preview?pageIndex:0)+pageLimit),replaceAssets=text=>Object.entries(assets).reduce((out,[url,data])=>out.split(url).join(data),text);
   const css=replaceAssets(fontCSS+'\n'+layout.css);if(/<\/style/i.test(css))throw new Error('CSS mẫu chưa hợp lệ.');
-  const content=selected.map((items,p)=>`<section class="ncn-sheet" aria-label="Tờ ${p+1+pageIndex}"><div class="paper"><div class="${escapeHTML(layout.contentClass||'ncn-store-content')}">${items.map((row,position)=>replaceAssets(renderFrame(layout,row,{preview,position}))).join('\n')}</div></div></section>`).join('\n');
+  const content=selected.map((items,p)=>`<section class="ncn-sheet" aria-label="Tờ ${p+1+pageIndex}"><div class="paper"><div class="${escapeHTML(layout.contentClass||'ncn-store-content')}">${items.map((row,position)=>replaceAssets(renderFrame(layout,row,{preview,position,editable,copyIndex:(pageIndex+p)*layout.perPage+position}))).join('\n')}</div></div></section>`).join('\n');
   return `<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHTML(title)}</title><style>
   html{box-sizing:border-box}*,*::before,*::after{box-sizing:inherit}body{font-family:'Times New Roman',serif;font-size:16px;color:#000}input{border-radius:0;box-shadow:none}
   .paper_content{width:738px;margin:0 auto;padding-top:20px}.ncn-store-content{width:100%;height:100%}
   ${css}
   html,body{margin:0;padding:0;min-width:0;color-scheme:light;background:#e9edf3}.ncn-sheet{position:relative;width:${size.w}mm;height:${size.h}mm;margin:0 auto 18px;background:#fff;overflow:hidden;break-after:page;page-break-after:always}.ncn-sheet:last-child{break-after:auto;page-break-after:auto}
   .paper{position:absolute;left:50%;top:0;margin:0 0 0 -390px;padding:0;width:780px;height:1100px;transform:scale(${size.ratio});transform-origin:top center;overflow:hidden}input[type=text]{outline:none;border-radius:0;box-shadow:none;-webkit-appearance:none;appearance:none}input[type=checkbox]{appearance:auto;-webkit-appearance:checkbox;accent-color:#000}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}@page{size:${paper} ${size.orientation};margin:0}@media print{html,body{background:#fff}.ncn-sheet{margin:0;box-shadow:none}}
+  ${editable?editableStyles:''}
   </style></head><body>${content}</body></html>`;
 }
 export function sampleCSV(layout) {

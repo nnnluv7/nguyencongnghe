@@ -1,3 +1,4 @@
+import {editableInput,editableStyles} from '../ncn-direct/preview.js?v=20261015-direct-1';
 export const MAX_LABELS = 1500;
 export const MAX_PAGES = 300;
 export const escapeHTML = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -40,17 +41,18 @@ export function validateForPrint(layout,rows) {
   return checked;
 }
 
-function frame(layout,row,{examples=false}={}) {
+function frame(layout,row,{examples=false,editable=false,copyIndex=0}={}) {
   return layout.prototype.replace(/<input\b[^>]*>/g,tag=>{
     const index=Number(tag.match(/\bdata-field="(\d+)"/)?.[1]);
     const field=layout.fields[index];
     if(!field)throw new Error('Mẫu in không hợp lệ.');
     let value=row.values[index]||'';
-    if(examples&&!value)value=field.example;
+    if(examples&&!editable&&!value)value=field.example;
     tag=tag.replace(/\svalue="[^"]*"/g,'').replace(/\sstyle="[^"]*"/g,'');
     const scale=row.scales[index]??100;
     const style=scale===100?'':` style="font-size:${(field.fontSize*scale/100).toFixed(2)}px"`;
-    return tag.replace(/\s*\/?>(\s*)$/,(_,space)=>` value="${escapeHTML(value)}"${style}>${space}`);
+    const rendered=tag.replace(/\s*\/?>(\s*)$/,(_,space)=>` value="${escapeHTML(value)}"${style}>${space}`);
+    return editable?editableInput(rendered,field,copyIndex):rendered;
   });
 }
 
@@ -67,15 +69,16 @@ export function paginate(layout,rows) {
   return pages;
 }
 
-export function renderDocument(layout,rows,{title='Sticker · nguyencongnghe.com',paper='A4',fontCSS='',assets={},preview=false,pageLimit=MAX_PAGES}={}) {
+export function renderDocument(layout,rows,{title='Sticker · nguyencongnghe.com',paper='A4',fontCSS='',assets={},preview=false,pageLimit=MAX_PAGES,pageIndex=0,editable=false}={}) {
   if(!['A4','A5'].includes(paper))throw new Error('Khổ giấy không hợp lệ.');
-  const pages=paginate(layout,rows).slice(0,pageLimit);
+  const start=preview?pageIndex:0;
+  const pages=paginate(layout,rows).slice(start,start+pageLimit);
   const ratio=paper==='A5'?148/210:1;
   const replaceAssets=text=>Object.entries(assets).reduce((out,[url,data])=>out.split(url).join(data),text);
   const size=paper==='A5'?{w:148,h:210}:{w:210,h:297};
   const css=replaceAssets(fontCSS+'\n'+layout.css);
   if(/<\/style/i.test(css))throw new Error('CSS mẫu in không hợp lệ.');
-  const body=pages.map((rows,p)=>`<section class="ncn-sheet" aria-label="Tờ ${p+1}"><div class="paper"><div class="${escapeHTML(layout.contentClass)}">${layout.staticPage?'':rows.map(row=>frame(layout,row,{examples:preview})).join('\n ')}</div></div></section>`).join('\n');
+  const body=pages.map((rows,p)=>`<section class="ncn-sheet" aria-label="Tờ ${p+1+start}"><div class="paper"><div class="${escapeHTML(layout.contentClass)}">${layout.staticPage?'':rows.map((row,position)=>frame(layout,row,{examples:preview,editable,copyIndex:(start+p)*layout.perPage+position})).join('\n ')}</div></div></section>`).join('\n');
   return `<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escapeHTML(title)}</title><style>
   ${css}
   html{box-sizing:border-box;color-scheme:light}*,*::before,*::after{box-sizing:inherit}
@@ -88,6 +91,7 @@ export function renderDocument(layout,rows,{title='Sticker · nguyencongnghe.com
   @page{size:${paper} portrait;margin:0}
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   @media print{body{background:#fff}.ncn-sheet{margin:0;box-shadow:none}}
+  ${editable?editableStyles:''}
   </style></head><body>${body}</body></html>`;
 }
 

@@ -1,0 +1,39 @@
+/* NCN direct editing: the sheet is the main workspace. Original print rules apply. */
+@media screen {
+  .ncn-direct-editor .st-editor-grid { display: grid; grid-template-columns: minmax(0,1fr) !important; align-items: start; }
+  .ncn-direct-editor .st-editor-grid > .st-preview-panel { grid-column: 1; grid-row: 1; max-width: none !important; width: 100%; }
+  .ncn-direct-editor .st-editor-grid > .st-panel:not(.st-preview-panel) { grid-column: 1; grid-row: 2; }
+  .ncn-direct-editor .st-editor-grid > .st-preview-panel .st-panel-heading h4 { font-size: 16px; }
+  .ncn-direct-editor .ncn-direct-toolbar { display: grid; gap: 12px; margin: 0 0 14px; }
+  .ncn-direct-editor .ncn-direct-heading { display: grid; gap: 4px; }
+  .ncn-direct-editor .ncn-direct-heading strong { font-size: 14px; line-height: 1.5; color: var(--st-text); }
+  .ncn-direct-editor .ncn-direct-heading span { font-size: 12px; line-height: 1.6; color: var(--st-muted); }
+  .ncn-direct-editor .ncn-direct-controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .ncn-direct-editor .ncn-direct-controls button {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 44px; min-height: 44px; padding: 8px 12px; border: 1px solid var(--st-border);
+    border-radius: 8px; background: var(--st-surface); color: var(--st-text); font: 13px/1.5 var(--body-font,Arial,sans-serif); cursor: pointer;
+  }
+  .ncn-direct-editor .ncn-direct-controls button:focus-visible { outline: 3px solid #9aabff; outline-offset: 2px; }
+  .ncn-direct-editor .ncn-direct-controls button:disabled { opacity: .4; cursor: default; }
+  .ncn-direct-editor .ncn-direct-controls .ncn-direct-print { background: var(--st-accent,#3e55fa); color: #fff; border-color: var(--st-accent,#3e55fa); }
+  .ncn-direct-editor .ncn-direct-page-count { font-size: 12px; padding: 0 4px; color: var(--st-muted); white-space: nowrap; }
+  .ncn-direct-editor .ncn-direct-link-toggle { display: inline-flex; align-items: center; gap: 9px; font-size: 12px; min-height: 36px; cursor: pointer; }
+  .ncn-direct-editor .ncn-direct-link-toggle input { appearance: auto; width: 18px; height: 18px; accent-color: var(--st-accent,#3e55fa); }
+  .ncn-direct-editor .ncn-direct-link-toggle[hidden] { display: none; }
+  .ncn-direct-editor .ncn-direct-stage { position: relative; width: 100%; overflow: auto !important; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; touch-action: pan-x pan-y; background: #eef1f7; }
+  .ncn-direct-editor .ncn-direct-canvas { position: relative; flex: none; overflow: hidden; }
+  .ncn-direct-editor .ncn-direct-stage iframe { position: absolute; top: 0; left: 0; display: block; transform-origin: top left; max-width: none !important; border: 0; }
+  .ncn-direct-editor .nt-preview-nav { display: none !important; }
+  .ncn-direct-editor .st-preview-panel { min-width: 0; }
+  @media (min-width: 1180px) {
+    .ncn-direct-editor .st-editor-grid { grid-template-columns: minmax(0,1fr) minmax(260px,320px) !important; gap: 20px; }
+    .ncn-direct-editor .st-editor-grid > .st-panel:not(.st-preview-panel) { grid-column: 2; grid-row: 1; }
+  }
+  @media (max-width: 620px) {
+    .ncn-direct-editor .st-preview-panel { padding: 10px !important; }
+    .ncn-direct-editor .ncn-direct-controls button { min-height: 44px; padding: 8px 10px; }
+    .ncn-direct-editor .ncn-direct-heading strong { font-size: 13px; }
+    .ncn-direct-editor .ncn-direct-link-toggle { min-height: 44px; }
+  }
+}

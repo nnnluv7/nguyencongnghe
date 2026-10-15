@@ -1,0 +1,89 @@
+import {copyAt,editCopy} from './preview.js?v=20261015-direct-1';
+
+export function createDirectEditor({app,frame,stage,getState,onChange,onSelect,onPage,onPrint,onError,doc=document,win=window}) {
+  app.classList.add('ncn-direct-editor');
+  const fieldHeading=app.querySelector('.st-editor-grid > .st-panel:not(.st-preview-panel) h4');
+  if(fieldHeading)fieldHeading.textContent='Ô nhập';
+  const previewHeading=app.querySelector('.st-preview-panel .st-panel-heading h4');
+  if(previewHeading)previewHeading.textContent='Nhập trực tiếp trên mẫu';
+  const listeners=[];
+  const listen=(node,event,fn,options)=>{node?.addEventListener(event,fn,options);listeners.push(()=>node?.removeEventListener(event,fn,options));};
+  const make=(tag,className,text)=>{const el=doc.createElement(tag);if(className)el.className=className;if(text)el.textContent=text;return el;};
+  const toolbar=make('div','ncn-direct-toolbar');toolbar.setAttribute('aria-label','Nhập trực tiếp trên mẫu');
+  const heading=make('div','ncn-direct-heading');heading.append(make('strong','','Bấm vào chữ trên mẫu để nhập'),make('span','','Mỗi mẫu trên tờ được điền riêng.'));
+  const tools=make('div','ncn-direct-controls');
+  function button(text,label,fn){const b=make('button','',text);b.type='button';b.setAttribute('aria-label',label||text);listen(b,'click',fn);tools.append(b);return b;}
+  let zoom=1,size=null,count=1,page=0,child=null,childCleanup=()=>{},generation=0,linked=false,composing=false;
+  const previous=button('←','Tờ trước',()=>onPage?.(page-1)),pageLabel=make('span','ncn-direct-page-count','Tờ 1/1');tools.append(pageLabel);
+  const next=button('→','Tờ sau',()=>onPage?.(page+1));
+  button('−','Thu nhỏ',()=>{zoom=Math.max(1,zoom-.25);scale();});
+  button('+','Phóng to',()=>{zoom=Math.min(4,zoom+.25);scale();});
+  button('Vừa trang','Xem vừa trang',()=>{zoom=1;scale();});
+  button('100%','Xem kích thước thật',()=>{const base=fitScale();zoom=Math.min(4,Math.max(1,1/base));scale();});
+  const printButton=button('In ngay','In mẫu đã nhập',()=>{flush();onPrint?.();});printButton.classList.add('ncn-direct-print');
+  const linkLabel=make('label','ncn-direct-link-toggle'),check=make('input');check.type='checkbox';
+  linkLabel.append(check,make('span','','Áp dụng cho cả nhóm nội dung'));
+  listen(check,'change',()=>{linked=check.checked;});
+  toolbar.append(heading,tools,linkLabel);stage.before(toolbar);
+  const canvas=make('div','ncn-direct-canvas');stage.append(canvas);canvas.append(frame);
+  stage.classList.add('ncn-direct-stage');
+  function fitScale(){return size?(stage.clientWidth||440)/(size.w*96/25.4):1;}
+  function scale(){
+    if(!size)return;const width=size.w*96/25.4,height=size.h*96/25.4,ratio=fitScale()*zoom;
+    stage.style.aspectRatio=size.w+'/'+size.h;
+    canvas.style.width=width*ratio+'px';canvas.style.height=height*ratio+'px';
+    frame.style.width=width+'px';frame.style.height=height+'px';frame.style.transform=`scale(${ratio})`;
+  }
+  function syncValues(){
+    if(!child)return;const state=getState();if(!state.layout)return;
+    child.querySelectorAll('input[data-ncn-copy][data-field]').forEach(input=>{
+      let row;try{row=copyAt(state.rows,Number(input.dataset.ncnCopy)).row;}catch{return;}
+      const value=String(row.values[Number(input.dataset.field)]??'');
+      if(input.type==='checkbox'){input.checked=Boolean(value);return;}
+      if(input===child.activeElement&&composing)return;
+      if(input.value!==value){const start=input.selectionStart,end=input.selectionEnd;input.value=value;if(input===child.activeElement&&start!==null){try{input.setSelectionRange(Math.min(start,value.length),Math.min(end,value.length));}catch{}}}
+    });
+    child.querySelectorAll('[data-ncn-mirror]').forEach(node=>{
+      try{node.textContent=String(copyAt(state.rows,Number(node.dataset.ncnCopy)).row.values[Number(node.dataset.ncnMirror)]??'');}catch{}
+    });
+  }
+  function commit(input){
+    if(!input?.matches?.('input[data-ncn-copy][data-field]'))return;
+    try{
+      const state=getState(),copy=Number(input.dataset.ncnCopy),index=Number(input.dataset.field),value=input.type==='checkbox'?(input.checked?'1':''):input.value;
+      const result=editCopy(state.layout,state.rows,copy,index,value,{linked});
+      onChange(result.rows,result.selected);syncValues();
+    }catch(error){onError?.(error.message);}
+  }
+  function flush(){if(child)commit(child.activeElement);}
+  function bindDocument(document){
+    if(!document?.body)return false;
+    const stamp=document.documentElement.getAttribute('data-ncn-direct-generation');
+    if(stamp&&Number(stamp)!==generation)return false;
+    childCleanup();child=document;composing=false;
+    const bindings=[];
+    const bind=(type,fn)=>{child.addEventListener(type,fn);bindings.push(()=>document.removeEventListener(type,fn));};
+    bind('focusin',e=>{const input=e.target;if(input?.matches?.('input[data-ncn-copy][data-field]')){try{const row=copyAt(getState().rows,Number(input.dataset.ncnCopy));onSelect?.(row.rowIndex);syncValues();}catch(error){onError?.(error.message);}}});
+    bind('input',e=>{if(!e.isComposing&&!composing)commit(e.target);});
+    bind('change',e=>{if(e.target.type==='checkbox')commit(e.target);});
+    bind('compositionstart',()=>{composing=true;});
+    bind('compositionend',e=>{composing=false;commit(e.target);});
+    bind('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='p'){e.preventDefault();flush();onPrint?.();}});
+    childCleanup=()=>{bindings.forEach(fn=>fn());child=null;};
+    syncValues();return true;
+  }
+  listen(frame,'load',()=>{try{const target=frame.contentDocument;if(target?.documentElement?.hasAttribute('data-ncn-direct-generation'))bindDocument(target);}catch{onError?.('Chưa mở được ô nhập trên mẫu. Anh có thể nhập ở phần Ô nhập.');}});
+  listen(win,'keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='p'&&getState().layout){e.preventDefault();flush();onPrint?.();}});
+  const commonPrint=doc.getElementById('ncn-page-print');
+  listen(commonPrint,'click',e=>{if(getState().layout){e.preventDefault();e.stopImmediatePropagation();flush();onPrint?.();}},true);
+  function render(html,{paperSize,pageIndex=0,pages=1,editable=true}={}){
+    childCleanup();size=paperSize;page=pageIndex;count=pages;generation++;
+    previous.disabled=page===0;next.disabled=page>=count-1;pageLabel.textContent=`Tờ ${page+1}/${count}`;
+    heading.firstChild.textContent=editable?'Bấm vào chữ trên mẫu để nhập':'Mẫu in sẵn';
+    heading.lastChild.textContent=editable?'Mỗi mẫu trên tờ được điền riêng. Ô chưa nhập hiện chữ gợi ý.':'Anh chọn số lượng và khổ giấy rồi bấm In.';
+    linkLabel.hidden=!editable;
+    frame.srcdoc=html.replace('<html ',`<html data-ncn-direct-generation="${generation}" `);
+    scale();
+  }
+  return {render,scale,flush,bindDocument,syncValues,getZoom:()=>zoom,destroy:()=>{childCleanup();listeners.forEach(fn=>fn());toolbar.remove();}};
+}
