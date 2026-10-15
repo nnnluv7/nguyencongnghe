@@ -1,0 +1,256 @@
+/* NCN mobile interface. Sheet dimensions and original print styles are retained. */
+.ncn-mobile-table-scroll,
+.ncn-mobile-sheet-viewport,
+.ncn-mobile-sheet-frame { display: contents; }
+[data-ncn-mobile-ui] { display: none; }
+
+@media screen {
+  body.ncn-modern { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  body.ncn-modern #outer-wrapper { display: flow-root; }
+  body.ncn-modern #center-container {
+    display: block; float: none; clear: both; width: 100%; min-width: 0;
+    box-sizing: border-box; overflow: visible;
+  }
+  body.ncn-modern #center-container > .container { min-width: 0; }
+  body.ncn-modern #ncn-footer {
+    clear: both; width: 100%; min-width: 0; box-sizing: border-box;
+  }
+}
+
+@media screen and (max-width: 900px) {
+  body.ncn-modern {
+    --ncn-mobile-top: calc(64px + env(safe-area-inset-top, 0px));
+    --ncn-sidebar: 0px;
+  }
+  body.ncn-modern #outer-wrapper {
+    margin-left: 0;
+    padding: calc(var(--ncn-mobile-top) + 16px)
+      max(12px, env(safe-area-inset-right, 0px))
+      calc(24px + env(safe-area-inset-bottom, 0px))
+      max(12px, env(safe-area-inset-left, 0px));
+  }
+  body.ncn-modern #center-container { margin: 0; padding: 0; }
+  body.ncn-modern #ncn-topbar {
+    left: 0; height: var(--ncn-mobile-top); gap: 8px;
+    padding: env(safe-area-inset-top, 0px)
+      max(12px, env(safe-area-inset-right, 0px)) 0
+      max(12px, env(safe-area-inset-left, 0px));
+  }
+  body.ncn-modern #ncn-topbar .ncn-topbar-left { min-width: 0; flex: 1 1 auto; gap: 8px; }
+  body.ncn-modern #ncn-topbar .ncn-location { min-width: 0; }
+  body.ncn-modern #ncn-topbar .ncn-location > span {
+    font-size: 13px; line-height: 1.4; overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap;
+  }
+  body.ncn-modern #ncn-topbar .ncn-location > small,
+  body.ncn-modern #ncn-topbar .ncn-top-vip { display: none; }
+  body.ncn-modern #ncn-topbar .ncn-topbar-right { gap: 6px; flex-shrink: 0; }
+  body.ncn-modern .ncn-icon-button,
+  body.ncn-modern #ncn-topbar .ncn-account-menu summary {
+    width: 44px; height: 44px; min-width: 44px; min-height: 44px;
+  }
+  body.ncn-modern #ncn-topbar .ncn-top-search {
+    flex: 0 0 44px; width: 44px; max-width: 44px; min-width: 44px;
+    height: 44px; padding: 10px; justify-content: center;
+    background: var(--ncn-surface);
+  }
+  body.ncn-modern #ncn-topbar .ncn-top-search > span:not(:first-child),
+  body.ncn-modern #ncn-topbar .ncn-top-search kbd { display: none; }
+  body.ncn-modern #ncn-sidebar {
+    width: min(310px, calc(100vw - 36px));
+    padding-top: calc(28px + env(safe-area-inset-top, 0px));
+    padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    overscroll-behavior: contain;
+  }
+  body.ncn-modern #ncn-menu-close {
+    top: calc(8px + env(safe-area-inset-top, 0px)); right: 8px;
+    width: 44px; height: 44px;
+  }
+  body.ncn-modern.ncn-menu-open { overflow: hidden; }
+  body.ncn-modern .ncn-nav-link { min-height: 44px; font-size: 14px; }
+  body.ncn-modern #ncn-page-actions { gap: 10px; flex-wrap: wrap; font-size: 12px; }
+  body.ncn-modern #ncn-page-actions > div { flex-wrap: wrap; gap: 8px; }
+  body.ncn-modern #ncn-page-actions button { min-height: 44px; font-size: 12px; padding: 10px 12px; }
+  body.ncn-modern #ncn-page-tools {
+    top: calc(var(--ncn-mobile-top) + 8px); right: 12px; padding: 18px;
+    box-sizing: border-box; width: min(420px, calc(100vw - 24px));
+    max-height: calc(100vh - var(--ncn-mobile-top) - 24px);
+    max-height: calc(100dvh - var(--ncn-mobile-top) - 24px);
+  }
+  body.ncn-modern .ncn-account-dropdown { width: min(280px, calc(100vw - 24px)); }
+  body.ncn-modern .auth-box { width: calc(100% - 24px); max-width: 420px; box-sizing: border-box; }
+  body.ncn-modern .auth-input { min-height: 44px; font-size: 16px; box-sizing: border-box; }
+  body.ncn-modern .auth-submit { min-height: 44px; }
+  body.ncn-modern .ncn-ui input:not([type=checkbox]):not([type=radio]) {
+    position: static !important; inset: auto !important; min-width: 0;
+    height: auto !important; min-height: 44px; font-size: 16px;
+  }
+  body.ncn-modern .ncn-search-dialog-head { gap: 8px; padding: 12px; }
+  body.ncn-modern .ncn-search-dialog-head label { min-width: 0; }
+  body.ncn-modern #ncn-global-results { max-height: 55vh; }
+
+  body.ncn-modern .item-post-wrap { padding: 16px; border-radius: 14px; }
+  body.ncn-modern #feed-view .item-post-wrap > .hentry > .post-inner-area > h1.entry-title {
+    position: static; font-size: clamp(21px, 5.4vw, 27px); line-height: 1.4;
+    letter-spacing: -.4px; margin-bottom: 18px; text-align: left;
+  }
+  body.ncn-modern #feed-view .item-post-wrap > .hentry > .post-inner-area > h1.entry-title::after {
+    display: none; content: none;
+  }
+  body.ncn-modern #postBody { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
+  body.ncn-modern:not(.ncn-popup-page):not(.ncn-store-page):not(.ncn-sticker-page):not(.ncn-event-page) #postBody img {
+    max-width: 100% !important; height: auto !important; object-fit: contain;
+  }
+  body.ncn-modern .post-inner-user,
+  body.ncn-modern .post-inner-data { min-width: 0; flex-wrap: wrap; }
+  body.ncn-modern .feed-share { display: flex; flex-wrap: wrap; gap: 6px; }
+  body.ncn-modern .feed-share a { min-width: 40px; min-height: 40px; box-sizing: border-box; }
+  body.ncn-modern .comments-section .widget-title { font-size: 19px; line-height: 1.4; }
+  body.ncn-modern .cg-comment-form input,
+  body.ncn-modern .cg-comment-form textarea { position: static; height: auto; min-height: 44px; font-size: 16px; }
+  body.ncn-modern #ncn-footer { flex-wrap: wrap; gap: 14px; padding: 20px 0 0; }
+  body.ncn-modern #ncn-footer .ncn-footer-brand { width: 100%; min-width: 0; flex-wrap: wrap; gap: 8px; }
+  body.ncn-modern #ncn-footer > div:last-child { margin-left: 0; flex-wrap: wrap; }
+  body.ncn-modern #ncn-footer small,
+  body.ncn-modern #ncn-footer button,
+  body.ncn-modern #ncn-footer a { font-size: 12px; line-height: 1.5; }
+
+  body.ncn-modern .ncn-tool-card h3 { font-size: 15px; }
+  body.ncn-modern .ncn-tool-card p { font-size: 12px; }
+  body.ncn-modern .ncn-card-open { font-size: 11px; }
+  body.ncn-modern .ncn-pin { width: 44px; height: 44px; top: 4px; right: 3px; display: grid; place-items: center; }
+  body.ncn-modern .ncn-tool-badge { margin-right: 32px; }
+  body.ncn-modern .ncn-filter-row button { min-height: 44px; font-size: 12px; }
+  body.ncn-modern .ncn-button { min-height: 44px; font-size: 12px; }
+  body.ncn-modern .ncn-hero-copy > p { font-size: 14px; }
+
+  body.ncn-modern :is(#ncn-store-app, #ncn-popup-app, #ncn-sticker-app, #ncn-event-app) :is(input, select, textarea):not([type=checkbox]):not([type=radio]):not([type=range]) {
+    min-width: 0; max-width: 100%; min-height: 44px; font-size: 16px !important;
+  }
+  body.ncn-modern :is(#ncn-store-app, #ncn-popup-app, #ncn-sticker-app) :is(.st-button, .st-tabs button, .st-row-list button) {
+    min-height: 44px; font-size: 13px;
+  }
+  body.ncn-modern :is(#ncn-store-app, #ncn-popup-app, #ncn-sticker-app) :is(.st-field, .st-search, .nt-settings > .st-field) { min-width: 0; }
+  body.ncn-modern :is(#ncn-store-app, #ncn-popup-app, #ncn-sticker-app) .st-note { font-size: 12px !important; }
+
+  /* Insurance and delayed-payment form: fit both columns inside the card. */
+  body.ncn-mobile-insurance #postBody .containerz {
+    width: 100% !important; max-width: 560px; box-sizing: border-box;
+    margin: 16px auto; padding: 12px; border: 1px solid var(--ncn-border);
+    border-radius: 12px; background: var(--ncn-surface);
+  }
+  body.ncn-mobile-insurance #postBody .containerz table { width: 100%; table-layout: fixed; }
+  body.ncn-mobile-insurance #postBody .containerz td,
+  body.ncn-mobile-insurance #postBody .containerz th {
+    box-sizing: border-box; padding: 10px 7px; height: 48px;
+    font-size: 14px; line-height: 1.45; white-space: normal; overflow-wrap: anywhere;
+  }
+  body.ncn-mobile-insurance #postBody .containerz td.label { width: 46%; }
+  body.ncn-mobile-insurance #postBody .containerz td.input { width: 54%; }
+  body.ncn-mobile-insurance #postBody .containerz input[type=text],
+  body.ncn-mobile-insurance #postBody .containerz select {
+    min-width: 0; max-width: 100%; min-height: 44px; font-size: 16px !important;
+    box-sizing: border-box; color: #1b2843;
+  }
+  body.ncn-mobile-insurance #postBody .containerz input[type=text] { padding: 7px 3px; }
+  body.ncn-mobile-insurance #postBody .containerz select { padding: 4px; }
+  body.ncn-mobile-insurance #postBody #tratruoc { width: calc(100% - 58px) !important; }
+  body.ncn-mobile-insurance #postBody #kieutratruoc { width: 56px !important; }
+  body.ncn-mobile-insurance #postBody #laisuat { width: calc(100% - 22px) !important; }
+  body.ncn-mobile-insurance #postBody #goi + span { top: 50% !important; transform: translateY(-50%); }
+  body.ncn-mobile-insurance #postBody .containerz > div:first-child {
+    display: grid !important; grid-template-columns: 1fr 1fr; gap: 8px !important;
+  }
+  body.ncn-mobile-insurance #postBody .containerz > div:first-child label {
+    display: flex; align-items: center; gap: 8px; min-height: 40px; font-size: 14px;
+  }
+  body.ncn-mobile-insurance #postBody input[type=checkbox],
+  body.ncn-mobile-insurance #postBody input[type=radio] { width: 18px; height: 18px; flex-shrink: 0; }
+  body.ncn-mobile-insurance #postBody .containerz td > label {
+    display: inline-flex !important; align-items: center; gap: 3px; top: 0;
+    min-height: 100%; font-size: 12px;
+  }
+  body.ncn-mobile-insurance.dark #postBody .containerz td { color: #1b2843; background-color: #fff; }
+
+  /* FIFO: readable data entry in its own horizontal scroller. */
+  body.ncn-mobile-fifo .ncn-mobile-table-scroll {
+    display: block; width: 100%; max-width: 100%; overflow-x: auto;
+    overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch;
+    border: 1px solid var(--ncn-border); border-radius: 10px; margin: 10px 0 20px;
+  }
+  body.ncn-mobile-fifo #postBody .nhaplieu {
+    width: 824px; min-width: 824px; table-layout: fixed; margin: 0 !important;
+  }
+  body.ncn-mobile-fifo #postBody .nhaplieu td {
+    width: 104px; min-width: 104px; height: 48px; padding: 0;
+    vertical-align: middle; box-sizing: border-box;
+  }
+  body.ncn-mobile-fifo #postBody .nhaplieu td:first-child {
+    position: sticky; left: 0; width: 96px; min-width: 96px; z-index: 1;
+    background: var(--ncn-surface); color: var(--ncn-ink); font-size: 13px !important;
+  }
+  body.ncn-mobile-fifo #postBody .nhaplieu input {
+    font-size: 16px; padding: 8px; min-width: 0; min-height: 44px;
+    color: #1b2843; background: #fff;
+  }
+  body.ncn-mobile-fifo [data-ncn-mobile-ui] {
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;
+    gap: 8px; margin: 12px 0; color: var(--ncn-muted); font: 13px/1.5 var(--body-font, Arial, sans-serif);
+  }
+  body.ncn-mobile-fifo [data-ncn-mobile-ui] button {
+    min-height: 44px; padding: 9px 13px; border: 1px solid var(--ncn-border);
+    border-radius: 8px; background: var(--ncn-surface); color: var(--ncn-ink);
+    font: inherit; cursor: pointer;
+  }
+  body.ncn-mobile-fifo .ncn-mobile-sheet-viewport { display: block; max-width: 100%; overflow: auto; }
+  body.ncn-mobile-fifo .ncn-mobile-sheet-frame {
+    display: block; width: calc(var(--ncn-sheet-width, 775px) * var(--ncn-fit-scale, 1));
+    height: calc(var(--ncn-sheet-height, 560px) * var(--ncn-fit-scale, 1));
+  }
+  body.ncn-mobile-fifo .ncn-mobile-sheet-frame > #printMe {
+    display: block; position: relative; float: none; margin: 0;
+    transform: scale(var(--ncn-fit-scale, 1)); transform-origin: top left;
+  }
+
+  /* QR: the square contains the entire code and its white quiet zone. */
+  body.ncn-mobile-qr #postBody #textCode {
+    width: 100%; min-width: 0; max-width: 100%; min-height: 48px; height: auto;
+    box-sizing: border-box; padding: 12px; border: 1px solid var(--ncn-border);
+    border-radius: 10px; font: 16px/1.5 var(--body-font, Arial, sans-serif);
+    background: var(--ncn-surface); color: var(--ncn-ink);
+  }
+  body.ncn-mobile-qr #postBody #qrcode {
+    display: flex; align-items: center; justify-content: center; flex-direction: column;
+    width: min(208px, 100%); height: auto; min-height: 176px; aspect-ratio: 1;
+    box-sizing: border-box; padding: 24px; margin: 20px auto;
+    border: 1px solid #dce2ed; border-radius: 12px; background: #fff; line-height: 0;
+  }
+  body.ncn-mobile-qr #postBody #qrcode img,
+  body.ncn-mobile-qr #postBody #qrcode canvas {
+    width: 128px !important; height: 128px !important; max-width: 100% !important;
+    flex: 0 0 auto; margin: 0; padding: 0; border: 0; image-rendering: pixelated;
+  }
+}
+
+@media screen and (max-width: 520px) {
+  body.ncn-modern #ncn-page-actions > a { width: 100%; }
+  body.ncn-modern #ncn-page-actions > div { width: 100%; }
+  body.ncn-modern #ncn-page-actions button { flex: 1 1 auto; justify-content: center; }
+  body.ncn-modern :is(#ncn-store-app, #ncn-popup-app, #ncn-sticker-app) .st-settings { grid-template-columns: 1fr; }
+  body.ncn-modern :is(#ncn-store-app, #ncn-popup-app, #ncn-sticker-app) .st-work-top { align-items: flex-start; flex-direction: column; }
+  body.ncn-modern #ncn-store-app .nt-settings > .st-field { width: 100%; }
+  body.ncn-modern :is(#ncn-store-app, #ncn-popup-app, #ncn-sticker-app) .st-panel { padding: 12px; }
+}
+@media screen and (max-width: 380px) {
+  body.ncn-modern .ncn-tool-grid { grid-template-columns: 1fr; }
+  body.ncn-modern .ncn-hero { padding: 24px 20px; }
+  body.ncn-modern .ncn-hero h1 { font-size: 32px; }
+  body.ncn-modern #ncn-topbar .ncn-location > span { font-size: 12px; }
+}
+
+@media print {
+  [data-ncn-mobile-ui] { display: none !important; }
+  .ncn-mobile-table-scroll,
+  .ncn-mobile-sheet-viewport,
+  .ncn-mobile-sheet-frame { display: contents !important; }
+}
