@@ -33,3 +33,28 @@
   status = 200
   force = true
 # END NCN EVENT VIP
+
+# BEGIN NCN GVGS VIP
+[functions."ncn-gvgs"]
+  node_bundler = "esbuild"
+  included_files = ["netlify/lib/ncn-gvgs-private/**", "netlify/lib/ncn-event-private/stick.png", "netlify/lib/ncn-event-private/mt2-mincap.woff2"]
+  external_node_modules = ["@netlify/identity", "@netlify/blobs", "qrcode"]
+
+[[redirects]]
+  from = "/assets/ncn-gvgs-core.js"
+  to = "/.netlify/functions/ncn-gvgs?route=asset&name=core"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/assets/ncn-gvgs.js"
+  to = "/.netlify/functions/ncn-gvgs?route=asset&name=ui"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/downloads/ncn-gvgs-bridge.user.js"
+  to = "/.netlify/functions/ncn-gvgs?route=asset&name=bridge"
+  status = 200
+  force = true
+# END NCN GVGS VIP

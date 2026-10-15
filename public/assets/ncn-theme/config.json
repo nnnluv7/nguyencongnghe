@@ -83,6 +83,17 @@
       "access": "vip"
     },
     {
+      "id": "gvgs",
+      "title": "Giờ Vàng Giá Sốc",
+      "description": "VIP: lọc tồn kho, tra giá chương trình, in popup A5/A4 và sticker bát giác.",
+      "href": "/in-gvgs/",
+      "group": "in-an",
+      "icon": "bolt",
+      "tone": "amber",
+      "featured": true,
+      "access": "vip"
+    },
+    {
       "id": "insurance",
       "title": "Bảo Hiểm & Trả Chậm",
       "description": "Mở bộ công cụ tư vấn và tra cứu bảo hiểm hiện có.",
