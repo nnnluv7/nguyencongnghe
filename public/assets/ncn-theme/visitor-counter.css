@@ -1,0 +1,14 @@
+/* A compact row inside the existing NCN footer. */
+#ncn-footer .ncn-visitor-counter {
+  flex: 0 0 100%; width: 100%; box-sizing: border-box;
+  display: flex; justify-content: center; flex-wrap: wrap; gap: 9px 22px;
+  margin-top: 12px; padding: 11px 15px;
+  background: var(--ncn-surface, #fff); color: var(--ncn-muted, #64748b);
+  border: 1px solid var(--ncn-border, #e5eaf3); border-radius: 12px;
+  font: 500 12px/1.5 Inter, Arial, sans-serif;
+}
+#ncn-footer .ncn-visitor-counter span { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+#ncn-footer .ncn-visitor-counter b { color: var(--ncn-ink, #1b2843); font-weight: 750; font-variant-numeric: tabular-nums; }
+#ncn-footer .ncn-visitor-dot { width: 7px; height: 7px; border-radius: 50%; background: #16a34a; display: inline-block; box-shadow: 0 0 0 3px #16a34a22; }
+@media (max-width: 450px) { #ncn-footer .ncn-visitor-counter { justify-content: space-between; gap: 8px 12px; font-size: 11px; } }
+@media print { #ncn-visitor-counter { display: none !important; } }
