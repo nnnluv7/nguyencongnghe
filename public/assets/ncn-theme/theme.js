@@ -1,4 +1,5 @@
-import './visitor-counter.js'; // NCN visitor metrics
+import './visitor-counter.js?v=20261016-easy-2'; // NCN visitor metrics
+import {installEasyUI} from './easy-ui.js?v=20261016-easy-2';
 /* NCN portal: navigation and local display preferences. VIP authorization stays on the server. */
 const ICONS = {
   home:'<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z"/>',
@@ -215,7 +216,8 @@ export function createTheme({doc=document,win=window,config,catalog=win.CG_CATAL
     // The preview uses the same UI, and opens existing website routes in the browser.
     previewLinks();
   }
-  return {tools,rows,renderTools,renderSearch,renderLibrary,openSearch,closeSearch,destroy:()=>listeners.splice(0).forEach(remove=>remove())};
+  const easyUI=installEasyUI({doc,win,config:cfg,preview});
+  return {tools,rows,renderTools,renderSearch,renderLibrary,openSearch,closeSearch,destroy:()=>{easyUI.destroy();listeners.splice(0).forEach(remove=>remove());}};
 }
 
 export async function bootTheme() {

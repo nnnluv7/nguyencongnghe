@@ -1,3 +1,4 @@
+import {catalogueCard} from '../ncn-theme/cards.js?v=20261016-easy-2';
 import {defaultRow,normalize,normalizeRows,validateForPrint,paginate,renderDocument,parseCSV,importTable,sampleCSV,escapeHTML} from './core.js?v=20261015-direct-1';
 import {createDirectEditor} from '../ncn-direct/editor.js?v=20261015-direct-1';
 import {rowsForValidation} from '../ncn-direct/preview.js?v=20261015-direct-1';
@@ -22,7 +23,7 @@ export function createStickerApp({app,data,doc=document,win=window,fetcher=fetch
     const matches=data.models.filter(m=>(group==='all'||m.group===group)&&normalize(m.name+' '+groupName(m.group)).includes(query));
     $('st-groups').innerHTML=[{id:'all',name:'Tất cả'},...data.groups].map(g=>`<button type="button" data-group="${g.id}" aria-pressed="${g.id===group}">${escapeHTML(g.name)}</button>`).join('');
     $('st-result-count').textContent=`${matches.length} mẫu${group==='all'?'':' · '+groupName(group)}`;
-    $('st-cards').innerHTML=matches.map(m=>`<button type="button" class="st-card" data-model="${m.id}" aria-pressed="${m.id===model?.id}"><img src="${m.thumbnail}" alt="Mẫu ${escapeHTML(m.name)}" loading="lazy" width="180" height="145"><strong>${escapeHTML(m.name)}</strong><span>${m.variants.length>1?'3 cỡ · 6 / 2 / 1 sticker trên A4':escapeHTML(m.variants[0].size)}</span></button>`).join('')||'<p>Không tìm thấy mẫu. Anh thử từ khóa khác.</p>';
+    $('st-cards').innerHTML=matches.map(m=>catalogueCard(m,data.layouts,model?.id)).join('')||'<p>Không tìm thấy mẫu. Anh thử từ khóa khác.</p>';
   }
 
   function showRowList() {
@@ -147,7 +148,7 @@ export function createStickerApp({app,data,doc=document,win=window,fetcher=fetch
   });
   $('st-groups').addEventListener('click',safe(event=>{const button=event.target.closest('[data-group]');if(button){group=button.dataset.group;showCatalogue();}}));
   $('st-search').addEventListener('input',showCatalogue);
-  $('st-cards').addEventListener('click',safe(event=>{const button=event.target.closest('[data-model]');if(button)chooseModel(button.dataset.model);}));
+  $('st-cards').addEventListener('click',safe(event=>{const button=event.target.closest('[data-model]');if(button)chooseModel(button.dataset.model,button.dataset.variant===undefined?null:Number(button.dataset.variant));}));
   $('st-row-list').addEventListener('click',safe(event=>{const button=event.target.closest('[data-row]');if(button){selected=Number(button.dataset.row);previewIndex=Math.floor(rows.slice(0,selected).reduce((n,r)=>n+Number(r.qty),0)/layout.perPage);showFields();updatePreview();}}));
   $('st-fields').addEventListener('input',safe(event=>{
     const input=event.target;

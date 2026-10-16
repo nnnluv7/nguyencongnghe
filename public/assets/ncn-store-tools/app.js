@@ -1,3 +1,4 @@
+import {catalogueCard} from '../ncn-theme/cards.js?v=20261016-easy-2';
 import {defaultRow,normalize,escapeHTML,normalizeRows,validateForPrint,paginate,paperSize,renderDocument,parseCSV,sampleCSV,importTable} from './core.js?v=20261015-direct-1';
 import {createDirectEditor} from '../ncn-direct/editor.js?v=20261015-direct-1';
 import {rowsForValidation} from '../ncn-direct/preview.js?v=20261015-direct-1';
@@ -12,7 +13,7 @@ export function createStoreApp({app,data,doc=document,win=window,fetcher=fetch})
   const query=normalize($('nt-search').value),matches=models.filter(m=>(group==='all'||m.group===group)&&normalize(m.name+' '+groupName(m.group)).includes(query));
   $('nt-groups').innerHTML=[{id:'all',name:'Tất cả'},...groups].map(g=>`<button type="button" data-group="${escapeHTML(g.id)}" aria-pressed="${g.id===group}">${escapeHTML(g.name)}</button>`).join('');
   $('nt-result-count').textContent=`${matches.length} / ${models.length} mẫu`;
-  $('nt-cards').innerHTML=matches.map(m=>`<button type="button" class="st-card" data-model="${escapeHTML(m.id)}" aria-pressed="${model?.id===m.id}"><img src="${escapeHTML(m.thumbnail)}" alt="${escapeHTML(m.name)}" loading="lazy" width="180" height="145"><strong>${escapeHTML(m.name)}</strong><span>${escapeHTML(m.note||m.size)}</span></button>`).join('')||'<p>Không tìm thấy mẫu. Anh thử từ khóa khác.</p>';
+  $('nt-cards').innerHTML=matches.map(m=>catalogueCard(m,data.layouts,model?.id)).join('')||'<p>Không tìm thấy mẫu. Anh thử từ khóa khác.</p>';
  }
  function showFields() {
   const row=selectedRow();if(!row)return;

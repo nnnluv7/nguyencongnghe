@@ -16,7 +16,7 @@ function mount() {
   if (!footer || document.getElementById('ncn-visitor-counter')) return;
   const css = document.createElement('link');
   css.rel = 'stylesheet';
-  css.href = '/assets/ncn-theme/visitor-counter.css?v=1';
+  css.href = '/assets/ncn-theme/visitor-counter.css?v=20261016-easy-2';
   document.head.appendChild(css);
 
   const section = document.createElement('section');
@@ -27,7 +27,7 @@ function mount() {
     <span><i class="ncn-visitor-dot" aria-hidden="true"></i>Đang online <b data-ncn-counter="online">—</b></span>
     <span>Hôm nay <b data-ncn-counter="today">—</b></span>
     <span>Tổng truy cập <b data-ncn-counter="total">—</b></span>`;
-  footer.appendChild(section);
+  footer.after(section);
 
   const id = sessionGet(ID_KEY) || crypto.randomUUID();
   sessionSet(ID_KEY, id);
