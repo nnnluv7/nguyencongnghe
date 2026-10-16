@@ -40,6 +40,16 @@
   ],
   "tools": [
     {
+      "id": "lucky-wheel",
+      "title": "Vòng Quay May Mắn",
+      "description": "Thêm danh sách, quay chọn người may mắn và lưu lịch sử kết quả.",
+      "href": "/vong-quay-may-man/",
+      "group": "tien-ich",
+      "icon": "star",
+      "tone": "violet",
+      "featured": true
+    },
+    {
       "id": "sticker",
       "title": "Bộ Sticker",
       "description": "Mẫu giảm giá, bảo hiểm và đặc quyền. Điền nội dung và tạo bản in.",
