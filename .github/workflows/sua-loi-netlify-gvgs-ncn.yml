@@ -1,0 +1,53 @@
+name: Sua loi Netlify GVGS NCN
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: ncn-theme-install
+  cancel-in-progress: false
+jobs:
+  fix-netlify-gvgs:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      NCN_BRANCH: ${{ github.event.repository.default_branch }}
+    steps:
+      - name: Lay ma nguon
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+      - name: Dung Node 22
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+      - name: Sua dung 2 tep GVGS
+        shell: python
+        run: |
+          import base64,gzip,hashlib,json,os
+          from pathlib import Path
+          raw=gzip.decompress(base64.b64decode("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"))
+          if hashlib.sha256(raw).hexdigest()!="586423c8ef4678b235e25c2866a095e16deec9ff803671eea1d111d9a516f213":raise ValueError('Tep cai dat bi cat/sua; sao chep lai toan bo .txt.')
+          payload=json.loads(raw)
+          ns={"__name__":"ncn_gvgs_bundle_fix"}
+          exec(compile(payload['installer'],'sua-loi-gvgs.py','exec'),ns)
+          ns['install'](Path.cwd(),{name:base64.b64decode(value)for name,value in payload['files'].items()},payload['meta'])
+          (Path(os.environ['RUNNER_TEMP'])/'ncn-verify-netlify.mjs').write_text(payload['verify'])
+      - name: Cai thu vien va bo dong goi Netlify de kiem tra
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm install --prefix "$RUNNER_TEMP/ncn-netlify-check" --ignore-scripts --no-audit --no-fund --save-exact @netlify/zip-it-and-ship-it@16.3.0
+      - name: Dong goi thu toan bo Functions
+        run: NCN_ZISI_DIR="$RUNNER_TEMP/ncn-netlify-check" NCN_BUNDLE_DIR="$RUNNER_TEMP/ncn-function-bundles" node "$RUNNER_TEMP/ncn-verify-netlify.mjs"
+      - name: Luu ban sua
+        run: |
+          git add -- netlify/functions/ncn-gvgs.mjs netlify/lib/ncn-gvgs-private/gv2-assets.cjs
+          if [ -d ncn-netlify-gvgs-fix-backup ]; then git add -A -- ncn-netlify-gvgs-fix-backup; fi
+          if git diff --cached --quiet; then
+            echo "Da co ban sua; khong can tao commit moi."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "fix(ncn): limit GV-2 resource tracing for Netlify"
+          git push origin HEAD:"$NCN_BRANCH"
