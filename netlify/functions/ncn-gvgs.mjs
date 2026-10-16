@@ -17,7 +17,7 @@ const dependencies={
   store:()=>getStore({name:'ncn-gvgs-vip-v1',consistency:'strong'}),
   asset:name=>readFileSync(path.join(base,name),'utf8'),
   print:(items,settings)=>Core.printable(items,settings,{
-    gv2:String(settings.format||'').startsWith('popup-gv2-')?(gv2Assets||(gv2Assets=loadGV2Assets(path.join(process.cwd(),'public')))):null,
+    gv2:String(settings.format||'').startsWith('popup-gv2-')?(gv2Assets||(gv2Assets=loadGV2Assets())):null,
     frame:readFileSync(path.join(shared,'stick.png')).toString('base64'),
     font:readFileSync(path.join(shared,'mt2-mincap.woff2')).toString('base64'),
     qr:code=>QRCode.create(code,{errorCorrectionLevel:'M'}).modules
