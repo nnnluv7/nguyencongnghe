@@ -1,0 +1,198 @@
+# NCN - Cài bộ đếm chỉ với 1 YAML. Đặt vào .github/workflows/ trên nhánh main.
+# Lần đầu upload sẽ tự chạy; cũng có thể vào Actions > Run workflow.
+# Tạo backend Netlify + frontend cho các trang dùng theme.js, tự commit lên main.
+name: "NCN | Cài bộ đếm online và lượt truy cập"
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/cai-bo-dem-truy-cap-ncn.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ncn-visitor-counter-installer
+  cancel-in-progress: false
+
+jobs:
+  cai-dat:
+    name: Cài bộ đếm NCN tự động
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Lấy mã nguồn NCN
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+          fetch-depth: 0
+
+      - name: Cài JS, Netlify Functions và giao diện bộ đếm
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from io import BytesIO
+          import base64, zipfile
+
+          # Mã nguồn bộ đếm được nhúng ngay trong YML để không cần tải file bên ngoài.
+          payload = (
+              "UEsDBBQAAAAIABMZUF3iFGzUJwEAAA0CAAAiAAAAbmV0bGlmeS9mdW5jdGlvbnMvbmNuLXZpc2l0b3JzLm1qc41RzU6DQBC+8xTfDUhaiNc22CZq"
+              "4k1jfQFYhnbNMlt3Byxp+u5uoW2M8eBtZ/P9zuh2b53giC3JRqyj2fn1SHtjh3HGCY2zLeI1kxjdDHllbOXjZaSvVOWoFHqwHQu555JrQ+5Gy7Lc"
+              "6CpnxfNeex0k52pCZu3HWSZSlr1g8/7y9oQC8Q+kn/d3AUGH0aimpuyMoPQDKzQdK9GWsZsME0efHXmZIegJHSTFMQLyHK+Oek1fCDhUrmS1C1Ln"
+              "fi2xeLRdcGcraG0d6sHonnAJALFSGp8FoSmlH1dSIElR3F+dVtmkt8ouHyiKUGTvbN2NGePAB1a3HSdHcNnSYio9JvbaC7EaFoi9OMvbGKd0pC1+"
+              "HeS/5GVgO5LO8Z8HSsYq6XVtAX6KvgFQSwMEFAAAAAgAExlQXQDhjHoyAQAA6wEAACoAAABuZXRsaWZ5L2Z1bmN0aW9ucy9uY24tdmlzaXRvcnMt"
+              "Y2xlYW51cC5tanNdkE1qw0AMhfc+hRYFO5DYbekqJlDIPpTmAhmP5WSKLJn5SWqM796Ja7elGzGMpO89PdN2Yj0McEZ/9GIRRmistJC+MnoyTV9U"
+              "JJVLy8Qso5pQcejeLDpk/buR5wWZqmDNm6txJtI2WgJ7tHn7cSckRQF7RYQ1VD0cvvlw1BesA6EFYepjAQVdqMi4+A81diR9nuDnpK6F3VQbc4Zd"
+              "NOPm7W10fJFgqU9hLJfxGhsVyINyPWtoAmtvosBFcR0FsxUMCcxMi61co+AO1E0Z///KbAkoG4BVe9f7c6jbXJ/S9UQyzsf5Pvadt8LnaGe1KmcZ"
+              "IcwNN5KdDvsDzMswp7T98fAwzK8RnFeE0C1ZW9Ria3eaiBZ9sAyMN3hH10U+ZhyI1vdcvPLBbeH58SUaKJMx+QJQSwMEFAAAAAgAExlQXSdwGNeW"
+              "BgAA2xAAACMAAABuZXRsaWZ5L2xpYi9uY24tdmlzaXRvci1jb3VudGVyLm1qc5VXe3PaRhD/n0+xmclEwgaBX21ih2Qcx9O6jcFjyLQzHtc+0Amu"
+              "EXfq3YFNib579x4SAuMm8YwZSbu3j98+r7WzA32mKYzEjGsqFQgOXapTlizgQyqGKoIepzBnimnoIJUC4YIvpmKmYCjFg6KyqckQFFWKCR7BTqtG"
+              "HzMhNcrkSkOv++mie3734fPZ7+eDu8s+Sjlo37Xb7ZPaFgZDPjyBVgtOs0yKxwj2Ycr4TFM0LQEy0mzO9CLyZ/vn/f5Fr3t3dToYnF938XDrr5t2"
+              "8w1pJrfL13mzfD7Mm4flywESXr8hw9u1L8Xz3n7+ssVOaoUbyYyjVsRlzqjmZPqRLEIuHlDXR6JphI9hvQ7LGoCkeiY5cPpgSZZrF36GHfipXfzs"
+              "oef1SIuLfq+vJePjsB6plI1o2G4gsX5Sy2s1ohZ8tFLM+EjSKeU6VFpI2oAvdOE0Ik5nYpoRSZuEx031QDIgc8FiBalAfMqTChIppiYko5mU+GEl"
+              "fUTSVEUoLBESwpRqIFrTaWbi3T4pX97C/uptd9fpBx/kTNI5MynRAfJAMFWsodGY6j+YnlxSTWKiSYh2N2AJepHRYwj+VoIHDSuBKU35aIEflZaC"
+              "jwPIEYmV/MLoDnRn0yGVYaHwfWQEv49s/sLXr9BeOycy46Ixq7TwPRogeLq4SC6JHk2OS0qEVo4hh+OSoUsfjkHLGYW8KlRSNUv1hquK6t/6vW7h"
+              "orXnuLR7F/YgbxTmeBNZAqGTFU1FzBJG47rPIcOQ47+eYInZhDqXUsgwOHN1Cg/SVS1PMHd0sDVtrA09njJOi8TBjHSBW4P1w2z0hRqHEJFJlKQC"
+              "NZncbT0pXmu5Ozu0hwy0p1KSRWTyK1xCSvlYI6obVY3Oh3cNYHXovNtQ28SvK7EZGdNVGl2hUKZohCkaeoXRlGT+2chy6KeYQKgcQ5mwx2O4F9br"
+              "1sulY8xb95hQ9Yoa366MJoNun+rQUm0NrCwxPcdaVK9ShtgYC0pkXpBcCIxIHIfmW4SZEKksZToMWkE9ykQWOgt8myhPKPYv3RY/pYlGv9hIPRO+"
+              "mCzQ/vW2VPHxRgtN0gZogYwNcJjcbsX2xiZkWbThvc0d1bIS7r+/ZhvPyEEDMBj4m/+wsGey2BBvq3AuvYPGXzT6uOgU9m2tQXhEKhz4tsGBXQUt"
+              "NADnNjRlUIzNoek5DRsf2/L2saVXB8A1VRn6RKMK89KzN2BCSYyT1rSZ4IyMJrR5Jjg6nQboPRdN6yTCEvxpCVgozQHi1ey55uG4FGdJgiDZPpk/"
+              "nVXY9tED3y1+xdmQoqMYkb5DcJSK0ZfKBFszfyMNJ/60pP/MqNJF43fdy36KplRPRAwvOh0IfjkfBPDqFWyjXfX6g6DocQ7KJVDT2dCpS8fIBQ6g"
+              "NBUPNA5M2zhsH/l+qeXC6y6r2HiDbhSOhZ5zq3Wdwrp1A4omvllrFqLQN43KRJFszDjqLKT7cNp0Dxw1WDPDn0BITKf5fP3Jf6lHEzOiDTAFoZA5"
+              "k6mjPodVz8mMKWclTAdrWl+EWw0c+YwyFYhAYLYH2JvQe6mVGdVhQDLsWSNiQt+yBVp/zggz7ywMTBZG7B1twDUU8WJAH1fTsrBK48f1cBWskRsh"
+              "8A6O9vaf033txGAlC0iJHFOv/2CLftRtTI1wTVK0VLPByDBBwG9khiXCDw6dNVQ3Fk50AwcPiy2SBlOcCva0W5ht0g+FSCnhz+b9BZ+TFLX5eeCj"
+              "2d6wz22cPinXSc+OAfOHG+IVLhnYXCkw5ac2jU9glpkepxBB3DIoKDKlngq4TiIeuOcJkyuRl7Sx7YSrIfvttSFHLhab5h/sBY1tC9aTVHAQ1suK"
+              "L7xNmFT6fI47UOepSfZMqcuOvf/T5bSVEitrmJP8ZPEOqnNxlRr5CuzTIo7YggU+8DHeX2LOxhN7IcIEG7rLjAkIYk9xAhhDA+UuWSqqPfF2IFyI"
+              "n7i7Gqs/hu9K6rdd3jLCS1nf00dNMvoDOd41cOWG0KZ+fa2ZY41E1O243bOuwwI3Ln8vPUan3KFtqle1VKzH5pIiJJEsXcCMkzlhKRmmrkkclZ3S"
+              "hC2vjs/NBdrU7Swr6qfi0ZbLX7FRa5Ek37VK4+L72thhblwIuZjT2N64/Bbq8NzYRbduu4EvRMQI+Ri3q4uPegHyN7bX9bFabNfFgrRlnb3Zu13L"
+              "KMcZMdUnCb3AGIzNOSunbkafF/nWA1Qt62pWxxTRoKXCSqF6hHZ312su9xclnw6ey8T0P1BLAwQUAAAACAATGVBd2O4k2/wEAAD8CgAAKgAAAHB1"
+              "YmxpYy9hc3NldHMvbmNuLXRoZW1lL3Zpc2l0b3ItY291bnRlci5qc41WzW7bRhC++ynGQhFShkQ56M22XCSO06hxnAB2ChRBEK/IkbnValfhLqUS"
+              "joA+QgO0T9BbgQI59FQfE+Q93Cfp7A9pWk6NCrC14s7PNzPfzHCwBccHx7DgmhtVwAxNwVO9A0wqWc1UqUGj1lzJ/phpzCBVpTRY6B5IRT/UlKMG"
+              "Uhy9oF9CYGpINoGtwUaqpDbw4MUIhhANEolG8Ek1mJTSyeiBTGU/+NXRbpAfPXrz9PAHq0LXSbhOAoZkcb8RfHDw9EuSHl/WlpyoYsYMgSZZiUsY"
+              "SSOS43I2xuKxu4qjBe9/fxx1dzc2anh12N+iiadYdeFiA8AUFVxAgaYsGoET8srOMTlHMzI4c8K7sIKUmTS/lpalEPR4Y3XLw4n30IMFEyW2Ha15"
+              "0NceauG2o8EWPCzUUlOc2mvQlYQxwliodEo5oao4BNcQZjZbsfdZJ0v5TGUqLWcojQ3sUKA9PqxGWWyz3fdSNmEAfALxZlB79+5uvVClfmBR1O2G"
+              "/Ow2AFKt297TApnBYCiOBJdT75bkkgKFrb82lUCdI5qovskLnDjeMU1p81wzORkZrEFISPqbxfC+02y85siyhM3nKLODnIssJinLjhqk9jy/A2iQ"
+              "8FjDj4Rnga63EtGWSgWBPmYz/D/CFN0DQz07Lg3GESs46ws2RhH1IDrNry7fy3OYfvyDGFVWkF79/eecjoweLnG8Bk5KLJ6cPjsit2f0HGBPz5nc"
+              "3+PgEA07bSyZMh1w7nKeZSiHHfKAnf29Ad//9It1oCQVC2FvDBkzrG+VQwDDjr/r7P/z8697gzEpOU8tp08+/jUDyaovqxuVseoO7dOry98IQSvm"
+              "/zBjmFg3c2Zz4ul8gwEhTW0WuHK25oSfXV3bBWlRzY1KKNOZmr18OXoUh1w3Le+Fe2TE3Qg0wNKpVEuB2TmuWQ7DrgvD4ZA0agWLjlOgQ5gwofG6"
+              "iQq68F1MQcNw3zW4DauA2EvQEAE1gVeRL4Wli8uqP1BeotfdoFUbNaygnnbAPGPellhUJ2iHviris1e3M/zVBflZdV6fuRjtx06LYOjePfBTOOH6"
+              "MZecCGwtvCKV1zQYvFRi8CdzoMictK6bWZ74U0vDe1jR/5U9Ml3JFJpJV85JEuM6Jgujzl57aHkyt6cStLJsKe6fuQF9IzsF6jkdbNOyJeM0SZHm"
+              "ckz7r9dIgt2vucp2IHrx/OSUcm0HDW3THZrfUYiyf1rNMSIRYp/gNN0J/uBHTbMEVr3G0Fhl1Q58d/L8ONHU/vKcdmt8Qdzo+V2+A5s36LTq9mgd"
+              "pDmSYan6dkPYok8R50zwBT22wdX2VzfqtVnHlqgp1SWnLeMW6WFRUN0Jt6s2cZCTs6hR9XnxDAw5aQzZeOKbTtpwqUzr3eBy326g0BO+g1zd7ccz"
+              "39GiZkS9IYNEzV7DjXAj9iD//IGFOSFz+jLw6f3nD1eXv6cg3LdpjZKotjrhkglh9/R6G3oS0l9NuuvGNHzm+nLJaTAs3Uq3uaNtHnvhHny9/WZ7"
+              "e7t7Yx+xLDtc0OGIa6IIxRfZIo+54KZKc5q2tpZEbtvpPpu3GN1gCcUNCG5bntObAyldWwySqUBWNGhdIMSpC5rzaWCPs0yvF67HicQ0X2oYsEmD"
+              "KyqpNpQ2SxJXDivYAKX9mVUnhkC6KRcJxWxWSfSONDx6/iy0zRGJk+Gef6f5AjAApOLUrzwW6L9QSwMEFAAAAAgAExlQXbgRnbX/AQAAEwQAACsA"
+              "AABwdWJsaWMvYXNzZXRzL25jbi10aGVtZS92aXNpdG9yLWNvdW50ZXIuY3NzjVPBjpswEL3nK6aKKm1WcQJJSLJw6aqnXvYfDDYwG7CRbZZsV/33"
+              "jg1pokbqVkhgj8dv3nszrB/hGQrddrxwYPQAqCwKCa6WIM9oHaoKXr6/QKm1k2YFj+vZXBWKjXtY+fUbWnTasEL3ygc/ZgBlI88pRPTEUfQ1gwGF"
+              "q9Npk+szs/iTsFNaGyENo1BG1wTaruHvabifwWtPDMp3QiZg5VIopK+QhWM2GN6l4N8ZVH751J1hs+kCUstNhYo5TfHYx6DjQoSScUx5cTLm5bw4"
+              "VYaYixTeuHlgzEuyvSl5IZcwL8tykZFFjTa3CW3vpKDj/e6wO+aLgBSUEDyhW92guEkfzyhfJpKX20V20W24wN5OFL1v2stMoihE1vEqgR9e8hKe"
+              "DfJmCZYry6w0WGazX5/3wnZcwcfVV1QNKslGe3mDlWLoZGuv1gYn996woaYjRgiFTEHp0ej/qJlTwTvDUJ1Ifpxvjjsv3+tkg8SqJrmHJJoilI+c"
+              "vqpvSWKRguN533DjA/afxYV2VHYas4OnX1/Q/eYvu5Mwhjetn8d7vt3x7M6pvNHFaRrZmgs9jFMdwZbaPN3abDy1b60UyOGh5TSaI49dEnXnBfH6"
+              "/J+5n/VgPMulG6RUU1+OfnLDNAe76CeS4zwTgSuFzqByl6r3lf5IVFpJ+IJtp40j10eM31BLAwQUAAAACAATGVBdMVvFMUcFAADYDgAAGwAAAHRl"
+              "c3RzL25jbi12aXNpdG9ycy50ZXN0Lm1qc81XbW/bNhD+nl9xA4pKamXJdlt7ceAFSVug3ZqkWLoNWBA0tHS22NCkKtJJDdf/fUdRsuUkTlogH+YI"
+              "sSXynrt77o3i01wVBgxqA+NCTcGTKsWBvff2drhbZVpjsbHunsTaFDxpbFxAUiAz+FrNpMHiHZOpwCKERCCTs/xjgRplgiFccTSSTd+weQgnxx/e"
+              "H7/9fPjX6z/efvp8dArLSlMUxRKN4ON5LPgololsXXHNjSpaiVMQTb9o0r6TKEn2H8AQvF6fsV67/6qV9HsvWy+RvWgx7HZbfdbZbae/tunTIREn"
+              "cfiDEl2SGM9kYriSMFXJ5SkZgX4Aix0AB3XFxAw14Um8hiOW+8EerQmkFSzocdveFmhmhSyloJIIy99Mz2UCGo1/iURJygwLiU0lxfz9+JgQhzBm"
+              "QhNz7tERM0lGRA1hsQwqvNoSJVJ67tCjiYMsjbEfPgbfX8M+fWq3B/D9O/hNZPd8P0LDJvDLcNhUGwQrP4iLlI85pgNnHixrPZX6lUeLyicLOIAL"
+              "+9V6snj+nMhZXsByZd8dyKaYrYCXN+j6/fTkuEmZym2INFFSI5mMN8zY3LW3iVdztRa+QeJ+ZOVhfx/kTIjb0v9wkx2Ra3bX/UiW8DswBNfGX0Be"
+              "4Jh/CyFnEy6pnLYEeiTUyGbcWRRFFT5haz84j8ZcUHn4lzD8DS4jbVhhtLXOd9BWvecFQTSlRCUZu4302l/L4HYsSkVEHi8wocTnqAdwdn5nTFKk"
+              "lMfa+cqqxsPKYRJdVjVY4Ffyweep7QpU3XRjIx5Ym2wt/YlfCcP4XmZMrgdxLCezOXURJSdykmGUqGkc1X2iLlLd7BbaC0vmpmgyRQnlfTw5/UTP"
+              "MmQpFuTLAjyCMyhNy8xz9GgLy3PBE2ax4i9aSdpOjlM4aG27IR55ByOVzgdgMzOy/VFOyDAid+3gMgh3bMab0q3UBrhQQmhQtlUwA1OeSj7JDHAJ"
+              "f7tOSfr9khLriOu+ERHDhL9upf4bgopyVmj0vW6722t12q1O71OnN3i1S9e/FPEQGiteGeqfResP2m26bqL1LdraLY1a20AAK5B8RxoQluCygXGJ"
+              "gN9ySidalilVJRdzKHs62BFhbMRcPq2ddtmibeOlFGk04brPSmXb5Daruyur91ZgmZtPJHXX2PKd7lJjzT7pWOkre8EQ2DWjmPruq0L0Kan9g4AK"
+              "zOaO36Q5RczfllSfWYDI0eE6U2SUYWL1O2Xz8xDOOiHY67xE+V8qPXwkpd0Q7OWU2nA+H8ILeAa9Nv3r0Bx+yJjH6heP5E/7pj/b07O/kZ4PRjl0"
+              "8/bxgt2tgr0uYC6pe/MU1oVMlep6oCvqAr/QOMB0a63+UHk1Cvl2N7rDdY+NkjI+NNTMjKbSy3a7UdLXBcX5pLSyOos93vy4d4Lcmg54xUWE39g0"
+              "F0hbH54w986OARxU46M+EAXlHH2QswYhG6S92Ah2dUCnmE5pCGlqekxg3app6qsi1XBNBwg1o5cFNUsysg3KZLqnV9/u027h5zv1aJZcoj0a0Ak0"
+              "i8ZCKSp2QolvvT04QkoK3LnvwnkRP1lUIC3odJd0e7C8oLB0vAcl7ObDbZu9cmzpuOTCJoqbYwPY3a2iE8fgDtUmQ8dUi1MZMGLFemcKltC7Fd3U"
+              "x72BDXC08t1lFhMf6HBIDOjInhKjEZepr0sF7gkt0blW2xDY72h1eNwnm1yAnp2dzqcjJaLy9n1lxLl9j4E5R3pvcJ41NfoWzB7b6G9w18rN/HMQ"
+              "N974fMo5OzupyzQl1KWv66NrxvQ25oP7ZDYDEFRp/R9QSwMEFAAAAAgAExlQXTgNcVwkBQAAcQkAABsAAABkb2NzL25jbi12aXNpdG9yLWNvdW50"
+              "ZXIubWRlVs9v1EYUvu9f8aQcSJZdu2oPSORSCG2CgCgCWqk92eud2NO1Zyx7nGiPKAeEUFUiWqEIRc0PoTRABDRUqLYqDpPyf/g/6Xszs7tJuSTr"
+              "mfG89773fd/zHKwurUIfrrfNDpxtt/XHDNJPb9vmUIEqqjFEbX2SwypTKV8fw/ygrQ8FRImEguUShBBptXHFF3E1ZiKSIhZxwhY6nbMn+hCPVW19"
+              "LGDQNo8h0vsRrPOUgUqYxFi6FjGMOIYUGErXEQR5NUh55AdwGQJhQ/rrlYgUl6LE5ahtjkLYZIOSK+bBrRX96+oyDPXfeJPNbG1lDaJ/j69OMx4l"
+              "+j3uqqRt3kX4j5sjJgWM3WxVkMhScTqC5bbNA2HObovY63Tm5uB6iGW0zSMocbHT6UO3e/YkxONSpFywbveq2YE84fqlKeS1SGBIVz1UWPQpKH0i"
+              "IMFYDylWW+8rArrZMSElYUCrh/jjS7xF1writj4SIJK2fqF6oDBzSPVeBlnbPOfw1RcQc30w9lM6tkhbNgX7mgXWM5mu6PcZiHD8/yxNWrPu2jRE"
+              "rPfGPZNuYgHKdM0xVtvswvfc1LMaZvDd/aXLV+z999vmN4ecvYoCKbt4EZVprBFiTkdeYdmcmDGl3dm24V0EI30SJQ4qD+60zTMOKhy4PgclK0vk"
+              "wz0lizBmAWxg/bZFNnVEaUeBAccQ1T7bTHoTPuQI7iGf5DplvF0sqL9JOLY1iJh2d7mLj611rbEEuV8QjQReHPJOZ2nGcgPqjzfXTIO6XcvPDb0P"
+              "83moomSh2/0sG6n3hMUkQ/mgqNrmqfBgGSO8ocexaR7GrpxiLGa7lFZbvyLOfHrrIsf6lPcQAH2c+zFCjbz4g7CS2Fs8hKi8iJAyzXZkpOzBKnah"
+              "miBp8qHkM0zeZWnrX7vboxSOSCf6ZYarf1JXeJbLQsElz9/gqE5Z9CNZCcUK76fy0mJgI1OnjyqLz0TsYVkyVfoiEn0kXcZ88xffCmAecz6c8cJp"
+              "2EjJKO0lFaz3sedrdxc8WKvKxM9YETOEfLYXZCEXQc9Utjv1hSHLUzk25LHFWnFNvWWZq5VqANes9zhMAy/mKqkG/qYsRuup3Cz9EWdZHxnTH8j+"
+              "EH9iHd44SwPrLhmRCeVWk7L3cxOuEhyZxkrizzdimEsu1FUIfO9zxyNQHJxl4F0w6cSyjjB5DG3zO3X6QDjuBnP05rqUiH/gkDL+a7cdzR3O3hST"
+              "b13gidK+nmQ0SOUA+0G2Ubb1X8LBkYfRCCWId0hk6b0oYcMqZcPZPcH5AvpRykJR5V5GvR22zc/CmTbR09opeTd14pnzHSux25/eVqD/MejRMvYJ"
+              "BbMvOp1bE3evCAnyF6QsKZdQ+oD+KyU2aBGcZ8DNGygjVEqF5DDORMhdNBQPbpDaUmvYoq3fZa7cCUzXCY2pds+f+OHandu+ZQ6iaunniJYXbIOz"
+              "TbKUEyr+BY0svMg6LRkiKcyepfGwRW2j99XZ1jmHujABbc3okbc/n9jn5t7WTEL49NS43jaepbXnEWoFjSTSe9yzLh+ZfmRhMWLFxMCNTEwixhId"
+              "B9E9niITQ+JSiEUQw+YvWlrMcQPLfYyOLoizDyoYsfHCIuGGdmPNeUoY86VAHXqjTKff2On7ylSiX9vBZUrCk79AqU/V+Yw8wO+Og/FsJLouYnoZ"
+              "IoIZyd4MGaQJAfgRUzFj3w7h3OrIzCD8gDGW6/pF02QC/aSYlLhpu0NDA4fWh8iZK7oXXTIxAont9Dr/AVBLAQIUAxQAAAAIABMZUF3iFGzUJwEA"
+              "AA0CAAAiAAAAAAAAAAAAAACkgQAAAABuZXRsaWZ5L2Z1bmN0aW9ucy9uY24tdmlzaXRvcnMubWpzUEsBAhQDFAAAAAgAExlQXQDhjHoyAQAA6wEA"
+              "ACoAAAAAAAAAAAAAAKSBZwEAAG5ldGxpZnkvZnVuY3Rpb25zL25jbi12aXNpdG9ycy1jbGVhbnVwLm1qc1BLAQIUAxQAAAAIABMZUF0ncBjXlgYA"
+              "ANsQAAAjAAAAAAAAAAAAAACkgeECAABuZXRsaWZ5L2xpYi9uY24tdmlzaXRvci1jb3VudGVyLm1qc1BLAQIUAxQAAAAIABMZUF3Y7iTb/AQAAPwK"
+              "AAAqAAAAAAAAAAAAAACkgbgJAABwdWJsaWMvYXNzZXRzL25jbi10aGVtZS92aXNpdG9yLWNvdW50ZXIuanNQSwECFAMUAAAACAATGVBduBGdtf8B"
+              "AAATBAAAKwAAAAAAAAAAAAAApIH8DgAAcHVibGljL2Fzc2V0cy9uY24tdGhlbWUvdmlzaXRvci1jb3VudGVyLmNzc1BLAQIUAxQAAAAIABMZUF0x"
+              "W8UxRwUAANgOAAAbAAAAAAAAAAAAAACkgUQRAAB0ZXN0cy9uY24tdmlzaXRvcnMudGVzdC5tanNQSwECFAMUAAAACAATGVBdOA1xXCQFAABxCQAA"
+              "GwAAAAAAAAAAAAAApIHEFgAAZG9jcy9uY24tdmlzaXRvci1jb3VudGVyLm1kUEsFBgAAAAAHAAcAPAIAACEcAAAAAA=="
+          )
+          files = {
+              "netlify/functions/ncn-visitors.mjs",
+              "netlify/functions/ncn-visitors-cleanup.mjs",
+              "netlify/lib/ncn-visitor-counter.mjs",
+              "public/assets/ncn-theme/visitor-counter.js",
+              "public/assets/ncn-theme/visitor-counter.css",
+              "tests/ncn-visitors.test.mjs",
+              "docs/ncn-visitor-counter.md",
+          }
+          entry = Path("public/assets/ncn-theme/theme.js")
+          if not entry.is_file():
+              raise SystemExit("Không thấy public/assets/ncn-theme/theme.js: sai mã nguồn repo NCN, đã dừng để tránh sửa nhầm.")
+          with zipfile.ZipFile(BytesIO(base64.b64decode(payload))) as z:
+              assert set(z.namelist()) == files, "Danh sách tệp nhúng không hợp lệ"
+              for name in sorted(files):
+                  target = Path(name)
+                  target.parent.mkdir(parents=True, exist_ok=True)
+                  content = z.read(name)
+                  # Chỉ ghi lại tệp nếu có thay đổi, cho phép chạy lại YAML nhiều lần.
+                  if not target.exists() or target.read_bytes() != content:
+                      target.write_bytes(content)
+                      print("Cài đặt:", name)
+          code = entry.read_text(encoding="utf-8")
+          line = "import './visitor-counter.js'; // NCN visitor metrics"
+          if line not in code:
+              entry.write_text(line + "\n" + code, encoding="utf-8")
+              print("Đã bật bộ đếm trên mọi trang dùng theme.js")
+          else:
+              print("Bộ đếm đã tích hợp trong theme.js")
+          PY
+
+      - name: Kiểm tra cú pháp và chạy test
+        shell: bash
+        run: |
+          node --check netlify/lib/ncn-visitor-counter.mjs
+          node --check netlify/functions/ncn-visitors.mjs
+          node --check netlify/functions/ncn-visitors-cleanup.mjs
+          node --check public/assets/ncn-theme/visitor-counter.js
+          node --check public/assets/ncn-theme/theme.js
+          node --test tests/ncn-visitors.test.mjs
+
+      - name: Lưu thay đổi lên main để Netlify triển khai
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- \
+            public/assets/ncn-theme/theme.js \
+            public/assets/ncn-theme/visitor-counter.js \
+            public/assets/ncn-theme/visitor-counter.css \
+            netlify/functions/ncn-visitors.mjs \
+            netlify/functions/ncn-visitors-cleanup.mjs \
+            netlify/lib/ncn-visitor-counter.mjs \
+            tests/ncn-visitors.test.mjs \
+            docs/ncn-visitor-counter.md
+          if git diff --cached --quiet; then
+            echo "Bộ đếm đã được cài; không có thay đổi mới."
+          else
+            git commit -m "feat(ncn): install visitor counters for Netlify"
+            git push origin HEAD:main
+          fi
+          echo "Hoàn tất. Kiểm tra bản deploy mới trong Netlify."
