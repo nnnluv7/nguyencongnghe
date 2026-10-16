@@ -1,5 +1,5 @@
 import './visitor-counter.js?v=20261016-easy-2'; // NCN visitor metrics
-import {installEasyUI} from './easy-ui.js?v=20261016-easy-2';
+import {installEasyUI} from './easy-ui.js?v=20261016-one-theme-1';
 /* NCN portal: navigation and local display preferences. VIP authorization stays on the server. */
 const ICONS = {
   home:'<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z"/>',
@@ -225,7 +225,7 @@ export async function bootTheme() {
   let configFailed=false;
   if(!config){
     try {
-      const response=await fetch('/assets/ncn-theme/config.json?v=20261014-modern-1');
+      const response=await fetch('/assets/ncn-theme/config.json?v=20261016-one-theme-1');
       if(!response.ok) throw new Error('config');config=await response.json();
     } catch {
       configFailed=true;config={brand:'NCN',tagline:'Không gian công cụ của bạn',groups:[],tools:[]};

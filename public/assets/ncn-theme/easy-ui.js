@@ -1,5 +1,5 @@
 /* Simple NCN navigation and task-focused forms. Existing controls retain their handlers. */
-const VERSION='20261016-easy-2';
+const VERSION='20261016-one-theme-1';
 const PRIMARY=['sticker','popup-a7','popup-large','event','gvgs','cash','sales','decor'];
 const SHORT={sticker:'Sticker','popup-a7':'Popup A7 / LED','popup-large':'Popup A4 / A5 / A6',event:'Event VIP',gvgs:'Giờ Vàng VIP',cash:'Kiểm quỹ',sales:'Bán hàng',decor:'Trang trí'};
 export function installEasyUI({doc=document,win=window,config={},preview=false}={}){
@@ -7,7 +7,7 @@ export function installEasyUI({doc=document,win=window,config={},preview=false}=
   const listen=(node,event,fn)=>{node?.addEventListener(event,fn);listeners.push(()=>node?.removeEventListener(event,fn));};
   const make=(tag,cls,value)=>{const n=doc.createElement(tag);if(cls)n.className=cls;if(value)n.textContent=value;return n;};
   doc.body.classList.add('ncn-easy');
-  if(!$('ncn-easy-style')){const link=make('link');link.id='ncn-easy-style';link.rel='stylesheet';link.href='/assets/ncn-theme/easy-ui.css?v='+VERSION;doc.head.append(link);}
+  if(!$('ncn-easy-style')){const link=make('link');link.id='ncn-easy-style';link.rel='stylesheet';link.href='/assets/ncn-theme/site.css?v='+VERSION;doc.head.append(link);}
   const brand=doc.querySelector('#ncn-sidebar .ncn-brand'),header=doc.querySelector('.ncn-topbar-left');
   if(brand&&header&&!header.querySelector('.ncn-header-brand')){const clone=brand.cloneNode(true);clone.classList.add('ncn-header-brand');header.append(clone);}
   const nav=$('ncn-navigation');

@@ -1,0 +1,3 @@
+# Revalidate static HTML and assets after updates. Netlify Functions keep their own headers.
+/*
+  Cache-Control: public, max-age=0, must-revalidate

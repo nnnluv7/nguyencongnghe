@@ -1,0 +1,32 @@
+# NCN: retire obsolete intermediate pages; keep model and size selections.
+/2022/06/popup-a5-1.html  /popup-a4-a5-a6/?mau=tvtl-giam-a5  301
+/2022/06/popup-pk1.html  /popup-a7/?mau=pk  301
+/2022/06/sticker-bao-hiem-xe-may-dan-ao-66k.html  /sticker/?nhom=bao-hiem  301
+/2022/09/a4-gia-cheo-1.html  /sticker/?mau=gc-gach-1&co=1  301
+/2022/09/popup-a4-dien-may-giam-ngay.html  /popup-a4-a5-a6/?mau=mln-full  301
+/2022/09/popup-dien-may-tuy-chinh-a5-1.html  /popup-a4-a5-a6/?mau=tvtl-giam-a5  301
+/2022/09/popup-dien-may-tuy-chinh-a5-2.html  /popup-a4-a5-a6/?mau=ml-ud  301
+/2022/09/popup-ict-san-pham-ban-chay.html  /popup-a7/?mau=btn-gach  301
+/2022/09/sticker-may-cu-tu-phone.html  /sticker/?nhom=khac  301
+/2022/11/sticker-giam-gia-12-pcs-a4.html  /sticker/?mau=gg2&co=1  301
+/2022/11/sticker-giam-gia-6pcs-a4.html  /sticker/?mau=gg2&co=1  301
+/2022/11/sticker-giam-phan-tram-12pcs.html  /sticker/?mau=ptg&co=1  301
+/2022/11/sticker-giam-phan-tram-6pcs.html  /sticker/?mau=ptg&co=1  301
+/2022/12/popup-giam-phan-tram-ict-gia-dung-btn.html  /popup-a7/?mau=pk  301
+/2023/07/popup-ban-trai-nghiem-1.html  /popup-a7/?mau=btn-giam  301
+/2023/07/popup-ngan-5-tu-phone.html  /popup-a7/?mau=led-giam  301
+/2023/09/popup-dien-may-gia-gach-gia-giam.html  /popup-a4-a5-a6/?mau=tvtl-gach  301
+/2023/10/a4-combo-gia-dung.html  /popup-a4-a5-a6/?nhom=giam-gia  301
+/2023/10/sticker-giam-gia-2pcs.html  /sticker/?mau=gg2&co=2  301
+/2023/11/popup-ban-kem.html  /popup-a4-a5-a6/?nhom=giam-gia  301
+/2023/11/popup-combo-phu-kien.html  /popup-a7/?mau=pk  301
+/2023/11/sticker-giam-gia-1pc.html  /sticker/?mau=gg2&co=3  301
+/2023/12/a4-dau-line.html  /popup-a4-a5-a6/?mau=mln-full  301
+/2023/12/a5-dong-gia.html  /popup-a4-a5-a6/?mau=tvtl-giam-a5  301
+/2024/04/tam-long-a5-thay-popup-do.html  /popup-a4-a5-a6/?mau=tvtl-giam-a5  301
+
+# Compatibility for bookmarked/cached stylesheets. Never route protected assets here.
+/assets/ncn-theme/theme.css  /assets/ncn-theme/site.css  200
+/assets/ncn-theme/title-fix.css  /assets/ncn-theme/site.css  200
+/assets/ncn-theme/mobile.css  /assets/ncn-theme/site.css  200
+/assets/ncn-theme/easy-ui.css  /assets/ncn-theme/site.css  200
