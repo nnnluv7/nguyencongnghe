@@ -37,7 +37,7 @@
 # BEGIN NCN GVGS VIP
 [functions."ncn-gvgs"]
   node_bundler = "esbuild"
-  included_files = ["netlify/lib/ncn-gvgs-private/**", "netlify/lib/ncn-event-private/stick.png", "netlify/lib/ncn-event-private/mt2-mincap.woff2"]
+  included_files = ["netlify/lib/ncn-gvgs-private/**", "netlify/lib/ncn-event-private/stick.png", "netlify/lib/ncn-event-private/mt2-mincap.woff2", "public/assets/ncn-popup/catalogue.json", "public/assets/ncn-popup/media/gv2-*"]
   external_node_modules = ["@netlify/identity", "@netlify/blobs", "qrcode"]
 
 [[redirects]]

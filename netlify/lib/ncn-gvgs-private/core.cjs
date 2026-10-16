@@ -192,8 +192,10 @@
     return {html:'<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc(settings.name||'Sticker bát giác NCN')+'</title><style>'+css+'</style></head><body>'+symbol+pages.join('')+'</body></html>',labels:labels.length,pages:pages.length,perPage:l.perPage};
   }
 
-  // These five formats match the workflows observed in the GVGS source.
+  // Mẫu 2 shares its artwork, typography and positions with the popup catalogue.
   var FORMATS={
+    'popup-gv2-a4':{name:'Giờ vàng giá sốc · Mẫu 2 · A4 chữ lớn',width:197,height:285,columns:1,rows:1,perPage:1,paper:'A4',template:'gv-2'},
+    'popup-gv2-a5':{name:'Giờ vàng giá sốc · Mẫu 2 · A5',width:197*148/210,height:285*148/210,columns:1,rows:1,perPage:1,paper:'A5',template:'gv-2'},
     'popup-a5':{name:'Popup A5 · 2 mẫu/A4',width:200,height:141,columns:1,rows:2,perPage:2},
     'popup-full':{name:'Popup lớn · 1 mẫu/A4',width:200,height:285,columns:1,rows:1,perPage:1},
     'sticker-small':{name:'Sticker nhỏ · 6 nhãn/A4',width:88.635,height:88.635,columns:2,rows:3,perPage:6},
@@ -202,7 +204,7 @@
   };
   function formatLayout(format){
     var key=format||'popup-a5',value=typeof key==='string'&&Object.prototype.hasOwnProperty.call(FORMATS,key)?FORMATS[key]:null;
-    if(!value)throw new Error('Chọn một trong 5 khổ in GVGS.');
+    if(!value)throw new Error('Chọn một mẫu in GVGS hợp lệ.');
     return Object.assign({},value);
   }
   function printText(value,max){
@@ -214,6 +216,23 @@
   function popupHeader(){
     return '<header class="gvgs-header"><span class="gvgs-gift" aria-hidden="true"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="4"><path d="M9 27h46v12H9zM13 39v20h38V39M32 27v32M32 25C9 27 9 5 21 8c7 1 11 17 11 17Zm0 0C55 27 55 5 43 8c-7 1-11 17-11 17Z"/></svg></span><strong>GIỜ VÀNG GIÁ SỐC</strong><b class="gvgs-brand">NCN</b></header>';
   }
+  function gv2Printable(items,settings,assets,l,name,period){
+    if(!assets||!assets.gv2)throw new Error('Chưa tải được mẫu Giờ vàng giá sốc 2. Tải lại trang rồi thử lại.');
+    var template=assets.gv2,quota=printText(settings.quota,80),pages=[];
+    items.forEach(function(p){
+      var values=[p.name,money(p.originalPrice),money(p.eventPrice),period,quota];
+      var frame=template.layout.prototype.replace(/<input\b[^>]*>/g,function(tag){
+        var match=tag.match(/\bdata-field="(\d+)"/),index=match?Number(match[1]):-1,field=template.layout.fields[index];
+        if(!field)throw new Error('Mẫu Giờ vàng giá sốc 2 chưa hợp lệ.');
+        var value=values[index]||'',size=Math.min(field.fontSize,710/Math.max(1,Array.from(value).length*.6));
+        return tag.replace(/\s(?:value|style)="[^"]*"/g,'').replace(/\s*\/?\s*>$/,function(){return ' value="'+esc(value)+'" style="font-size:'+size.toFixed(2)+'px">';});
+      });
+      for(var i=0;i<p.qty;i++)pages.push('<section class="ncn-sheet" aria-label="Tờ '+(pages.length+1)+'" data-code="'+esc(p.code)+'"><div class="paper"><div class="'+esc(template.layout.contentClass)+'">'+frame+'</div></div></section>');
+    });
+    var a5=l.paper==='A5',ratio=a5?148/210:1;
+    var css=template.css+'\nhtml{box-sizing:border-box;color-scheme:light}*,*::before,*::after{box-sizing:inherit}body{margin:0;padding:0;min-width:0;background:#e9edf3;color:#000}.ncn-sheet{position:relative;width:'+(a5?148:210)+'mm;height:'+(a5?210:297)+'mm;margin:0 auto 18px;background:#fff;break-after:page;page-break-after:always;overflow:hidden}.ncn-sheet:last-child{break-after:auto;page-break-after:auto}.paper{position:absolute;left:50%;top:0;margin:0 0 0 -390px;width:780px;height:1100px;transform:scale('+ratio+');transform-origin:top center}input[type=text]{outline:none;border-radius:0;box-shadow:none;-webkit-appearance:none;appearance:none}.ncn-gv2-frame .gv2-new{color:'+(settings.color?'#c91727':'#000')+';-webkit-text-fill-color:'+(settings.color?'#c91727':'#000')+'}@page{size:'+l.paper+' portrait;margin:0}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}@media print{body{background:#fff}.ncn-sheet{margin:0;box-shadow:none}}';
+    return {html:'<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc(name)+'</title><style>'+css+'</style></head><body>'+pages.join('')+'</body></html>',labels:pages.length,pages:pages.length,perPage:1,format:settings.format,formatName:l.name,paper:l.paper,width:l.width,height:l.height};
+  }
   function printable(items,settings,assets){
     settings=settings||{};
     var l=formatLayout(settings.format),name=printText(settings.name,100)||'GVGS NCN',note=printText(settings.note,100),period=printText(settings.period,80);
@@ -224,6 +243,7 @@
       total+=p.qty;
     });
     if(total>1500)throw new Error('Một lần tạo tối đa 1.500 bản. Chia nhỏ danh sách in.');
+    if(l.template==='gv-2')return gv2Printable(items,settings,assets,l,name,period);
     if((settings.format||'').indexOf('sticker-')===0){
       var printed=stickerPrintable(items,Object.assign({},settings,{width:l.width,height:l.height}),assets);
       return Object.assign(printed,{format:settings.format,formatName:l.name,width:l.width,height:l.height});

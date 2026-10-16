@@ -29,3 +29,8 @@ body.ncn-gvgs-page [hidden]{display:none!important}
   body.ncn-gvgs-page .ev-results button{white-space:normal}
   body.ncn-gvgs-page #vip-gate{padding:20px 16px}
 }
+
+body.ncn-gvgs-page .gvgs-template-preview{display:flex;align-items:center;gap:16px;padding:14px 18px;margin:0 0 20px;border:1px solid var(--ncn-border);border-radius:12px;background:var(--ncn-bg)}
+body.ncn-gvgs-page .gvgs-template-preview img{flex:0 0 70px;width:70px;height:101px;object-fit:contain;background:#fff;border:1px solid #bbb}
+body.ncn-gvgs-page .gvgs-template-preview strong{font-size:16px}
+body.ncn-gvgs-page .gvgs-template-preview p{margin:5px 0 0!important;color:var(--ncn-muted);font-size:13px}

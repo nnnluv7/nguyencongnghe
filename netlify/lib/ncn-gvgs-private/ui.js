@@ -54,7 +54,15 @@
     function updateEstimate(){
       try{
         var l=C.formatLayout(el('size').value),total=state.selected.reduce(function(n,p){return n+p.qty;},0);
-        el('page-estimate').textContent=l.perPage+' nhãn/A4'+(total?' · '+Math.ceil(total/l.perPage)+' trang':'');
+        var gv2=l.template==='gv-2',popup=el('size').value.indexOf('popup-')===0;
+        el('page-estimate').textContent=l.perPage+(popup?' popup/':' nhãn/')+(l.paper||'A4')+(total?' · '+Math.ceil(total/l.perPage)+' trang':'');
+        el('gv2-sample').hidden=!gv2;
+        el('quota-field').hidden=!gv2;
+        el('note-field').hidden=gv2||!popup;
+        el('period-field').hidden=!gv2&&el('size').value!=='popup-full';
+        el('period-label').textContent=gv2?'Thời gian áp dụng':'Thời gian / thông tin thêm trên popup lớn';
+        el('period').placeholder=gv2?'VD: TỪ 16/10 ĐẾN 18/10':'Để trống = hiện mã sản phẩm';
+        el('period-help').textContent=gv2?'Để trống nếu không in thời gian.':'Để trống để in mã sản phẩm.';
       }catch(error){el('page-estimate').textContent=error.message;}
     }
     function closeResults(){el('results').hidden=true;el('search').setAttribute('aria-expanded','false');}
@@ -193,8 +201,8 @@
     if(isAdmin)el('export-prices').addEventListener('click',guarded(function(){if(!state.catalog.length)throw new Error('Chưa có bảng giá.');exportExcel(listRows(state.catalog),'bang-gia-gvgs');}));
     el('export-list').addEventListener('click',guarded(function(){if(!state.selected.length)throw new Error('Danh sách đang trống.');exportExcel(listRows(state.selected),el('name').value||'danh-sach-in-gvgs');}));
     el('export-missing').addEventListener('click',guarded(function(){exportExcel([['Mã sản phẩm','Tên sản phẩm','Số lượng','Lý do']].concat(state.missing.map(function(p){return [p.code,p.name,p.qty||'',p.reason];})),'gvgs-chua-ap-dung');}));
-    function settings(){return {catalogueId:publishedId,name:el('name').value||'GVGS NCN',format:el('size').value,note:el('note').value,period:el('period').value,color:el('color').checked};}
-    function applySettings(s){['name','note','period'].forEach(function(k){if(s[k]!=null)el(k).value=s[k];});el('color').checked=!!s.color;el('size').value=s.format||'popup-a5';updateEstimate();}
+    function settings(){return {catalogueId:publishedId,name:el('name').value||'GVGS NCN',format:el('size').value,note:el('note').value,period:el('period').value,quota:el('quota').value,color:el('color').checked};}
+    function applySettings(s){['name','note','period','quota'].forEach(function(k){if(s[k]!=null)el(k).value=s[k];});el('color').checked=!!s.color;el('size').value=s.format||'popup-a5';updateEstimate();}
     el('size').addEventListener('change',updateEstimate);
     el('all').addEventListener('click',guarded(function(){
       if(!state.catalog.length)throw new Error('Chọn bảng giá trước.');
@@ -216,7 +224,9 @@
     async function preview(record){
       var s=record?record.settings:settings(),items=record?record.items:state.selected;var layout=C.formatLayout(s.format);el('preview').disabled=true;try{
       state.print=await VIP.call('print',{items:items,settings:s});var frame=el('preview-frame');state.printReady=new Promise(function(resolve){frame.onload=function(){Promise.resolve(frame.contentDocument.fonts?frame.contentDocument.fonts.ready:null).then(resolve);};});frame.srcdoc=state.print.html;
-      el('dialog-title').textContent=s.name;el('preview-info').textContent=state.print.labels+' nhãn · '+state.print.pages+' trang A4 · '+layout.name;
+      var paper=state.print.paper||layout.paper||'A4';
+      el('dialog-title').textContent=s.name;el('preview-info').textContent=state.print.labels+' bản · '+state.print.pages+' trang '+paper+' · '+layout.name;
+      el('print-tip').textContent='Chọn giấy '+paper+', tỷ lệ 100%, lề Không, tắt đầu/chân trang; bật Đồ họa nền. Mẫu in có sẵn hình nền và font. Cuộn ngang để xem cả tờ trên điện thoại.';
       if(!el('dialog').open){if(typeof el('dialog').showModal==='function')el('dialog').showModal();else el('dialog').setAttribute('open','');}
       if(!record){state.history.unshift({createdAt:new Date().toISOString(),settings:s,items:items.map(function(p){return isAdmin?Object.assign({},p):{code:p.code,qty:p.qty};}),labels:state.print.labels,pages:state.print.pages});state.history=state.history.slice(0,15);persistHistory();}
       }finally{el('preview').disabled=false;}

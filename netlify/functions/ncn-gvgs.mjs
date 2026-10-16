@@ -5,16 +5,19 @@ import {readFileSync} from 'node:fs';
 import path from 'node:path';
 import QRCode from 'qrcode/lib/core/qrcode.js';
 import Core from '../lib/ncn-gvgs-private/core.cjs';
+import loadGV2Assets from '../lib/ncn-gvgs-private/gv2-assets.cjs';
 import {createHandler,verifyIdentity} from '../lib/ncn-event-api.mjs';
 import {PAYMENT_STORE,withPaidVip} from '../lib/ncn-membership.mjs';
 
 const base=path.join(process.cwd(),'netlify/lib/ncn-gvgs-private');
 const shared=path.join(process.cwd(),'netlify/lib/ncn-event-private');
+let gv2Assets;
 const dependencies={
   verify:async request=>withPaidVip(await verifyIdentity(request,getIdentityConfig()),()=>getStore({name:PAYMENT_STORE,consistency:'strong'})),
   store:()=>getStore({name:'ncn-gvgs-vip-v1',consistency:'strong'}),
   asset:name=>readFileSync(path.join(base,name),'utf8'),
   print:(items,settings)=>Core.printable(items,settings,{
+    gv2:String(settings.format||'').startsWith('popup-gv2-')?(gv2Assets||(gv2Assets=loadGV2Assets(path.join(process.cwd(),'public')))):null,
     frame:readFileSync(path.join(shared,'stick.png')).toString('base64'),
     font:readFileSync(path.join(shared,'mt2-mincap.woff2')).toString('base64'),
     qr:code=>QRCode.create(code,{errorCorrectionLevel:'M'}).modules
