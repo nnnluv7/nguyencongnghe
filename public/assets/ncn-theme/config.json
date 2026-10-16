@@ -4,18 +4,18 @@
   "logo": "/assets/ncn-theme/logo.png",
   "tagline": "Không gian công cụ của bạn",
   "hero": {
-    "eyebrow": "CỔNG CÔNG CỤ NCN",
-    "title": "Mọi công cụ.\nTrong một nơi.",
-    "description": "Tạo sticker, in popup, mở bảng giá Event và tìm các tiện ích cho ngày làm việc của bạn.",
-    "primaryText": "Khám phá công cụ",
-    "secondaryText": "Mở Event VIP"
+    "eyebrow": "KHÔNG GIAN CÔNG CỤ CỦA BẠN",
+    "title": "Chào mừng đến với NCN",
+    "description": "Mở nhanh Event VIP, Giờ Vàng, kiểm quỹ và các tiện ích. Chọn công cụ bên dưới hoặc mở menu để bắt đầu.",
+    "primaryText": "Mở Event VIP",
+    "secondaryText": "Xem tất cả công cụ"
   },
   "announcement": {
     "title": "Từ nội dung đến bản in, chỉ vài bước.",
     "description": "Chọn mẫu → nhập nội dung → kiểm tra xem trước → in. Bắt đầu với bộ Sticker và Popup.",
     "href": "/sticker/"
   },
-  "contactUrl": "/p/contact-us.html",
+  "contactUrl": "https://line.me/ti/p/C9-ixFOSeY",
   "groups": [
     {
       "id": "in-an",
@@ -39,6 +39,47 @@
     }
   ],
   "tools": [
+    {
+      "id": "event",
+      "title": "Event VIP",
+      "description": "Mở bảng giá được ADMIN lưu và in sticker cho chương trình Event.",
+      "href": "/in-event/",
+      "group": "in-an",
+      "icon": "bolt",
+      "tone": "navy",
+      "featured": true,
+      "access": "vip"
+    },
+    {
+      "id": "gvgs",
+      "title": "Giờ Vàng VIP",
+      "description": "VIP: lọc tồn kho, tra giá chương trình, in popup A5/A4 và sticker bát giác.",
+      "href": "/in-gvgs/",
+      "group": "in-an",
+      "icon": "bolt",
+      "tone": "amber",
+      "featured": true,
+      "access": "vip"
+    },
+    {
+      "id": "cash",
+      "title": "Kiểm quỹ",
+      "description": "Mở công cụ kiểm quỹ và đối chiếu tiền tại quầy.",
+      "href": "/2024/02/kiem-quy.html",
+      "group": "kho",
+      "icon": "wallet",
+      "tone": "amber"
+    },
+    {
+      "id": "insurance",
+      "title": "Bảo Hiểm & Trả Chậm",
+      "description": "Mở bộ công cụ tư vấn và tra cứu bảo hiểm hiện có.",
+      "href": "/2025/05/tu-van.html",
+      "group": "ban-hang",
+      "icon": "shield",
+      "tone": "amber",
+      "featured": true
+    },
     {
       "id": "lucky-wheel",
       "title": "Vòng Quay May Mắn",
@@ -82,38 +123,6 @@
       "featured": true
     },
     {
-      "id": "event",
-      "title": "Event VIP",
-      "description": "Mở bảng giá được ADMIN lưu và in sticker cho chương trình Event.",
-      "href": "/in-event/",
-      "group": "in-an",
-      "icon": "bolt",
-      "tone": "navy",
-      "featured": true,
-      "access": "vip"
-    },
-    {
-      "id": "gvgs",
-      "title": "Giờ Vàng Giá Sốc",
-      "description": "VIP: lọc tồn kho, tra giá chương trình, in popup A5/A4 và sticker bát giác.",
-      "href": "/in-gvgs/",
-      "group": "in-an",
-      "icon": "bolt",
-      "tone": "amber",
-      "featured": true,
-      "access": "vip"
-    },
-    {
-      "id": "insurance",
-      "title": "Bảo Hiểm & Trả Chậm",
-      "description": "Mở bộ công cụ tư vấn và tra cứu bảo hiểm hiện có.",
-      "href": "/2025/05/tu-van.html",
-      "group": "ban-hang",
-      "icon": "shield",
-      "tone": "amber",
-      "featured": true
-    },
-    {
       "id": "sales",
       "title": "Hỗ trợ bán hàng",
       "description": "Tem triển khai, bảng tên, biên bản và biểu mẫu hỗ trợ bán hàng.",
@@ -140,15 +149,6 @@
       "group": "kho",
       "icon": "tag",
       "tone": "teal"
-    },
-    {
-      "id": "cash",
-      "title": "Kiểm quỹ",
-      "description": "Mở công cụ kiểm quỹ và đối chiếu tiền tại quầy.",
-      "href": "/2024/02/kiem-quy.html",
-      "group": "kho",
-      "icon": "wallet",
-      "tone": "amber"
     },
     {
       "id": "inventory",
@@ -187,5 +187,9 @@
       "tone": "amber",
       "featured": true
     }
-  ]
+  ],
+  "adminContact": {
+    "line": "https://line.me/ti/p/C9-ixFOSeY",
+    "groupLine": "https://line.me/ti/g/EJP2yCnSVM"
+  }
 }

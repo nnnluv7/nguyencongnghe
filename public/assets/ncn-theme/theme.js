@@ -1,5 +1,6 @@
 import './visitor-counter.js?v=20261016-easy-2'; // NCN visitor metrics
-import {installEasyUI} from './easy-ui.js?v=20261016-one-theme-1';
+import {installToolUI} from './tool-ui.js?v=20261016-floating-1';
+import {installFloatingMenu,orderTools,navigationHTML} from './menu.js?v=20261016-floating-1';
 /* NCN portal: navigation and local display preferences. VIP authorization stays on the server. */
 const ICONS = {
   home:'<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z"/>',
@@ -63,7 +64,7 @@ export function createTheme({doc=document,win=window,config,catalog=win.CG_CATAL
   const imageURL=value=>preview&&win.NCN_THEME_PREVIEW_ASSETS?.[value]||safeHref(value);
   const previewLinks=root=>{if(preview)(root||doc).querySelectorAll('.ncn-ui a[href^="/"],a.ncn-search-result[href^="/"],a.ncn-search-all[href^="/"]').forEach(a=>{a.href='https://nguyencongnghe.com'+a.getAttribute('href');a.target='_blank';a.rel='noopener';});};
   const groups=(Array.isArray(cfg.groups)?cfg.groups:[]).filter(g=>g&&typeof g.id==='string'&&g.name);
-  const tools=(Array.isArray(cfg.tools)?cfg.tools:[]).filter(t=>t&&/^[a-z0-9-]+$/i.test(t.id)&&t.title&&safeHref(t.href)).map(t=>({...t,href:safeHref(t.href)}));
+  const tools=orderTools((Array.isArray(cfg.tools)?cfg.tools:[]).filter(t=>t&&/^[a-z0-9-]+$/i.test(t.id)&&t.title&&safeHref(t.href)).map(t=>({...t,href:safeHref(t.href)})));
   const toolIds=new Set(tools.map(t=>t.id));
   const rows=normalizeCatalog(catalog);
   let favorites;
@@ -73,7 +74,8 @@ export function createTheme({doc=document,win=window,config,catalog=win.CG_CATAL
   doc.querySelectorAll('[data-ncn-config]').forEach(el=>{const value=configText(el.dataset.ncnConfig); if(typeof value==='string') el.textContent=value;});
   doc.querySelectorAll('[data-ncn-logo]').forEach(el=>{if(safeHref(cfg.logo)) el.src=imageURL(cfg.logo);});
   if($('ncn-announce-link') && safeHref(cfg.announcement?.href)) $('ncn-announce-link').href=safeHref(cfg.announcement.href);
-  if($('ncn-contact-link') && safeHref(cfg.contactUrl)) $('ncn-contact-link').href=safeHref(cfg.contactUrl);
+  for(const node of doc.querySelectorAll('[data-ncn-admin-line]')){const url=safeHref(cfg.adminContact?.line||cfg.contactUrl);if(url)node.href=url;}
+  for(const node of doc.querySelectorAll('[data-ncn-admin-group]')){const url=safeHref(cfg.adminContact?.groupLine);if(url)node.href=url;}
   text('ncn-today',new Intl.DateTimeFormat('vi-VN',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric',timeZone:'Asia/Ho_Chi_Minh'}).format(new Date()));
   doc.body.classList.add('ncn-modern');
   // These are the original nodes: login handlers, ADMIN labels and quick tools keep their identity.
@@ -93,14 +95,11 @@ export function createTheme({doc=document,win=window,config,catalog=win.CG_CATAL
   listen($('ncn-page-print'),'click',()=>win.print());
   text('ncn-page-section',home?'Tổng quan':library?'Thư viện':currentTool?groups.find(g=>g.id===currentTool.group)?.name||'Công cụ':'Nội dung');
   text('ncn-page-title',home?'Cổng công cụ NCN':library?'Bài viết & hướng dẫn':currentTool?.title||doc.title.replace(/\s*\|\s*nguyencongnghe\.com$/i,''));
-  function navLink(href,title,icon,badge='') {
+  function navLink(href,title,icon,badge='',id='') {
     const active=canonicalPath(href)===path;
-    return `<a class="ncn-nav-link" href="${escapeHTML(href)}"${active?' aria-current="page"':''}>${svg(icon)}<span>${escapeHTML(title)}</span>${badge?'<b class="ncn-nav-pill">VIP</b>':''}</a>`;
+    return `<a class="ncn-nav-link" href="${escapeHTML(href)}"${id?` data-ncn-tool="${escapeHTML(id)}"`:""}${active?' aria-current="page"':''}>${svg(icon)}<span>${escapeHTML(title)}</span>${badge?'<b class="ncn-nav-pill">VIP</b>':''}</a>`;
   }
-  if($('ncn-navigation')) $('ncn-navigation').innerHTML=navLink('/','Tổng quan','home')+groups.map(group=>{
-    const items=tools.filter(t=>t.group===group.id);
-    return items.length?`<p class="ncn-nav-label">${escapeHTML(group.name)}</p>`+items.map(t=>navLink(t.href,t.title,t.icon,t.access==='vip')).join(''):'';
-  }).join('')+'<p class="ncn-nav-label">Khám phá</p>'+navLink('/thu-vien/','Thư viện bài viết','book');
+  if(tools.length&&$('ncn-navigation')) $('ncn-navigation').innerHTML=navigationHTML(tools,navLink);
   // A repository without Event still gets a useful portal, without dead VIP links.
   if(!tools.some(t=>t.id==='event')) doc.querySelectorAll('#ncn-site-shell a[href="/in-event/"],.ncn-hero-actions a[href="/in-event/"]').forEach(a=>a.hidden=true);
   function applyMode(mode,persist=false) {
@@ -111,16 +110,7 @@ export function createTheme({doc=document,win=window,config,catalog=win.CG_CATAL
   }
   icons();applyMode(read('ncn-theme')==='dark'?'dark':'light');
   listen($('ncn-theme-toggle'),'click',()=>applyMode(doc.body.classList.contains('dark')?'light':'dark',true));
-  function setMenu(open,restoreFocus=true) {
-    doc.body.classList.toggle('ncn-menu-open',open);
-    if($('ncn-menu-backdrop')) $('ncn-menu-backdrop').hidden=!open;
-    $('ncn-menu-open')?.setAttribute('aria-expanded',String(open));
-    if(open) $('ncn-menu-close')?.focus();else if(restoreFocus) $('ncn-menu-open')?.focus();
-  }
-  listen($('ncn-menu-open'),'click',()=>setMenu(true));
-  listen($('ncn-menu-close'),'click',()=>setMenu(false));
-  listen($('ncn-menu-backdrop'),'click',()=>setMenu(false));
-  listen($('ncn-navigation'),'click',e=>{if(e.target.closest('a')) setMenu(false,false);});
+  const menu=installFloatingMenu({doc,win}),setMenu=(value,restoreFocus=true)=>menu.setOpen(value,restoreFocus);
   function setDrawer(open) {
     if($('ncn-page-tools')) $('ncn-page-tools').hidden=!open;
     $('ncn-tools-toggle')?.setAttribute('aria-expanded',String(open));
@@ -151,13 +141,6 @@ export function createTheme({doc=document,win=window,config,catalog=win.CG_CATAL
   listen(doc,'keydown',e=>{
     if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();openSearch();}
     if(e.key==='Escape'){if(dialog?.open)closeSearch();if(doc.body.classList.contains('ncn-menu-open'))setMenu(false);if(!$('ncn-page-tools')?.hidden)setDrawer(false);}
-    // Keep keyboard focus within the mobile menu while its backdrop is open.
-    if(e.key==='Tab'&&doc.body.classList.contains('ncn-menu-open')){
-      const focusable=[...$('ncn-sidebar').querySelectorAll('a[href],button')].filter(el=>!el.hidden);
-      const first=focusable[0],last=focusable.at(-1);
-      if(e.shiftKey&&doc.activeElement===first){e.preventDefault();last?.focus();}
-      else if(!e.shiftKey&&doc.activeElement===last){e.preventDefault();first?.focus();}
-    }
   });
   let homeGroup='',homeQuery='';
   function toolCard(t) {
@@ -216,19 +199,21 @@ export function createTheme({doc=document,win=window,config,catalog=win.CG_CATAL
     // The preview uses the same UI, and opens existing website routes in the browser.
     previewLinks();
   }
-  const easyUI=installEasyUI({doc,win,config:cfg,preview});
-  return {tools,rows,renderTools,renderSearch,renderLibrary,openSearch,closeSearch,destroy:()=>{easyUI.destroy();listeners.splice(0).forEach(remove=>remove());}};
+  const toolUI=installToolUI({doc,win,config:cfg,preview});
+  return {tools,rows,renderTools,renderSearch,renderLibrary,openSearch,closeSearch,menu,destroy:()=>{menu.destroy();toolUI.destroy();listeners.splice(0).forEach(remove=>remove());}};
 }
 
 export async function bootTheme() {
+  installFloatingMenu({doc:document,win:window});
   let config=window.NCN_THEME_CONFIG;
   let configFailed=false;
   if(!config){
     try {
-      const response=await fetch('/assets/ncn-theme/config.json?v=20261016-one-theme-1');
+      const response=await fetch('/assets/ncn-theme/config.json?v=20261016-floating-1');
       if(!response.ok) throw new Error('config');config=await response.json();
     } catch {
-      configFailed=true;config={brand:'NCN',tagline:'Không gian công cụ của bạn',groups:[],tools:[]};
+      try{config=JSON.parse(document.getElementById('ncn-initial-config')?.textContent||'null');}catch{}
+      if(!config){configFailed=true;config={brand:'NCN',tagline:'Không gian công cụ của bạn',groups:[],tools:[]};}
     }
   }
   const result=createTheme({config,preview:window.NCN_THEME_PREVIEW===true});
