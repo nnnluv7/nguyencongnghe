@@ -6,11 +6,12 @@ import path from 'node:path';
 import QRCode from 'qrcode/lib/core/qrcode.js';
 import Core from '../lib/ncn-gvgs-private/core.cjs';
 import {createHandler,verifyIdentity} from '../lib/ncn-event-api.mjs';
+import {PAYMENT_STORE,withPaidVip} from '../lib/ncn-membership.mjs';
 
 const base=path.join(process.cwd(),'netlify/lib/ncn-gvgs-private');
 const shared=path.join(process.cwd(),'netlify/lib/ncn-event-private');
 const dependencies={
-  verify:request=>verifyIdentity(request,getIdentityConfig()),
+  verify:async request=>withPaidVip(await verifyIdentity(request,getIdentityConfig()),()=>getStore({name:PAYMENT_STORE,consistency:'strong'})),
   store:()=>getStore({name:'ncn-gvgs-vip-v1',consistency:'strong'}),
   asset:name=>readFileSync(path.join(base,name),'utf8'),
   print:(items,settings)=>Core.printable(items,settings,{

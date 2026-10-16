@@ -58,3 +58,13 @@
   status = 200
   force = true
 # END NCN GVGS VIP
+
+# BEGIN NCN VIP PAYMENT
+[functions."ncn-billing"]
+  node_bundler = "esbuild"
+  external_node_modules = ["@netlify/identity", "@netlify/blobs"]
+
+[functions."ncn-sepay-webhook"]
+  node_bundler = "esbuild"
+  external_node_modules = ["@netlify/blobs"]
+# END NCN VIP PAYMENT

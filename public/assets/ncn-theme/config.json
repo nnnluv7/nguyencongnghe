@@ -166,6 +166,16 @@
       "group": "tien-ich",
       "icon": "spark",
       "tone": "coral"
+    },
+    {
+      "id": "vip",
+      "title": "Nâng cấp VIP",
+      "description": "30.000đ/30 ngày hoặc 55.000đ/60 ngày. Dùng chung Sticker Event và Giờ Vàng Giá Sốc.",
+      "href": "/premium/",
+      "group": "tien-ich",
+      "icon": "shield",
+      "tone": "amber",
+      "featured": true
     }
   ]
 }

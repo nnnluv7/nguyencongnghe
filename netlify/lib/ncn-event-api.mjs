@@ -48,7 +48,7 @@ export function createHandler(deps){return async function(req){
     const user=await deps.verify(req);
     if(route==='me'&&method==='GET')return reply({user,allowed:!!(user&&(user.admin||user.vip))});
     if(!user)fail(401,'Đăng nhập tài khoản VIP để sử dụng.');
-    if(!user.admin&&!user.vip)fail(403,'Tài khoản đang chờ ADMIN duyệt và cấp VIP.');
+    if(!user.admin&&!user.vip)fail(403,'Tài khoản chưa có VIP hoặc gói đã hết hạn. Đăng ký/gia hạn VIP hoặc liên hệ ADMIN.');
     const store=deps.store();
     if(route==='app'&&method==='GET')return reply({html:await deps.asset(user.admin?'admin.html':'vip.html'),user});
     if(route==='asset'&&method==='GET'){
