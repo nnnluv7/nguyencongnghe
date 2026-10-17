@@ -285,3 +285,44 @@ html[data-ncn-theme="dark"] .ncn-game-nav a[aria-current="page"]{background:#263
   .topbar,.ncn-game-sidebar{background:var(--ncn-surface)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
 }
 /* END NCN GAME GLASS POLISH 20261017 */
+/* BEGIN NCN GAME MOBILE GLASS 20261017-v1 */
+/* Game shell only. Keep canvas sizing and menu positions unchanged. */
+@media screen and (max-width:900px) {
+  :root {
+    --ncn-game-mobile-panel:rgba(247,251,255,.76);
+    --ncn-game-mobile-strong:rgba(250,253,255,.88);
+    --ncn-game-mobile-rim:rgba(255,255,255,.85);
+    --ncn-game-mobile-shadow:0 15px 44px rgba(22,52,99,.15),inset 0 1px 0 rgba(255,255,255,.88);
+  }
+  html[data-ncn-theme="dark"] {
+    --ncn-game-mobile-panel:rgba(24,39,63,.75);
+    --ncn-game-mobile-strong:rgba(23,38,62,.88);
+    --ncn-game-mobile-rim:rgba(218,235,255,.19);
+    --ncn-game-mobile-shadow:0 22px 55px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.10);
+  }
+  .topbar,.ncn-game-sidebar {
+    background:var(--ncn-game-mobile-strong);
+    border-color:var(--ncn-game-mobile-rim);
+    box-shadow:var(--ncn-game-mobile-shadow);
+  }
+  .ncn-game-admin,#ncn-game-theme,.ncn-game-close,.ncn-game-admin a {
+    background:var(--ncn-game-mobile-panel);
+    border-color:var(--ncn-game-mobile-rim);
+  }
+  @supports ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))) {
+    .topbar,.ncn-game-sidebar {
+      -webkit-backdrop-filter:blur(22px) saturate(155%);
+      backdrop-filter:blur(22px) saturate(155%);
+    }
+  }
+}
+@media screen and (max-width:900px) and (prefers-reduced-transparency:reduce),
+       screen and (max-width:900px) and (prefers-contrast:more),
+       screen and (max-width:900px) and (forced-colors:active) {
+  .topbar,.ncn-game-sidebar {
+    background:var(--ncn-surface)!important;
+    -webkit-backdrop-filter:none!important;
+    backdrop-filter:none!important;
+  }
+}
+/* END NCN GAME MOBILE GLASS 20261017-v1 */
