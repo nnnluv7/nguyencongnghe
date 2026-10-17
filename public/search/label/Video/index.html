@@ -6,13 +6,14 @@
 <meta charset="utf-8">
 <style id="ncn-appearance-style">
 @media screen {
-html[data-ncn-theme="light"]{color-scheme:light;background:#f4f7fb;color:#192d4a}
+html[data-ncn-theme="light"]{color-scheme:light;background:#f4f7fb;color:#15263d}
 html[data-ncn-theme="dark"]{color-scheme:dark;background:#0c1628;color:#edf3ff}
-html[data-ncn-theme="light"] body.ncn-modern{background-color:#f4f7fb!important;color:#192d4a}
-html[data-ncn-theme="dark"] body.ncn-modern{background-color:#0c1628!important;color:#edf3ff}
+html[data-ncn-theme="light"] body.ncn-modern{background-color:#f4f7fb!important;color:#15263d;background-image:radial-gradient(ellipse 68% 520px at 9% 0%,rgba(114,183,255,.30),transparent 78%),radial-gradient(ellipse 60% 480px at 92% 12%,rgba(182,163,255,.26),transparent 76%),radial-gradient(ellipse 54% 420px at 45% 35%,rgba(112,222,208,.16),transparent 78%);background-repeat:no-repeat;background-size:100% 1000px}
+html[data-ncn-theme="dark"] body.ncn-modern{background-color:#0c1628!important;color:#edf3ff;background-image:radial-gradient(ellipse 68% 520px at 9% 0%,rgba(45,113,212,.24),transparent 78%),radial-gradient(ellipse 60% 480px at 92% 12%,rgba(128,88,204,.20),transparent 76%),radial-gradient(ellipse 54% 420px at 45% 35%,rgba(34,143,153,.12),transparent 78%);background-repeat:no-repeat;background-size:100% 1000px}
 body.ncn-modern #header-wrapper,body.ncn-modern #top-bar,body.ncn-modern #footer-wrapper,body.ncn-modern #inner-menu,body.ncn-modern>.overlay,body.ncn-modern>.backTop{display:none!important}
 }
 @media print {html[data-ncn-theme]{color-scheme:light;background:#fff;color:#000}}
+@media screen and (prefers-reduced-transparency:reduce),screen and (prefers-contrast:more),screen and (forced-colors:active){html[data-ncn-theme] body.ncn-modern{background-image:none!important}}
 </style>
 <script id="ncn-appearance-bootstrap" data-ncn-appearance>
 (function(){
@@ -110,8 +111,8 @@ if(typeof window!=='undefined'&&typeof document!=='undefined')installAppearance(
 <script src="/assets/site-config.js"></script><script src="/assets/catalog.js"></script><script src="/assets/js/47ee60ab923773d65c.js"></script><script src="/assets/vendor/8ec8dce35a344a43af.js" type="text/javascript"></script><script src="/assets/site-bridge.js"></script><link href="/assets/replica.css" rel="stylesheet"/><!-- NCN site.css: base -->
 <!-- NCN site.css: titles -->
 <!-- NCN site.css: responsive -->
-<link id="ncn-site-style" rel="stylesheet" href="/assets/ncn-theme/site.css?v=20261017-mobile-dark-1"></head>
-<body class="index home feed-view ncn-modern ncn-floating-ui" data-label="Video" id="mainContent"><script data-ncn-appearance-body>window.NCN_APPEARANCE?.refresh();</script>
+<link id="ncn-site-style" rel="stylesheet" href="/assets/ncn-theme/site.css?v=20261017-glass-1"></head>
+<body class="index home feed-view ncn-modern ncn-floating-ui ncn-liquid-glass" data-label="Video" id="mainContent"><script data-ncn-appearance-body>window.NCN_APPEARANCE?.refresh();</script>
 <!-- BEGIN NCN MODERN SHELL -->
 <a class="ncn-skip" href="#feed-view">Bỏ qua menu, đến nội dung</a>
 <div id="ncn-site-shell" class="ncn-ui">
