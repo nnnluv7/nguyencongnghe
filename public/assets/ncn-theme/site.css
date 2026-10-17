@@ -443,224 +443,160 @@ body.ncn-modern .st-card-sizes button:focus-visible{outline: 3px solid #2563b8; 
 @media screen{body.ncn-modern #ncn-cash-app .cq-metric[data-kind=over]{border-color: #d5b57a;}}
 @media screen{body.ncn-modern #ncn-cash-app .cq-metric[data-kind=match]{border-color: #7fbea8;}}
 
-/* BEGIN NCN UNIFIED LIQUID GLASS 20261017 */
-/* NCN: visual surfaces only; no layout, auth flow, VIP checks or print edits. */
+/* BEGIN NCN SOFT GLASS 20261017-v1 */
+/* Quiet visual layer shared by desktop and mobile. Screen only; print sheets untouched. */
 @media screen {
   body.ncn-modern {
-    --ncn-unified-panel:rgba(251,253,255,.77);
-    --ncn-unified-panel-strong:rgba(252,254,255,.90);
-    --ncn-unified-input:rgba(255,255,255,.68);
-    --ncn-unified-rim:rgba(255,255,255,.87);
-    --ncn-unified-line:rgba(103,145,196,.25);
-    --ncn-unified-shadow:0 20px 56px rgba(20,55,96,.13),inset 0 1px rgba(255,255,255,.90),inset 0 -1px rgba(123,156,201,.14);
+    --ncn-bg:#f3f6f9;
+    --ncn-ink:#203249;
+    --ncn-muted:#586b80;
+    --ncn-accent:#2c659f;
+    --ncn-border:rgba(124,148,175,.28);
+    --ncn-rim:rgba(143,164,190,.42);
+    --ncn-highlight:rgba(255,255,255,.35);
+    --ncn-glass:rgba(249,251,253,.91);
+    --ncn-glass-strong:rgba(251,252,254,.95);
+    --ncn-glass-soft:rgba(241,246,250,.89);
+    --ncn-glass-card:rgba(255,255,255,.91);
+    --ncn-calm-nav:rgba(250,252,254,.94);
+    --ncn-calm-card:rgba(255,255,255,.91);
+    --ncn-calm-control:rgba(244,248,252,.91);
+    --ncn-calm-line:rgba(129,152,180,.34);
+    --ncn-calm-shadow:0 8px 27px rgba(28,55,85,.085),0 1px 3px rgba(28,55,85,.045);
+    --ncn-calm-shadow-lg:0 15px 42px rgba(28,55,85,.13),0 2px 6px rgba(28,55,85,.055);
+    --ncn-shadow:var(--ncn-calm-shadow);
+    --ncn-shadow-high:var(--ncn-calm-shadow-lg);
+    --ncn-unified-panel:var(--ncn-calm-card);
+    --ncn-unified-panel-strong:var(--ncn-calm-nav);
+    --ncn-unified-input:var(--ncn-calm-control);
+    --ncn-unified-rim:var(--ncn-calm-line);
+    --ncn-unified-line:var(--ncn-calm-line);
+    --ncn-unified-shadow:var(--ncn-calm-shadow);
+    --ncn-mobile-panel:var(--ncn-calm-card);
+    --ncn-mobile-strong:var(--ncn-calm-nav);
+    --ncn-mobile-control:var(--ncn-calm-control);
+    --ncn-mobile-rim:var(--ncn-calm-line);
+    --ncn-mobile-line:var(--ncn-calm-line);
+    --ncn-mobile-shadow:var(--ncn-calm-shadow);
+    background-color:var(--ncn-bg)!important;
+    background-image:none!important;
   }
   html[data-ncn-theme="dark"] body.ncn-modern,
   body.ncn-modern.dark {
-    --ncn-unified-panel:rgba(24,39,62,.76);
-    --ncn-unified-panel-strong:rgba(27,43,70,.91);
-    --ncn-unified-input:rgba(35,54,82,.80);
-    --ncn-unified-rim:rgba(203,224,255,.16);
-    --ncn-unified-line:rgba(174,203,249,.26);
-    --ncn-unified-shadow:0 24px 64px rgba(0,0,0,.30),inset 0 1px rgba(255,255,255,.10);
-  }
-
-  /* Shared navigation, search, drawers and account menu. */
-  body.ncn-modern :is(#ncn-topbar,#ncn-sidebar,#ncn-page-tools,#ncn-search-dialog,.ncn-account-dropdown) {
-    background:var(--ncn-unified-panel-strong);
-    border-color:var(--ncn-unified-rim);
-    box-shadow:var(--ncn-unified-shadow);
-  }
-  body.ncn-modern :is(.ncn-menu-heading,.ncn-search-dialog-head,.ncn-admin-card) {
-    border-color:var(--ncn-unified-line);
-  }
-  body.ncn-modern :is(.ncn-icon-button,.ncn-account-menu summary,.ncn-admin-links a,.ncn-top-search) {
-    background:var(--ncn-unified-input);
-    border-color:var(--ncn-unified-rim);
-    box-shadow:inset 0 1px rgba(255,255,255,.16);
-  }
-
-  /* Login/register/forgot-password UI, without changing display or JS handlers. */
-  body.ncn-modern .auth-modal .auth-box {
-    background:var(--ncn-unified-panel-strong);
-    color:var(--ncn-ink);
-    border:1px solid var(--ncn-unified-rim);
-    border-radius:28px;
-    box-shadow:0 28px 90px rgba(8,24,54,.27),inset 0 1px rgba(255,255,255,.26);
-  }
-  body.ncn-modern .auth-modal .auth-title { color:var(--ncn-ink);letter-spacing:-.35px; }
-  body.ncn-modern .auth-modal .auth-field label { color:var(--ncn-ink); }
-  body.ncn-modern .auth-modal .auth-input {
-    background:var(--ncn-unified-input);
-    color:var(--ncn-ink);
-    border:1px solid var(--ncn-unified-line);
-    border-radius:14px;
-    box-shadow:inset 0 1px 2px rgba(4,31,63,.05);
-  }
-  body.ncn-modern .auth-modal .auth-input:focus-visible {
-    outline:2px solid var(--ncn-accent);
-    outline-offset:2px;
-  }
-  body.ncn-modern .auth-modal .auth-submit {
-    border:1px solid rgba(255,255,255,.30);
-    border-radius:14px;
-    background:linear-gradient(150deg,#367dd8,#185bb0);
-    color:#fff;
-    box-shadow:0 9px 22px rgba(31,94,172,.24),inset 0 1px rgba(255,255,255,.28);
-  }
-  body.ncn-modern .auth-modal .auth-close {
-    border-radius:50%;
-    color:var(--ncn-ink);
-  }
-  body.ncn-modern .auth-modal .auth-link { color:var(--ncn-accent); }
-
-  /* Forms and content cards: scoped to app chrome, not print/preview stages. */
-  body.ncn-modern :is(.ncn-welcome-panel,.ncn-tool-card,.ncn-article-card,.ncn-contact-panel),
-  body.ncn-modern #ncn-event-app .ev-panel,
-  body.ncn-modern :is(#ncn-sticker-app,#ncn-popup-app,#ncn-store-app) :is(.st-panel:not(.st-preview-panel),.st-card),
-  body.ncn-modern #ncn-wheel-app .lw-panel,
-  body.ncn-modern #ncn-billing-app :is(.pay-panel,.pay-plan),
-  body.ncn-modern #ncn-cash-app :is(.cq-panel,.cq-metric:not(.cq-metric-main)) {
-    background:var(--ncn-unified-panel);
-    border-color:var(--ncn-unified-rim);
-    box-shadow:var(--ncn-unified-shadow);
-  }
-  body.ncn-modern #ncn-event-app .ev-dialog,
-  body.ncn-modern #ncn-cash-app #cq-copy-dialog {
-    background:var(--ncn-unified-panel-strong);
-    border-color:var(--ncn-unified-rim);
-    box-shadow:var(--ncn-unified-shadow);
-    border-radius:24px;
-  }
-  body.ncn-modern :is(#ncn-event-app .ev-field input,#ncn-event-app .ev-field select,
-                        #ncn-sticker-app .st-field input,#ncn-sticker-app .st-field select,
-                        #ncn-popup-app .st-field input,#ncn-popup-app .st-field select,
-                        #ncn-billing-app .pay-form input) {
-    border-radius:12px;
-    border-color:var(--ncn-unified-line);
-    background:var(--ncn-unified-input);
-    color:var(--ncn-ink);
-  }
-  body.ncn-modern :is(#ncn-event-app .ev-button,#ncn-billing-app .pay-btn,
-                      #ncn-sticker-app .st-button,#ncn-popup-app .st-button) { border-radius:12px; }
-
-  @supports ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))) {
-    body.ncn-modern :is(#ncn-topbar,#ncn-sidebar,#ncn-page-tools,#ncn-search-dialog,.ncn-account-dropdown,
-                        .auth-modal .auth-box,.ncn-welcome-panel,.ncn-tool-card,.ncn-article-card,.ncn-contact-panel),
-    body.ncn-modern #ncn-event-app :is(.ev-panel,.ev-dialog),
-    body.ncn-modern :is(#ncn-sticker-app,#ncn-popup-app,#ncn-store-app) :is(.st-panel:not(.st-preview-panel),.st-card),
-    body.ncn-modern #ncn-wheel-app .lw-panel,
-    body.ncn-modern #ncn-billing-app :is(.pay-panel,.pay-plan),
-    body.ncn-modern #ncn-cash-app :is(.cq-panel,.cq-metric:not(.cq-metric-main),#cq-copy-dialog) {
-      -webkit-backdrop-filter:blur(22px) saturate(160%);
-      backdrop-filter:blur(22px) saturate(160%);
-    }
-  }
-}
-/* Fallbacks are intentional for reduced transparency, contrast and accessibility. */
-@media screen and (prefers-reduced-transparency:reduce),screen and (prefers-contrast:more),screen and (forced-colors:active) {
-  body.ncn-modern :is(#ncn-topbar,#ncn-sidebar,#ncn-page-tools,#ncn-search-dialog,.ncn-account-dropdown,.auth-modal .auth-box),
-  body.ncn-modern :is(.ncn-welcome-panel,.ncn-tool-card,.ncn-article-card,.ncn-contact-panel) {
-    background:var(--ncn-surface)!important;
-    -webkit-backdrop-filter:none!important;
-    backdrop-filter:none!important;
-  }
-}
-/* END NCN UNIFIED LIQUID GLASS 20261017 */
-/* BEGIN NCN MOBILE GLASS 20261017-v1 */
-/* Mobile-only visual polish. No changes to layouts, JS, auth, or printing. */
-@media screen and (max-width:900px) {
-  body.ncn-modern {
-    --ncn-mobile-panel:rgba(247,251,255,.76);
-    --ncn-mobile-strong:rgba(250,253,255,.88);
-    --ncn-mobile-control:rgba(255,255,255,.58);
-    --ncn-mobile-rim:rgba(255,255,255,.85);
-    --ncn-mobile-line:rgba(92,131,186,.24);
-    --ncn-mobile-shadow:0 15px 44px rgba(22,52,99,.15),inset 0 1px 0 rgba(255,255,255,.88);
-  }
-  html[data-ncn-theme="dark"] body.ncn-modern,
-  body.ncn-modern.dark {
-    --ncn-mobile-panel:rgba(24,39,63,.75);
-    --ncn-mobile-strong:rgba(23,38,62,.88);
-    --ncn-mobile-control:rgba(54,75,106,.43);
-    --ncn-mobile-rim:rgba(218,235,255,.19);
-    --ncn-mobile-line:rgba(166,195,238,.21);
-    --ncn-mobile-shadow:0 22px 55px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.10);
+    --ncn-bg:#111d2c;
+    --ncn-ink:#e8edf5;
+    --ncn-muted:#a9bbcd;
+    --ncn-accent:#9fc7fb;
+    --ncn-border:rgba(168,189,214,.22);
+    --ncn-rim:rgba(169,192,221,.25);
+    --ncn-highlight:rgba(255,255,255,.07);
+    --ncn-glass:rgba(30,45,65,.94);
+    --ncn-glass-strong:rgba(32,47,68,.97);
+    --ncn-glass-soft:rgba(42,60,84,.88);
+    --ncn-glass-card:rgba(30,45,65,.94);
+    --ncn-calm-nav:rgba(30,45,65,.97);
+    --ncn-calm-card:rgba(31,46,67,.94);
+    --ncn-calm-control:rgba(47,66,90,.92);
+    --ncn-calm-line:rgba(168,189,214,.25);
+    --ncn-calm-shadow:0 9px 27px rgba(0,0,0,.17),0 1px 3px rgba(0,0,0,.10);
+    --ncn-calm-shadow-lg:0 15px 42px rgba(0,0,0,.28);
   }
   body.ncn-modern :is(#ncn-topbar,#ncn-sidebar,#ncn-page-tools,#ncn-search-dialog,.ncn-account-dropdown) {
-    background:var(--ncn-mobile-strong);
-    border-color:var(--ncn-mobile-rim);
-    box-shadow:var(--ncn-mobile-shadow);
+    background:var(--ncn-calm-nav);
+    border-color:var(--ncn-calm-line);
+    box-shadow:var(--ncn-calm-shadow-lg);
   }
-  body.ncn-modern :is(#ncn-footer,.ncn-welcome-panel,.ncn-tool-card,.ncn-article-card,.ncn-contact-panel,.ncn-quick-card) {
-    background:var(--ncn-mobile-panel);
-    border-color:var(--ncn-mobile-rim);
-    box-shadow:var(--ncn-mobile-shadow);
-  }
-  body.ncn-modern :is(.ncn-icon-button,.ncn-account-menu summary,.ncn-top-search,.ncn-admin-links a,.ncn-button-glass) {
-    background:var(--ncn-mobile-control);
-    border-color:var(--ncn-mobile-rim);
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.16);
-  }
-  body.ncn-modern :is(.ncn-menu-heading,.ncn-admin-card,.ncn-search-dialog-head) {
-    border-color:var(--ncn-mobile-line);
-  }
-  body.ncn-modern .auth-modal .auth-box {
-    background:var(--ncn-mobile-strong);
-    border:1px solid var(--ncn-mobile-rim);
-    border-radius:26px;
-    box-shadow:0 24px 65px rgba(10,26,55,.27),inset 0 1px rgba(255,255,255,.20);
-    color:var(--ncn-ink);
-  }
-  body.ncn-modern .auth-modal .auth-input {
-    background:var(--ncn-mobile-control);
-    border-color:var(--ncn-mobile-line);
-    border-radius:13px;
-    color:var(--ncn-ink);
-  }
+  body.ncn-modern :is(#ncn-footer,.ncn-welcome-panel,.ncn-tool-card,.ncn-article-card,.ncn-contact-panel,.ncn-quick-card),
   body.ncn-modern #ncn-event-app :is(.ev-panel,.ev-dialog),
   body.ncn-modern :is(#ncn-sticker-app,#ncn-popup-app,#ncn-store-app) :is(.st-panel:not(.st-preview-panel),.st-card),
   body.ncn-modern #ncn-wheel-app .lw-panel,
   body.ncn-modern #ncn-billing-app :is(.pay-panel,.pay-plan),
   body.ncn-modern #ncn-cash-app :is(.cq-panel,.cq-metric:not(.cq-metric-main),#cq-copy-dialog) {
-    background:var(--ncn-mobile-panel);
-    border-color:var(--ncn-mobile-rim);
-    box-shadow:var(--ncn-mobile-shadow);
+    background:var(--ncn-calm-card);
+    border-color:var(--ncn-calm-line);
+    box-shadow:var(--ncn-calm-shadow);
   }
+  body.ncn-modern :is(.ncn-icon-button,.ncn-account-menu summary,.ncn-top-search,.ncn-admin-links a,.ncn-button-glass),
+  body.ncn-modern .auth-modal .auth-input {
+    background:var(--ncn-calm-control);
+    border-color:var(--ncn-calm-line);
+    box-shadow:none;
+  }
+  body.ncn-modern :is(.ncn-menu-heading,.ncn-admin-card,.ncn-search-dialog-head) {
+    border-color:var(--ncn-calm-line);
+  }
+  body.ncn-modern .ncn-admin-card,
+  body.ncn-modern .ncn-search-dialog-head {background:var(--ncn-calm-nav)}
+  body.ncn-modern .auth-modal .auth-box {
+    background:var(--ncn-calm-nav);
+    color:var(--ncn-ink);
+    border:1px solid var(--ncn-calm-line);
+    border-radius:22px;
+    box-shadow:var(--ncn-calm-shadow-lg);
+  }
+  body.ncn-modern .auth-modal .auth-input {
+    border-radius:12px;
+    color:var(--ncn-ink);
+  }
+  body.ncn-modern .auth-modal .auth-submit {
+    background:#2d67a7;
+    color:#fff;
+    border-radius:12px;
+    box-shadow:0 4px 12px rgba(31,85,150,.16);
+  }
+  body.ncn-modern #ncn-menu-open {
+    background:linear-gradient(150deg,#3572b6,#2762a2);
+    box-shadow:0 5px 16px rgba(35,85,149,.16),inset 0 1px rgba(255,255,255,.18);
+  }
+  body.ncn-modern .ncn-tool-card::before,
+  body.ncn-modern .ncn-welcome-panel::before {opacity:.10}
+  body.ncn-modern .ncn-tool-card:hover {box-shadow:0 11px 28px rgba(28,55,85,.105)}
+  body.ncn-modern .ncn-nav-link:hover {transform:none}
+  body.ncn-modern .ncn-tool-card {border-radius:20px}
+  body.ncn-modern .ncn-welcome-panel {border-radius:24px}
+  body.ncn-modern #ncn-topbar {border-radius:24px}
+  body.ncn-modern #ncn-sidebar {border-radius:25px}
   body.ncn-modern :is(#ncn-event-app .ev-field input,#ncn-event-app .ev-field select,
                       #ncn-sticker-app .st-field input,#ncn-sticker-app .st-field select,
                       #ncn-popup-app .st-field input,#ncn-popup-app .st-field select,
                       #ncn-billing-app .pay-form input) {
-    background:var(--ncn-mobile-control);
-    border-color:var(--ncn-mobile-line);
+    background:var(--ncn-calm-control);
+    border-color:var(--ncn-calm-line);
     color:var(--ncn-ink);
   }
   @supports ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))) {
-    body.ncn-modern :is(#ncn-topbar,#ncn-sidebar,#ncn-page-tools,#ncn-search-dialog,.ncn-account-dropdown,
-                        .auth-modal .auth-box,#ncn-footer,.ncn-welcome-panel,.ncn-tool-card,.ncn-article-card,.ncn-contact-panel,.ncn-quick-card),
-    body.ncn-modern #ncn-event-app :is(.ev-panel,.ev-dialog),
+    body.ncn-modern :is(#ncn-topbar,#ncn-sidebar,#ncn-page-tools,#ncn-search-dialog,.ncn-account-dropdown,.auth-modal .auth-box),
+    body.ncn-modern #ncn-event-app .ev-dialog,
+    body.ncn-modern #ncn-cash-app #cq-copy-dialog {
+      -webkit-backdrop-filter:blur(12px) saturate(112%);
+      backdrop-filter:blur(12px) saturate(112%);
+    }
+    body.ncn-modern :is(#ncn-footer,.ncn-welcome-panel,.ncn-tool-card,.ncn-article-card,.ncn-contact-panel,.ncn-quick-card),
+    body.ncn-modern #ncn-event-app .ev-panel,
     body.ncn-modern :is(#ncn-sticker-app,#ncn-popup-app,#ncn-store-app) :is(.st-panel:not(.st-preview-panel),.st-card),
     body.ncn-modern #ncn-wheel-app .lw-panel,
     body.ncn-modern #ncn-billing-app :is(.pay-panel,.pay-plan),
-    body.ncn-modern #ncn-cash-app :is(.cq-panel,.cq-metric:not(.cq-metric-main),#cq-copy-dialog) {
-      -webkit-backdrop-filter:blur(22px) saturate(155%);
-      backdrop-filter:blur(22px) saturate(155%);
+    body.ncn-modern #ncn-cash-app :is(.cq-panel,.cq-metric:not(.cq-metric-main)) {
+      -webkit-backdrop-filter:blur(4px) saturate(105%);
+      backdrop-filter:blur(4px) saturate(105%);
     }
   }
+  @media(max-width:900px) {
+    body.ncn-modern #ncn-topbar {border-radius:21px}
+    body.ncn-modern #ncn-sidebar {border-radius:22px}
+    body.ncn-modern :is(.ncn-welcome-panel,.ncn-tool-card,.ncn-article-card,.ncn-quick-card) {box-shadow:0 5px 16px rgba(28,55,85,.07)}
+    body.ncn-modern :is(.ncn-welcome-panel,.ncn-tool-card,.ncn-article-card,.ncn-quick-card) {border-radius:18px}
+  }
 }
-/* Respect OS accessibility settings: reduced transparency and high contrast. */
-@media screen and (max-width:900px) and (prefers-reduced-transparency:reduce),
-       screen and (max-width:900px) and (prefers-contrast:more),
-       screen and (max-width:900px) and (forced-colors:active) {
-  body.ncn-modern :is(#ncn-topbar,#ncn-sidebar,#ncn-page-tools,#ncn-search-dialog,.ncn-account-dropdown,
-                      .auth-modal .auth-box,#ncn-footer,.ncn-welcome-panel,.ncn-tool-card,.ncn-article-card,.ncn-contact-panel,.ncn-quick-card),
-  body.ncn-modern #ncn-event-app :is(.ev-panel,.ev-dialog),
-  body.ncn-modern :is(#ncn-sticker-app,#ncn-popup-app,#ncn-store-app) :is(.st-panel:not(.st-preview-panel),.st-card),
-  body.ncn-modern #ncn-wheel-app .lw-panel,
-  body.ncn-modern #ncn-billing-app :is(.pay-panel,.pay-plan),
-  body.ncn-modern #ncn-cash-app :is(.cq-panel,.cq-metric:not(.cq-metric-main),#cq-copy-dialog) {
+/* Preserve high contrast and accessibility preferences; avoid forcing transparency. */
+@media screen and (prefers-reduced-transparency:reduce),
+       screen and (prefers-contrast:more),
+       screen and (forced-colors:active) {
+  body.ncn-modern :is(#ncn-topbar,#ncn-sidebar,#ncn-page-tools,#ncn-search-dialog,.ncn-account-dropdown,.auth-modal .auth-box),
+  body.ncn-modern :is(.ncn-welcome-panel,.ncn-tool-card,.ncn-article-card,.ncn-quick-card) {
     background:var(--ncn-surface)!important;
     -webkit-backdrop-filter:none!important;
     backdrop-filter:none!important;
   }
 }
-/* END NCN MOBILE GLASS 20261017-v1 */
+/* END NCN SOFT GLASS 20261017-v1 */
