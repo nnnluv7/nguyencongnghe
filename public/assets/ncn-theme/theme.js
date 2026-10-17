@@ -1,6 +1,7 @@
+import {installAppearance} from './appearance.js?v=20261017-mobile-dark-1';
 import './visitor-counter.js?v=20261016-easy-2'; // NCN visitor metrics
 import {installToolUI} from './tool-ui.js?v=20261016-floating-1';
-import {installFloatingMenu,orderTools,navigationHTML} from './menu.js?v=20261016-floating-1';
+import {installFloatingMenu,orderTools,navigationHTML} from './menu.js?v=20261017-mobile-dark-1';
 /* NCN portal: navigation and local display preferences. VIP authorization stays on the server. */
 const ICONS = {
   home:'<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z"/>',
@@ -102,14 +103,7 @@ export function createTheme({doc=document,win=window,config,catalog=win.CG_CATAL
   if(tools.length&&$('ncn-navigation')) $('ncn-navigation').innerHTML=navigationHTML(tools,navLink);
   // A repository without Event still gets a useful portal, without dead VIP links.
   if(!tools.some(t=>t.id==='event')) doc.querySelectorAll('#ncn-site-shell a[href="/in-event/"],.ncn-hero-actions a[href="/in-event/"]').forEach(a=>a.hidden=true);
-  function applyMode(mode,persist=false) {
-    const dark=mode==='dark';doc.body.classList.toggle('dark',dark);
-    const button=$('ncn-theme-toggle');
-    if(button){button.setAttribute('aria-pressed',String(dark));button.setAttribute('aria-label',dark?'Chuyển sang chế độ sáng':'Chuyển sang chế độ tối');button.innerHTML=svg(dark?'sun':'moon');}
-    if(persist) write('ncn-theme',dark?'dark':'light');
-  }
-  icons();applyMode(read('ncn-theme')==='dark'?'dark':'light');
-  listen($('ncn-theme-toggle'),'click',()=>applyMode(doc.body.classList.contains('dark')?'light':'dark',true));
+  icons();const appearance=installAppearance({doc,win});appearance.refresh();
   const menu=installFloatingMenu({doc,win}),setMenu=(value,restoreFocus=true)=>menu.setOpen(value,restoreFocus);
   function setDrawer(open) {
     if($('ncn-page-tools')) $('ncn-page-tools').hidden=!open;
@@ -194,16 +188,17 @@ export function createTheme({doc=document,win=window,config,catalog=win.CG_CATAL
     listen($('ncn-library-label'),'change',e=>{libraryLabel=e.target.value;page=1;updateLibraryURL();renderLibrary();});
     listen($('ncn-library-prev'),'click',()=>{page--;renderLibrary();});listen($('ncn-library-next'),'click',()=>{page++;renderLibrary();});renderLibrary();
   }
-  listen(win,'storage',e=>{if(e.key==='ncn-theme')applyMode(e.newValue==='dark'?'dark':'light');if(e.key==='ncn-favorites'){try{const value=JSON.parse(e.newValue||'[]');favorites=new Set(Array.isArray(value)?value.filter(x=>toolIds.has(x)):[]);}catch{favorites=new Set();}renderTools();}});
+  listen(win,'storage',e=>{if(e.key==='ncn-favorites'){try{const value=JSON.parse(e.newValue||'[]');favorites=new Set(Array.isArray(value)?value.filter(x=>toolIds.has(x)):[]);}catch{favorites=new Set();}renderTools();}});
   if(preview){
     // The preview uses the same UI, and opens existing website routes in the browser.
     previewLinks();
   }
   const toolUI=installToolUI({doc,win,config:cfg,preview});
-  return {tools,rows,renderTools,renderSearch,renderLibrary,openSearch,closeSearch,menu,destroy:()=>{menu.destroy();toolUI.destroy();listeners.splice(0).forEach(remove=>remove());}};
+  return {tools,rows,renderTools,renderSearch,renderLibrary,openSearch,closeSearch,menu,appearance,destroy:()=>{menu.destroy();toolUI.destroy();listeners.splice(0).forEach(remove=>remove());}};
 }
 
 export async function bootTheme() {
+  installAppearance({doc:document,win:window});
   installFloatingMenu({doc:document,win:window});
   let config=window.NCN_THEME_CONFIG;
   let configFailed=false;

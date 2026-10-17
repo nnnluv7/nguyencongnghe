@@ -1,7 +1,7 @@
 /* Responsive wrappers preserve the original input nodes, handlers and print sheet. */
 (() => {
   'use strict';
-  if (window.NCNMobile?.version === '20261015-1') return;
+  if (window.NCNMobile?.version === '20261017-mobile-dark-1') return;
   const jobs = [];
   let started = false;
   const mobile = window.matchMedia?.('(max-width: 900px)');
@@ -96,12 +96,7 @@
     });
   }
   function refresh() {
-    if (!isMobile()) {
-      document.body.classList.remove('ncn-menu-open');
-      const backdrop = document.getElementById('ncn-menu-backdrop');
-      if (backdrop) backdrop.hidden = true;
-      document.getElementById('ncn-menu-open')?.setAttribute('aria-expanded', 'false');
-    }
+    // Navigation has its own controller at every viewport size.
     jobs.forEach(job => job());
   }
   function boot() {
@@ -121,7 +116,7 @@
     else if (mobile?.addListener) mobile.addListener(refresh);
     refresh();
   }
-  window.NCNMobile = Object.freeze({ version: '20261015-1', boot, refresh });
+  window.NCNMobile = Object.freeze({ version: '20261017-mobile-dark-1', boot, refresh });
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true });
   else boot();
 })();

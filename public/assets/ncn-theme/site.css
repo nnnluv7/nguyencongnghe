@@ -1,8 +1,8 @@
 /* NCN — one responsive interface, one floating navigation. */
 @media screen {
 body.ncn-modern{--ncn-accent:#2864c7;--ncn-ink:#192d4a;--ncn-muted:#697b91;--ncn-bg:#f4f7fb;--ncn-surface:#fff;--ncn-border:#e1e8f1;--ncn-sidebar:0px;--body-font:'Inter',Arial,sans-serif;--title-font:var(--body-font);--text-font:var(--body-font);margin:0;background:var(--ncn-bg);color:var(--ncn-ink);font-family:var(--body-font);font-size:14px;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;text-size-adjust:100%}
-body.ncn-modern.dark{--ncn-accent:#9aafff;--ncn-ink:#edf3ff;--ncn-muted:#a8bad1;--ncn-bg:#0c1628;--ncn-surface:#16243b;--ncn-border:#2a3a55}
-body.ncn-modern #header-wrapper,body.ncn-modern #top-bar,body.ncn-modern #footer-wrapper,body.ncn-modern #inner-menu,body.ncn-modern .backTop,body.ncn-modern #ticker-flex,body.ncn-modern #mega-wrap,body.ncn-modern #mega-wrap1,body.ncn-modern #top-wrap,body.ncn-modern #home-ads,body.ncn-modern #footer-ads{display:none!important}
+html[data-ncn-theme="dark"] body.ncn-modern,body.ncn-modern.dark{--ncn-accent:#9aafff;--ncn-ink:#edf3ff;--ncn-muted:#a8bad1;--ncn-bg:#0c1628;--ncn-surface:#16243b;--ncn-border:#2a3a55}
+body.ncn-modern #header-wrapper,body.ncn-modern #top-bar,body.ncn-modern #footer-wrapper,body.ncn-modern #inner-menu,body.ncn-modern .backTop,body.ncn-modern #ticker-flex,body.ncn-modern #mega-wrap,body.ncn-modern #mega-wrap1,body.ncn-modern #top-wrap,body.ncn-modern #home-ads,body.ncn-modern #footer-ads,body.ncn-modern #mega-wrap0,body.ncn-modern>.overlay{display:none!important}
 body.ncn-modern #outer-wrapper{display:flow-root;width:100%!important;max-width:1440px!important;min-width:0;margin:0 auto!important;padding:24px 24px 0;box-sizing:border-box}
 body.ncn-modern #center-container{display:block;float:none;clear:both;width:100%;min-width:0;margin:0;padding:0;box-sizing:border-box;overflow:visible}
 body.ncn-modern #center-container>.container{display:block;width:100%!important;max-width:none!important;min-width:0;margin:0;padding:0!important}
@@ -39,6 +39,7 @@ body.ncn-modern #ncn-page-tools .sidebar-cover{display:block!important;float:non
 .ncn-account-dropdown{position:absolute;top:53px;right:0;width:290px;max-width:calc(100vw - 24px);border:1px solid var(--ncn-border);border-radius:15px;background:var(--ncn-surface);box-shadow:0 14px 50px #10223c22;padding:18px;font-size:12px;z-index:1400}
 .ncn-account-dropdown>strong{display:block;font-size:14px;margin-bottom:12px}
 .ncn-account-dropdown>a{display:block;margin-top:12px;color:var(--ncn-accent);font-weight:700}
+#ncn-account-host #auth-header-desktop{display:flex!important;float:none!important;flex-wrap:wrap;gap:8px;width:auto;height:auto;margin:0}
 #ncn-menu-open{display:inline-flex!important;position:fixed;z-index:1200;top:14px;left:max(16px,calc((100vw - 1440px)/2 + 16px));align-items:center;justify-content:center;gap:9px;min-height:44px;min-width:96px;padding:10px 15px;border:0;border-radius:13px;background:#2864c7;color:#fff;box-shadow:0 5px 15px #2864c733;font-size:13px;font-weight:800;transition:background .18s,box-shadow .18s,transform .18s}
 #ncn-menu-open svg{width:21px;height:21px}
 #ncn-menu-open:hover{background:#1e52a9;box-shadow:0 7px 20px #2864c744;transform:translateY(-1px)}

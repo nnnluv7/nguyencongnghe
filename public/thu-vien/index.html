@@ -2,6 +2,52 @@
 
 <html class="ltr" dir="ltr" lang="vi" xmlns="http://www.w3.org/1999/xhtml" xmlns:b="http://www.google.com/2005/gml/b" xmlns:data="http://www.google.com/2005/gml/data" xmlns:expr="http://www.google.com/2005/gml/expr">
 <head>
+<!-- BEGIN NCN APPEARANCE -->
+<meta charset="utf-8">
+<style id="ncn-appearance-style">
+@media screen {
+html[data-ncn-theme="light"]{color-scheme:light;background:#f4f7fb;color:#192d4a}
+html[data-ncn-theme="dark"]{color-scheme:dark;background:#0c1628;color:#edf3ff}
+html[data-ncn-theme="light"] body.ncn-modern{background-color:#f4f7fb!important;color:#192d4a}
+html[data-ncn-theme="dark"] body.ncn-modern{background-color:#0c1628!important;color:#edf3ff}
+body.ncn-modern #header-wrapper,body.ncn-modern #top-bar,body.ncn-modern #footer-wrapper,body.ncn-modern #inner-menu,body.ncn-modern>.overlay,body.ncn-modern>.backTop{display:none!important}
+}
+@media print {html[data-ncn-theme]{color-scheme:light;background:#fff;color:#000}}
+</style>
+<script id="ncn-appearance-bootstrap" data-ncn-appearance>
+(function(){
+/* This controller is also inlined before external resources in every page head. */
+function installAppearance({doc=document,win=window}={}){
+ if(win.NCN_APPEARANCE?.document===doc)return win.NCN_APPEARANCE;
+ const root=doc.documentElement,valid=v=>v==='dark'||v==='light';
+ let mode=valid(root.dataset.ncnTheme)?root.dataset.ncnTheme:'light',volatile=false;
+ const read=()=>{try{
+  const value=win.localStorage.getItem('ncn-theme');if(valid(value))return value;
+  const old=win.localStorage.getItem('mode');
+  if(old==='darkmode'||old==='mydark'){const migrated=old==='darkmode'?'dark':'light';try{win.localStorage.setItem('ncn-theme',migrated);}catch{}return migrated;}
+  return 'light';
+ }catch{return mode;}};
+ const icon=dark=>'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(dark?'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5 19 19M5 19l1.5-1.5M17.5 6.5 19 5"/>':'<path d="M21 13A9 9 0 0 1 11 3a9 9 0 1 0 10 10Z"/>')+'</svg>';
+ function set(value,persist=false){
+  mode=valid(value)?value:'light';const dark=mode==='dark';root.dataset.ncnTheme=mode;doc.body?.classList.toggle('dark',dark);
+  const button=doc.getElementById('ncn-theme-toggle');
+  if(button){button.setAttribute('aria-pressed',String(dark));button.setAttribute('aria-label',dark?'Chuyển sang chế độ sáng':'Chuyển sang chế độ tối');button.innerHTML=icon(dark);}
+  if(persist)try{win.localStorage.setItem('ncn-theme',mode);volatile=false;}catch{volatile=true;}
+  return mode;
+ }
+ const refresh=()=>set(volatile?mode:read()),api={document:doc,get mode(){return mode;},set,refresh};win.NCN_APPEARANCE=api;refresh();
+ doc.addEventListener('click',e=>{if(!e.target?.closest?.('#ncn-theme-toggle'))return;e.preventDefault();set(mode==='dark'?'light':'dark',true);});
+ doc.addEventListener('DOMContentLoaded',refresh,{once:true});win.addEventListener('pageshow',refresh);
+ doc.addEventListener('visibilitychange',()=>{if(doc.visibilityState==='visible')refresh();});
+ win.addEventListener('storage',e=>{if(e.key!==null&&e.key!=='ncn-theme')return;try{if(e.storageArea&&e.storageArea!==win.localStorage)return;}catch{}refresh();});
+ return api;
+}
+if(typeof window!=='undefined'&&typeof document!=='undefined')installAppearance();
+
+})();
+</script>
+<!-- END NCN APPEARANCE -->
+
 <meta content="*" http-equiv="Access-Control-Allow-Origin"/>
 <meta content="https://nguyencongnghe.com/assets/ncn-theme/logo.png" property="og:image"/>
 <script src="/assets/js/b9891f589cc0f98f96.js"></script>
@@ -11,7 +57,7 @@
 <!-- Site Info -->
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <title>Thư viện | NCN</title>
-<meta content="text/html; charset=utf-8" http-equiv="Content-Type"/>
+<!-- NCN appearance: UTF-8 declared at start of head -->
 <meta content="blogger" name="generator"/>
 <link href="https://i.ibb.co/vg5gwhS/Bie-u-tru-ng-NCN-co-ng-nghe-to-i-gia-n.png" rel="icon" type="image/png"/>
 <link href="https://i.ibb.co/vg5gwhS/Bie-u-tru-ng-NCN-co-ng-nghe-to-i-gia-n.png" rel="icon" sizes="32x32" type="image/png"/>
@@ -64,8 +110,8 @@
 <script src="/assets/site-config.js"></script><script src="/assets/catalog.js"></script><script src="/assets/js/2ef0baed16077abedf.js"></script><script src="/assets/vendor/8ec8dce35a344a43af.js" type="text/javascript"></script><script src="/assets/site-bridge.js"></script><link href="/assets/replica.css" rel="stylesheet"/><!-- NCN site.css: base -->
 <!-- NCN site.css: titles -->
 <!-- NCN site.css: responsive -->
-<link id="ncn-site-style" rel="stylesheet" href="/assets/ncn-theme/site.css?v=20261016-floating-1"></head>
-<body class="ncn-modern ncn-library-page ncn-floating-ui" id="mainContent"><script data-ncn-appearance>try{if(localStorage.getItem("ncn-theme")==="dark")document.body.classList.add("dark");}catch(e){}</script>
+<link id="ncn-site-style" rel="stylesheet" href="/assets/ncn-theme/site.css?v=20261017-mobile-dark-1"></head>
+<body class="ncn-modern ncn-library-page ncn-floating-ui" id="mainContent"><script data-ncn-appearance-body>window.NCN_APPEARANCE?.refresh();</script>
 <!-- BEGIN NCN MODERN SHELL -->
 <a class="ncn-skip" href="#feed-view">Bỏ qua menu, đến nội dung</a>
 <div id="ncn-site-shell" class="ncn-ui">
@@ -75,7 +121,7 @@
 <nav id="ncn-navigation" aria-label="Danh mục công cụ"><p class="ncn-nav-label">Mở nhanh</p><a class="ncn-nav-link" href="/in-event/" data-ncn-tool="event"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m13 2-9 12h7l-1 8 10-12h-7Z"/></svg><span>Event VIP</span><b class="ncn-nav-pill">VIP</b></a><a class="ncn-nav-link" href="/in-gvgs/" data-ncn-tool="gvgs"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m13 2-9 12h7l-1 8 10-12h-7Z"/></svg><span>Giờ Vàng VIP</span><b class="ncn-nav-pill">VIP</b></a><a class="ncn-nav-link" href="/2024/02/kiem-quy.html" data-ncn-tool="cash"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7H5a2 2 0 0 1 0-4h14v4M3 5v14a2 2 0 0 0 2 2h15V7M20 11h-5v6h5M17 14h.01"/></svg><span>Kiểm quỹ</span></a><a class="ncn-nav-link" href="/2025/05/tu-van.html" data-ncn-tool="insurance"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6ZM8 12l3 3 5-6"/></svg><span>Bảo Hiểm &amp; Trả Chậm</span></a><p class="ncn-nav-label">Tất cả công cụ</p><a class="ncn-nav-link" href="/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z"/></svg><span>Trang chủ</span></a><a class="ncn-nav-link" href="/vong-quay-may-man/" data-ncn-tool="lucky-wheel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.8 5.8 6.4.9-4.6 4.5 1.1 6.4-5.7-3-5.7 3 1.1-6.4-4.6-4.5 6.4-.9Z"/></svg><span>Vòng Quay May Mắn</span></a><a class="ncn-nav-link" href="/sticker/" data-ncn-tool="sticker"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 0-9 9h2l7-7Z"/><path d="M14 21v-5a2 2 0 0 1 2-2h5M8 9h.01M15 9h.01M8 13c1 2 3 3 5 2"/></svg><span>Bộ Sticker</span></a><a class="ncn-nav-link" href="/popup-a7/" data-ncn-tool="popup-a7"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M7 13h4M7 16h8M15 6h.01M18 6h.01"/></svg><span>Popup A7 / LED</span></a><a class="ncn-nav-link" href="/popup-a4-a5-a6/" data-ncn-tool="popup-large"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 10 6-10 6L2 9ZM2 13l10 6 10-6M2 17l10 6 10-6"/></svg><span>Popup A4 / A5 / A6</span></a><a class="ncn-nav-link" href="/ban-hang/" data-ncn-tool="sales"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 7h14l2 14H3ZM8 7V5a4 4 0 0 1 8 0v2"/></svg><span>Hỗ trợ bán hàng</span></a><a class="ncn-nav-link" href="/2020/10/kho-ver-52-all-tools-ho-tro-kho.html" data-ncn-tool="warehouse"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 9 5v8l-9 5-9-5V8ZM3 8l9 5 9-5M12 13v8M7.5 5.5l9 5"/></svg><span>File kho</span></a><a class="ncn-nav-link" href="/2024/01/in-fifo.html" data-ncn-tool="fifo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3h9l9 9-9 9-9-9ZM7 7h.01"/></svg><span>In FIFO</span></a><a class="ncn-nav-link" href="/2024/01/ban-kiem-ke-san-pham-theo-file-excel.html" data-ncn-tool="inventory"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3h6v6H3ZM15 3h6v6h-6ZM3 15h6v6H3ZM15 15h3v3h3v3h-6ZM21 12v3M12 3v3M12 9v3H9M12 18v3M3 12h3"/></svg><span>Kiểm kê bằng QR</span></a><a class="ncn-nav-link" href="/2024/04/qrcode-generator-tao-ma-qrcode.html" data-ncn-tool="qr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3h6v6H3ZM15 3h6v6h-6ZM3 15h6v6H3ZM15 15h3v3h3v3h-6ZM21 12v3M12 3v3M12 9v3H9M12 18v3M3 12h3"/></svg><span>Tạo mã QR</span></a><a class="ncn-nav-link" href="/trang-tri/" data-ncn-tool="decor"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5ZM20 3v4M18 5h4"/></svg><span>Trang trí</span></a><a class="ncn-nav-link" href="/premium/" data-ncn-tool="vip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6ZM8 12l3 3 5-6"/></svg><span>Nâng cấp VIP</span></a><a class="ncn-nav-link" href="/thu-vien/" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5c-3-2-7-2-10-1v15c3-1 7-1 10 1 3-2 7-2 10-1V4c-3-1-7-1-10 1ZM12 5v15"/></svg><span>Thư viện bài viết</span></a></nav>
 <div class="ncn-admin-card"><strong>Liên hệ Admin</strong><div class="ncn-admin-links"><a href="https://line.me/ti/p/C9-ixFOSeY" target="_blank" rel="noopener noreferrer" data-ncn-admin-line>Line Admin ↗</a><a href="https://line.me/ti/g/EJP2yCnSVM" target="_blank" rel="noopener noreferrer" data-ncn-admin-group>Group Line ↗</a></div><small>Hỗ trợ tài khoản và sử dụng công cụ.</small></div></aside>
 <div id="ncn-menu-backdrop" aria-hidden="true" hidden></div>
-<header id="ncn-topbar"><div class="ncn-topbar-left"><a class="ncn-brand ncn-header-brand" href="/" aria-label="Trang chủ NCN"><span class="ncn-brand-image"><img src="/assets/ncn-theme/logo.png" width="40" height="40" alt="Logo NCN" data-ncn-logo></span><span><strong data-ncn-config="brand">NCN</strong><small data-ncn-config="tagline">Không gian công cụ của bạn</small></span></a><div class="ncn-location"><span id="ncn-page-section">Công cụ</span><small id="ncn-page-title">NCN</small></div></div><button type="button" class="ncn-top-search" data-ncn-search-open><span data-ncn-icon="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7"/><path d="m16 16 5 5"/></svg></span><span>Tìm công cụ, bài viết…</span><kbd>⌘ K</kbd></button><div class="ncn-topbar-right"><button id="ncn-theme-toggle" class="ncn-icon-button" type="button" aria-label="Đổi chế độ sáng/tối" aria-pressed="false"><span data-ncn-icon="moon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 13A9 9 0 0 1 11 3a9 9 0 1 0 10 10Z"/></svg></span></button><a class="ncn-top-vip" href="/premium/">Nâng cấp <b>VIP</b></a><details class="ncn-account-menu"><summary aria-label="Tài khoản"><span data-ncn-icon="user"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></svg></span></summary><div class="ncn-account-dropdown"><strong>Tài khoản NCN</strong><div id="ncn-account-host"><a href="/premium/">Đăng nhập / Nâng cấp VIP</a></div><a href="/premium/">Quản lý gói VIP ↗</a></div></details></div></header>
+<header id="ncn-topbar"><div class="ncn-topbar-left"><a class="ncn-brand ncn-header-brand" href="/" aria-label="Trang chủ NCN"><span class="ncn-brand-image"><img src="/assets/ncn-theme/logo.png" width="40" height="40" alt="Logo NCN" data-ncn-logo></span><span><strong data-ncn-config="brand">NCN</strong><small data-ncn-config="tagline">Không gian công cụ của bạn</small></span></a><div class="ncn-location"><span id="ncn-page-section">Công cụ</span><small id="ncn-page-title">NCN</small></div></div><button type="button" class="ncn-top-search" data-ncn-search-open><span data-ncn-icon="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7"/><path d="m16 16 5 5"/></svg></span><span>Tìm công cụ, bài viết…</span><kbd>⌘ K</kbd></button><div class="ncn-topbar-right"><button id="ncn-theme-toggle" class="ncn-icon-button" type="button" aria-label="Đổi chế độ sáng/tối" aria-pressed="false"><span data-ncn-icon="moon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 13A9 9 0 0 1 11 3a9 9 0 1 0 10 10Z"/></svg></span></button><a class="ncn-top-vip" href="/premium/">Nâng cấp <b>VIP</b></a><details class="ncn-account-menu"><summary aria-label="Tài khoản"><span data-ncn-icon="user"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></svg></span></summary><div class="ncn-account-dropdown"><strong>Tài khoản NCN</strong><div id="ncn-account-host"><div class="auth-wrap-desktop" id="auth-header-desktop"></div></div><a href="/premium/">Quản lý gói VIP ↗</a></div></details></div></header>
 <div id="ncn-page-actions" hidden><a href="/">← Trang chủ</a><div><button id="ncn-page-print" type="button"><span data-ncn-icon="printer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v7H6zM18 12h.01"/></svg></span>In trang</button><button id="ncn-tools-toggle" type="button" aria-expanded="false" aria-controls="ncn-page-tools"><span data-ncn-icon="sliders"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h5M15 5h5M4 12h9M19 12h1M4 19h1M11 19h9"/><circle cx="12" cy="5" r="3"/><circle cx="16" cy="12" r="3"/><circle cx="8" cy="19" r="3"/></svg></span>Công cụ trang</button></div></div>
 <aside id="ncn-page-tools" hidden aria-label="Công cụ của trang"><div class="ncn-drawer-heading"><strong>Công cụ trang</strong><button id="ncn-tools-close" class="ncn-icon-button" type="button" aria-label="Đóng công cụ trang"><span data-ncn-icon="close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></span></button></div><div id="ncn-page-tools-host"></div></aside>
 <dialog id="ncn-search-dialog" aria-labelledby="ncn-search-title"><div class="ncn-search-dialog-head"><label id="ncn-search-title" for="ncn-global-query"><span data-ncn-icon="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7"/><path d="m16 16 5 5"/></svg></span><span class="ncn-sr-only">Tìm công cụ và bài viết</span><input id="ncn-global-query" type="search" placeholder="Bạn đang tìm gì?" autocomplete="off"></label><button id="ncn-search-close" class="ncn-icon-button" type="button" aria-label="Đóng tìm kiếm"><span data-ncn-icon="close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></span></button></div><div id="ncn-global-results"></div><p class="ncn-search-tip">Tìm không dấu cũng được · Esc để đóng</p></dialog>
@@ -83,7 +129,7 @@
 <script id="ncn-initial-config" type="application/json">{"brand":"NCN","siteName":"nguyencongnghe.com","logo":"/assets/ncn-theme/logo.png","tagline":"Không gian công cụ của bạn","hero":{"eyebrow":"KHÔNG GIAN CÔNG CỤ CỦA BẠN","title":"Chào mừng đến với NCN","description":"Mở nhanh Event VIP, Giờ Vàng, kiểm quỹ và các tiện ích. Chọn công cụ bên dưới hoặc mở menu để bắt đầu.","primaryText":"Mở Event VIP","secondaryText":"Xem tất cả công cụ"},"announcement":{"title":"Từ nội dung đến bản in, chỉ vài bước.","description":"Chọn mẫu → nhập nội dung → kiểm tra xem trước → in. Bắt đầu với bộ Sticker và Popup.","href":"/sticker/"},"contactUrl":"https://line.me/ti/p/C9-ixFOSeY","groups":[{"id":"in-an","name":"In ấn","icon":"printer"},{"id":"ban-hang","name":"Bán hàng","icon":"bag"},{"id":"kho","name":"Kho & thu ngân","icon":"box"},{"id":"tien-ich","name":"Tiện ích","icon":"spark"}],"tools":[{"id":"event","title":"Event VIP","description":"Mở bảng giá được ADMIN lưu và in sticker cho chương trình Event.","href":"/in-event/","group":"in-an","icon":"bolt","tone":"navy","featured":true,"access":"vip"},{"id":"gvgs","title":"Giờ Vàng VIP","description":"VIP: lọc tồn kho, tra giá chương trình, in popup A5/A4 và sticker bát giác.","href":"/in-gvgs/","group":"in-an","icon":"bolt","tone":"amber","featured":true,"access":"vip"},{"id":"cash","title":"Kiểm quỹ","description":"Mở công cụ kiểm quỹ và đối chiếu tiền tại quầy.","href":"/2024/02/kiem-quy.html","group":"kho","icon":"wallet","tone":"amber"},{"id":"insurance","title":"Bảo Hiểm & Trả Chậm","description":"Mở bộ công cụ tư vấn và tra cứu bảo hiểm hiện có.","href":"/2025/05/tu-van.html","group":"ban-hang","icon":"shield","tone":"amber","featured":true},{"id":"lucky-wheel","title":"Vòng Quay May Mắn","description":"Thêm danh sách, quay chọn người may mắn và lưu lịch sử kết quả.","href":"/vong-quay-may-man/","group":"tien-ich","icon":"star","tone":"violet","featured":true},{"id":"sticker","title":"Bộ Sticker","description":"Mẫu giảm giá, bảo hiểm và đặc quyền. Điền nội dung và tạo bản in.","href":"/sticker/","group":"in-an","icon":"sticker","tone":"blue","featured":true,"image":"/assets/ncn-theme/sample-sticker.png"},{"id":"popup-a7","title":"Popup A7 / LED","description":"Nhãn giá cho bàn trải nghiệm, điện thoại, phụ kiện và gia dụng.","href":"/popup-a7/","group":"in-an","icon":"panel","tone":"violet","featured":true,"image":"/assets/ncn-theme/sample-popup.png"},{"id":"popup-large","title":"Popup A4 / A5 / A6","description":"Popup A4/A5/A6, thêm mẫu Giờ Vàng giá sốc 2 với 5 ô nhập riêng.","href":"/popup-a4-a5-a6/","group":"in-an","icon":"layers","tone":"teal","featured":true},{"id":"sales","title":"Hỗ trợ bán hàng","description":"Tem triển khai, bảng tên, biên bản và biểu mẫu hỗ trợ bán hàng.","href":"/ban-hang/","group":"ban-hang","icon":"bag","tone":"coral","featured":true},{"id":"warehouse","title":"File kho","description":"Mở các file và công cụ hỗ trợ công việc kho.","href":"/2020/10/kho-ver-52-all-tools-ho-tro-kho.html","group":"kho","icon":"box","tone":"blue"},{"id":"fifo","title":"In FIFO","description":"Tạo nhãn FIFO cho hàng hóa và công việc kho.","href":"/2024/01/in-fifo.html","group":"kho","icon":"tag","tone":"teal"},{"id":"inventory","title":"Kiểm kê bằng QR","description":"Hỗ trợ kiểm kê sản phẩm từ tệp Excel và mã QR.","href":"/2024/01/ban-kiem-ke-san-pham-theo-file-excel.html","group":"kho","icon":"qr","tone":"violet"},{"id":"qr","title":"Tạo mã QR","description":"Mở trình tạo mã QR cho liên kết và nội dung.","href":"/2024/04/qrcode-generator-tao-ma-qrcode.html","group":"tien-ich","icon":"qr","tone":"blue"},{"id":"decor","title":"Trang trí","description":"30 mẫu dây treo, hoa, sao, ong và bướm; nhập chữ và in theo khổ A4/A5.","href":"/trang-tri/","group":"tien-ich","icon":"spark","tone":"coral"},{"id":"vip","title":"Nâng cấp VIP","description":"30.000đ/30 ngày hoặc 55.000đ/60 ngày. Dùng chung Sticker Event và Giờ Vàng Giá Sốc.","href":"/premium/","group":"tien-ich","icon":"shield","tone":"amber","featured":true}],"adminContact":{"line":"https://line.me/ti/p/C9-ixFOSeY","groupLine":"https://line.me/ti/g/EJP2yCnSVM"}}</script>
 <!-- END NCN MODERN SHELL -->
 
-<script src="/assets/js/73d65e1c1d34ecc2be.js" type="text/javascript"></script>
+<!-- NCN appearance: initial mode is applied in head -->
 <!-- Theme Options -->
 <div class="admin-area" style="display:none">
 <div class="admin-section section" id="admin" name="Blank Thumbnail"><div class="widget Image" data-version="2" id="Image33">
@@ -92,66 +138,13 @@
 </div>
 <!-- Outer Wrapper -->
 <div id="outer-wrapper">
-<nav class="flex-section" id="top-bar">
-<div class="nav-widget container">
-<div class="date-format"></div>
-<div class="auth-wrap-desktop" id="auth-header-desktop"></div>
-</div>
-</nav>
+<!-- NCN retired shell: top-bar -->
 <!-- Header Wrapper -->
-<header id="header-wrapper" itemscope="itemscope" itemtype="https://schema.org/WPHeader" role="banner">
-<div class="hamburger-section">
-<div class="hamburger-container">
-<div class="container">
-<div class="logo-container">
-<div class="header-section">
-<div class="header-left">
-<a aria-label="Menu" class="hamburger" href="javascript:;"></a>
-<h1 class="blog-title"><a href="/">★·.·nguyencongnghe.com ·.·★</a></h1>
-<div class="original-menu section" id="original-menu" name="Main Menu"><div class="widget LinkList" data-version="2" id="LinkList12">
-<ul id="original-menuList" role="tablist">
-<li itemprop="name" role="tab"><a href="/" itemprop="url">Trang chủ</a></li><li itemprop="name" role="tab"><a href="#" itemprop="url">Kho/Thu ngân</a></li><li itemprop="name" role="tab"><a href="/2020/10/kho-ver-52-all-tools-ho-tro-kho.html" itemprop="url">_File kho</a></li><li itemprop="name" role="tab"><a href="/2024/01/in-fifo.html" itemprop="url">_In FiFo</a></li><li itemprop="name" role="tab"><a href="/2024/02/kiem-quy.html" itemprop="url">_Kiểm quỹ</a></li><li itemprop="name" role="tab"><a href="/2024/01/ban-kiem-ke-san-pham-theo-file-excel.html" itemprop="url">_Kiểm kê = Qrcode</a></li><li itemprop="name" role="tab"><a href="#" itemprop="url">In Ấn</a></li><li itemprop="name" role="tab"><a href="/sticker" itemprop="url">_Sticker</a></li><li itemprop="name" role="tab"><a href="/in-event/" itemprop="url">_Event: Sticker gạch giá</a></li><li itemprop="name" role="tab"><a href="/popup-a7" itemprop="url">_Popup A7</a></li><li itemprop="name" role="tab"><a href="/popup-a4-a5-a6" itemprop="url">_Popup A4 A5 A6</a></li><li itemprop="name" role="tab"><a href="/trang-tri" itemprop="url">_Trang trí</a></li><li itemprop="name" role="tab"><a href="/ban-hang" itemprop="url">_Hỗ trợ bán hàng</a></li><li itemprop="name" role="tab"><a href="/2025/05/tu-van.html" itemprop="url">Bảo Hiểm &amp; Trả Chậm</a></li><li itemprop="name" role="tab"><a href="/2024/04/qrcode-generator-tao-ma-qrcode.html" itemprop="url">Tạo mã QR</a></li>
-</ul>
-</div></div>
-</div>
-<div class="header-right">
-<div class="search-wrap">
-<a aria-label="Dark mode" class="dark-toggle-flex" href="javascript:;" role="button"></a>
-<a class="search-button-flex" href="javascript:;" role="button" title="Tìm kiếm"></a>
-</div>
-</div>
-<div id="overlay-id"></div>
-<div id="search-flex">
-<div class="search-flex-container">
-<div class="search-form" role="search">
-<input autocomplete="off" class="search-input" placeholder="Tìm kiếm" spellcheck="false" type="text" value=""/>
-</div>
-<button aria-label="Tìm kiếm" class="search-flex-close search-hidden"></button>
-</div>
-<div class="search-section"></div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</header>
-<div class="ticker flex-section" id="ticker-flex">
-<div class="ticker-pro container no-items section" id="hot-posts" name="Trending Posts">
-</div>
-</div>
-<div class="flex-section" id="mega-wrap">
-<div class="Pro-flex container flex no-items section" id="ft-post" name="Top Feature Section">
-</div>
-</div>
-<div class="flex-section" id="home-ads">
-<div class="ads-tool container no-items section" id="main-ads1" name="Quảng cáo">
-</div>
-</div>
-<div class="flex-section" id="top-wrap">
-<div class="Pro-box container no-items section" id="top-box" name="4 BÀI CĂNG NGANG">
-</div>
-</div>
+<!-- NCN retired shell: header-wrapper -->
+<!-- NCN retired shell: ticker-flex -->
+<!-- NCN retired shell: mega-wrap -->
+<!-- NCN retired shell: home-ads -->
+<!-- NCN retired shell: top-wrap -->
 <div class="flex-section" id="center-container">
 <div class="container outer-container">
 <main id="feed-view">
@@ -180,75 +173,15 @@
     CHIA SẺ TRANG NÀY
 </a>
 </div>
-</div><div class="widget HTML" data-version="2" id="HTML4">
-<div class="widget-title"><h3 class="title">Hạng mục in ấn</h3></div>
-<div class="widget-content">
-<a class="button-chuyengia" href="/sticker" style="background-color: #4CAF50; color: white; text-decoration: none; padding: 10px 20px; border-radius: 5px; border: none; cursor: pointer; display: block; text-align: center; margin: 10px;">
-    IN STICKER
-</a>
-<a class="button-chuyengia" href="/popup-a7" style="background-color: #008CBA; color: white; text-decoration: none; padding: 10px 20px; border-radius: 5px; border: none; cursor: pointer; display: block; text-align: center; margin: 10px;">
-    IN POPUP A7
-</a>
-<a class="button-chuyengia" href="/popup-a4-a5-a6" style="background-color: #f44336; color: white; text-decoration: none; padding: 10px 20px; border-radius: 5px; border: none; cursor: pointer; display: block; text-align: center; margin: 10px;">
-    IN POPUP A4-A5-A6
-</a>
-<a class="button-chuyengia" href="/trang-tri" style="background-color: #555555; color: white; text-decoration: none; padding: 10px 20px; border-radius: 5px; border: none; cursor: pointer; display: block; text-align: center; margin: 10px;">
-    TRANG TRÍ
-</a>
-<a class="button-chuyengia" href="/ban-hang" style="background-color: #FF9800; color: white; text-decoration: none; padding: 10px 20px; border-radius: 5px; border: none; cursor: pointer; display: block; text-align: center; margin: 10px;">
-    HỖ TRỢ BÁN HÀNG
-</a>
-</div>
-</div>
-<div class="widget HTML" data-version="2" id="HTML19">
-<div class="widget-title"><h3 class="title">Xem thêm</h3></div>
-<div class="widget-content">6/sidebar/thu-thuat</div>
-</div></div>
+</div><!-- NCN retired sidebar: HTML4 -->
+<!-- NCN retired sidebar: HTML19 --></div>
 </aside>
 </div>
 </div>
-<div class="flex-section" id="footer-ads">
-<div class="ads-tool container no-items section" id="main-ads2" name="Quảng cáo">
-</div>
-</div>
-<div class="flex-section" id="mega-wrap1">
-<div class="Pro-box container no-items section" id="room-box0" name="Videos Section">
-</div>
-</div>
-<div class="flex-section" id="mega-wrap0">
-<div class="Pro-box container no-items section" id="room-box1" name="Bottom Feature Posts"></div>
-</div>
-<div class="flex-footer" id="footer-wrapper" itemscope="itemscope" itemtype="https://schema.org/WPFooter" role="banner">
-<div class="flex-ft footer-data">
-<div class="container">
-<div class="footer-primary section" id="Footer-Function3" name="Footer About Us"><div class="widget Image" data-version="2" id="Image150">
-<div class="widget-content">
-<div class="about-content">
-<div class="footer-logo custom-image"><a href="/">
-<img alt="nguyencongnghe.com - NCN" data-normal="https://i.ibb.co/vg5gwhS/Bie-u-tru-ng-NCN-co-ng-nghe-to-i-gia-n.png" height="64" id="darkroom2" src="https://i.ibb.co/vg5gwhS/Bie-u-tru-ng-NCN-co-ng-nghe-to-i-gia-n.png" width="160" data-dark="https://i.ibb.co/vg5gwhS/Bie-u-tru-ng-NCN-co-ng-nghe-to-i-gia-n.png"/>
-</a></div>
-<div class="bio-data">
-<h3 class="title">Made with ♥️ by Zandy</h3>
-<span class="image-caption">Website được xây dựng và vận hành chỉ nhằm mục đích thỏa mãn niềm đam mê cá nhân, mọi nội dung trên website đều được sưu tầm từ các nguồn dữ liệu khác trên mạng internet và được bên tập lại để phù hợp với chính sách dữ liệu!</span></div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="flex-ft footer-container">
-<div class="container footer-outer">
-<div class="footer-copyright section" id="footer-copyright" name="Footer Attribution"><div class="widget HTML" data-version="2" id="HTML33">
-<div class="widget-content"><span class="copyright-text widget">All Right Reserved Copyright © 2024</span></div>
-</div></div>
-<div class="footer-checks-menu section" id="footer-checks-menu" name="Footer Menu"><div class="widget LinkList" data-version="2" id="LinkList8">
-<div class="widget-content">
-<ul><li><a href="/p/about.html">Giới thiệu</a></li><li><a href="/p/contact-us.html">Liên hệ</a></li><li><a href="/p/privacy-policy.html">Chính sách bảo mật</a></li></ul>
-</div>
-</div></div>
-</div>
-</div>
-</div>
+<!-- NCN retired shell: footer-ads -->
+<!-- NCN retired shell: mega-wrap1 -->
+<!-- NCN retired shell: mega-wrap0 -->
+<!-- NCN retired shell: footer-wrapper -->
 <div class="modal_tit">
 <div class="modal_tit-background">
 <div class="modal_tit-full">
@@ -300,22 +233,16 @@
 <!-- END NCN MODERN FOOTER -->
 </div>
 <!-- Slider Mobile Menu -->
-<div id="inner-menu">
-<div class="inner-container"><div class="date-format"></div><span class="hide-mobile-menu"></span></div>
-<div class="mobile-container">
-<div class="mobile-menu" id="mobile-menu"></div>
-<div class="auth-wrap-mobile" id="auth-header-mobile"></div>
-</div>
-</div>
-<div class="overlay"></div>
-<div class="backTop"></div>
+<!-- NCN retired shell: inner-menu -->
+<!-- NCN retired shell: overlay -->
+<!-- NCN retired shell: backTop -->
 <!-- Theme Hosted Plugins -->
 
 <script src="/assets/js/47d8666c3b6ae2a146.js" type="text/javascript"></script>
 <!-- Theme LocalHost Plugins -->
 <script src="/assets/js/8f3382422a2f53503f.js" type="text/javascript"></script>
 <!-- Main Template File Scripts -->
-<script src="/assets/js/59cde7058d21c3f959.js" type="text/javascript"></script>
+<script src="/assets/js/59cde7058d21c3f959.js?v=20261017-mobile-dark-1" type="text/javascript"></script>
 <!-- Blogger Default Widget Scripts -->
 <!--Begin hiển thị widget theo link-->
 <!-- Begin khai báo tag - hide tag name -->
@@ -345,7 +272,7 @@
 <script src="/assets/js/0ca0b0d3937c316ea2.js" type="text/javascript"></script>
 <!--It is your responsibility to notify your visitors about cookies used and data collected on your blog. Blogger makes a standard notification available for you to use on your blog, and you can customise it or replace it with your own notice. See http://www.blogger.com/go/cookiechoices for more details.-->
 <script type="module" src="/assets/ncn-vip-auth.js"></script>
-<!-- BEGIN NCN MODERN SCRIPT --><script type="module" src="/assets/ncn-theme/theme.js?v=20261016-floating-1"></script><!-- END NCN MODERN SCRIPT -->
-<!-- BEGIN NCN MOBILE SCRIPT --><script defer src="/assets/ncn-theme/mobile.js?v=20261015-1"></script><!-- END NCN MOBILE SCRIPT -->
+<!-- BEGIN NCN MODERN SCRIPT --><script type="module" src="/assets/ncn-theme/theme.js?v=20261017-mobile-dark-1"></script><!-- END NCN MODERN SCRIPT -->
+<!-- BEGIN NCN MOBILE SCRIPT --><script defer src="/assets/ncn-theme/mobile.js?v=20261017-mobile-dark-1"></script><!-- END NCN MOBILE SCRIPT -->
 </body>
 </html>

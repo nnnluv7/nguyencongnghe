@@ -1,4 +1,50 @@
-<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Nâng cấp VIP NCN: 30.000đ/30 ngày, 55.000đ/60 ngày. Dùng Sticker Event và Giờ Vàng Giá Sốc."><title>Nâng cấp VIP | nguyencongnghe.com</title><link rel="icon" href="/assets/ncn-theme/logo.png"><!-- NCN site.css: base --><!-- NCN site.css: responsive --><link rel="stylesheet" href="/assets/ncn-billing.css?v=20261016-pay-1"><script src="/assets/catalog.js" defer></script><link id="ncn-site-style" rel="stylesheet" href="/assets/ncn-theme/site.css?v=20261016-floating-1"></head><body class="ncn-modern ncn-event-page ncn-billing-page ncn-floating-ui" id="mainContent"><script data-ncn-appearance>try{if(localStorage.getItem("ncn-theme")==="dark")document.body.classList.add("dark");}catch(e){}</script><!-- BEGIN NCN MODERN SHELL -->
+<!doctype html><html lang="vi"><head>
+<!-- BEGIN NCN APPEARANCE -->
+<meta charset="utf-8">
+<style id="ncn-appearance-style">
+@media screen {
+html[data-ncn-theme="light"]{color-scheme:light;background:#f4f7fb;color:#192d4a}
+html[data-ncn-theme="dark"]{color-scheme:dark;background:#0c1628;color:#edf3ff}
+html[data-ncn-theme="light"] body.ncn-modern{background-color:#f4f7fb!important;color:#192d4a}
+html[data-ncn-theme="dark"] body.ncn-modern{background-color:#0c1628!important;color:#edf3ff}
+body.ncn-modern #header-wrapper,body.ncn-modern #top-bar,body.ncn-modern #footer-wrapper,body.ncn-modern #inner-menu,body.ncn-modern>.overlay,body.ncn-modern>.backTop{display:none!important}
+}
+@media print {html[data-ncn-theme]{color-scheme:light;background:#fff;color:#000}}
+</style>
+<script id="ncn-appearance-bootstrap" data-ncn-appearance>
+(function(){
+/* This controller is also inlined before external resources in every page head. */
+function installAppearance({doc=document,win=window}={}){
+ if(win.NCN_APPEARANCE?.document===doc)return win.NCN_APPEARANCE;
+ const root=doc.documentElement,valid=v=>v==='dark'||v==='light';
+ let mode=valid(root.dataset.ncnTheme)?root.dataset.ncnTheme:'light',volatile=false;
+ const read=()=>{try{
+  const value=win.localStorage.getItem('ncn-theme');if(valid(value))return value;
+  const old=win.localStorage.getItem('mode');
+  if(old==='darkmode'||old==='mydark'){const migrated=old==='darkmode'?'dark':'light';try{win.localStorage.setItem('ncn-theme',migrated);}catch{}return migrated;}
+  return 'light';
+ }catch{return mode;}};
+ const icon=dark=>'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(dark?'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5 19 19M5 19l1.5-1.5M17.5 6.5 19 5"/>':'<path d="M21 13A9 9 0 0 1 11 3a9 9 0 1 0 10 10Z"/>')+'</svg>';
+ function set(value,persist=false){
+  mode=valid(value)?value:'light';const dark=mode==='dark';root.dataset.ncnTheme=mode;doc.body?.classList.toggle('dark',dark);
+  const button=doc.getElementById('ncn-theme-toggle');
+  if(button){button.setAttribute('aria-pressed',String(dark));button.setAttribute('aria-label',dark?'Chuyển sang chế độ sáng':'Chuyển sang chế độ tối');button.innerHTML=icon(dark);}
+  if(persist)try{win.localStorage.setItem('ncn-theme',mode);volatile=false;}catch{volatile=true;}
+  return mode;
+ }
+ const refresh=()=>set(volatile?mode:read()),api={document:doc,get mode(){return mode;},set,refresh};win.NCN_APPEARANCE=api;refresh();
+ doc.addEventListener('click',e=>{if(!e.target?.closest?.('#ncn-theme-toggle'))return;e.preventDefault();set(mode==='dark'?'light':'dark',true);});
+ doc.addEventListener('DOMContentLoaded',refresh,{once:true});win.addEventListener('pageshow',refresh);
+ doc.addEventListener('visibilitychange',()=>{if(doc.visibilityState==='visible')refresh();});
+ win.addEventListener('storage',e=>{if(e.key!==null&&e.key!=='ncn-theme')return;try{if(e.storageArea&&e.storageArea!==win.localStorage)return;}catch{}refresh();});
+ return api;
+}
+if(typeof window!=='undefined'&&typeof document!=='undefined')installAppearance();
+
+})();
+</script>
+<!-- END NCN APPEARANCE -->
+<!-- NCN appearance: UTF-8 declared at start of head --><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Nâng cấp VIP NCN: 30.000đ/30 ngày, 55.000đ/60 ngày. Dùng Sticker Event và Giờ Vàng Giá Sốc."><title>Nâng cấp VIP | nguyencongnghe.com</title><link rel="icon" href="/assets/ncn-theme/logo.png"><!-- NCN site.css: base --><!-- NCN site.css: responsive --><link rel="stylesheet" href="/assets/ncn-billing.css?v=20261016-pay-1"><script src="/assets/catalog.js" defer></script><link id="ncn-site-style" rel="stylesheet" href="/assets/ncn-theme/site.css?v=20261017-mobile-dark-1"></head><body class="ncn-modern ncn-event-page ncn-billing-page ncn-floating-ui" id="mainContent"><script data-ncn-appearance-body>window.NCN_APPEARANCE?.refresh();</script><!-- BEGIN NCN MODERN SHELL -->
 <a class="ncn-skip" href="#feed-view">Bỏ qua menu, đến nội dung</a>
 <div id="ncn-site-shell" class="ncn-ui">
 <button id="ncn-menu-open" type="button" aria-label="Mở menu tất cả công cụ" aria-controls="ncn-sidebar" aria-haspopup="dialog" aria-expanded="false"><span data-ncn-icon="menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></span><span>Menu</span></button>
@@ -31,4 +77,4 @@
 <section id="pay-admin" class="pay-panel" aria-labelledby="pay-admin-title" hidden><div class="pay-section-head"><div><span class="pay-eyebrow">CHỈ ADMIN</span><h2 id="pay-admin-title">Thanh toán & thành viên</h2></div><button id="pay-admin-refresh" type="button" class="pay-link">Làm mới</button></div><p id="pay-admin-setup" class="pay-notice"></p><p id="pay-admin-message" class="pay-notice" role="status" aria-live="polite" hidden></p><h3>Giao dịch SePay đã xác thực</h3><p class="pay-caption">Đối chiếu giao dịch cần xử lý với mã đơn của khách. Không cấp VIP từ ảnh chuyển khoản.</p><div id="pay-admin-transactions" class="pay-table-wrap"></div><button id="pay-admin-more-tx" type="button" class="pay-link" hidden>Xem giao dịch cũ hơn</button>
 <form id="pay-reconcile" class="pay-reconcile"><h3>Đối chiếu giao dịch</h3><div class="pay-form"><label>Mã giao dịch SePay<input name="transactionId" inputmode="numeric" pattern="[1-9][0-9]{0,19}" required maxlength="20"></label><label>Mã đơn NCN<input name="orderId" pattern="NCN[A-Fa-f0-9]{20}" required maxlength="23" autocomplete="off"></label><button type="submit" class="pay-btn pay-light">Tra đơn trước khi cấp VIP</button></div><p id="pay-reconcile-preview" class="pay-notice" hidden></p><button id="pay-reconcile-apply" type="button" class="pay-btn" hidden>Xác nhận đối chiếu & cấp VIP</button></form>
 <h3>Thành viên thanh toán</h3><p class="pay-caption">Tạm khóa chỉ áp dụng cho gói trả phí. Quyền ADMIN/VIP được cấp thủ công quản lý tại Netlify Identity.</p><div id="pay-admin-members" class="pay-table-wrap"></div><button id="pay-admin-more-members" type="button" class="pay-link" hidden>Xem thêm thành viên</button></section>
-<noscript><p>Bật JavaScript để đăng nhập và tạo mã thanh toán.</p></noscript></div></div></div></main><footer id="ncn-footer" class="ncn-ui"><a class="ncn-footer-brand" href="/"><span data-ncn-config="brand">NCN</span><small>nguyencongnghe.com</small></a><p>Công cụ cho ngày làm việc của bạn.</p><div><a class="ncn-footer-line" href="https://line.me/ti/p/C9-ixFOSeY" target="_blank" rel="noopener noreferrer" data-ncn-admin-line>Line Admin ↗</a><a href="https://line.me/ti/g/EJP2yCnSVM" target="_blank" rel="noopener noreferrer" data-ncn-admin-group>Group Line ↗</a><a href="/thu-vien/">Thư viện</a></div></footer></div><script type="module" src="/assets/ncn-billing.js?v=20261016-pay-1"></script><script type="module" src="/assets/ncn-theme/theme.js?v=20261016-floating-1"></script><script src="/assets/ncn-theme/mobile.js?v=20261015-1" defer></script></body></html>
+<noscript><p>Bật JavaScript để đăng nhập và tạo mã thanh toán.</p></noscript></div></div></div></main><footer id="ncn-footer" class="ncn-ui"><a class="ncn-footer-brand" href="/"><span data-ncn-config="brand">NCN</span><small>nguyencongnghe.com</small></a><p>Công cụ cho ngày làm việc của bạn.</p><div><a class="ncn-footer-line" href="https://line.me/ti/p/C9-ixFOSeY" target="_blank" rel="noopener noreferrer" data-ncn-admin-line>Line Admin ↗</a><a href="https://line.me/ti/g/EJP2yCnSVM" target="_blank" rel="noopener noreferrer" data-ncn-admin-group>Group Line ↗</a><a href="/thu-vien/">Thư viện</a></div></footer></div><script type="module" src="/assets/ncn-billing.js?v=20261016-pay-1"></script><script type="module" src="/assets/ncn-theme/theme.js?v=20261017-mobile-dark-1"></script><script src="/assets/ncn-theme/mobile.js?v=20261017-mobile-dark-1" defer></script></body></html>

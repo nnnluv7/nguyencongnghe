@@ -356,41 +356,7 @@ $((function() {
         }
     }));
     var w = new Date;
-    w.setDate(w.getDate()), $(".date-format").html("Hôm nay | " + w.getDate() + " " + ["Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6", "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"][w.getMonth()] + " Năm " + w.getFullYear()), $(".dark-toggle-flex").click((function() {
-            localStorage.setItem("mode", "darkmode" === localStorage.getItem("mode") ? "mydark" : "darkmode"), $("#mainContent").addClass("dark"), $("#darkroom, #darkroom1, #darkroom2").each((function() {
-                var a = $(this);
-                "darkmode" === localStorage.getItem("mode") ? a.attr("src", a.attr("data-dark")) : ($("#mainContent").removeClass("dark"), a.attr("src", a.attr("data-normal")))
-            }))
-        })), $("img.snip-thumbnail").lazyimg(), $("#original-menu").Menuiki(), $(".menu li").each((function() {
-            0 < $(this).find("ul").length && $(this).addClass("drop-down")
-        })), $("#mobile-menu").each((function() {
-            var a = $(this);
-            $("#original-menuList").clone().appendTo(a), $(".hamburger, .hide-mobile-menu").on("click", (function() {
-                $("body").toggleClass("spring-open")
-            }))
-        })), $(".mobile-menu ul .mega-menu").removeClass("sub-tab"), $(".mobile-menu ul li a").on("click", (function() {
-            $(this).parent().removeClass("show").find("> .m-sub").slideToggle(170)
-        })), $(".social-mobile").each((function() {
-            var a = $(this);
-            $(".footer-primary ul.colorful-ico").clone().appendTo(a)
-        })), $(".search-button-flex").on("click", (function() {
-            localStorage.search_id = "", $("#search-flex").fadeIn(200).find("input").focus(), $("body").addClass("active-search")
-        })), $(".overlay, #overlay-id").on("click", (function() {
-            $("body").removeClass("active-search spring-open")
-        })), $("#header-wrapper .hamburger-container").each((function() {
-            var a = $(this);
-            if (1 == tMessages.fixedMenu && 0 < a.length) {
-                var e = $(document).scrollTop(),
-                    s = a.offset().top,
-                    t = a.height(),
-                    i = s + t + 50;
-                $(window).scroll((function() {
-                    var o = $(document).scrollTop();
-                    o < $("#footer-wrapper").offset().top - t && (o > i ? a.addClass("fixed-nos") : o < s && a.removeClass("fixed-nos"), o > e ? a.removeClass("show") : a.addClass("show"), e = $(document).scrollTop())
-                }))
-            }
-        })),
-
+    w.setDate(w.getDate()), $(".date-format").html("Hôm nay | " + w.getDate() + " " + ["Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6", "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"][w.getMonth()] + " Năm " + w.getFullYear()), $("img.snip-thumbnail").lazyimg(),
         $("#load-more-link").each((function() {
             var a = $(this).data("load");
             a && $("#load-more-link").show(),

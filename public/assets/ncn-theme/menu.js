@@ -42,6 +42,7 @@ export function installFloatingMenu({doc=document,win=window}={}){
   if(e.shiftKey&&(doc.activeElement===first||!panel.contains(doc.activeElement))){e.preventDefault();last.focus();}
   else if(!e.shiftKey&&(doc.activeElement===last||!panel.contains(doc.activeElement))){e.preventDefault();first.focus();}
  });
+ listen(win,'pageshow',e=>{if(e.persisted)setOpen(false,false,true);});
  const api={setOpen,isOpen:()=>open,destroy(){setOpen(false,false,true);destroyed=true;listeners.splice(0).forEach(remove=>remove());unlock();controllers.delete(doc);}};
  controllers.set(doc,api);return api;
 }
