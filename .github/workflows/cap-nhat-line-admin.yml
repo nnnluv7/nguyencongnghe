@@ -1,0 +1,133 @@
+name: NCN - Cap nhat Line Admin
+
+on:
+  workflow_dispatch:
+    inputs:
+      hanh_dong:
+        description: 'Cap nhat lien ket moi hoac khoi phuc lien ket truoc do'
+        required: true
+        default: cap-nhat
+        type: choice
+        options:
+          - cap-nhat
+          - khoi-phuc
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ncn-cap-nhat-line-admin
+  cancel-in-progress: false
+
+jobs:
+  update-admin-contact:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Lay ma nguon website moi nhat
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: true
+
+      - name: Thay link Line va Group Line tren tat ca trang
+        shell: bash
+        env:
+          NCN_ACTION: ${{ inputs.hanh_dong }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import subprocess
+          from pathlib import Path
+
+          OLD_LINE = 'https://line.me/ti/p/C9-ixFOSeY'
+          OLD_GROUP = 'https://line.me/ti/g/EJP2yCnSVM'
+          NEW_LINE = 'https://line.me/ti/p/dLN_MZNtTG'
+          NEW_GROUP = 'https://line.me/R/ti/g/g2w-fXhc4e'
+          mode = os.environ.get('NCN_ACTION', 'cap-nhat')
+          if mode == 'cap-nhat':
+              changes = ((OLD_LINE, NEW_LINE), (OLD_GROUP, NEW_GROUP))
+              target_line, target_group = NEW_LINE, NEW_GROUP
+          elif mode == 'khoi-phuc':
+              changes = ((NEW_LINE, OLD_LINE), (NEW_GROUP, OLD_GROUP))
+              target_line, target_group = OLD_LINE, OLD_GROUP
+          else:
+              raise SystemExit('Thao tac khong hop le: ' + repr(mode))
+
+          web_root = Path('public')
+          config_path = web_root / 'assets/ncn-theme/config.json'
+          if not web_root.is_dir() or not config_path.is_file():
+              raise SystemExit('Khong tim thay public/ hoac assets/ncn-theme/config.json. Dung thao tac de bao ve website.')
+
+          # Chi sua file text dang duoc Git theo doi trong public/.
+          # Khong dong cham den Netlify Functions, VIP, workflow khac, CSS giao dien.
+          paths = subprocess.check_output(['git', 'ls-files', '-z', '--', 'public']).split(b'\0')
+          allowed = {'.html', '.htm', '.json', '.js', '.mjs', '.css', '.txt', '.md'}
+          touched = []
+          replacement_counts = {a: 0 for a, _ in changes}
+          for raw_path in paths:
+              if not raw_path:
+                  continue
+              path = Path(os.fsdecode(raw_path))
+              if not path.is_file() or path.suffix.lower() not in allowed:
+                  continue
+              # URL chi chua ky tu ASCII; thay truc tiep tren bytes se giu
+              # nguyen encoding, newline, noi dung khac va tat ca chi tiet HTML.
+              original = path.read_bytes()
+              updated = original
+              for source, destination in changes:
+                  source_bytes = source.encode('ascii')
+                  replacement_counts[source] += updated.count(source_bytes)
+                  updated = updated.replace(source_bytes, destination.encode('ascii'))
+              if updated != original:
+                  path.write_bytes(updated)
+                  touched.append(path.as_posix())
+
+          # Kiem tra cau hinh nguon: contactUrl (trang chu) va adminContact (menu).
+          cfg = json.loads(config_path.read_text(encoding='utf-8'))
+          if not isinstance(cfg.get('adminContact'), dict):
+              raise SystemExit('Cau hinh thieu adminContact; can kiem tra truoc khi cap nhat.')
+          if cfg['adminContact'].get('line') != target_line:
+              raise SystemExit('Chua thay dung adminContact.line')
+          if cfg['adminContact'].get('groupLine') != target_group:
+              raise SystemExit('Chua thay dung adminContact.groupLine')
+          if cfg.get('contactUrl') != target_line:
+              raise SystemExit('Chua thay dung contactUrl (trang chu)')
+
+          # Kiem tra tung trang: neu link cu van xuat hien thi khong commit.
+          html_total = 0
+          for path in web_root.rglob('*.html'):
+              html_total += 1
+              content = path.read_bytes()
+              for source, destination in changes:
+                  if source.encode('ascii') in content:
+                      raise SystemExit(f'Con link cu tren {path}: {source}')
+          print('THANH CONG: Da kiem tra', html_total, 'trang HTML')
+          print('So tep duoc cap nhat:', len(touched))
+          for source, count in replacement_counts.items():
+              print('  So lan thay', source, ':', count)
+          for name in touched[:20]:
+              print('  Da sua:', name)
+          if len(touched) > 20:
+              print('  ... va', len(touched) - 20, 'tep nua')
+          if not touched:
+              print('Khong co thay doi moi; website da dung thong tin nay.')
+          PY
+
+      - name: Luu mot commit len GitHub de Netlify build mot lan
+        shell: bash
+        run: |
+          git add -u -- public
+          if git diff --cached --quiet; then
+            echo 'Khong co thay doi. Khong tao commit hoac kich hoat Netlify build.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          if [ '${{ inputs.hanh_dong }}' = 'khoi-phuc' ]; then
+            git commit -m 'revert(ncn): restore previous Admin LINE contacts'
+          else
+            git commit -m 'fix(ncn): update Admin LINE and Group LINE contacts'
+          fi
+          git push origin HEAD:'${{ github.event.repository.default_branch }}'
