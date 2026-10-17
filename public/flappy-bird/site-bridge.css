@@ -230,3 +230,19 @@ html[data-ncn-theme="dark"] .ncn-game-nav a[aria-current="page"]{background:#263
 @media(max-width:900px){.topbar{top:8px;left:8px;right:8px;height:64px;gap:12px;padding:0 12px;border-radius:25px}.topbar .brand{margin-left:56px}#ncn-game-menu{top:18px;left:20px;width:44px;min-width:44px;padding:11px;border-radius:50%}#ncn-game-menu span{display:none}.app{padding-top:80px}}
 @media(max-width:620px){.topbar{padding:0 10px;gap:7px}.topbar .brand{gap:7px;margin-left:54px}#ncn-game-menu{left:20px}.app{padding:80px max(12px,env(safe-area-inset-right,0px)) 0 max(12px,env(safe-area-inset-left,0px))}.ncn-game-sidebar{inset:8px auto 8px 8px;max-width:calc(100vw - 16px);max-height:calc(100dvh - 16px);border-radius:26px}}
 /* END NCN GAME GLASS+ICON SYNC 20261017-v2 */
+/* NCN - FIX MENU POSITION */
+#ncn-game-topbar > #ncn-game-menu {
+  position: absolute !important;
+  top: 50% !important;
+  left: 12px !important;
+  transform: translateY(-50%) !important;
+  z-index: 1200;
+}
+
+@media (max-width: 900px) {
+  #ncn-game-topbar > #ncn-game-menu {
+    width: 44px;
+    min-width: 44px;
+    border-radius: 50%;
+  }
+}
