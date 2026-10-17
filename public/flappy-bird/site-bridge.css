@@ -246,3 +246,42 @@ html[data-ncn-theme="dark"] .ncn-game-nav a[aria-current="page"]{background:#263
     border-radius: 50%;
   }
 }
+
+/* BEGIN NCN GAME GLASS POLISH 20261017 */
+/* Retain existing layout and game canvas. Only align glass surfaces. */
+@media screen {
+  :root {
+    --ncn-game-rim:rgba(255,255,255,.78);
+    --ncn-game-panel:rgba(250,253,255,.82);
+    --ncn-game-strong:rgba(251,253,255,.92);
+    --ncn-game-shadow:0 20px 56px rgba(20,55,96,.14),inset 0 1px rgba(255,255,255,.80);
+  }
+  html[data-ncn-theme="dark"] {
+    --ncn-game-rim:rgba(220,235,255,.20);
+    --ncn-game-panel:rgba(18,31,52,.85);
+    --ncn-game-strong:rgba(20,34,56,.94);
+    --ncn-game-shadow:0 24px 64px rgba(0,0,0,.30),inset 0 1px rgba(255,255,255,.10);
+  }
+  .topbar,.ncn-game-sidebar {
+    background:var(--ncn-game-strong);
+    border-color:var(--ncn-game-rim);
+    box-shadow:var(--ncn-game-shadow);
+  }
+  .ncn-game-close,#ncn-game-theme,.ncn-game-admin a {
+    background:var(--ncn-game-panel);
+    border-color:var(--ncn-game-rim);
+    color:var(--ncn-ink);
+  }
+  .ncn-game-sidebar-head,.ncn-game-admin { border-color:var(--ncn-border); }
+  .ncn-game-admin { background:var(--ncn-game-panel); }
+  @supports ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))) {
+    .topbar,.ncn-game-sidebar {
+      -webkit-backdrop-filter:blur(24px) saturate(155%);
+      backdrop-filter:blur(24px) saturate(155%);
+    }
+  }
+}
+@media screen and (prefers-reduced-transparency:reduce),screen and (prefers-contrast:more),screen and (forced-colors:active) {
+  .topbar,.ncn-game-sidebar{background:var(--ncn-surface)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+}
+/* END NCN GAME GLASS POLISH 20261017 */

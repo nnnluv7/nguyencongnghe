@@ -442,3 +442,127 @@ body.ncn-modern .st-card-sizes button:focus-visible{outline: 3px solid #2563b8; 
 @media screen{body.ncn-modern #ncn-cash-app .cq-metric[data-kind=short]{border-color: #d7a3a3;}}
 @media screen{body.ncn-modern #ncn-cash-app .cq-metric[data-kind=over]{border-color: #d5b57a;}}
 @media screen{body.ncn-modern #ncn-cash-app .cq-metric[data-kind=match]{border-color: #7fbea8;}}
+
+/* BEGIN NCN UNIFIED LIQUID GLASS 20261017 */
+/* NCN: visual surfaces only; no layout, auth flow, VIP checks or print edits. */
+@media screen {
+  body.ncn-modern {
+    --ncn-unified-panel:rgba(251,253,255,.77);
+    --ncn-unified-panel-strong:rgba(252,254,255,.90);
+    --ncn-unified-input:rgba(255,255,255,.68);
+    --ncn-unified-rim:rgba(255,255,255,.87);
+    --ncn-unified-line:rgba(103,145,196,.25);
+    --ncn-unified-shadow:0 20px 56px rgba(20,55,96,.13),inset 0 1px rgba(255,255,255,.90),inset 0 -1px rgba(123,156,201,.14);
+  }
+  html[data-ncn-theme="dark"] body.ncn-modern,
+  body.ncn-modern.dark {
+    --ncn-unified-panel:rgba(24,39,62,.76);
+    --ncn-unified-panel-strong:rgba(27,43,70,.91);
+    --ncn-unified-input:rgba(35,54,82,.80);
+    --ncn-unified-rim:rgba(203,224,255,.16);
+    --ncn-unified-line:rgba(174,203,249,.26);
+    --ncn-unified-shadow:0 24px 64px rgba(0,0,0,.30),inset 0 1px rgba(255,255,255,.10);
+  }
+
+  /* Shared navigation, search, drawers and account menu. */
+  body.ncn-modern :is(#ncn-topbar,#ncn-sidebar,#ncn-page-tools,#ncn-search-dialog,.ncn-account-dropdown) {
+    background:var(--ncn-unified-panel-strong);
+    border-color:var(--ncn-unified-rim);
+    box-shadow:var(--ncn-unified-shadow);
+  }
+  body.ncn-modern :is(.ncn-menu-heading,.ncn-search-dialog-head,.ncn-admin-card) {
+    border-color:var(--ncn-unified-line);
+  }
+  body.ncn-modern :is(.ncn-icon-button,.ncn-account-menu summary,.ncn-admin-links a,.ncn-top-search) {
+    background:var(--ncn-unified-input);
+    border-color:var(--ncn-unified-rim);
+    box-shadow:inset 0 1px rgba(255,255,255,.16);
+  }
+
+  /* Login/register/forgot-password UI, without changing display or JS handlers. */
+  body.ncn-modern .auth-modal .auth-box {
+    background:var(--ncn-unified-panel-strong);
+    color:var(--ncn-ink);
+    border:1px solid var(--ncn-unified-rim);
+    border-radius:28px;
+    box-shadow:0 28px 90px rgba(8,24,54,.27),inset 0 1px rgba(255,255,255,.26);
+  }
+  body.ncn-modern .auth-modal .auth-title { color:var(--ncn-ink);letter-spacing:-.35px; }
+  body.ncn-modern .auth-modal .auth-field label { color:var(--ncn-ink); }
+  body.ncn-modern .auth-modal .auth-input {
+    background:var(--ncn-unified-input);
+    color:var(--ncn-ink);
+    border:1px solid var(--ncn-unified-line);
+    border-radius:14px;
+    box-shadow:inset 0 1px 2px rgba(4,31,63,.05);
+  }
+  body.ncn-modern .auth-modal .auth-input:focus-visible {
+    outline:2px solid var(--ncn-accent);
+    outline-offset:2px;
+  }
+  body.ncn-modern .auth-modal .auth-submit {
+    border:1px solid rgba(255,255,255,.30);
+    border-radius:14px;
+    background:linear-gradient(150deg,#367dd8,#185bb0);
+    color:#fff;
+    box-shadow:0 9px 22px rgba(31,94,172,.24),inset 0 1px rgba(255,255,255,.28);
+  }
+  body.ncn-modern .auth-modal .auth-close {
+    border-radius:50%;
+    color:var(--ncn-ink);
+  }
+  body.ncn-modern .auth-modal .auth-link { color:var(--ncn-accent); }
+
+  /* Forms and content cards: scoped to app chrome, not print/preview stages. */
+  body.ncn-modern :is(.ncn-welcome-panel,.ncn-tool-card,.ncn-article-card,.ncn-contact-panel),
+  body.ncn-modern #ncn-event-app .ev-panel,
+  body.ncn-modern :is(#ncn-sticker-app,#ncn-popup-app,#ncn-store-app) :is(.st-panel:not(.st-preview-panel),.st-card),
+  body.ncn-modern #ncn-wheel-app .lw-panel,
+  body.ncn-modern #ncn-billing-app :is(.pay-panel,.pay-plan),
+  body.ncn-modern #ncn-cash-app :is(.cq-panel,.cq-metric:not(.cq-metric-main)) {
+    background:var(--ncn-unified-panel);
+    border-color:var(--ncn-unified-rim);
+    box-shadow:var(--ncn-unified-shadow);
+  }
+  body.ncn-modern #ncn-event-app .ev-dialog,
+  body.ncn-modern #ncn-cash-app #cq-copy-dialog {
+    background:var(--ncn-unified-panel-strong);
+    border-color:var(--ncn-unified-rim);
+    box-shadow:var(--ncn-unified-shadow);
+    border-radius:24px;
+  }
+  body.ncn-modern :is(#ncn-event-app .ev-field input,#ncn-event-app .ev-field select,
+                        #ncn-sticker-app .st-field input,#ncn-sticker-app .st-field select,
+                        #ncn-popup-app .st-field input,#ncn-popup-app .st-field select,
+                        #ncn-billing-app .pay-form input) {
+    border-radius:12px;
+    border-color:var(--ncn-unified-line);
+    background:var(--ncn-unified-input);
+    color:var(--ncn-ink);
+  }
+  body.ncn-modern :is(#ncn-event-app .ev-button,#ncn-billing-app .pay-btn,
+                      #ncn-sticker-app .st-button,#ncn-popup-app .st-button) { border-radius:12px; }
+
+  @supports ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))) {
+    body.ncn-modern :is(#ncn-topbar,#ncn-sidebar,#ncn-page-tools,#ncn-search-dialog,.ncn-account-dropdown,
+                        .auth-modal .auth-box,.ncn-welcome-panel,.ncn-tool-card,.ncn-article-card,.ncn-contact-panel),
+    body.ncn-modern #ncn-event-app :is(.ev-panel,.ev-dialog),
+    body.ncn-modern :is(#ncn-sticker-app,#ncn-popup-app,#ncn-store-app) :is(.st-panel:not(.st-preview-panel),.st-card),
+    body.ncn-modern #ncn-wheel-app .lw-panel,
+    body.ncn-modern #ncn-billing-app :is(.pay-panel,.pay-plan),
+    body.ncn-modern #ncn-cash-app :is(.cq-panel,.cq-metric:not(.cq-metric-main),#cq-copy-dialog) {
+      -webkit-backdrop-filter:blur(22px) saturate(160%);
+      backdrop-filter:blur(22px) saturate(160%);
+    }
+  }
+}
+/* Fallbacks are intentional for reduced transparency, contrast and accessibility. */
+@media screen and (prefers-reduced-transparency:reduce),screen and (prefers-contrast:more),screen and (forced-colors:active) {
+  body.ncn-modern :is(#ncn-topbar,#ncn-sidebar,#ncn-page-tools,#ncn-search-dialog,.ncn-account-dropdown,.auth-modal .auth-box),
+  body.ncn-modern :is(.ncn-welcome-panel,.ncn-tool-card,.ncn-article-card,.ncn-contact-panel) {
+    background:var(--ncn-surface)!important;
+    -webkit-backdrop-filter:none!important;
+    backdrop-filter:none!important;
+  }
+}
+/* END NCN UNIFIED LIQUID GLASS 20261017 */
