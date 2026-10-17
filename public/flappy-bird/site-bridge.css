@@ -1,45 +1,123 @@
-/* NCN arcade bridge 2026-10-17 – scoped additions, no change to game physics. */
-:root{--ncn-border:rgba(137,158,198,.2);--ncn-text:#e8f0ff;--ncn-drawer:#111b2e;--ncn-drawer-accent:#86abff;--ncn-card:rgba(255,255,255,.07)}
-html[data-ncn-theme="light"]{color-scheme:light;--ncn-text:#1a2a47;--ncn-drawer:#fff;--ncn-drawer-accent:#1a5fd8;--ncn-card:rgba(36,74,138,.065);--ncn-border:rgba(55,82,127,.17);background:#f4f7fb}
-html[data-ncn-theme="dark"]{color-scheme:dark;background:#0c1628}
-html[data-ncn-theme="light"] body{background:radial-gradient(ellipse at 35% -10%,#d9e9ff,transparent 70%),#f4f7fb;color:var(--ncn-text)}
-html[data-ncn-theme="dark"] body{background:radial-gradient(ellipse at 50% 0,#172440,#0c1628 65%);color:var(--ncn-text)}
-html[data-ncn-theme="light"] .topbar,html[data-ncn-theme="light"] .footer{color:#1a2a47}
-html[data-ncn-theme="light"] .brand-light{color:#62738d}
-html[data-ncn-theme="light"] .live-dot{color:#62738d}
-html[data-ncn-theme="light"] .icon-button,html[data-ncn-theme="light"] .ncn-game-menu-button{color:#243856;border-color:var(--ncn-border);background:#fff}
-html[data-ncn-theme="light"] .underbar{border-color:var(--ncn-border);color:#243856}
-html[data-ncn-theme="light"] .underbar .under-item div>span,html[data-ncn-theme="light"] .under-record>span,html[data-ncn-theme="light"] .under-record small{color:#667998}
-html[data-ncn-theme="light"] .underbar .under-icon{background:#e8f0ff;border-color:var(--ncn-border)}
-html[data-ncn-theme="light"] .footer,html[data-ncn-theme="light"] .footer a{color:#60728f}
-html[data-ncn-theme="light"] .underbar .under-record b{color:#7f4c09}
-html[data-ncn-theme="light"] .game-shell{color:#fff4dd;color-scheme:dark}
-.topbar{gap:10px}
-.topbar .brand{margin-right:auto}
-.ncn-game-menu-button{display:inline-flex;align-items:center;justify-content:center;flex:none;width:43px;height:43px;border:1px solid #ffffff2b;color:var(--cream);background:#ffffff11;border-radius:14px;cursor:pointer;transition:background .2s,transform .2s}
-.ncn-game-menu-button:hover,.ncn-game-theme-button:hover{transform:translateY(-1px)}
-.ncn-game-menu-button svg{width:23px;height:23px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round}
-.ncn-game-menu-button:focus-visible,.ncn-game-close:focus-visible,.ncn-game-sidebar a:focus-visible{outline:3px solid #5ca6ff;outline-offset:3px}
-.ncn-game-shade{position:fixed;inset:0;z-index:1002;background:rgba(3,9,21,.62);backdrop-filter:blur(5px)}
-.ncn-game-sidebar{position:fixed;inset:0 auto 0 0;z-index:1003;width:min(350px,calc(100vw - 38px));max-height:100dvh;overflow:auto;overscroll-behavior:contain;box-shadow:22px 0 70px rgba(0,0,0,.32);background:var(--ncn-drawer);color:var(--ncn-text);border-right:1px solid var(--ncn-border);padding:22px 17px max(22px,env(safe-area-inset-bottom));}
-.ncn-game-sidebar-head{display:flex;align-items:flex-start;gap:14px;justify-content:space-between;padding:6px 4px 18px;border-bottom:1px solid var(--ncn-border)}
-.ncn-game-sidebar-brand{font-size:22px;font-weight:900;color:var(--ncn-drawer-accent)}
-.ncn-game-sidebar-brand b{font-size:12px;letter-spacing:.7px;margin-left:5px;color:var(--ncn-text)}
-.ncn-game-sidebar-brand small{display:block;font-size:11px;color:#95a7bf;font-weight:500;margin-top:9px;letter-spacing:0}
-.ncn-game-close{width:38px;height:38px;flex:none;display:grid;place-items:center;border:1px solid var(--ncn-border);border-radius:12px;background:var(--ncn-card);color:inherit;cursor:pointer}
-.ncn-game-nav{display:flex;flex-direction:column;gap:4px;padding:16px 0 10px}
-.ncn-game-nav .ncn-section{display:block;padding:18px 10px 8px;color:#7188a9;font-size:10px;letter-spacing:1.4px;font-weight:800}
-.ncn-game-nav a{display:flex;align-items:center;gap:12px;min-height:46px;padding:11px 12px;border-radius:12px;color:var(--ncn-text);font-size:13px;font-weight:600;line-height:1.35;transition:background .15s}
-.ncn-game-nav a:hover,.ncn-game-nav a[aria-current="page"]{background:var(--ncn-card)}
-.ncn-game-nav a[aria-current="page"]{color:var(--ncn-drawer-accent);font-weight:800}
-.ncn-game-nav .ncn-item-icon{flex:none;width:21px;font-size:17px;text-align:center;color:var(--ncn-drawer-accent)}
-.ncn-game-nav .ncn-item-title{flex:1}
-.ncn-game-nav .ncn-vip-pill{font-size:9px;color:#995b04;background:#ffe6ae;padding:4px 6px;border-radius:6px;font-weight:800}
-.ncn-game-admin{border-top:1px solid var(--ncn-border);margin-top:15px;padding:16px 9px 4px;display:flex;gap:12px;flex-direction:column}
-.ncn-game-admin p{margin:0;font-size:10px;font-weight:800;letter-spacing:1.3px;color:#8297b6}
-.ncn-game-admin a{font-size:12px;color:var(--ncn-drawer-accent);font-weight:650}
+/* NCN unified game shell v2. Only scoped selectors; never alter the portal's main CSS. */
+:root {
+  --ncn-accent:#2864c7;--ncn-ink:#192d4a;--ncn-muted:#697b91;
+  --ncn-bg:#f4f7fb;--ncn-surface:#fff;--ncn-border:#e1e8f1;
+  color-scheme:light;
+}
+html[data-ncn-theme="dark"] {
+  --ncn-accent:#9aafff;--ncn-ink:#edf3ff;--ncn-muted:#a8bad1;
+  --ncn-bg:#0c1628;--ncn-surface:#16243b;--ncn-border:#2a3a55;
+  color-scheme:dark;
+}
+/* HTML hidden state must override display:grid/flex from the arcade's CSS. */
+body [hidden],body [hidden] * { display:none!important; }
+html,body{max-width:100%;overflow-x:clip}
+body{background:var(--ncn-bg)!important;color:var(--ncn-ink);font-family:Inter,Arial,sans-serif}
+.app{max-width:1440px;width:100%;margin:auto;padding:87px 24px 0;min-width:0}
+.app>main{min-width:0}
+/* NCN fixed topbar. Toolbar for game-specific actions lives BELOW the header. */
+.topbar {
+  box-sizing:border-box;position:fixed;z-index:1000;inset:0 0 auto;
+  height:72px;padding:0 max(24px,calc((100vw - 1392px)/2));
+  display:flex;align-items:center;justify-content:space-between;gap:22px;
+  background:var(--ncn-surface);color:var(--ncn-ink);border-bottom:1px solid var(--ncn-border);
+}
+.topbar .brand{display:flex;align-items:center;gap:10px;margin-left:104px;margin-right:auto;min-width:0;text-decoration:none;color:inherit;white-space:nowrap}
+.topbar .ncn-game-brand-image{display:grid;place-items:center;flex:none;width:40px;height:40px;padding:4px;border:1px solid var(--ncn-border);border-radius:11px;background:#fff}
+.topbar .ncn-game-brand-image img{display:block;width:31px;height:31px;object-fit:contain}
+.topbar .ncn-game-brand-copy strong{display:block;font-size:21px;line-height:1.2;letter-spacing:-.7px;font-weight:850}
+.topbar .ncn-game-brand-copy small{display:block;font-size:10px;letter-spacing:0;margin-top:5px;color:var(--ncn-muted);font-weight:500}
+.topbar .top-actions{display:flex;gap:10px;align-items:center;flex:none}
+.ncn-game-header-label{font-size:12px;font-weight:700;color:var(--ncn-muted);white-space:nowrap}
+/* Same floating blue menu location and footprint as the primary NCN layout. */
+#ncn-game-menu{
+  display:inline-flex;position:fixed;z-index:1200;top:14px;
+  left:max(16px,calc((100vw - 1440px)/2 + 16px));
+  min-height:44px;min-width:96px;width:auto;height:auto;padding:10px 15px;
+  align-items:center;justify-content:center;gap:9px;
+  background:#2864c7;border:0;border-radius:13px;
+  color:#fff;box-shadow:0 5px 15px #2864c733;
+  font-size:13px;font-weight:800;line-height:1.3;transition:background .18s,transform .18s;
+}
+#ncn-game-menu:hover{background:#1e52a9;transform:translateY(-1px)}
+#ncn-game-menu[aria-expanded="true"]{opacity:0;pointer-events:none}
+#ncn-game-menu svg{width:21px;height:21px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round}
+#ncn-game-theme{display:grid;place-items:center;width:42px;height:42px;border:1px solid var(--ncn-border);border-radius:11px;background:var(--ncn-surface);color:var(--ncn-muted)}
+#ncn-game-theme svg{width:20px;height:20px}
+/* Content boundaries / controls echo the portal's cards. The inner arcade is deliberately self-contained. */
+.ncn-game-tools{display:flex;align-items:center;justify-content:space-between;gap:14px;min-height:53px;margin:0 0 13px;padding:0 4px}
+.ncn-game-page-title{font-size:13px;font-weight:800;color:var(--ncn-ink)}
+.ncn-game-tool-actions{display:flex;align-items:center;gap:8px}
+.ncn-game-tool-actions .icon-button{display:grid;place-items:center;width:38px;height:38px;background:var(--ncn-surface);color:var(--ncn-muted);border:1px solid var(--ncn-border);border-radius:10px}
+.ncn-game-tool-actions .icon-button:hover{color:var(--ncn-accent);background:var(--ncn-bg)}
+.game-shell{max-width:100%;margin:0;border-radius:19px;border:1px solid var(--ncn-border);box-shadow:0 18px 48px #11233b22;color:#fff4dd;color-scheme:dark}
+.game-shell:fullscreen{max-width:none;border-radius:0;border:0}
+.underbar{border-bottom:1px solid var(--ncn-border);color:var(--ncn-ink);gap:15px}
+.underbar .under-record>span,.underbar .under-record small,.underbar .under-item div>span{color:var(--ncn-muted)}
+.underbar .under-icon{background:var(--ncn-surface);border-color:var(--ncn-border)}
+.footer{color:var(--ncn-muted);border-top:1px solid var(--ncn-border);padding-top:19px;margin-top:8px}
+.footer a{color:var(--ncn-accent)}
+/* Identical sliding card treatment & navigation sizes to the main NCN portal. */
+.ncn-game-shade{position:fixed;inset:0;z-index:1290;background:#0b1e3b55;backdrop-filter:blur(3px)}
+.ncn-game-sidebar{
+  box-sizing:border-box;position:fixed;z-index:1300;inset:12px auto 12px 12px;
+  width:340px;max-width:calc(100vw - 24px);height:auto;max-height:calc(100dvh - 24px);
+  display:flex;flex-direction:column;overflow:hidden;padding:0;
+  background:var(--ncn-surface);color:var(--ncn-ink);
+  border:1px solid var(--ncn-border);border-radius:19px;
+  box-shadow:0 24px 80px #0a1e3e38;
+}
+.ncn-game-sidebar-head{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:18px 17px 16px;flex:none;border-bottom:1px solid var(--ncn-border)}
+.ncn-game-sidebar-brand{display:block;min-width:0;font-size:20px;font-weight:850;letter-spacing:-.6px;color:var(--ncn-ink)}
+.ncn-game-sidebar-brand b{font-size:10px;letter-spacing:0;color:var(--ncn-muted);font-weight:700}
+.ncn-game-sidebar-brand small{display:block;font-size:10px;letter-spacing:0;margin-top:5px;color:var(--ncn-muted);font-weight:500}
+.ncn-game-close{display:grid;place-items:center;flex:none;width:40px;height:40px;min-width:40px;border:0;border-radius:11px;background:var(--ncn-bg);color:var(--ncn-ink);font:inherit;cursor:pointer}
+.ncn-game-nav{display:flex;flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;flex-direction:column;gap:2px;padding:6px 13px 12px}
+.ncn-game-nav .ncn-section{display:block;margin:14px 10px 8px;color:var(--ncn-muted);font-size:10px;letter-spacing:1px;font-weight:800;text-transform:uppercase}
+.ncn-game-nav a{display:flex;align-items:center;gap:11px;min-height:45px;padding:10px 11px;margin:2px 0;border-radius:10px;color:var(--ncn-ink);text-decoration:none;font-size:13px;font-weight:650;line-height:1.4;transition:background .15s,color .15s}
+.ncn-game-nav a:hover{background:var(--ncn-bg)}
+.ncn-game-nav a[aria-current="page"]{background:#eaf1ff;color:#205ab2;font-weight:800}
+html[data-ncn-theme="dark"] .ncn-game-nav a[aria-current="page"]{background:#263e64;color:#d0e0ff}
+.ncn-game-nav .ncn-item-icon{flex:none;width:19px;text-align:center;font-size:17px;color:var(--ncn-muted)}
+.ncn-game-nav .ncn-item-title{flex:1;min-width:0;overflow-wrap:anywhere}
+.ncn-game-nav .ncn-vip-pill{margin-left:auto;padding:4px 6px;border-radius:6px;background:#f0eafa;color:#7951b8;font-size:9px;line-height:1}
+.ncn-game-admin{flex:none;display:flex;flex-direction:row;align-items:center;gap:8px;flex-wrap:wrap;padding:14px 18px 17px;margin:0;background:var(--ncn-bg);border-top:1px solid var(--ncn-border)}
+.ncn-game-admin p{flex:0 0 100%;margin:0;font-size:12px;font-weight:800;letter-spacing:0;color:var(--ncn-ink)}
+.ncn-game-admin a{display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:8px 11px;border:1px solid var(--ncn-border);border-radius:9px;background:var(--ncn-surface);color:var(--ncn-ink);font-size:11px;font-weight:750;text-decoration:none}
+.ncn-game-admin a:first-of-type{color:#087f3c}
 .ncn-game-admin a:hover{text-decoration:underline}
 body.ncn-game-menu-open{overflow:hidden}
-@media(max-width:700px){.topbar{gap:7px}.topbar .brand{font-size:15px}.ncn-game-menu-button{width:37px;height:37px;border-radius:10px}.ncn-game-menu-button svg{width:20px;height:20px}.top-actions{gap:5px}.ncn-game-theme-button{width:32px;height:32px}.ncn-game-sidebar{padding-top:max(16px,env(safe-area-inset-top))}}
-@media(prefers-reduced-motion:reduce){.ncn-game-sidebar,.ncn-game-shade{transition:none!important}}
-@media(max-width:480px){.topbar .brand-light{display:none}.topbar .brand{letter-spacing:-.3px}.topbar .brand img{width:28px;height:28px}}
+#ncn-game-menu:focus-visible,.ncn-game-close:focus-visible,.ncn-game-sidebar a:focus-visible,.ncn-game-tool-actions button:focus-visible{outline:3px solid #74a7ff;outline-offset:3px}
+@media(max-width:900px){
+ .topbar{height:66px;padding:0 18px;gap:12px}
+ .topbar .brand{margin-left:55px}
+ .topbar .ncn-game-brand-copy strong{font-size:19px}
+ #ncn-game-menu{top:11px;left:12px;min-width:45px;width:45px;min-height:44px;padding:9px}
+ #ncn-game-menu span{display:none}
+ .app{padding:79px 18px 0}
+}
+@media(max-width:620px){
+ .topbar{padding:0 12px;gap:9px}
+ .topbar .brand{gap:7px;margin-left:55px}
+ .topbar .ncn-game-brand-image{width:37px;height:37px}
+ .topbar .ncn-game-brand-image img{width:29px;height:29px}
+ .topbar .ncn-game-brand-copy strong{font-size:18px}
+ .topbar .ncn-game-brand-copy small{font-size:9px}
+ .ncn-game-header-label{display:none}
+ #ncn-game-theme{width:40px;height:40px}
+ .app{padding:78px 12px 0}
+ .ncn-game-tools{min-height:46px;margin-bottom:11px;padding:0 2px}
+ .ncn-game-tool-actions{gap:6px}
+ .ncn-game-tool-actions .icon-button{width:34px;height:34px}
+ .ncn-game-page-title{font-size:11px}
+ .game-shell{border-radius:15px}
+ .ncn-game-sidebar{inset:8px auto 8px 8px;max-width:calc(100vw - 16px);max-height:calc(100dvh - 16px)}
+ .underbar{gap:8px}
+}
+@media(max-width:380px){
+ .topbar .ncn-game-brand-copy small{display:none}
+ .ncn-game-page-title{font-size:10px}
+ .ncn-game-tool-actions .icon-button{width:32px;height:32px}
+ .underbar .under-item:nth-child(2){display:none}
+}
+@media(prefers-reduced-motion:reduce){#ncn-game-menu,.ncn-game-nav a{transition:none!important}}

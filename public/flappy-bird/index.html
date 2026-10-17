@@ -11,15 +11,15 @@
   <script>
     (function(){
       var theme='light';
-      try{var saved=localStorage.getItem('ncn-theme');var legacy=localStorage.getItem('mode');theme=(saved==='dark'||saved==='light')?saved:(legacy==='darkmode'?'dark':'light');}catch(e){}
+      try{var saved=localStorage.getItem('ncn-theme');var legacy=localStorage.getItem('mode');theme=(saved==='dark'||saved==='light')?saved:((legacy==='darkmode'?'dark':'light'));}catch(e){}
       document.documentElement.setAttribute('data-ncn-theme',theme);
     })();
   </script>
   <link rel="stylesheet" href="game.css">
-  <link rel="stylesheet" href="site-bridge.css">
+  <link rel="stylesheet" href="site-bridge.css?v=20261017-unified-ui-2">
   <script src="core.js" defer></script>
   <script src="game.js" defer></script>
-  <script src="site-bridge.js" defer></script>
+  <script src="site-bridge.js?v=20261017-unified-ui-2" defer></script>
 </head>
 <body>
   <!-- Menu nổi đồng bộ NCN. Tách CSS để không ảnh hưởng engine Canvas. -->
@@ -39,17 +39,27 @@
     </div>
   </aside>
   <div class="app">
-    <header class="topbar">
+    <!-- Chung quy chuẩn khung NCN: menu nổi bên trái, header cố định, nội dung bên dưới. -->
+    <header class="topbar" id="ncn-game-topbar">
       <button type="button" id="ncn-game-menu" class="ncn-game-menu-button" aria-label="Mở menu" aria-expanded="false" aria-controls="ncn-game-sidebar" title="Menu công cụ">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg><span>Menu</span>
       </button>
-      <a class="brand" href="https://nguyencongnghe.com/" aria-label="Về Nguyên Công Nghệ"><img src="icon.svg" width="38" height="38" alt=""><span>NCN<span class="brand-light">ARCADE</span></span></a>
-      <div class="top-actions"><span class="live-dot">MỘT VÁN NHANH?</span>
+      <a class="brand" href="/" aria-label="Về Nguyên Công Nghệ"><span class="ncn-game-brand-image"><img id="ncn-game-logo" src="icon.svg" width="32" height="32" alt=""></span><span class="ncn-game-brand-copy"><strong>NCN</strong><small>NGUYÊN CÔNG NGHỆ</small></span></a>
+      <div class="top-actions">
+        <span class="ncn-game-header-label">Trò chơi giải trí</span>
         <button type="button" id="ncn-game-theme" class="icon-button ncn-game-theme-button" aria-label="Chuyển giao diện sáng/tối" title="Đổi giao diện">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 13A9 9 0 0 1 11 3a9 9 0 1 0 10 10Z"/></svg>
-        </button><button id="helpButton" class="icon-button" title="Cách chơi" aria-label="Cách chơi">?</button><button id="soundButton" class="icon-button" title="Tắt âm thanh" aria-label="Tắt âm thanh" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 4 6 8H3v8h3l5 4V4Zm4 4a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></svg></button><button id="fullscreenButton" class="icon-button" title="Toàn màn hình" aria-label="Toàn màn hình"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg></button></div>
+        </button>
+      </div>
     </header>
-
+    <div class="ncn-game-tools" aria-label="Công cụ trò chơi">
+      <span class="ncn-game-page-title">🎮 Bay Đi Đừng Cáu</span>
+      <div class="ncn-game-tool-actions">
+        <button id="helpButton" class="icon-button" title="Cách chơi" aria-label="Cách chơi">?</button>
+        <button id="soundButton" class="icon-button" title="Tắt âm thanh" aria-label="Tắt âm thanh" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 4 6 8H3v8h3l5 4V4Zm4 4a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></svg></button>
+        <button id="fullscreenButton" class="icon-button" title="Toàn màn hình" aria-label="Toàn màn hình"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg></button>
+      </div>
+    </div>
     <main>
       <section class="game-shell" id="gameShell" aria-label="Bay Đi Đừng Cáu">
         <canvas id="gameCanvas" tabindex="0" aria-label="Vùng chơi. Chạm hoặc nhấn Space để vỗ cánh. Shift để lướt. P để tạm dừng.">Trình duyệt của bạn cần hỗ trợ Canvas để chơi game.</canvas>

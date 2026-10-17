@@ -101,6 +101,8 @@
     if (!items.some(t=>t.id==='flappy-bird'))anchor('Bay Đi Đừng Cáu','/flappy-bird/',{icon:'🎮'});
     anchor('Thư viện bài viết','/thu-vien/',{icon:'▤'});
     // Use the user's new Admin contacts even on deployments with stale config.
+    const logo = safe(cfg?.logo);
+    if (logo && $('ncn-game-logo')) $('ncn-game-logo').src = logo;
     $('ncn-game-line').href=defaultLine;
     $('ncn-game-group').href=defaultGroup;
   }
