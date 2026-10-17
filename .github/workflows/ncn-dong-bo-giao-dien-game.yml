@@ -1,0 +1,291 @@
+name: NCN - Dong bo giao dien Game
+on:
+  workflow_dispatch:
+    inputs:
+      tac_vu:
+        description: 'Sua giao dien game hoac phuc hoi giao dien truoc do'
+        type: choice
+        options:
+          - sua-giao-dien
+          - khoi-phuc
+        default: sua-giao-dien
+permissions:
+  contents: write
+concurrency:
+  group: ncn-theme-install
+  cancel-in-progress: false
+jobs:
+  fix-game-ui:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      NCN_ACTION: ${{ inputs.tac_vu }}
+      NCN_BRANCH: ${{ github.event.repository.default_branch }}
+    steps:
+      - name: Lay ma nguon tu nhanh chinh
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+      - name: Dong bo game va sao luu
+        shell: python
+        run: |
+          import base64,gzip,hashlib,json,os
+          from pathlib import Path
+          source=Path('.github/workflows/ncn-dong-bo-giao-dien-game.yml').read_text(encoding='utf-8')
+          encoded=''.join(line.partition(':')[2].strip() for line in source.splitlines() if line.startswith('# NCN_GAME_UI_PAYLOAD:'))
+          raw=gzip.decompress(base64.b64decode(encoded,validate=True))
+          if hashlib.sha256(raw).hexdigest()!='dd7bf63b61e39d9fbca643b28cd9a7c408a70daa10bf3c7e6cb29d0e0a847e49':
+            raise ValueError('File workflow bi cat, hoac payload bi sua. Hay dan lai toan bo file.')
+          data=json.loads(raw)
+          namespace={'__name__':'ncn_ui_repair'}
+          exec(compile(data['installer'],'ncn-game-ui-repair.py','exec'),namespace)
+          if os.environ.get('NCN_ACTION')=='khoi-phuc':
+            namespace['rollback'](Path.cwd())
+          else:
+            files={name:base64.b64decode(value,validate=True) for name,value in data['files'].items()}
+            namespace['repair'](Path.cwd(),files)
+      - name: Kiem tra cac chuc nang game
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check public/flappy-bird/core.js
+          node --check public/flappy-bird/game.js
+          node --check public/flappy-bird/site-bridge.js
+          if [ -f tests/ncn-flight.test.cjs ]; then node --test tests/ncn-flight.test.cjs; fi
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          html=Path('public/flappy-bird/index.html').read_text()
+          assert html.count('id="ncn-game-menu"')==1
+          assert html.count('id="ncn-game-theme"')==1
+          assert html.count('id="helpButton"')==1
+          assert html.count('id="soundButton"')==1
+          assert html.count('id="fullscreenButton"')==1
+          assert 'ncn-game-brand-copy' in html
+          data=json.loads(Path('public/assets/ncn-theme/config.json').read_text())
+          assert sum(t.get('id')=='flappy-bird' for t in data['tools'])==1
+          if os.getenv('NCN_ACTION')!='khoi-phuc':
+            css=Path('public/flappy-bird/site-bridge.css').read_text()
+            assert 'body [hidden]' in css and 'display:none!important' in css
+          print('Da kiem tra game, menu, che do an/hien va config.')
+          PY
+      - name: Luu ban va len GitHub
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add -A -- public/flappy-bird/index.html public/flappy-bird/site-bridge.css public/flappy-bird/site-bridge.js ncn-game-backup/state.json ncn-game-ui-backup/state.json
+          if git diff --cached --quiet; then
+            echo "Khong co thay doi, khong tao build Netlify thu hai."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ "$NCN_ACTION" = "khoi-phuc" ]; then
+            git commit -m "revert(ncn): restore earlier arcade interface"
+          else
+            git commit -m "fix(ncn): align arcade UI with portal and hidden overlays"
+          fi
+          git push origin HEAD:"$NCN_BRANCH"
+
+# Khong xoa cac dong ben duoi: du lieu su dung cho ban va.
+# NCN_GAME_UI_PAYLOAD_BEGIN
+# NCN_GAME_UI_PAYLOAD: H4sIAAAAAAAC/819SY/jWJLmX/HKPnhER2QERS3uioQftItyLa5dYmchwM1JSiTFEKm1UOfB3GbQmMNgToNGXwZooIGeU9exGvM/6p+Mmb3HRYt7
+# NCN_GAME_UI_PAYLOAD: eFTlANONLA9xeYs9s88+s7fwDz/ZXhAqjmOsf/ry09/97vMmWH9Wbe+z4W1v/ENorbzsr96vP+H/D7WVb+g3QXhwjJu14Sv2+uZ5tb5RvBtjbweh
+# NCN_GAME_UI_PAYLOAD: 7Zk33Ur3pu4ovn+4MRXXuOGlK6G98j7ddFc3mqV4phHchKsbf7WGezdj6bOyCa3PvnJwDS+8ebYdI/jEqvzVe16v3BtfCS3HVm9sF9+5eYKfv3r8
+# NCN_GAME_UI_PAYLOAD: h7I2fWUdGB9vVCUwCrmPN5YS4NMfbxbByvt4swqgA16j1Kl9HfR6o4dbf6M6tvb5mZr5s2qv9c+3v3qj0qBRGw0fwo3vGO/ixz941EcPenLz7tb2
+# NCN_GAME_UI_PAYLOAD: dGP/yQpd5/bjbWCHxs/q2tZN45MWBGdXFsHt+/e83uGoNKo93Hqa9zNK5WdV0ZYb/zOIJsQHVx7UP6g9laTBxaMb++rTk9pgKPW6D7eiIBYyQubu
+# NCN_GAME_UI_PAYLOAD: 541nP9uGji+I8EC5NKx9bZaGzYc//OrdwP9d63aqO19uFeFZ1cWiqN4Vsoahinktp9+r+WJBu39+1oU7saiJ2r1SfL4zsrmMntHzipLXs8/GvaBm
+# NCN_GAME_UI_PAYLOAD: ioZ6+/Hlis5F9eVWLObvhUyuKD7fPxcKhUzeKGSVYta4U+9zd0pOyGYzes7QdO2+YOSKGUMt5ov6Mzz8nNHFTDH31toWWJlynymKhnifec5nRUEV
+# NCN_GAME_UI_PAYLOAD: oavQNUO7v8+pRkbXc7lCVtWFrKDdF9V8LpNXNSGfz9wr2l3xTisqWNkffwVhPd/oNmhv+E5XQuX9l7URbtZepHCfAksR8wV275Nl7Pmz79mbhqet
+# NCN_GAME_UI_PAYLOAD: dEM/ffUdjucnfeP6Ad34aHjBZm18VQLNth/qigOKjaPkhQ/i+w+3v/7q3b7/xEp6d7sJn3++v+XFh2AIRvhuvVqFHz3QnPdfmIDQdh7QYt7RVXbR
+# NCN_GAME_UI_PAYLOAD: fqbrn+zgq6IGK2cTGu/e34Ce3376dIuqTnfBrsKArv4K/0fXsYwvN2vFDoybieJsjNp6vVq/ux17gfJskO3Su7e8Ih0E8IBt+uyT0fLKvVVItz6t
+# NCN_GAME_UI_PAYLOAD: Dah9C5VjU9YGAsXW+BquqB/J3ffX6sRO3aw2YWDrhEerqFIuW6yAyWZtKPoVyTxcyOzkff8TvvdVPYRGANJBmWErsY/w04ChAUDzDFbFxofhM1hR
+# NCN_GAME_UI_PAYLOAD: HOOiegg/oPSPOMAoRH7/E6ipCyXzx1KisQPCTU8zmFJQE0BnLkQA9f+MN1HmWiz0Fzr3i48jCqr0yV3q9vodgfbX1fJhtN4YH9mtgH6kygld/8H/
+# NCN_GAME_UI_PAYLOAD: tLND6ysW8s7/hH8+3H5ChAKsYf3+BI+la4d+wJVPVAP28LLlI8P1mbooDor5wHxIcHP7IQjX7+Dt9+lWrA9fsMDdGmTGR4Ts6JdVAKPkOwqICh74
+# NCN_GAME_UI_PAYLOAD: 6KdeerY9cD3sxY3n2N7ynWsHIFoz6jQ3HQTarwSvJK1oQIK19pBoTgLkiQ3BEzBWpAVXuthAB0jF0qA+rzae/ulGYh4RzMo2sYHgwDRFxxHUloqJ
+# NCN_GAME_UI_PAYLOAD: JrQGu4iESa8/EEg4K0UP3kGV70/MiLkFHOlbRUPruSVDPlOj1FORw9dv33/UbS18/1LToWdYCis1bhGvFkp4R06RSv6HVKm/Txwm96lXrXdkGYwi
+# NCN_GAME_UI_PAYLOAD: MAnBCC4D0AHf0EIgGYwEnBk09P0jPR1ZNVIQNjpKEBhhbHF4iWEejWeCI8nIgST4O797wB+vNXXsxe1i73CETCxu5ehf6UJKYdIOnT+mbdZoZA9/
+# NCN_GAME_UI_PAYLOAD: 8L6kIOn9hcD+GLdT8Q7vtpGO0XNbQhBW0KcttjJAfHxFwD6qlY2N1lYukJvQ+OVGUYE7IWFDywYMjTEpNcxxp1IAxTqZ0sf4oVPrp0unWpkq5fKh
+# NCN_GAME_UI_PAYLOAD: rbEOgCLevn944NQGuq6TlnEvyrv8D97v4Rl+jY0GXrqic6fVUePXtgd1NWxlBX78L3/6Tx4T0H/81z//E/zPX/70jyAQ9S9/+u+/3CytP/9v+BFa
+# NCN_GAME_UI_PAYLOAD: yoHu/Df7Y3RN3diODnf+/L9ckNYvTDdPK7vqqzQLiUIMd6pheDex1UCpYK+gWVzBdPv52Vinxgn58noVghbC4AchkGJDh+c/pVH3725Kz6EBhPwm
+# NCN_GAME_UI_PAYLOAD: 2GiaEQTPGwdswXGQQUKLQR82yhrqMpzV7gZEjowxoBsbL1xtNAsaEuMSoSw8C5JF9wr0yjlASz6x+th1hprMKB/OYTTl/VIDkxqXlRoY662hP1wO
+# NCN_GAME_UI_PAYLOAD: 8S8xFDzETBaun+hY9PrvHmLzhLou8Yg0zHufPPble6NF8EcjwQciuKE4JJaNDq5qbcOYgc5+AZflfbj9BWDxxl3B87ZG4U5w4wKuxwP0dzdMB1ae
+# NCN_GAME_UI_PAYLOAD: czgJi35e7bwI8Ujp1dVquTQMH4fdMwzgjDj6eCVpwNpwV1uDQgQC6JV3s1utl8n4eMbu64XzSA/aS8MTv3giQ5D9pdFFBPOApT/8IbL0L8QnYpP+
+# NCN_GAME_UI_PAYLOAD: wg3645lB3kaduf0CeMiCt09qIcfZbUoZPukGI7zEim+v4OVF2SiYIfaiTF2+vSz/RBbnNVyUp6BhUUO/Dz2vtKbEiuFlRBFBLPL37znyp9nkH/7+
+# NCN_GAME_UI_PAYLOAD: 71llKQry5fLVE38T3+eD8/6P0WAxCPyP/wKIp/3l3//Fv/Es+BOewB9G8R/BI/zlT//5JvjLn/5Fuckyqob9gBt//jd47N//CRwyAKnzf/51Q9Bo
+# NCN_GAME_UI_PAYLOAD: 3/jwxj9rn6KIJEKeE1L1HdfMYt3XvSiYPnvsFe41YOkJxi046/sFrOZ5E3A01Q30hOhgQwvN5kXGxer6LulKO0km5DLJaPvn/xk5mP/zr3/50z9p
+# NCN_GAME_UI_PAYLOAD: J8ICZotX/4eGz/zbuT9BopLUFPvI38U+EvEObnF7jQ3q9+ek5hqnWXoAPFEehwkqruG70B0xmTSNOQFn/kBMXaCoU5THJrJmM9tCiLnSzjrqHYNV
+# NCN_GAME_UI_PAYLOAD: zD0Bh+HBTmo0I0UjJObNML9D3c0rLTOTNp1Z7O9fp/dR+660KcVhwWvD/zycgB3HnYsBBGF8BHJnIwywUOUlkhiV+w9JL3//8FIF57B4XknKBP4h
+# NCN_GAME_UI_PAYLOAD: 0uzfszTEL3FFaZP8/UOENGmnkoav6LUrAMRNAP73H+0b85yVxZaxtGy0opiUIVT9M1JXQ8VMDwDVn//Fs0jQMLBfKU79+vXh4fbrV1exva9fb+OA
+# NCN_GAME_UI_PAYLOAD: P0oWfiqtzQ1mG5/w1zpCH/+ToutfFX7v3e3PP1Na4WN48A0CrY+Aa8rGYQj2SdvpQL1/uXyLx3IvvfjuKyURvn59zwPyl6vnWnT7kTn5h1sS5tcQ
+# NCN_GAME_UI_PAYLOAD: BitSLOWB4vrAwDeDVIyjfIoNI4ZiBaPlFX8GUxhfeBTFbnz8AyV44BfvwmfKHJwmQqJ8RloXocSfPv5EHOanL3/46dVc409ffnqq1Jeq2BWMWdmR
+# NCN_GAME_UI_PAYLOAD: GpagTncfKov9Sm9kAqmxt1RXK0qe7EuL3ONTw3Lm0/6Hil0ynxoZR2/UzLloWZrXdfSqYOuzgdsemfaTuTKl6j6UZwNLauQtdTqmMuSZvlOzLUGy
+# NCN_GAME_UI_PAYLOAD: ywtVzAvyNC88DVtZZToQlGpmKc9kfy6OQ110lnrDDJRp3tcbjqVWMse5WA/kkbBvN5Ny2lPZ16uZhZqVHc2WTtqluvUQnrd1aDPUH87FYqBmJVtq
+# NCN_GAME_UI_PAYLOAD: dLeqN3BUr1+U7M6+M6plOm4narOgzAZQT74yny3NfavsS51hP6du1iAHs3/fs/Rh1TZbfXO07PakWv0A7VrKo90W2imojfHVNsiNyXGebflac+Cr
+# NCN_GAME_UI_PAYLOAD: Yu60Dcustck7Alxb7e5WKE9fHe5M1WjcubO+Od80Cn52bOrNNjyXwfYMcuo3zxiWD/B3Oz/g381AGebMUdCL7lvKsGzvCuWNfNiZimg5eH1XqJl6
+# NCN_GAME_UI_PAYLOAD: 0DOlRmurwvv7b3Vfag4OMBae1NBxnMz5rLWYTwegCxkfyq2rdnmndHqh1HiyNgXdkmp5T5951W9uDuUhoFxGrr6CZ5vteAz2vuoGpuZOAhhfGNPi
+# NCN_GAME_UI_PAYLOAD: BsacdAx/q9O6Jw+LR93V1gbqmV1ewbNu9Gzb64rygZdVqYXtYbVqzkqmLIIuHMpLBWRjiTk2BtD+/boKsgkXUiNcQb832H+tUq6OM50CXtvdDUAO
+# NCN_GAME_UI_PAYLOAD: 5Q30wwK5HXeFOv5eK40lyjtjQHkmlKc3W6jvG6kihFwf+LgxnZcqpZXsTTbzLI3j6nEWPMI1vG7qbv0AbVnJ0wz0UQfd1Vd6Rbvj75nYTmMWivOZ
+# NCN_GAME_UI_PAYLOAD: ZGpiXZSn/aLaKIKs9yO9UTzMp7rTdnVHrzlgF8KqJeYXqp0RlMYklIea38vKlmaXA3mqW/Ps8jvvZrZyY+w9jkL2/khYRXU+jQRPbtQPykG/f252
+# NCN_GAME_UI_PAYLOAD: Ld2dLOFasSXufVm0hNZh+Zk/W3isWHF98Xu87KeDvgRdWbeOK09tOJ7S7HuPw+Xd8xTKBF1+bIx9IyvE8pGhvTrIBnR+k/x7UFexfYADbcSQWl2A
+# NCN_GAME_UI_PAYLOAD: MfDn3kSQhybWJ8yHmc1czIXcjr02l/HjiMu+KfiPleUd05XiyXid6eFRbzqBPOvC+xMhpXPeHMpru92jdpB+5L0jYIXTnrYOgF+gz/mFlu181hfC
+# NCN_GAME_UI_PAYLOAD: oVOVxM6otO8eMhnVdVxlOlm2ZxO/PZLsM70ytWxrAWUBhrWgDf4Ryl/KU8CzRe6+ne0uNNfZ6dUc9vVeE7sHZVYWpGb3MD8CroiAL8P8N2g3yHfi
+# NCN_GAME_UI_PAYLOAD: yjPpw4UMmryMSvmouR3A4S5gKuCh1/Llhk51PmXnxc6idOguarvOSAt1wF3ZdRy5kskoQ+HwUpugLpBJfQl9up+7xaUxYu2UhkIo1XB8x6a6adw5
+# NCN_GAME_UI_PAYLOAD: U8TSJthoF+3OBqyQAUeqIztnTsAm56Jp9jPdEcOuTTWxWbDrb92NUimvmI0X8X1HdXUYn7HZF+sbsLtj2y6FbV633HBEqeEsQaakN0xGmaPSAJwe
+# NCN_GAME_UI_PAYLOAD: SmDvewvGqSi5ZF9s7GFsCfNgbGEsoa85lONSmc25PtSPCmHilXLh+hxtH30aPKfBuKhud9OeEp6GGvgyedoC2wW7d4sB8weAY42iB+9YIEurPUWb
+# NCN_GAME_UI_PAYLOAD: qqOuCZo3cZLre2vOdLALNpJ5DXuTdywYV/AtC/B9zVYG+6xAu0E/NtD+jTxrCaSDFezXwNe/2+4MjTH6/8iWQad282nuJVlC/RMbcA51DPC0bz8t
+# NCN_GAME_UI_PAYLOAD: caxL9/NFvjfITORdzgff+VR1avkm9Kk57AGeL3bbOeiXJmZANrsPg0Ydxz2Evjng4xYcwxf4G3UcfEigVkkfsS0fYpyt7pGHCCrhubNDeSOeAE6i
+# NCN_GAME_UI_PAYLOAD: D/Ll6mk/oQ9bTRyjTw7ms+7xbHxBNsUj6c0McGmYCebTlqNCGftWtRqQ3yQ9twHfwa72gP3t2rLTO+LYqNPJRh9KH3L+YQJtjtoVtfW+LcI7kVyr
+# NCN_GAME_UI_PAYLOAD: +818NjcVwOgTeU7zlm6/oLfRvYu2ldF3l/VhZDchyk7QXPJ7WXnKcYiN5/18GGGatJUWd/ZCkswJ84VQ7wL8vgZtrX14Ak6jNFuODLrVFmWQV3ln
+# NCN_GAME_UI_PAYLOAD: DDO2Mmst24e4HQt91jpwbrdD34Rleo9zs+/W88inlGG1toQx/4byAz1YzcaX5WcHK32YEQE7N1A2yFBZSvUB9Ad9rWdtcvoGZGrFulwpovxi2TIc
+# NCN_GAME_UI_PAYLOAD: uDqmlgzcRuVchct+97Tct5heQn9z0NbxoDsco36V0s9ZVzAAeaqT8gsrvTnYacfVti2iHxlvQM+AHy63GmDKqJZ/Hk38nl4foM0KIDNPnsGYO0Vb
+# NCN_GAME_UI_PAYLOAD: RZ0/SJHf2ahicQdyBG5b3qB/kN3JAe4dpEW+Q3U2QHZD4jW2aldty2fj9J32eoBDGa0ixbJWmgNBa3YK7UOR+tJ2QbcyErVZPhS9jqeFsmOt5kfC
+# NCN_GAME_UI_PAYLOAD: yL+2zU1Wb5m1vffYcI5g86NI/3dbHDPmH+E64UjEp09xCvUuxqPqzmoPBfAFVgb1VZtN8sildaNR+AYYpfDryBV7djkkHAW42eQnvtRoE5YCt66u
+# NCN_GAME_UI_PAYLOAD: pkuIdzC+GWDbEWcG3B+1VdcM2DsOvDOg8uZB7xtw4yW3Lz/lg1DuhJngjxO79QZbrcH8wIWNz+J7fzWOcax5AScIo8LU+xf+Bfr5HGMZ8rxpDeI3
+# NCN_GAME_UI_PAYLOAD: C+w3v5SpvbKlNrsp30QxDMQO++MrPpHHU4I9ovad4njapxC/ycqexOK7ipo1i9KiZHYqwEvovxhfIh+NMj3o07H9tNjv5rPBSmpgPCUIUlVedUZy
+# NCN_GAME_UI_PAYLOAD: F97bd1xz36VrtZxSrYmSfU8cCWKPD9yPfaC2QQynZcuWmvZzl5jNbSrGFZswNWVLKRyM8XgCHMgclntydpLfFfwNYl7YQOzLewr6PsC3V30qcEwc
+# NCN_GAME_UI_PAYLOAD: h/bUCRme5u6Vaca7hkWqqG9B7ozruQ7E2bkNydUu8zhbsDtHjIMth2KU+Hc9wH9Li8Snvq1N3a3WXOIYAE+GuBLkirZGMua/oRxo9z4AHtCcTLyq
+# NCN_GAME_UI_PAYLOAD: vST+Mh4t0S51CXShcc2np/H9CqYLarYE5XYFZVrcRNz9TRxlGtk5H6OK9GECGBCA3SsdBWNnD2LMwkpcEjasr+gG+c3InpqDvNYYQx2tDGD/Vr1u
+# NCN_GAME_UI_PAYLOAD: 4xS3pHmigjZkZ2I7T9tznLd42WarSnOSR74MOOQp0/oWsAn9fhN+8xi3KLDcgGTy/ERRCiifMaE+nrxzKr/f0B4PnSHYoVDLS9Ulvr8DWzQ7I/hP
+# NCN_GAME_UI_PAYLOAD: jK/tpSqUPcL/ykraRk/G9Ko9pvwGeybC3rdwASirGGhXbDbi1/MPjTt/CNwp6B3Qr1DO5M1cuGzJmM9isreftpXnxbfc6zzoks9iHPJC+aBr4u5l
+# NCN_GAME_UI_PAYLOAD: G2hE+sj8hdKYBFot0dGkTMKJtK7FuI05L4zPgAc2wEfGvgF02JanOxhfaPe0u0rJ5vPVcbrSHk0sgi8dVPizaQ7O8kDTpK2x/jojiAmLgoScB8ZF
+# NCN_GAME_UI_PAYLOAD: oTjhCub2GoV1tm/uCq0Q8zKAVavYhmblA8TzR/Jric6ivgG3dBxdaG0NxEXSVUmg/16OrwDfypbeME3s02hUA13um127lBtWu2KvYR7V6tjs1ufC
+# NCN_GAME_UI_PAYLOAD: 1EU/NLDgnkj6zvW+1xCObXhvPqqhbezS9zqjvt0+EiaKMv4VuUxewiLmE1wd8BbzBTL4tn4yri9hTyp+aY3V+54JYxRi/lBqLKrrRkp2Cf5cfw5j
+# NCN_GAME_UI_PAYLOAD: uN8GN3JStSt1svOMOqqBfCar7myeGY06IBNZ7E7N6Dr+O+xC7PK0QJyWPfwbySPtP07jrTPcaGQs5dTuQD+YXaX0Ms4XyCDfiIcRlkzia+dyeiWX
+# NCN_GAME_UI_PAYLOAD: fG6vXUv1ZEs7pModR9fQBuowbsDHZiTTS1sEzd9MMSZltti2y1XgF4XVVDCVxmdrs9YXEoxRTv3mwLiNtEZ9ISMGYf7zUBahbTOKKcBW4N2R0nBc
+# NCN_GAME_UI_PAYLOAD: vRLfDzjXFeBeP87VNNEe66HUgL8FjDNz9pMzOOwKe4zfl/qMYjUhzh832vj8hn5/01FvoEyN5bcLnTink+SCOK6w/DTGfAuwZXE+65zJ7jRGADv2
+# NCN_GAME_UI_PAYLOAD: VBd1IOGzUR4kzrMg10nrxHWesdKnfZvbFf93hAEn713BaisjVzKBPJUFZhfAIdI22JwsIz2BGLm2rKGsWl30fTA2mxSnYnzC61KecOICVyN7KSEu
+# NCN_GAME_UI_PAYLOAD: QFxf3CA2XC1/1s3MYz4y8LXsAOL6broMU034zTV5vNSvBcb44GcJO7G9KZkF8kwGXpUR5lMtkh27Vsc4AmWfrw5BN0PghIBze6nzmJVqIXJBY8j9
+# NCN_GAME_UI_PAYLOAD: olvLN9OyYHVQWeCvMraa4WWlY0OxGM7d+1CP+/dX9e3A8vdXeLnXFTC3FZe/edR8zG1FPg3kq3ndKfBd8g2dKstrxZz23Ac26hlNnLzBB5YBGydH
+# NCN_GAME_UI_PAYLOAD: 4CxXMRvnPMAfLiN8eayX/GuYffbcb+j3TBPwed+tCXvwbxl9URNOYq0UJ0jnVlPc7vLamU2DzW4wltWyXeRVkV6B78h30Z9TbJT02dddnHcsb1Xg
+# NCN_GAME_UI_PAYLOAD: DtTel+vgfAT6ON0vRwxP02NxBOxw1EY/wtoUBuQ7u1zN7AuAY9/yPfQbTF9f1btzf72EelbX/LSMuedKaswT7Lmwd/4sm29b3D15x6QN0d9IT+nZ
+# NCN_GAME_UI_PAYLOAD: OtMfzCftv4F/yPtjHCfUCYrFKqlna5aven3A9q40HMtjqXJvDkC3o3ztpZ3GsqO+AVeFeLG7pth1mC5X9uF9slNldBL7JRwy8eGX9urhfMQE/VkW
+# NCN_GAME_UI_PAYLOAD: xg5xAf0zv8Zxz9Nh7IDvTCejOeakprl0/vO6/xAnAWIJ5YCz5bx0jhtX3pFnjjP3Wlsd4/nGEvvgP9nlSn+yNCeYV1y3eoMDzdO2EOt2OeepbfMY
+# NCN_GAME_UI_PAYLOAD: AHEQYgBzQj7uQk+jvFJnlKfygE+0ovzFvgV+ueBD2eXqLlefXGIWG+f2dLBFTGundTORN5R9pY/NUjpO2KA/An2p4By0jnHRpnHnTZcm/nWRezRV
+# NCN_GAME_UI_PAYLOAD: sINMvr3Y29oi390VSjjfuUUODpgDfvy5uq6UF3vFYXOyyNNFgeal1QNySeAN1fvTvOuLWE1zkaGW1X2ccwS7wXwU4mGc47yStwc9X5qKuKgGNE4x
+# NCN_GAME_UI_PAYLOAD: voKeDvhcDMbyE6gjiXe0ZgtxxyG9BezHOYNI18GH7mP9t8tjzOmsh5gnXab5esrmB4CbwNumxSXGWKpbPKC9pe0efEKA/FMmvnHZhgSD2fh1qlI8
+# NCN_GAME_UI_PAYLOAD: lqBHNRNjSpL5t1CvpvjwIskr8vnVUBUHKLMVyGp5NUaKcn8Jjuw6CbaYTP9ojmGxK9Qz38P6KOeewghqQxtzMnyOk3h3lOdEOY3P7i3yU/Rhc85f
+# NCN_GAME_UI_PAYLOAD: fZzP7/RSvDGTwdyHirEsHw+4/w18H84pyXqlHKAOq3bubbpGfr8ltGeRfZ/5cfL7V2PZHcgzhHfzqXj2Q39Zl6X6QNrlB63YZ2xYTjzxG9d0h/uL
+# NCN_GAME_UI_PAYLOAD: qRMY42ux/ADimP1JXZc5Cv7MDK7PWms2P6Od5/0QVxpBD+0bY4oWrp3AedkQ1/QYI+4jqvnq7g5tGcZBU3YgW53yJpTjAE5XH+CaDAFiRJ+wIR/6
+# NCN_GAME_UI_PAYLOAD: UQzwQs7vLbpzNjYRvo+B+xVRTmFKVy95sTgBPM+PxrV6dZBw31SM1F0xnhTHPjbZ8pl8LuUaOgbY5FiwWgOnn9hjrJNHkqeb7af7e62Pb+SqMl9n
+# NCN_GAME_UI_PAYLOAD: kjlCbBhqr8fWTMeWeeTYPamWl/bfir1BSt/mwMl3+Y45CXqTdjQfS/fubMuf4xw+YGY5QEzHdUmrae67/TiLpVI+uuWAfz3ICcf+kPPtulTbWpu7
+# NCN_GAME_UI_PAYLOAD: uTkCOfk1iAcx/7YEfoX11dI8+sK3VwCvMM7anXCYan6ssbkaQWlAfLUuCqR/ucBUwecYoxMO8zIvfRsHQRxj69U4z+D2yrj7JOElf8NagAuur5/k
+# NCN_GAME_UI_PAYLOAD: rpP5fpDBFX9ZD9rTLpTZvxa3OcZ0YkPbsmAfwE8yY8QojMmkGq5Ts8ZSrQuYRTwx4nurzhU+QOs9Ct3Y1lGflCqOdenDgHKvYFtTmo8WzvqDuLBL
+# NCN_GAME_UI_PAYLOAD: +yk2zuj7JqF8DfO8MvjHDODvMslhLvKcd+GY5/tpjF0uvoexyRyDPLOEdB6StQXinlnXGQLOpNrzgc/znObDcF1fIQOcJu2Dee5pEeegXss/RLpk
+# NCN_GAME_UI_PAYLOAD: oh+cT3dhlNeL/SOuf3R+E91qw1h8Bt+4x/nTFfhzNsfw7TPoNmLgSfxx1s5I9xfEI4irTAI9+n2JZee6h3wjozb7oSI6C8DoQ9Q/6NdRn+6FYXQd
+# NCN_GAME_UI_PAYLOAD: cwf1iQzt+jDi/Hr4oVHYOn3k2VV32UnhhHmIfKY8rQtJzHMH+ilb7Up5xfp86r9Qj5fi8jPxYsTBOBaaAHezxqgX0I4u5xILtnZzwXNhlCs3ddCB
+# NCN_GAME_UI_PAYLOAD: Fc4vg8y4XDHHpoI/FIEnLRSqs2cRH69+B+u9WJ5Hwk3G/VjuJ8oXAj/HNYHRfcw9AC+h9Z0x/gfD/hB92lK4wO7In/G5K0fPxBidnn9w9EMG9K+7
+# NCN_GAME_UI_PAYLOAD: RQxJ9IGt8YBxuAvtcgf6uewfyigfZTis4r3LuY3r+h7rAXIqvdmxOY4lmO9CzAgcfABsCfzeZi4meazEZ+UHutZb4FgCFsU8JsGtyAavlz0mPtdh
+# NCN_GAME_UI_PAYLOAD: OTYx8VFjjGVYDjWb0pnF/HgR79/z8iMf4CrTvKXW8s6ccmZn5TYsS2rcVb+x9anCZTtP89UvxaDgBxlGEIbH3IfzaLy372EOG3QX/UgwrpD9XMz5
+# NCN_GAME_UI_PAYLOAD: MllkHMSLCcQfsjiJ9H0wB8zG+dFttmTSPOVxZXYW490Lsk37HyrvWi6At62hYA6dZLh8kVOALSZxEscGKNOnNS2Jrwj0Ol37MIK2bqb3BTZumza+
+# NCN_GAME_UI_PAYLOAD: H+XFyU/l6hmpofu7Ox9jEuBOgimL4DcK93zdIq4Trm9fsNMLPwWxWf5aLgfiN1z7fDBSObynZas8HaK9fDOHw1LCt9bBdU58nhOL+j+tL/SGs1VJ
+# NCN_GAME_UI_PAYLOAD: Z8/b1MXYzrnWJr0xyemVdHuw/zVTAzzdIKefYk66G8brda7EkUxXLOJgV+Kfcx/6oY84mctsOC+W2XrPzokvjmwowl0N9xm4kxHYu6DPOme5OdDP
+# NCN_GAME_UI_PAYLOAD: IXFgdg9z5hjDU8w2yOC8KHGKEw732/pgmlut/yY+WEqt2QNO9G2t/ji3M6k9ie+9zBWmclXDjrJFnMb1GAOwi2/LnDkWnN6wUgaM2AxHKb6EHI7m
+# NCN_GAME_UI_PAYLOAD: r5sD4DU7U8b1K0PkThD3APYvKVbM8jiPxnUT+VB9ukvn2R21WQpVxHCMARp7/wofxTm1HcSpeXUKYwrP5VbKIMU9I+xmOoW+t3JvjqGt4BPM9gHX
+# NCN_GAME_UI_PAYLOAD: xNU4zpaInzksR7FRKiexnalibgDXI+N81LcOx4WOSTgxLOeAD1Hf2na5ifsP1ofzebO9T2t7cD6sMFlwrIj1GNcCQnsDzHFexKNsrI7GNGOrIsgo
+# NCN_GAME_UI_PAYLOAD: CzoDdnLM36d4DCsHYjQ+L1faSrV+Kma9q268vjnqkD9SdT7voFXz82jNMM7hU/xJ61bzHt8nwjlEadeujhkOFlp56Cfy/hHcP85nY7NXKXuK1rON
+# NCN_GAME_UI_PAYLOAD: IcuXxJyhUqQ+qZjvvIiH2RhrWQfj8gDKBrvsszmTlE5FfvJpmfg/4GWUGwyzfcof8phul36G5hDzPPcQ4VRTra4qZWEv0VpzNk90AH0mvx09X9p3
+# NCN_GAME_UI_PAYLOAD: Kql3Or0Z7ckBHftbxg1sH23NuqafIxfjgRzaS8EHec4/4PoijA9w7eH9iY5a0Gemf/e4zhD3vED5gqkFiAE5M9Z1ttfHAV65UqG8UOyweVScV6U8
+# NCN_GAME_UI_PAYLOAD: bAi2tGUxL9rrnU+5DZqTXWOcgzmd6+PZBv+J/Wbro9L8okj5t/a0uCN/g/mlhrPRmsAPGM8JVdofk6+CfICvt7YG+OV4DaNoAacMIWYx7SdmSyAH
+# NCN_GAME_UI_PAYLOAD: 6Js3wfESMbdAcXpOz0iYF+fz2WweuRv7DOB1ODYMMy98UTdQsxifvbDe5Xq8KBEvdsbmGLn/cmnGeYmVMkxzm5QPjOZJznXCVcUimxt1SoBD5bom
+# NCN_GAME_UI_PAYLOAD: dgqXc+XVSngoQ8y1yUqNI+EG5YiatN+LbFbVcM8Se07pxGuSCr6Iedcmy/MyPhpq1ctcxpvm1cSuo7q4Fr4ejWk834xrefvJdYgpatgfaXTfK6G/
+# NCN_GAME_UI_PAYLOAD: GHZ6Y4jBxuOg94h/IS7DeYjOXrEot3TGWRHPHL5/Kp1TudfECeMvaW5Cax1auJfgylqHQbSvC/Qxd54DueBJrCwpxD076vDavC7oX2NyaE9pLRS3
+# NCN_GAME_UI_PAYLOAD: 5Tu2pvoSg5EHzyeIIcx3aigLzOlG8zk+ygL1t1KuwtjYI8wzp/g+5cxpXQPYP64FZfPfK8qLwJiz38k+vRfjgXMekPQD94LhvqCjkh1sQSc3YJfO
+# NCN_GAME_UI_PAYLOAD: NS4Qy4bWBJUXxrR+MX+YYHQoYY4QeYIPPGFSs+qjA/GEbyQDnAddyzT2qVistyssTQ3XvCR+9wKjce2HUikHhFOXOdPND8vgSo7xND4tRftNYu5O
+# NCN_GAME_UI_PAYLOAD: z9doDgj6+lQzcV6OcmDfgsn1+c44vmM234rzkJ0qj/ESW4zXFKXWK4bzqZP8bshbHCctzdXc4hZ4+iHJaSd5B8CEAvxNz3HQej0dde+Q3tuR3peA
+# NCN_GAME_UI_PAYLOAD: +4gcsHkYb1ffyIDJbfz38B736ry4x4jW4y7O55QB59maWVGfLjdSjWIsFfkFtslm82CmCv7vG/iuS44Q9Zf4+4HvFUnHPsmYczlEewSS/QJ70O14
+# NCN_GAME_UI_PAYLOAD: X9pJfKi68X446Nv52iP8nRGkmm/pbn0U7cmLuB9f82iytaKxn0zXhXvgwDcP8rgHri3y/dPmw8NPH3/6/umLP335qX1Y8X2sk40ylX152uf1lY/o
+# NCN_GAME_UI_PAYLOAD: S8C3iB3gpSMxH+De1Tntr0BOxOYH1Wzr2DuUN7i2BnTGUpukO4LSGJtao3gAmQatbAfilroPto17YjdSZbWtLPwD6qvUpH2UYXtK60pBd7q4R7Mg
+# NCN_GAME_UI_PAYLOAD: HaVcdzFYdI9BdA/3RML1Wr7j9oX5KL4egu915Opq0V0ss/PFct/boS4LIVvP3PJ6dtftNuZZ2ZXu2nw/J8TnB9mtL+TRaiG7sts7xM9vNRf6sIDr
+# NCN_GAME_UI_PAYLOAD: o7rTa8xZecjPoD84t8/2tPps7qMaPD73fdqvPhX5vCqWM4v24rZon6rkCKZx0q76Yi5ONjq0uzetW6dtcDbKEeqfDtyOmL6eyYD+LaE/Vg+4k1yt
+# NCN_GAME_UI_PAYLOAD: 0b7TqE9zVwP5lBed0fzQq8byOeqzljufdp2e3dl3F5LQERM5AC8+IFbBvcN81LW6ozGVyferY5xJ/ei5A4jrgruKJzyizgzrg+6oEu9XNClXBmOu
+# NCN_GAME_UI_PAYLOAD: ziYQT5W3Ou27gVhxWAbs6e7AHvI9Vwcf2gc72jtGpewC76e1sfAMlN21cF+vdkjpiNvays2lORV5js8RAtrnOSyrURw6G5a+gQ6Bn3HATveWMQK1
+# NCN_GAME_UI_PAYLOAD: F/OONHVCrn8g48CMxqjdwDKdO9DHXHum+zLU38N9p5XxHeWxXRn6rYVG1QcbdnbwHtmXIbZAN0Oa11fdfgH3Wz+mdOxxCPo9K281b2CB/t5x+Z09
+# NCN_GAME_UI_PAYLOAD: B+N6WN4Bjmx04GjzKeh0c1kYsnVsQR/nzqa7AOKNjXbIHAHLfRnl7dZ3WjMM5zMzOpug0Bn1hU6znOtlz/owxVyZs+m5ddCV+zsN953ivsvjKtfN
+# NCN_GAME_UI_PAYLOAD: lnO4pkprmmanGoK/zSXlNXk91Tz5A0PEPWoZvmdjBXJYbR/tcq8vQAzhOjnEAOCgO9xnA7HaGNex054b8B9g/9E6VcCKLu7lBV4Z54dMkKsozzrA
+# NCN_GAME_UI_PAYLOAD: VyadUUajHF6y9ylnPtr3j+14v1KZ6aNbzOHeTsPFvsCYZFvEGfB6LwtyFx3yaz1X9g20kewq5GtVQVYl8IWhr9I5ESta3zyfTQT1iNhTBv2m/eOF
+# NCN_GAME_UI_PAYLOAD: 7rG1M6oh4P5gCe96Pczpgp48MpkFeAbE/GCusDzd08DuII47Lg9wz28fJZ/tCU/ruxxA/XfzKe5tzzHuN+sUyO7R5kQ/A3YDY7zE8yHwGuiqf2Tr
+# NCN_GAME_UI_PAYLOAD: YjO2PBtkMcfTE3VLq64OHQ/Gm7DoFV2cdTOgw5h/8Hsiw6wert+1zTSOwj2OczZwnyzGLkKhMwP9aOI7zlJqnrwTydvv7fxixc4D7mPeQjLbLtuH
+# NCN_GAME_UI_PAYLOAD: Y4i4trMcgK8tkH1XQwv35WN90K9QO/rRes078C871FeQW6yv7enekQH3QbbCyXW0AfBrkT6rU7wW6XzpjucPl2w+oM51IA+8YhzbIIzlCm1Jr4ZZ
+# NCN_GAME_UI_PAYLOAD: hdbiZZiMESuy+mE+K5/16eW9Tyf9BH8tg76obLwu+0lyYHiU2Gmf+g0+hPWL/07ZKfU/xuVFfQdYeVTxfATwxdC+1Tl2P47C2B5ABqB/kyPId8/K
+# NCN_GAME_UI_PAYLOAD: qUMMrB/ULHDSKvN1YMubyHalSj69H4XvJ8vwMzLK8Fe/S2Grjec+KMcwwoUj6kxPjPZyRb+LtuJCPAUYp8z6BabbgI+IZbFdlzYn+6DZXm20gx3y
+# NCN_GAME_UI_PAYLOAD: DLbu+GrdLp7dwrBgXOigfKoh2zc6jduxby+kO7WBcTLycORyXdB7rdAe5rIoF47B2cj2e9Xx7g1yYWvx+H6ytC7M3f12LgZRuUdl5juxjl9pB+Iv
+# NCN_GAME_UI_PAYLOAD: 7mMlDIY6e4sJ9gNikf1WW/gn4ww+Fddhgc0CV/X6gNmR7ox3hNspmWJZSS6+m5afC+3IcSzZk+8APAN5bVisljn2XOReyH1C9izZ0QRtIy2LaH8T
+# NCN_GAME_UI_PAYLOAD: j4X3530+XJNv91javYBHjL9Vlnc6+Hmd1tNR/rQA3DkLco98z4jmjRrgn0W0c1oThGug+T73MlzHsz8ohkddMomvNzHXkhfA/xw514jXQ7EzIHD8
+# NCN_GAME_UI_PAYLOAD: nK0+6zPOYXfTfaX9usTbGslYQ3lc3xi+A8/Aszgwp1DgvvHOIJwdgP2DrBfQd4yB4d/dZoThDO+Yf6mJL/mXbpXwAf2L+XiA3+AD8JwT9ImEhYnO
+# NCN_GAME_UI_PAYLOAD: C1T2qd/O4/Mx9nAMjbHnkiOQXkjVWgbHkPzuj/muM4x3QKfJJ9o43wZ4ucVYH7lmrzoX5kcthXOl+N+A+cAFnYyG7clG8uK6A1xedud3nA/guRlb
+# NCN_GAME_UI_PAYLOAD: /Yg+HeynAvJBH1aJyz92mI8/xYxRF22NX9Mj+eUgXgZbBTmQjjO97QxzRxg79AHxGJ9gaqW06YysY7vJnpFxLeWQXWO+8lKfeq5F/PicU0rHutMd
+# NCN_GAME_UI_PAYLOAD: tazeKKSzEjSwd80VCnQukIdzEgNnOjRDxNjHmfAoied7rCcqX3/lGE20gUFqrWZLNwBbEX904Jwd9FvgXwmXphMRxw18F/kqsLfF5d5uwGTA45gv
+# NCN_GAME_UI_PAYLOAD: MtxN5MR+E24rYLvzLO273+g1Pm5sn8gaZBDpJmA04oQTqLGPjJ8h+8J8YM9jOnPeJrY/dZLGNw/jjR7aKMQ6VzAtqlcgHpX4LP47jvvQb0J8i2cR
+# NCN_GAME_UI_PAYLOAD: 9M0zns850/K6rpLv+5u4GcdC51xv+DlM52NQPhsD+N1k8Vk/skmwPdJTyl9Ojjg/RfaK/rXZMYE3rdTDZbwOsj/ITYjD6oSZgGV0pkIUp5kK8Hfo
+# NCN_GAME_UI_PAYLOAD: P8io5SDvAj+AftFRG/Mw9vfuZNm2S9/au9XmdOyKUPc13/SiP/qmzzBvJef5vn/KEXA/ATwI/Ks4cdRF6M1nJbDvAcqF4puEZ42PaV7ZY3sCGb5A
+# NCN_GAME_UI_PAYLOAD: ORBfMr9cQf5pnfs8OkcE5/hx7Y7B/TDEHAV5xDHqwjebGHNc9eeg22u03/Zre2mz4Q/EEeTTc1faTfuLU3PzwG1P99r+CJ+N9e5oneod+32K8ad6
+# NCN_GAME_UI_PAYLOAD: HecggKt+h+P8BnYIPgy53IXOVTIWy/3nwQ7yp/ubFv6K4n/vevug7SQH5Nqv9NOWD2i7+ZN9mhBLW0YlwT3wMw74abAl3VcXq10qFgMfAjoGY9sZ
+# NCN_GAME_UI_PAYLOAD: OSRTzuvfFpvRXBc7a0rNki7ve+TP+zmUpXSsARfpHOcL6RDjD/OngtyIcxZnOZ/woj+gjxm1sedrEvKnuZQo9rocl11qbBnXjudXWsnzMLY0HqM3
+# NCN_GAME_UI_PAYLOAD: jv9reRYWZ2a4XeBeb8AqzpP5nAP4KNzTuHzyKN8btHnunscA7B07Xm9m8vz7S8+RzUg0T5OnvLHxXZy/3i6aC/HebFNJPuSqPCJ5UX3RPMELsmM5
+# NCN_GAME_UI_PAYLOAD: xnSZLD55Uxwa507oTBnQ9R75RK7rdgbPzCj0uH3G8wqN+gtt4TlSktP9N6mGZ4LlAR+7loptAVtgcQBbcwI+zQGOROf5SZU5nn8pgj+JYgKKTzTw
+# NCN_GAME_UI_PAYLOAD: dZG/4zlpymlFvu+av8K1P9C/qzxfQc4HMS5gfQH1TkY/BjFQb1S6iL07DWkvj7o25ljZvcEBzxBBDkQ47kI8A3JFf3LpH6JzzVq/QT6sk86H7ZH/
+# NCN_GAME_UI_PAYLOAD: wBhgLGB2Ri3i0XGuqRnlLTos33iCZT6eAbmA+AXiUDkrVQSzswDfC7HceYxBGBHHKqn3GgNRqZRCnpf0e2exFs8lET9oAzaivdJ4LnzE6Yw6zaXz
+# NCN_GAME_UI_PAYLOAD: toUoL3zi06/FID/on8hns/zeD2PydWyPyjK5fhWzxElIfqUcxWGVzm4+qjsdcXzs0TzDuV6enpH3Izk4xZscQY6ugfsL+Vm4PcJA5M64hlDH9WYp
+# NCN_GAME_UI_PAYLOAD: DD3JUXG/UstSLnkk76IxusD/H8Jz55y/xGc5RXm4azmX85zgaT5C2r2U7+mJe+gnm/vDfCDlfG1hQzHzK7nTV8aB54nK9gVHJNu5Uh/Gva/j8Hmc
+# NCN_GAME_UI_PAYLOAD: mu1Uy9+V0/93OaqTnCpbH/P/Kpd6qg/s2nfzDN+L3XCO51VsYOPUAzyG9hyUGfApjIFF1KHyVqF+tM7HbTOfyVfiIOL7gBPnMUzpdI5q5FvAI7Y9
+# NCN_GAME_UI_PAYLOAD: sShC2cjHQGd3GA+toFwfdSqOxRYhv7+nszEjLo97A9TF6/jKMOB8bkRmfoLmlDDnZ13p2zzKpcfrDq7bbxST1djc1KhMGEjj9ibbiPI6FA+D7AYC
+# NCN_GAME_UI_PAYLOAD: cTuKDxleXccAyss5RhP0leVYXMDtsOdNdhpyO7EOvv1cd/HMy7L1V8x37GPdTOfsZmfxJ+s718c4RjjwObtref7dy3JiPPi1OZIzLDhezd0uCCvx
+# NCN_GAME_UI_PAYLOAD: LMmULtY23WqUp4q4xon9mG30G4c9sxkbc2KT4zl2IkeTGjXw26TDZ5zpLAZzNf/6+3X1xbM/nczlHMi07namspvEQJ1DpzqxIC66qiNvnd+/pidT
+# NCN_GAME_UI_PAYLOAD: ka0bi/Nh7MwNj+XjzvN/kgi+XuzGGAttrZadToPN2Vz0m89RsDVl7NwFg2OHimtqR3HOi/Fwrus8j5DKH5z6qm72Rf+XjltesnXS/1Su5ATL4hxC
+# NCN_GAME_UI_PAYLOAD: NaQcKNjOVj9kKM8PXHFjzHScq3Ne66/uOrv2rOwDll3MH7J53TROEZ8S0z4ghfvi1TmyRdmZT2UrpR/Z3mi8ny/MM3txrs49nbcd2oI+4tSHiW/i
+# NCN_GAME_UI_PAYLOAD: uNAm7Q15H5OVXeFy9HBOs3TC17qMr+UYvuqUH+O+HcfiOzmNdJ6FxXV/BZfj594CvkU6wc7iO123cMHfrs8nEXb/EJ9CLHyxTSd4fj6/89fOgZxh
+# NCN_GAME_UI_PAYLOAD: /bHXPMV6zqH3v818r/M35+DSPCbxqfVrcyXZ7ui1uffJi3LGeFTzukJ7WnRBl/LgZ+Pxko6lXFecA08597n1Jcoy7Seu1s1zMjSHA36brRXKX8y/
+# NCN_GAME_UI_PAYLOAD: 4NpxyltdiRuvzn0gLxO74MsyogJyAd7itE/nh9k53d9/LjmbFvoCOg3+qoN4BtdbgTzcvZ6zbMS5yot6DLEInIh8dIE4WRSXVjrZbqOWxTkzwDeB
+# NCN_GAME_UI_PAYLOAD: z29tZVdmeYss5mL8Eu5/Az+1Ol0Xtdxh3MK+MxGtj2il+PZcPIsLdxxjIs7DeWEpPa/OYqRmElsA7rmgUxnkQiB/84fXCJziRZ7XeTmOs5DyT1yn
+# NCN_GAME_UI_PAYLOAD: 6Vy0CF/OYgaKdyNf1a1Orswn9IWzvr9cL7SV5QITjCH/jHN4lbylNcvpcrLoq2Oshtjp5fGZH66Nz9l4HJLxcGh+KHk2vX6HfEn22pqc7mhy5b1X
+# NCN_GAME_UI_PAYLOAD: 1sjE8Vknexqf4e8Lffju+pNkvss5m+9y3tguOiPYjPYin8fmPB/5Zr2jPRfNU5zsRbr72jm/zfScToSTpavzmonunc7x0e/mC3rTjGIxpjdnsmVn
+# NCN_GAME_UI_PAYLOAD: zWYv9Fg8HfMkX9OZXcyNxfb8Gk5xXRLf8uzFPIyXrC1i6xkS/9ltXpHxyRm3k3Ms2EdtSL7DMcGxuxZHZa61N87teHG+lOySeOaBYlSz95a8KObI
+# NCN_GAME_UI_PAYLOAD: Kss35EFpLYjP9DGZYzDSc3ye8Nhv4F5mx3psnMwtHXuoHxXn7g029uJaphQ2vX0O9OrYnJ8PXNqcnvuaT80pts7mFFuRnl+fH0EuNvKhj2ZI36xq
+# NCN_GAME_UI_PAYLOAD: 9Fcd27k7XwcM2FmsLPHc/QHEh9YO9yJgrgT3ZsjNCXC1fhjtKet5/NrQubtcWzEOruYBztaGkOxO1gIPiiCXN6zHX5wux+evV8o2LaMWx2ZuVRnx
+# NCN_GAME_UI_PAYLOAD: I/JN2aOtOWzrMVBwNCHZdTwIhTH9iKoqzHEapMm2XsM1flRPkYWrDdpiwpc8mavHYan4xJfatrJ4zCO5V3+e7Xvx8hsoU6r0zSfcMl+h5/HTbRly
+# NCN_GAME_UI_PAYLOAD: cZW8J8+Szyn1PaclVyxf5p9GwvZpuJUSp3zgXakx2M6z/NNLbvLvAbgcKo+lxzE1jcvJl6CyWfycwdOwtHys6FcpVeuwDKi/+KmcqmC2KqZ3OY0z
+# NCN_GAME_UI_PAYLOAD: 9h7x82bZsqMuW4JqQ1sq/ehzV+nh9ni6P2oDo3jjl95hKU1qQwNV49ozeF3z27hdpkFHyVwvi6cWoKwT2eEnlgB2Ar1GNA9l4V39dAZAaztb2so1
+# NCN_GAME_UI_PAYLOAD: iPqFjDLyBuPBQXuhLAp7dyQvcAd6s3zs2fdbRhPzIN/ikMoTta18bGUhJJorjY4gD0/Lo6MFsi1cWoT6obZEtqSoddhBubooZzteu1LyMKWmVLRA
+# NCN_GAME_UI_PAYLOAD: quiooxmEork49mansubbPkE2uLQfj23FLSEVva67tKRlOpyUoLyyp7s6tLfkDfC4hLyAR0eZuGVosnT6WDfVV12ZLSH06aj6IR0tc7cZQhtw22h2
+# NCN_GAME_UI_PAYLOAD: guaL20DgGdyO091KNYs/W3Kl+gA/c7eQanQkV6gONfOZtRVCw76J23z0moz6e0QZqh64F9BdlE3qU20mHl8xwmPkhqbPt7ywT7INy8kn2iIba/Jj
+# NCN_GAME_UI_PAYLOAD: ZbG8H/lE2y7azgj2aZdW/IhYEz+vBrJjn0s7lO+fMayk42FL+Fk1M/XpNdx2KECYuInacF7mmz77FpdLywfoaL2TsqO2HONPqOE4Cbht7LF+D/LB
+# NCN_GAME_UI_PAYLOAD: JQdU50HG4xPcXNJGtpyveC5f/CSL2nS6WNcjbzvox3EOuoNy5EcmJrKPZM1wEHX2TCa03cWTqvepf6/O2oFtBxzO4ifloP0zoAfkMvNjNiaIc1Q+
+# NCN_GAME_UI_PAYLOAD: H+MTvKRtJW2XHTUwomMIgMaKuqc2xquoTugDyQ/6UER7Z5/OS8aa08WK3shtNNCxPrhV8BfoXh3AyfOjFLG8EeI62MiKjjU862+0tFQ6wag8O44/
+# NCN_GAME_UI_PAYLOAD: 6c+ZTpU+w7/Tn4M4zvm2aTx2KD5mo0lHe3vwfOFtz4/Aput+ImuGi31vsLn2ub6TozYRY06eZ7Ql+Wxf6p7rAOWbHNiWphf6GNsB9lX7W46YXyiz
+# NCN_GAME_UI_PAYLOAD: FviSsTmn92r06TZjJNidkWRLTQmusSP3gdoLeIQ5fh4H7pkdb34YjeD5qrTTF3DNps/LwDWJwjyl2up2h6WMWq1t4O++vZjAexr9u3vIZeCZPP43
+# NCN_GAME_UI_PAYLOAD: Go2BjjpBZ5jLtEfw7Fjg9+f0bA/KSB+dnOp74W/s+2/2WY5YJxqOK1UssvNHPErCW5rGgS0FV+u0PRHDA7KNIaXJOSeIfezOZHawvHsJh5DWAq/a
+# NCN_GAME_UI_PAYLOAD: Aa3MMwy3aOsi8BZLb+AUUZ9Chgn7ZIr53Nyd4D3nEWl7wpCK+TLw5RCWOqh/YK+45WwB9g3+EfxEVfjwI/VescnoM6Am+kiOHWgXOB5Ru15qyzHC
+# NCN_GAME_UI_PAYLOAD: eJQR98FQRw7lS76AX9vQcZaET+UNfvZBau7vpQbz/206kjLCmBN/xeR0UUbJY+Oh+Wd9R37J8L2y9HuHcvE77adwBTjfVn9ZnidlRtu3Uhj9Utk8
+# NCN_GAME_UI_PAYLOAD: 7eYEgIt5/ASx6jI5QTknMpKmaZ7LtzHay1N/1UAfSpizemR6iPhOy9Yh3ImOJfA1AdOWOXimfIfH2+nNyQH4oyU3W5YuTg5x+YuA66wMoRP/hEQT
+# NCN_GAME_UI_PAYLOAD: 8ZK9D33I6dBOg9u1Mp2bj408Tg0xHQJfNEJ+bIPuDmMfHPkFxgPOykA+BH5MGLCUJvrTEzminwY5xvFBwitK2/ah/KQ1cPsxHSVh4acT5iycomXG
+# NCN_GAME_UI_PAYLOAD: EFKBn65F25KBN5YzEIab7Oh6iIVc5pOlBn7uDY+eKy/wsyyYzpAPZZ4qTY7N0vF6o5ht0+cIyvS52AHTQ+xXVqox3YVxtoFHYFyR5lZRLLKJP2uZ
+# NCN_GAME_UI_PAYLOAD: 8Is7iGsO8xnonZ2HuCyDU1xlHexNwfQG+XX2CUzk9qlnwZYHZ8+dfjKC8Wh2DHIUFzA/xuKdRLfQf7HnwEa+xzdAv6/GPiHFRxCrQBlbHJvv+Nxk
+# NCN_GAME_UI_PAYLOAD: uwH43VaW8MWLfW2FjvDe0mcGgKfwtPfKyKJuodwHI750oUBbFWZCLO/nIbQDj35uJmVd6Dv2mWHad2QayX7n/RXy99g2ihOezT/rmo+3QT+RD5q8
+# NCN_GAME_UI_PAYLOAD: RfZcP8a/vfyv6UnFStvnZ+A8R9wioNJU42SJPPc0llmlYuTlj40ZYg+lblJtd0FO3K6o/3AdbAj63gUf1V2nsRN9NccfC3CWsCGFz6k4/Af8aAr/
+# NCN_GAME_UI_PAYLOAD: oliAlxeN4W9RFk6Db3DqmeHJoAPtF9jnKGGsIHaYi8TpHVZOwLF3jEt06IjDNj86CGJq1EGVPuvnCMjLU3KxXIhVjnLiK0Du91uJ+E6J4eSMUnkm
+# NCN_GAME_UI_PAYLOAD: +dUG+ifg77PWUWrqoKt7h2+F45+jtPCTPymcfJMPXMszZ6lmdcImOZU/inyENP2+HwG5QznLiLvUNeBtGsWQ4ONALnjkPKsbdNut47GcK5A11JdH
+# NCN_GAME_UI_PAYLOAD: frIbTjMstQfcbgyxGC6t4L6DnrsuM+47Iz8Z+8DxCQ+ZNOo2xq0pHxflJ5isxLqtsthRbduAaxEueXWwh1Z+nByRUQY7SY9nEG2/wGkAvWKpmLac
+# NCN_GAME_UI_PAYLOAD: 4xTgdKA/AsbMhnkXxgmnkVcG6IrB8mtVFT8D4g2GWK52MP22u8fPUUOckLJ14sSmxWy2a9E0ZPIcchOn7cV2XJOnsoVHOOJnzK/JJt1viF2OejWT
+# NCN_GAME_UI_PAYLOAD: 6v9E7dSFgLDj7Pr1+oX9LOUXIrnTp0+8QRt1oWXPTz7XTuljaGuSG4TxmbJp5McZ6QKmdQlbBlFeC2y1R0e89GPsQn1I9Ynr6F9TN5XrvyZH2XUO
+# NCN_GAME_UI_PAYLOAD: r9QN76FelFvqlKXxAQ/7movb86Ll6mbaz5zbTjFtQ9ODzj+lBdgv1A949OpkhvkxHfrkzNB3jVkfOzjlmfo95PEBvAc8fdyP3sHcmTcEWxjbuo7x
+# NCN_GAME_UI_PAYLOAD: MWBXBo9ywrGaixQv+Sc++aUxOPxYX7nviGOUk9xzsws6TfZGRwpxDE3HgYIxA1sX5+xzqMCNKe6gbYXIBVnM0c6E2qy+P86a5q5TyWhGte7Ohve4
+# NCN_GAME_UI_PAYLOAD: fAN03KKyCW/jfJXm9U64sgW+e77hn1w4TnD5W8X02geIWSpzaEedymjzTzZoGfw8iLlqHe63yCUT7s76Eedymq08+oQop6qPMuAjNXMyaXV4nX4v
+# NCN_GAME_UI_PAYLOAD: G7+bQd1TsxBfiMUgwqwoHwzxn9uC/uvDPH7e6aC6yJ3jazvkITodTQVxYhNwj8mrQH2F2Aq3VNAnTSrW81m84UHsHY3T3XkeLjlGzaJjVxmOR7m2
+# NCN_GAME_UI_PAYLOAD: SfB0Eg/hEaZ1QR4jTpK9rVrs2CWPMH6627Bjmrp0ZPDTkOX9kzq0Oyyz7eGyNsBGvoz9aUbL3O5YHp6mSQF7+hDv7yhuvMgdQoylQKz7yD9nhUdy
+# NCN_GAME_UI_PAYLOAD: 0/ghf2myacqnWVh8jHO1MR6CTe6KgHcuxJJMb0bcp1fqeM9P4elZ3rFWPMGZLG1dSXAG9Gk+JP5nAc/FsS+CLgaRrkQ6QtNpi0zaX+MRsGhjcayF
+# NCN_GAME_UI_PAYLOAD: sTwuP0A+yKbf8ux4KiGP8yJFzj/Zsj12/JzXE9mne2mZTS3eclkEO+ZTeWzaFuzJy/kHN8nHRP1jZX+vj+woOOinSM9fHW++vJHnILU7pst50q94
+# NCN_GAME_UI_PAYLOAD: m2uV3498S6O2wRgb+r98bFBfAvbe8jSOTfoDMX0Jcz7R2NrA4zx59F3ZIkfAJYQ4R3e1/clyxZ2HS8xliPcvdHao05xGT0y3mz37OAqLZ7F3VqpP
+# NCN_GAME_UI_PAYLOAD: hqOKhToWUE6ecR5ux8sN5Q7ZGGygzXxZvbmdVe7Xrcp90AKsQs6Vfvct7zxOay/nmafg+70WjjX6kR3LHcXyZtw47luNYTuLE9J5jh2MSQbqhvjG
+# NCN_GAME_UI_PAYLOAD: WsiudiVnz7YHPw2tMtRnGcO8r5Hfq+cfG11XPiKW4xbjjv8kwu9Dni19OPrqbIixDNtu9djsF5+8vtvyaBnaVrbLgEnOEuWS8hlwv7/hn3+Ff5MP
+# NCN_GAME_UI_PAYLOAD: Ap+Zj/zEOSbgsVaoj3jMxBb+E6B9LvZnNK3vHvGovlGeLRE/JBwPeMUHKBOPcgZ+4SyvlEtL+5741ug2HhNPSx8tAWImKzX/hnmUhdqcLGXgHVRm
+# NCN_GAME_UI_PAYLOAD: Jclf4DLaNh5P3thbc3FShfg2AN5KHL2XHI25agl4hHLOHC2t8mhpJrE8He9UWsU+CjAS5Mb6DNwyxtIGOxp1ChwIYmP9ubkXohx8u9nnerpneLRY
+# NCN_GAME_UI_PAYLOAD: MQw57NEGC5QvEjEG6mDe0EP7aWWT+DLBf9PDz+z69T5+pqWwssvVXX5AnyHD4xXJLqP2VPQxLXs40NHrdz7Ec+CPvXYzJBzr2c/2QpK850TurpqV
+# NCN_GAME_UI_PAYLOAD: wNdH3KNvIq+gpcIHBz9hCdghoXw5Lu0FjtOBwbCzEI/nUMfx32nNZTgHXggx+ufWZ/oUs4f1Ot/m0A7gs1UfyqAtj3h0IL6H8ki3KYqrmA549Mmh
+# NCN_GAME_UI_PAYLOAD: U925rAtsFudYrS3GoK98+hlsVsOj2dBf4uebfM3tA19Jxui+9aG3tvViogtJuZPGohFUyiIeTW2hTw16Jh7JyI7p71PZesPKtGd4xGDupNycryzT
+# NCN_GAME_UI_PAYLOAD: 49s+3JuTWTeKUYm/0BGClJuLloKST8K84pHlmnMm+6QY4lYxT3jd7GCuD+dQ8GjHAPOCYEtgc9rmzLbYZ+urgsl9OeLOZ4hZtrJ4759yP7pGccL5
+# NCN_GAME_UI_PAYLOAD: +gI8Zl1FjLxco0Dlgz6CzbQWfF7XUyOfebFOgOb3IQZmGAOcice+gw7O8UftOa+flv2Cvlx5r0mfo6smc6caxM4Qq+CRfSsji8t09seeE+qRrsnA
+# NCN_GAME_UI_PAYLOAD: fecictYi+jPgMJ1tet6kjUvjAYMAW79pYD9P2XmxsygdungM3UiLtu/iFhqIFYQ9jjdtF0dfjUfSI0fNdpnccOuX6AA/2S8A41byaAX9usfPbwB+
+# NCN_GAME_UI_PAYLOAD: jlH/uZzyOHeweWxKLMcuOi7wrEPbLa4foV30yYkabrMosrwNG2vcthXPI2s2ay/GaJflIt+b0DErjzxWA45KPPgxzv0EJq7RGbh18Lu4fSM432YM
+# NCN_GAME_UI_PAYLOAD: fWvhsr882IeIn0mjuH5YxiW3bI0GbjHm8xfQBowNH3/64x//L8nu7H+BpwAA
+# NCN_GAME_UI_PAYLOAD_END
