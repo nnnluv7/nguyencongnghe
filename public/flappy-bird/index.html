@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#11152c">
+  <title>Bay Đi Đừng Cáu — NCN Arcade</title>
+  <meta name="description" content="Một chú chim, một bầu trời đầy rắc rối. Né đại bàng, khe đá và bom rơi trong game arcade miễn phí của Nguyên Công Nghệ.">
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
+  <!-- Áp giao diện NCN trước khi nạp CSS: không nháy sáng khi chuyển trang. -->
+  <script>
+    (function(){
+      var theme='light';
+      try{var saved=localStorage.getItem('ncn-theme');var legacy=localStorage.getItem('mode');theme=(saved==='dark'||saved==='light')?saved:(legacy==='darkmode'?'dark':'light');}catch(e){}
+      document.documentElement.setAttribute('data-ncn-theme',theme);
+    })();
+  </script>
+  <link rel="stylesheet" href="game.css">
+  <link rel="stylesheet" href="site-bridge.css">
+  <script src="core.js" defer></script>
+  <script src="game.js" defer></script>
+  <script src="site-bridge.js" defer></script>
+</head>
+<body>
+  <!-- Menu nổi đồng bộ NCN. Tách CSS để không ảnh hưởng engine Canvas. -->
+  <div id="ncn-game-shade" class="ncn-game-shade" hidden></div>
+  <aside id="ncn-game-sidebar" class="ncn-game-sidebar" role="dialog" aria-modal="true" aria-label="Menu Nguyên Công Nghệ" aria-hidden="true" hidden inert>
+    <div class="ncn-game-sidebar-head">
+      <span class="ncn-game-sidebar-brand">NCN <b>NGUYÊN CÔNG NGHỆ</b><small>Danh mục công cụ</small></span>
+      <button type="button" id="ncn-game-close" class="ncn-game-close" aria-label="Đóng menu" title="Đóng menu">✕</button>
+    </div>
+    <nav id="ncn-game-nav" class="ncn-game-nav" aria-label="Điều hướng trang web">
+      <a href="/">⌂ Trang chủ</a><a href="/flappy-bird/" aria-current="page">✦ Bay Đi Đừng Cáu</a><a href="/thu-vien/">▤ Thư viện</a>
+    </nav>
+    <div class="ncn-game-admin">
+      <p>LIÊN HỆ ADMIN</p>
+      <a id="ncn-game-line" href="https://line.me/ti/p/dLN_MZNtTG" target="_blank" rel="noopener noreferrer">Line cá nhân ↗</a>
+      <a id="ncn-game-group" href="https://line.me/R/ti/g/g2w-fXhc4e" target="_blank" rel="noopener noreferrer">Group Line ↗</a>
+    </div>
+  </aside>
+  <div class="app">
+    <header class="topbar">
+      <button type="button" id="ncn-game-menu" class="ncn-game-menu-button" aria-label="Mở menu" aria-expanded="false" aria-controls="ncn-game-sidebar" title="Menu công cụ">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <a class="brand" href="https://nguyencongnghe.com/" aria-label="Về Nguyên Công Nghệ"><img src="icon.svg" width="38" height="38" alt=""><span>NCN<span class="brand-light">ARCADE</span></span></a>
+      <div class="top-actions"><span class="live-dot">MỘT VÁN NHANH?</span>
+        <button type="button" id="ncn-game-theme" class="icon-button ncn-game-theme-button" aria-label="Chuyển giao diện sáng/tối" title="Đổi giao diện">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 13A9 9 0 0 1 11 3a9 9 0 1 0 10 10Z"/></svg>
+        </button><button id="helpButton" class="icon-button" title="Cách chơi" aria-label="Cách chơi">?</button><button id="soundButton" class="icon-button" title="Tắt âm thanh" aria-label="Tắt âm thanh" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 4 6 8H3v8h3l5 4V4Zm4 4a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></svg></button><button id="fullscreenButton" class="icon-button" title="Toàn màn hình" aria-label="Toàn màn hình"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg></button></div>
+    </header>
+
+    <main>
+      <section class="game-shell" id="gameShell" aria-label="Bay Đi Đừng Cáu">
+        <canvas id="gameCanvas" tabindex="0" aria-label="Vùng chơi. Chạm hoặc nhấn Space để vỗ cánh. Shift để lướt. P để tạm dừng.">Trình duyệt của bạn cần hỗ trợ Canvas để chơi game.</canvas>
+        <div class="vignette" aria-hidden="true"></div>
+        <div class="hud" id="hud" hidden>
+          <div class="hud-left"><span class="hud-label">ĐIỂM</span><strong id="scoreValue">0</strong><span class="hud-sub" id="distanceValue">0 m</span></div>
+          <div class="hud-center"><span class="level-tag" id="levelValue">CHẶNG 01 · KHỞI ĐỘNG</span><span id="comboValue" class="combo-value"></span></div>
+          <div class="hud-right"><span class="star-value">✦ <b id="starsValue">0</b></span><button id="pauseButton" class="icon-button pause-button" title="Tạm dừng (P)" aria-label="Tạm dừng"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg></button></div>
+        </div>
+        <div class="run-message" id="runMessage" aria-live="polite"></div>
+        <div id="shieldLabel" class="shield-label" hidden>LÁ CHẮN <span></span></div>
+        <button id="dashButton" class="dash-button" hidden><span class="dash-icon">ϟ</span><span><b id="dashTitle">LƯỚT</b><small id="dashHint">SHIFT / D</small></span><span class="dash-track"><i id="dashFill"></i></span></button>
+
+        <div class="screen welcome-screen" id="welcomeScreen">
+          <div class="welcome-copy">
+            <div class="eyebrow"><i></i> BAY THẲNG. NÉ KHÉO. ĐỪNG CÁU.</div>
+            <h1>BAY ĐI<span>ĐỪNG CÁU<span class="title-dot">.</span></span></h1>
+            <p class="intro">Bầu trời rộng vậy.<br>Mà sao thứ gì cũng nhắm vào mình?</p>
+            <div class="mode-switch" role="group" aria-label="Độ khó"><button data-mode="easy" aria-pressed="false"><span>01</span> Thử tay</button><button data-mode="normal" class="selected" aria-pressed="true"><span>02</span> Căng thật</button><button data-mode="hard" aria-pressed="false"><span>03</span> Đừng cáu</button></div>
+            <p class="mode-description" id="modeDescription">Vừa đủ khó để muốn thử thêm một lần.</p>
+            <div class="start-row"><button id="startButton" class="primary-button">BAY THÔI <span>↗</span></button><button id="dailyButton" class="daily-button"><span class="daily-spark">✧</span><span>Đường bay hôm nay<small>Cùng đường bay · Thi tài với bạn</small></span></button></div>
+            <div class="welcome-bottom"><span><span class="key">SPACE</span> hoặc chạm để bay</span><span><span class="key">SHIFT</span> để lướt</span></div>
+          </div>
+          <div class="flight-stamp" aria-hidden="true"><span>NHỎ NHƯNG</span><b>CÓ VÕ.</b><span>↖ đó là bạn</span></div>
+          <div class="welcome-record"><span>★ KỶ LỤC CỦA BẠN</span><b id="welcomeBest">0</b><small>Trên thiết bị này</small></div>
+        </div>
+
+        <div class="screen modal-screen" id="pauseScreen" role="dialog" aria-modal="true" aria-label="Tạm dừng trò chơi" hidden><div class="modal-card"><span class="eyebrow">HÍT THỞ MỘT CHÚT</span><h2>Bầu trời đợi bạn.</h2><p>Game đang tạm dừng.</p><button id="resumeButton" class="primary-button">BAY TIẾP <span>→</span></button><button class="text-button" id="pauseHomeButton">Về màn hình chính</button></div></div>
+
+        <div class="screen modal-screen" id="overScreen" role="dialog" aria-modal="true" aria-label="Kết quả chuyến bay" hidden><div class="modal-card result-card">
+          <span class="result-kicker" id="resultKicker">CHUYẾN BAY KẾT THÚC</span><h2 id="deathTitle">Ủa, hết đường rồi?</h2><p id="deathText">Một cú chạm hơi thân thiết với vách đá.</p>
+          <div class="result-score"><strong id="finalScore">0</strong><span>ĐIỂM</span></div><span id="newRecord" class="new-record" hidden>✦ KỶ LỤC MỚI ✦</span>
+          <div class="result-stats"><div><b id="finalDistance">0 m</b><span>Quãng đường</span></div><div><b id="finalStars">0</b><span>Sao nhặt được</span></div><div><b id="finalNear">0</b><span>Pha né sát</span></div></div>
+          <div class="medal-row"><span id="medalName">TẬP BAY</span><span id="medalTarget">Mốc tiếp theo: 250</span></div><div class="medal-track"><i id="medalFill"></i></div>
+          <p class="result-tip" id="resultTip">Mẹo: nhịp chạm đều giúp chim giữ độ cao.</p>
+          <button id="retryButton" class="primary-button">BAY LẠI <span>↻</span></button><div class="result-actions"><button id="shareButton" class="text-button">Chia sẻ điểm ↗</button><button id="homeButton" class="text-button">Chọn độ khó</button></div><p id="shareStatus" class="share-status" role="status"></p>
+        </div></div>
+
+        <div class="screen modal-screen" id="helpScreen" role="dialog" aria-modal="true" aria-label="Hướng dẫn chơi" hidden><div class="modal-card help-card"><span class="eyebrow">HƯỚNG DẪN SINH TỒN</span><h2>Bay thì dễ.<br>Sống mới khó.</h2><ul class="help-list"><li><span class="help-symbol">↑</span><div><b>Chạm / Space / ↑</b><p>Vỗ cánh để bay lên. Thả để hạ xuống. Giữ để vỗ liên tục.</p></div></li><li><span class="help-symbol cyan">ϟ</span><div><b>Shift / D hoặc nút Lướt</b><p>Xuyên chướng ngại trong 0,55 giây. Hồi sau 8 giây.</p></div></li><li><span class="help-symbol gold">✦</span><div><b>Né sát, nhặt sao</b><p>Né sát cộng điểm và tăng combo. Sao cộng 10 điểm × combo.</p></div></li><li><span class="help-symbol red">!</span><div><b>Nhìn dấu cảnh báo</b><p>Vệt đỏ báo bom rơi. Chạm đất hoặc trần vẫn kết thúc chuyến bay.</p></div></li></ul><label class="motion-option"><input id="motionCheckbox" type="checkbox"> Giảm rung và hiệu ứng chuyển động</label><button id="closeHelpButton" class="primary-button">HIỂU RỒI <span>→</span></button><small class="help-footer">P / Esc: tạm dừng · Kỷ lục lưu trên máy · Không cần đăng nhập</small></div></div>
+        <div class="scene-caption" id="sceneCaption">01 / HOÀNG HÔN TRÊN THUNG LŨNG</div>
+      </section>
+
+      <section class="underbar" aria-label="Thông tin trò chơi"><div class="under-item"><span class="under-icon red">↗</span><div><b>MỘT ĐƯỜNG BAY. ĐỦ THỨ CẢN.</b><span>Đại bàng · Khe đá · Bom rơi</span></div></div><div class="under-item desktop-note"><span class="under-icon cyan">ϟ</span><div><b>KHÓ DẦN THEO TỪNG CHẶNG</b><span>Né sát để tăng combo. Canh lúc để lướt.</span></div></div><div class="under-record"><span>KỶ LỤC <small id="recordMode">CĂNG THẬT</small></span><b id="footerBest">000</b></div></section>
+    </main>
+    <footer class="footer"><span>Một chút thử thách từ <a href="https://nguyencongnghe.com/">Nguyên Công Nghệ</a></span><span>Chơi vui. Nhớ nghỉ tay nhé. <span class="footer-star">✦</span></span></footer>
+  </div>
+  <noscript><p class="noscript">Bạn cần bật JavaScript để chơi game.</p></noscript>
+</body>
+</html>

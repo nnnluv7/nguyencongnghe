@@ -1,0 +1,37 @@
+{
+  "version": "20261017-arcade-1",
+  "active": true,
+  "installed": {
+    "public/flappy-bird/index.html": "a0fbd292b763eeb25c4d8b596c8ffd0729c2c8a9f7e341d1d5aa5d3fe80b19eb",
+    "public/flappy-bird/game.css": "f531dd5897b4f4640378a412eb9c6c55d8a3a784ba2eae2d5cbfddabaa34d9ee",
+    "public/flappy-bird/game.js": "18394af4e5fda35d84ad2e04f1bb89953a85cf71abce75dd83975ed58600b329",
+    "public/flappy-bird/core.js": "776c653bd77a6901ac1d2e0464250e8fa7be249dc2c734696114878ced3d6627",
+    "public/flappy-bird/icon.svg": "410e7a24356cb7beb337f973aadb950deb6369287bd73f18994f470605f7000d",
+    "public/flappy-bird/site-bridge.css": "295801492f8f66615e63a93e7b847a40331d4ecdc86e491eb959dff8ff1d2194",
+    "public/flappy-bird/site-bridge.js": "a8192e281f5320b2a0fd8bec884be1dd4463bd030c89b5415bc05518ac797c9a",
+    "tests/ncn-flight.test.cjs": "d229c0cf45484e0df051f7c7c1390cceb5d4fa9d07c0feebf56e8affc0790cd0"
+  },
+  "before": {
+    "public/flappy-bird/index.html": null,
+    "public/flappy-bird/game.css": null,
+    "public/flappy-bird/game.js": null,
+    "public/flappy-bird/core.js": null,
+    "public/flappy-bird/icon.svg": null,
+    "public/flappy-bird/site-bridge.css": null,
+    "public/flappy-bird/site-bridge.js": null,
+    "tests/ncn-flight.test.cjs": null
+  },
+  "previousTool": null,
+  "groupCreated": true,
+  "groupId": "arcade",
+  "installedTool": {
+    "id": "flappy-bird",
+    "title": "Bay Đi Đừng Cáu",
+    "description": "Game arcade bay, né chướng ngại, nhặt sao và lập kỷ lục.",
+    "href": "/flappy-bird/",
+    "icon": "spark",
+    "tone": "violet",
+    "access": "public",
+    "group": "arcade"
+  }
+}

@@ -36,6 +36,10 @@
       "id": "tien-ich",
       "name": "Tiện ích",
       "icon": "spark"
+    },
+    {
+      "id": "arcade",
+      "name": "Giải trí"
     }
   ],
   "tools": [
@@ -186,6 +190,16 @@
       "icon": "shield",
       "tone": "amber",
       "featured": true
+    },
+    {
+      "id": "flappy-bird",
+      "title": "Bay Đi Đừng Cáu",
+      "description": "Game arcade bay, né chướng ngại, nhặt sao và lập kỷ lục.",
+      "href": "/flappy-bird/",
+      "icon": "spark",
+      "tone": "violet",
+      "access": "public",
+      "group": "arcade"
     }
   ],
   "adminContact": {
