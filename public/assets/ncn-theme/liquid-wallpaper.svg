@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1440" fill="none">
+  <defs>
+    <linearGradient id="sky" x1="160" y1="0" x2="1700" y2="1500" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#e3f2fc"/><stop offset=".45" stop-color="#e9f5f2"/><stop offset="1" stop-color="#e9edf9"/>
+    </linearGradient>
+    <linearGradient id="ribbon" x1="1850" y1="0" x2="850" y2="1150" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#a4d8f9"/><stop offset=".48" stop-color="#9ddfd1"/><stop offset="1" stop-color="#d3e9ef"/>
+    </linearGradient>
+    <linearGradient id="pearl" x1="0" y1="550" x2="1300" y2="1200" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#c7d6fc"/><stop offset=".55" stop-color="#e6e5fa"/><stop offset="1" stop-color="#f4e1d8"/>
+    </linearGradient>
+    <filter id="soft"><feGaussianBlur stdDeviation="38"/></filter>
+  </defs>
+  <path fill="url(#sky)" d="M0 0h1920v1440H0z"/>
+  <g filter="url(#soft)" opacity=".85">
+    <path d="M2100-200C1180-330 920 80 1340 310c600 328 620 515 190 650-370 115-420 362 140 620" stroke="url(#ribbon)" stroke-width="250"/>
+    <path d="M-420 420C300 250 650 450 460 690 260 945 770 1110 1090 1080c480-45 650 80 490 490" stroke="url(#pearl)" stroke-width="200"/>
+  </g>
+  <path d="M2070-140C1280-220 1050 70 1400 270c510 295 640 515 240 670" stroke="#fff" stroke-opacity=".35" stroke-width="3"/>
+</svg>
