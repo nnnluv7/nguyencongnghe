@@ -42,20 +42,17 @@ export function installToolUI({doc=document,win=window,config={},preview=false}=
 
   const cash=$('ncn-cash-app');
   if(cash&&!cash.dataset.easy){
-    cash.dataset.easy='true';const screen=cash.querySelector('.cq-screen'),summary=cash.querySelector('.cq-summary'),erp=$('cq-erp')?.closest('label'),side=cash.querySelector('.cq-side'),workspace=cash.querySelector('.cq-workspace');
-    if(screen&&summary&&erp){erp.classList.add('cq-erp-top');for(const node of erp.childNodes)if(node.nodeType===3)node.textContent='Tiền giữ ERP (VND)';summary.before(erp);const error=$('cq-erp-error');if(error)erp.after(error);}
-    if(side&&workspace){const detail=make('details','ncn-cash-options'),caption=make('summary','','Đối chiếu & tùy chọn phiếu in');workspace.after(detail);detail.append(caption,side);}
-    const container=$('center-container');if(container&&!$('ncn-cash-rail')){
-      container.classList.add('ncn-cash-layout');const rail=make('aside','ncn-cash-rail');rail.id='ncn-cash-rail';rail.setAttribute('aria-label','Tài khoản và công cụ liên quan');
-      const account=make('section','ncn-account-card'),caption=make('span','','TÀI KHOẢN NCN'),accountTitle=make('strong','','Công cụ cho ngày làm việc'),accountInfo=make('p','','Đăng nhập để xem gói VIP của bạn.'),membershipLink=make('a','','Đăng nhập / Nâng cấp VIP');membershipLink.href='/premium/';account.append(caption,accountTitle,accountInfo,membershipLink);rail.append(account);
-      for(const [title,info,url]of [['Sticker Event','Tra giá, lọc tồn kho và in sticker.','/in-event/'],['Giờ Vàng Giá Sốc','In mẫu GV-2 chữ lớn từ bảng giá VIP.','/in-gvgs/'],['Liên hệ hỗ trợ','Hỗ trợ sử dụng các công cụ NCN.',config.contactUrl||'/p/contact-us.html']]){const card=make('a','ncn-quick-card');card.href=url;if(url.startsWith('https://')){card.target='_blank';card.rel='noopener noreferrer';}card.append(make('strong','',title+' ↗'),make('p','',info));rail.append(card);}
-      container.append(rail);
-      if(!preview&&typeof win.fetch==='function'){
-        import('../ncn-identity-client.js').then(client=>client.ensureSession()).then(()=>win.fetch('/.netlify/functions/ncn-billing?route=me',{credentials:'same-origin',cache:'no-store'})).then(r=>r.ok?r.json():null).then(data=>{
-          const user=data?.user;if(!user)return;accountTitle.textContent=user.admin?'ADMIN':user.vipSource==='manual'?'VIP do ADMIN cấp':user.vip?'VIP đang hoạt động':'Thành viên NCN';
-          const expiration=user.vipExpiresAt?new Date(user.vipExpiresAt).toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh'}):'';accountInfo.textContent=user.vipSource==='payment'?'Hết hạn: '+expiration:user.admin||user.vipSource==='manual'?'Không giới hạn thời gian':expiration?'VIP hết hạn: '+expiration:'Chưa có gói VIP.';membershipLink.textContent=user.admin||user.vipSource==='manual'?'Mở công cụ VIP':'Mua / Gia hạn VIP';membershipLink.href=user.admin||user.vipSource==='manual'?'/in-gvgs/':'/premium/';
-        }).catch(()=>{});
-      }
+    cash.dataset.easy='true';const screen=cash.querySelector('.cq-screen'),summary=cash.querySelector('.cq-summary'),erp=$('cq-erp')?.closest('label'),side=cash.querySelector('.cq-side'),workspace=cash.querySelector('.cq-workspace'),table=cash.querySelector('.cq-count-panel');
+    if(screen&&summary&&erp&&side&&workspace&&table){
+      // Move the original nodes; cash calculations, keyboard entry and printing retain their handlers.
+      const grid=make('div','cq-compact-grid'),dashboard=make('aside','cq-dashboard');
+      dashboard.setAttribute('aria-label','Tổng tiền và đối chiếu ERP');summary.before(grid);
+      const actual=summary.querySelector('.cq-metric-main');if(actual)dashboard.append(actual);
+      erp.classList.add('cq-erp-top');for(const node of erp.childNodes)if(node.nodeType===3)node.textContent='Tiền giữ ERP (VND)';dashboard.append(erp);
+      const error=$('cq-erp-error');if(error)dashboard.append(error);
+      dashboard.append(summary);
+      const detail=make('details','ncn-cash-options'),caption=make('summary','','Đối chiếu & tùy chọn phiếu in');detail.append(caption,side);dashboard.append(detail);
+      grid.append(dashboard,table);workspace.remove();cash.classList.add('cq-compact');
     }
   }
   return {destroy(){listeners.forEach(remove=>remove());observers.forEach(o=>o.disconnect());}};

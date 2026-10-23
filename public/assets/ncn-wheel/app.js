@@ -1,11 +1,19 @@
-import {COLORS,MAX_ENTRIES,MAX_HISTORY,STORAGE_KEY,normalizeName,nameKey,parseNames,secureIndex,landingRotation,sectorPath,emptyState,restoreState} from './core.js?v=20261016-wheel-1';
+import {MAX_ENTRIES,MAX_HISTORY,STORAGE_KEY,normalizeName,nameKey,parseNames,secureIndex,landingRotation,sectorPath,emptyState,restoreState} from './core.js?v=20261016-wheel-1';
 const NS='http://www.w3.org/2000/svg';
+const GLASS_COLORS=[['#e1f6ff','#86c7ed'],['#eee5ff','#b5a1e7'],['#dbf9ed','#85cebb'],['#fff2d9','#e6c583'],['#e5edff','#9fb9e9'],['#ffe8f0','#e6b0c8'],['#d9f5f7','#84c8d1'],['#eef5da','#b6ce94']];
+let wheelInstance=0;
 export function createLuckyWheel({root=document.getElementById('ncn-wheel-app'),doc=document,win=window,storage,randomIndex,animate,now=()=>Date.now()}={}){
  if(!root)throw new Error('Không tìm thấy vòng quay.');
  const $=id=>root.querySelector('#lw-'+id),listeners=[];
  const listen=(node,type,handler)=>{node?.addEventListener(type,handler);listeners.push(()=>node?.removeEventListener(type,handler));};
  const make=(tag,cls,text)=>{const n=doc.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n;};
  const svg=(tag,attrs={})=>{const n=doc.createElementNS(NS,tag);for(const [k,v]of Object.entries(attrs))n.setAttribute(k,v);return n;};
+ const paintId='ncn-lw-glass-'+(++wheelInstance);
+ for(const [buttonId,titleId,label] of [['clear-list','list-title','Xóa danh sách tham gia'],['clear-history','history-title','Xóa toàn bộ lịch sử']]){
+  const button=$(buttonId),heading=$(titleId)?.parentElement,old=button?.parentElement;
+  if(button&&heading){button.textContent='Xóa';button.setAttribute('aria-label',label);heading.append(button);if(old?.classList.contains('lw-list-actions'))old.remove();}
+ }
+ const removeCaption=root.querySelector('.lw-check>span');if(removeCaption)removeCaption.textContent='Loại người trúng ở lượt tiếp theo';
  let store=storage,storageOK=true;
  if(store===undefined)try{store=win.localStorage;}catch{storageOK=false;}
  let state;try{state=restoreState(store?.getItem(STORAGE_KEY));}catch{state=emptyState();storageOK=false;}
@@ -19,12 +27,18 @@ export function createLuckyWheel({root=document.getElementById('ncn-wheel-app'),
  function renderWheel(){
   const entries=state.entries,n=entries.length,paint=n||8,wheel=$('wheel');rotation=0;
   wheel.style.transition='none';wheel.style.transform='rotate(0deg)';wheel.replaceChildren();
+  const defs=svg('defs');
+  GLASS_COLORS.forEach(([light,color],i)=>{
+   const gradient=svg('linearGradient',{id:paintId+'-'+i,x1:'0%',y1:'0%',x2:'100%',y2:'100%'});
+   gradient.append(svg('stop',{offset:'0%','stop-color':light}),svg('stop',{offset:'62%','stop-color':color}),svg('stop',{offset:'100%','stop-color':light}));defs.append(gradient);
+  });
+  wheel.append(defs);
   $('wheel-desc').textContent=n?`Vòng quay có ${n} người tham gia. Mỗi tên có một cơ hội như nhau.`:'Thêm tên vào danh sách để bắt đầu quay.';
   for(let i=0;i<paint;i++){
-   const group=svg('g');group.append(svg('path',{d:sectorPath(i,paint),fill:COLORS[i%COLORS.length],stroke:'#ffffff66','stroke-width':paint>80?.5:1.5}));
+   const group=svg('g');group.append(svg('path',{class:'lw-sector',d:sectorPath(i,paint),fill:`url(#${paintId}-${i%GLASS_COLORS.length})`,'fill-opacity':'.82',stroke:'#ffffffc2','stroke-width':paint>80?.5:1.8}));
    if(n&&(n<=48||i%Math.ceil(n/48)===0)){
     const angle=n===1?0:-90+(i+.5)*360/paint,rad=angle*Math.PI/180,x=n===1?300:300+183*Math.cos(rad),y=n===1?160:300+183*Math.sin(rad);
-    const left=Math.cos(rad)<0,text=svg('text',{x,y,'text-anchor':'middle','dominant-baseline':'middle',fill:'#fff','font-weight':'750','font-family':'Arial, sans-serif','font-size':n>48?10:n>20?12:n>12?15:n>6?20:25,transform:`rotate(${angle+(left?180:0)} ${x} ${y})`});
+    const left=Math.cos(rad)<0,text=svg('text',{class:'lw-sector-label',x,y,'text-anchor':'middle','dominant-baseline':'middle',fill:'#16384e','font-weight':'750','font-family':'Arial, sans-serif','font-size':n>48?10:n>20?12:n>12?15:n>6?20:25,transform:`rotate(${angle+(left?180:0)} ${x} ${y})`});
     const title=svg('title');title.textContent=entries[i].name;text.append(title);
     const max=n>20?12:18,name=n>48?String(i+1):entries[i].name;text.append(doc.createTextNode(name.length>max?name.slice(0,max-1)+'…':name));group.append(text);
    }
