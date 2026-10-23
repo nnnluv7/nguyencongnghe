@@ -247,71 +247,71 @@ html[data-ncn-theme="dark"] .ncn-game-nav a[aria-current="page"]{background:#263
   }
 }
 
-/* BEGIN NCN GAME SOFT GLASS 20261017-v1 */
-/* Game chrome only: the canvas, gameplay and menu placement are unchanged. */
+/* BEGIN NCN GAME LIQUID GLASS 20261023-v1 */
+/* Shared optical treatment is limited to the frame around the game. */
 @media screen {
   :root {
-    --ncn-bg:#f3f6f9;
-    --ncn-ink:#203249;
-    --ncn-muted:#586b80;
-    --ncn-border:rgba(124,148,175,.30);
-    --ncn-game-calm-nav:rgba(250,252,254,.95);
-    --ncn-game-calm-control:rgba(244,248,252,.92);
-    --ncn-game-calm-line:rgba(129,152,180,.34);
-    --ncn-game-calm-shadow:0 9px 29px rgba(28,55,85,.10),0 1px 3px rgba(28,55,85,.045);
+    --ncn-bg:#e9f3f6;--ncn-ink:#173047;--ncn-muted:#4b6477;
+    --ncn-border:rgba(82,120,149,.19);--ncn-surface:#f8fcff;
+    --ncn-ui-rim:rgba(255,255,255,.83);
+    --ncn-ui-glass:#f0f8fc;--ncn-ui-glass-strong:#f5faff;--ncn-ui-glass-soft:#f5faff;
+    --ncn-ui-shadow:0 8px 28px rgba(40,80,109,.075),inset 0 1px 0 rgba(255,255,255,.95);
+    --ncn-ui-shadow-high:0 22px 65px rgba(31,69,101,.17),inset 0 1px 0 rgba(255,255,255,.95);
   }
   html[data-ncn-theme="dark"] {
-    --ncn-bg:#111d2c;
-    --ncn-ink:#e8edf5;
-    --ncn-muted:#a9bbcd;
-    --ncn-border:rgba(168,189,214,.22);
-    --ncn-game-calm-nav:rgba(30,45,65,.97);
-    --ncn-game-calm-control:rgba(47,66,90,.92);
-    --ncn-game-calm-line:rgba(168,189,214,.25);
-    --ncn-game-calm-shadow:0 12px 32px rgba(0,0,0,.24);
+    --ncn-bg:#101f30;--ncn-ink:#eef7ff;--ncn-muted:#b4cadb;
+    --ncn-border:rgba(182,218,246,.19);--ncn-surface:#192e43;
+    --ncn-ui-rim:rgba(220,242,255,.25);
+    --ncn-ui-glass:#1a3047;--ncn-ui-glass-strong:#192d42;--ncn-ui-glass-soft:#233c54;
+    --ncn-ui-shadow:0 10px 32px rgba(0,10,23,.18),inset 0 1px 0 rgba(225,247,255,.17);
+    --ncn-ui-shadow-high:0 24px 70px rgba(0,8,20,.4),inset 0 1px 0 rgba(225,247,255,.22);
   }
-  body {background:var(--ncn-bg)!important;color:var(--ncn-ink)}
-  .topbar,.ncn-game-sidebar {
-    background:var(--ncn-game-calm-nav);
-    border-color:var(--ncn-game-calm-line);
-    box-shadow:var(--ncn-game-calm-shadow);
-  }
-  .ncn-game-admin {
-    background:var(--ncn-game-calm-control);
-    border-color:var(--ncn-game-calm-line);
-  }
-  .ncn-game-close,#ncn-game-theme,.ncn-game-admin a {
-    background:var(--ncn-game-calm-control);
-    border-color:var(--ncn-game-calm-line);
-    color:var(--ncn-ink);
-    box-shadow:none;
-  }
-  .ncn-game-nav a:hover {background:var(--ncn-game-calm-control);transform:none}
-  #ncn-game-menu {
-    background:linear-gradient(150deg,#3572b6,#2762a2);
-    box-shadow:0 5px 16px rgba(35,85,149,.16),inset 0 1px rgba(255,255,255,.18);
-  }
-  .ncn-game-sidebar {border-radius:25px}
-  .topbar {border-radius:24px}
   @supports ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))) {
-    .topbar,.ncn-game-sidebar {
-      -webkit-backdrop-filter:blur(12px) saturate(112%);
-      backdrop-filter:blur(12px) saturate(112%);
-    }
+    :root {--ncn-ui-glass:rgba(249,253,255,.57);--ncn-ui-glass-strong:rgba(247,252,255,.88);--ncn-ui-glass-soft:rgba(255,255,255,.4)}
+    html[data-ncn-theme="dark"] {--ncn-ui-glass:rgba(23,45,65,.68);--ncn-ui-glass-strong:rgba(21,41,61,.9);--ncn-ui-glass-soft:rgba(103,151,184,.14)}
+  }
+  body {
+    background-color:var(--ncn-bg)!important;
+    background-image:url('/assets/ncn-theme/liquid-wallpaper.svg')!important;
+    background-size:cover;background-position:center top;background-attachment:fixed;
+  }
+  html[data-ncn-theme="dark"] body {
+    background-image:linear-gradient(125deg,rgba(9,25,42,.92),rgba(13,35,48,.84) 48%,rgba(16,23,48,.93)),url('/assets/ncn-theme/liquid-wallpaper.svg')!important;
+  }
+  .topbar,.ncn-game-sidebar {
+    border-color:var(--ncn-ui-rim);box-shadow:var(--ncn-ui-shadow);
+    -webkit-backdrop-filter:blur(28px) saturate(155%);backdrop-filter:blur(28px) saturate(155%);
+  }
+  .topbar {background:var(--ncn-ui-glass);border-radius:28px}
+  .ncn-game-sidebar {background:var(--ncn-ui-glass-strong);border-radius:30px;box-shadow:var(--ncn-ui-shadow-high)}
+  .ncn-game-admin {background:var(--ncn-ui-glass-soft);border-color:var(--ncn-border)}
+  .ncn-game-close,#ncn-game-theme,.ncn-game-admin a {
+    background:var(--ncn-ui-glass-soft);border-color:var(--ncn-ui-rim);color:var(--ncn-ink);
+    box-shadow:inset 0 1px 0 var(--ncn-ui-highlight);
+  }
+  #ncn-game-menu {
+    background:linear-gradient(155deg,#3788de,#1764be 72%,#1556a6);
+    border-color:rgba(255,255,255,.64);
+    box-shadow:0 5px 16px rgba(27,94,164,.2),inset 0 1px 1px #ffffff8c,inset 0 -1px 1px #0b42894d;
   }
   @media(max-width:900px) {
-    .topbar {border-radius:21px}
-    .ncn-game-sidebar {border-radius:22px}
-    /* Do not change #ncn-game-menu top/left/transform: fixes already applied. */
+    body {background-attachment:scroll;background-size:auto 1600px}
+    .topbar {border-radius:25px}
+    .ncn-game-sidebar {border-radius:26px}
   }
 }
-@media screen and (prefers-reduced-transparency:reduce),
-       screen and (prefers-contrast:more),
-       screen and (forced-colors:active) {
-  .topbar,.ncn-game-sidebar {
-    background:var(--ncn-surface)!important;
-    -webkit-backdrop-filter:none!important;
-    backdrop-filter:none!important;
+@media screen and (prefers-reduced-transparency:reduce),screen and (prefers-contrast:more),screen and (forced-colors:active) {
+  html body {background-image:none!important}
+  .topbar,.ncn-game-sidebar,.ncn-game-admin,.ncn-game-close,#ncn-game-theme,.ncn-game-admin a {
+    background:var(--ncn-surface)!important;border-color:var(--ncn-border);box-shadow:none;
+    -webkit-backdrop-filter:none!important;backdrop-filter:none!important;
   }
 }
-/* END NCN GAME SOFT GLASS 20261017-v1 */
+@media screen and (forced-colors:active) {
+  :root,html[data-ncn-theme="dark"] {
+    --ncn-ink:CanvasText;--ncn-muted:CanvasText;--ncn-accent:LinkText;
+    --ncn-bg:Canvas;--ncn-surface:Canvas;--ncn-border:ButtonText;
+  }
+  #ncn-game-menu {background:Highlight!important;color:HighlightText!important}
+}
+/* END NCN GAME LIQUID GLASS 20261023-v1 */
