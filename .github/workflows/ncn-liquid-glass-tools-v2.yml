@@ -1,0 +1,255 @@
+name: NCN Liquid Glass Tools v2
+'on':
+  workflow_dispatch:
+    inputs:
+      tac_vu:
+        description: 'Cập nhật 5 trang công cụ hoặc khôi phục trước bản v2'
+        type: choice
+        required: true
+        default: cap-nhat
+        options:
+          - cap-nhat
+          - khoi-phuc
+permissions:
+  contents: write
+concurrency:
+  group: ncn-theme-install
+  cancel-in-progress: false
+jobs:
+  liquid-tools:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      NCN_ACTION: ${{ inputs.tac_vu }}
+      NCN_BRANCH: ${{ github.ref_name }}
+    steps:
+      - name: Lấy mã nguồn nhánh đã chọn
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - name: Chuẩn bị Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Cập nhật Liquid Glass v2 hoặc khôi phục
+        shell: bash
+        run: |
+          cat > "$RUNNER_TEMP/ncn-liquid-tools-v2.py" <<'PYTHON_NCN_TOOLS'
+          #!/usr/bin/env python3
+          """Self-contained NCN tools UI update with a guarded, exact restore point."""
+          from pathlib import Path
+          import base64
+          import gzip
+          import hashlib
+          import json
+          import os
+          import subprocess
+          import sys
+          import tempfile
+
+          VERSION = '20261023-v2'
+          BACKUP = '.github/ncn-liquid-tools-20261023-v2-backup.json'
+          CSS = 'public/assets/ncn-theme/site.css'
+          BEGIN = '/* BEGIN NCN COMPACT TOOLS LIQUID GLASS 20261023-v2 */'
+          END = '/* END NCN COMPACT TOOLS LIQUID GLASS 20261023-v2 */'
+          PREVIOUS_BEGIN = '/* BEGIN NCN LIQUID GLASS 20261023-v1 */'
+          PREVIOUS_END = '/* END NCN LIQUID GLASS 20261023-v1 */'
+          TARGETS = (CSS, 'public/assets/ncn-theme/tool-ui.js', 'public/assets/ncn-wheel/app.js')
+          PAYLOAD = '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'
+          PAYLOAD_SHA256 = '7595316f4ece4f918162cd6abdf6f35c6b1e6387d06fadce28f52d2ede0c9c8a'
+
+
+          def digest(data):
+              return hashlib.sha256(data).hexdigest()
+
+
+          def checked_path(root, relative):
+              path = root / relative
+              if path.is_symlink() or any(p.is_symlink() for p in path.parents if p != root.parent):
+                  raise ValueError('Không hỗ trợ đường dẫn liên kết: ' + relative)
+              if not path.resolve().is_relative_to(root):
+                  raise ValueError('Đường dẫn nằm ngoài kho mã nguồn: ' + relative)
+              if path.exists() and not path.is_file():
+                  raise ValueError('Đường dẫn không phải tệp: ' + relative)
+              return path
+
+
+          def read_optional(path):
+              return path.read_bytes() if path.exists() else None
+
+
+          def atomic_write(path, data):
+              if data is None:
+                  if path.exists():
+                      path.unlink()
+                  return
+              path.parent.mkdir(parents=True, exist_ok=True)
+              fd, temporary = tempfile.mkstemp(prefix='.ncn-tools-', dir=path.parent)
+              try:
+                  with os.fdopen(fd, 'wb') as stream:
+                      stream.write(data)
+                  os.chmod(temporary, 0o644)
+                  os.replace(temporary, path)
+              finally:
+                  if os.path.exists(temporary):
+                      os.unlink(temporary)
+
+
+          def write_transaction(root, changes):
+              paths = {relative: checked_path(root, relative) for relative in changes}
+              before = {relative: read_optional(path) for relative, path in paths.items()}
+              written = []
+              try:
+                  for relative, data in changes.items():
+                      if before[relative] != data:
+                          atomic_write(paths[relative], data)
+                          written.append(relative)
+              except Exception:
+                  for relative in reversed(written):
+                      atomic_write(paths[relative], before[relative])
+                  raise
+              return written
+
+
+          def payload():
+              raw = gzip.decompress(base64.b64decode(PAYLOAD, validate=True))
+              if digest(raw) != PAYLOAD_SHA256:
+                  raise ValueError('Gói giao diện bị thay đổi hoặc tải chưa đầy đủ.')
+              data = json.loads(raw)
+              if set(data) != {'files', 'base_sha256'} or set(data['files']) != set(TARGETS) or set(data['base_sha256']) != set(TARGETS[1:]):
+                  raise ValueError('Danh sách tệp giao diện không hợp lệ.')
+              return {relative: content.encode('utf-8') for relative, content in data['files'].items()}, data['base_sha256']
+
+
+          def read_backup(root):
+              path = checked_path(root, BACKUP)
+              if not path.exists():
+                  return None
+              data = json.loads(path.read_text(encoding='utf-8'))
+              if data.get('version') != VERSION or set(data.get('files', {})) != set(TARGETS):
+                  raise ValueError('Bản sao lưu không đúng phiên bản; dừng để tránh ghi đè.')
+              for relative, info in data['files'].items():
+                  current = read_optional(checked_path(root, relative))
+                  if current is None or digest(current) != info['applied_sha256']:
+                      raise ValueError('Tệp đã đổi sau khi cài bản v2: ' + relative + '. Dừng để giữ phần chỉnh sửa mới.')
+              return data
+
+
+          def patch_css(original, patch):
+              if original is None:
+                  raise ValueError('Không tìm thấy tệp giao diện: ' + CSS)
+              source = original.decode('utf-8')
+              count_begin, count_end = source.count(BEGIN), source.count(END)
+              if count_begin or count_end:
+                  if count_begin != 1 or count_end != 1 or source.index(BEGIN) >= source.index(END):
+                      raise ValueError('Dấu mốc CSS v2 bị thiếu hoặc lặp; chưa ghi tệp nào.')
+                  current = source[source.index(BEGIN):source.index(END) + len(END)]
+                  if current != patch.decode('utf-8').strip():
+                      raise ValueError('CSS v2 đã được chỉnh riêng; dừng để giữ phần chỉnh sửa đó.')
+                  return original
+              if source.count(PREVIOUS_BEGIN) != 1 or source.count(PREVIOUS_END) != 1 or source.index(PREVIOUS_BEGIN) >= source.index(PREVIOUS_END):
+                  raise ValueError('Cần có giao diện NCN Liquid Glass v1 trước khi cài bản công cụ v2.')
+              separator = '\n' if source.endswith('\n') else '\n\n'
+              return (source + separator + patch.decode('utf-8').strip() + '\n').encode('utf-8')
+
+
+          def install(root):
+              root = root.resolve()
+              existing_backup = read_backup(root)
+              bundled, supported_hashes = payload()
+              before, after = {}, {}
+              for relative in TARGETS:
+                  original = read_optional(checked_path(root, relative))
+                  before[relative] = original
+                  if relative == CSS:
+                      after[relative] = patch_css(original, bundled[relative])
+                  else:
+                      if original is None or (original != bundled[relative] and digest(original) != supported_hashes[relative]):
+                          raise ValueError('Mã nguồn đã khác phiên bản hỗ trợ: ' + relative + '. Chưa ghi tệp nào; cần ghép phần sửa mới trước.')
+                      after[relative] = bundled[relative]
+              if before == after:
+                  print('Các công cụ đã đúng bản Liquid Glass v2; không tạo thêm commit.')
+                  return []
+              if existing_backup:
+                  raise ValueError('Đã có bản sao lưu v2; không ghi đè bản sao lưu.')
+              backup = {'version': VERSION, 'files': {}}
+              for relative in TARGETS:
+                  backup['files'][relative] = {
+                      'original_sha256': digest(before[relative]),
+                      'original_gzip_base64': base64.b64encode(gzip.compress(before[relative], mtime=0)).decode('ascii'),
+                      'applied_sha256': digest(after[relative]),
+                  }
+              changes = {BACKUP: (json.dumps(backup, ensure_ascii=False, indent=2) + '\n').encode('utf-8'), **after}
+              written = write_transaction(root, changes)
+              print('Đã cập nhật 5 trang công cụ Liquid Glass v2 và lưu bản khôi phục.')
+              return written
+
+
+          def restore(root):
+              root = root.resolve()
+              backup = read_backup(root)
+              if backup is None:
+                  raise ValueError('Không có bản sao lưu của lần cài v2 từ workflow này.')
+              changes = {}
+              for relative, info in backup['files'].items():
+                  original = gzip.decompress(base64.b64decode(info['original_gzip_base64'], validate=True))
+                  if digest(original) != info['original_sha256']:
+                      raise ValueError('Bản sao lưu bị thay đổi: ' + relative)
+                  changes[relative] = original
+              changes[BACKUP] = None
+              written = write_transaction(root, changes)
+              print('Đã khôi phục đúng giao diện trước lần cài v2.')
+              return written
+
+
+          def stage(root):
+              allowed = set(TARGETS) | {BACKUP}
+              changed = subprocess.check_output(
+                  ['git', 'ls-files', '-z', '--modified', '--deleted', '--others', '--exclude-standard', '--', *sorted(allowed)], cwd=root
+              ).decode('utf-8').split('\0')
+              paths = sorted({path for path in changed if path})
+              if not set(paths).issubset(allowed):
+                  raise ValueError('Có tệp ngoài phạm vi giao diện; dừng tạo commit.')
+              if paths:
+                  subprocess.run(['git', 'add', '--all', '--', *paths], cwd=root, check=True)
+              return paths
+
+
+          if __name__ == '__main__':
+              try:
+                  mode = sys.argv[1] if len(sys.argv) == 2 else ''
+                  if mode not in ('cap-nhat', 'khoi-phuc', 'stage'):
+                      raise ValueError('Tác vụ không hợp lệ.')
+                  {'cap-nhat': install, 'khoi-phuc': restore, 'stage': stage}[mode](Path.cwd())
+              except (ValueError, KeyError, TypeError, OSError, EOFError, subprocess.SubprocessError) as error:
+                  print('::error::' + str(error), file=sys.stderr)
+                  raise SystemExit(1)
+          PYTHON_NCN_TOOLS
+          python3 "$RUNNER_TEMP/ncn-liquid-tools-v2.py" "$NCN_ACTION"
+      - name: Kiểm tra mã và các chức năng hiện có
+        shell: bash
+        run: |
+          test -s public/index.html
+          node --check --input-type=module < public/assets/ncn-theme/tool-ui.js
+          node --check --input-type=module < public/assets/ncn-wheel/app.js
+          node --test tests/ncn-flight.test.cjs tests/ncn-visitors.test.mjs tests/ncn-gvgs.test.mjs
+          git diff --check
+      - name: Lưu giao diện vào nhánh đã chọn
+        shell: bash
+        run: |
+          python3 "$RUNNER_TEMP/ncn-liquid-tools-v2.py" stage
+          if git diff --cached --quiet; then
+            echo "Các công cụ đã đúng phiên bản; không có thay đổi cần lưu." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          git diff --cached --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ "$NCN_ACTION" = "khoi-phuc" ]; then
+            NCN_MESSAGE="style: restore tools before NCN Liquid Glass v2"
+          else
+            NCN_MESSAGE="style: compact five tools with NCN Liquid Glass v2"
+          fi
+          git commit -m "$NCN_MESSAGE"
+          git push origin "HEAD:refs/heads/$NCN_BRANCH"
+          echo "Đã lưu giao diện công cụ. Kiểm tra lần triển khai website tương ứng trên Netlify." >> "$GITHUB_STEP_SUMMARY"
