@@ -54,3 +54,29 @@ test('shared catalogue deletion controls are only in ADMIN templates',()=>{
     assert.equal(vip.includes('id="ev-clear-prices"'),false);
   }
 });
+test('every page discovers final styles in its head and includes one shared announcement bar',()=>{
+  for(const path of pages){
+    const source=readFileSync(path,'utf8'),headEnd=source.indexOf('</head>');
+    for(const match of source.matchAll(/<link\b[^>]*rel="stylesheet"[^>]*>/g))assert.ok(match.index<headEnd,path+': stylesheet discovered after body starts');
+    assert.equal((source.match(/id="ncn-announcement"/g)||[]).length,1,path);
+    assert.equal((source.match(/src="\/assets\/ncn-theme\/announcements\.js[^"<>]*"/g)||[]).length,1,path);
+    assert.equal(source.includes('/assets/js/d4f21841d43fe64968.js'),false,path);
+    if(!path.includes('flappy-bird'))assert.ok(source.includes('site.css?v=20261024-first-paint-1'),path);
+  }
+});
+test('cash and private editor layouts are compact before any script executes',()=>{
+  const cash=readFileSync(join(root,'2024/02/kiem-quy.html'),'utf8');
+  assert.ok(cash.includes('class="cq-compact"'));assert.ok(cash.includes('class="cq-compact-grid"'));assert.equal(cash.includes('class="cq-workspace"'),false);
+  for(const tool of ['event','gvgs'])for(const name of ['admin','vip']){
+    const template=readFileSync(resolve(root,'../netlify/lib/ncn-'+tool+'-private/'+name+'.html'),'utf8');
+    assert.ok(template.includes('class="ncn-stock-import"'));assert.ok(template.includes('ncn-workspace-compact'));
+  }
+});
+test('initial page configuration matches the latest shared catalogue',()=>{
+  const config=JSON.parse(readFileSync(join(root,'assets/ncn-theme/config.json'),'utf8'));
+  for(const path of pages){
+    if(path===join(root,'flappy-bird/index.html'))continue;
+    const source=readFileSync(path,'utf8'),match=source.match(/<script id="ncn-initial-config" type="application\/json">([\s\S]*?)<\/script>/);
+    assert.ok(match,path);assert.deepEqual(JSON.parse(match[1]),config,path);
+  }
+});

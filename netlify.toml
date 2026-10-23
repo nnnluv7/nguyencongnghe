@@ -6,6 +6,10 @@
 [functions]
   directory = "netlify/functions"
 
+[functions."ncn-announcements"]
+  node_bundler = "esbuild"
+  external_node_modules = ["@netlify/identity", "@netlify/blobs"]
+
 # BEGIN NCN EVENT VIP
 [build.environment]
   NODE_VERSION = "22"
