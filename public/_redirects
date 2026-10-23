@@ -30,3 +30,9 @@
 /assets/ncn-theme/title-fix.css  /assets/ncn-theme/site.css  200
 /assets/ncn-theme/mobile.css  /assets/ncn-theme/site.css  200
 /assets/ncn-theme/easy-ui.css  /assets/ncn-theme/site.css  200
+
+# One canonical editor per tool; old bookmarks keep working.
+/p/sticker.html  /sticker/  301
+/p/popup-a7.html  /popup-a7/  301
+/p/popup-a4-a5-a6.html  /popup-a4-a5-a6/  301
+/assets/ncn-theme/easy-ui.js  /assets/ncn-theme/tool-ui.js  200

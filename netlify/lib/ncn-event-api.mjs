@@ -27,7 +27,9 @@ async function body(req){
   if(Number(req.headers.get('content-length')||0)>3_000_000)fail(413,'Bảng giá quá lớn. Chia nhỏ chương trình.');
   if(!(req.headers.get('content-type')||'').startsWith('application/json'))fail(415,'Dữ liệu cần có định dạng JSON.');
   const text=await req.text();if(Buffer.byteLength(text)>3_000_000)fail(413,'Dữ liệu quá lớn.');
-  try{return JSON.parse(text);}catch{fail(400,'Dữ liệu không hợp lệ.');}
+  let data;try{data=JSON.parse(text);}catch{fail(400,'Dữ liệu không hợp lệ.');}
+  if(!data||typeof data!=='object'||Array.isArray(data))fail(400,'Dữ liệu cần là một đối tượng JSON.');
+  return data;
 }
 function id(value){if(typeof value!=='string'||!/^[-a-zA-Z0-9_]{1,50}$/.test(value))fail(400,'Mã chương trình chỉ gồm chữ, số, dấu - hoặc _.');return value;}
 function validatedProducts(items){
@@ -38,6 +40,11 @@ function validatedProducts(items){
     const code=p.code.trim();if(seen.has(code))fail(400,'Bảng giá bị trùng mã '+code+'.');seen.add(code);
     return {code,name:p.name.trim(),originalPrice:p.originalPrice,eventPrice:p.eventPrice};
   });
+}
+const activeCatalogue=value=>!!(value&&!value.deleted&&Array.isArray(value.items));
+async function catalogues(store){
+  const listing=await store.list({prefix:'campaign-'});
+  return (await Promise.all(listing.blobs.map(b=>store.get(b.key,{type:'json'})))).filter(activeCatalogue);
 }
 export function createHandler(deps){return async function(req){
   try{
@@ -59,30 +66,47 @@ export function createHandler(deps){return async function(req){
       const [file,type]=names[name];return new Response(await deps.asset(file),{headers:{...headers,'Content-Type':type+'; charset=utf-8'}});
     }
     if(route==='catalogues'&&method==='GET'){
-      const listing=await store.list({prefix:'campaign-'}),entries=await Promise.all(listing.blobs.map(async b=>store.get(b.key,{type:'json'})));
-      return reply({catalogues:entries.filter(Boolean).map(p=>({id:p.id,name:p.name,updatedAt:p.updatedAt,count:p.items.length,version:p.version}))});
+      return reply({catalogues:(await catalogues(store)).map(p=>({id:p.id,name:p.name,updatedAt:p.updatedAt,count:p.items.length,version:p.version}))});
     }
     if(route==='catalogue'&&method==='GET'){
       const key=id(new URL(req.url).searchParams.get('id')),saved=await store.get('campaign-'+key,{type:'json'});
-      if(!saved)fail(404,'ADMIN chưa lưu bảng giá cho chương trình này.');return reply(saved);
+      if(!activeCatalogue(saved))fail(404,'Bảng giá không còn tồn tại hoặc đã được ADMIN xóa.');return reply(saved);
     }
     if(route==='publish'&&method==='POST'){
       if(!user.admin)fail(403,'Chỉ ADMIN được cập nhật bảng giá.');
       const d=await body(req),key='campaign-'+id(d.id),name=typeof d.name==='string'?d.name.trim():'';
       if(!name||name.length>200)fail(400,'Nhập tên chương trình, tối đa 200 ký tự.');
       const products=validatedProducts(d.items),old=await store.getWithMetadata(key,{type:'json'});
-      if(old&&d.version!==old.data.version)fail(409,'Bảng giá đã được cập nhật. Tải bảng giá đã lưu trước khi ghi đè.');
-      if(!old&&(await store.list({prefix:'campaign-'})).blobs.length>=20)fail(400,'Đã có 20 chương trình. Cập nhật một mã chương trình hiện có.');
+      const activeOld=activeCatalogue(old?.data);
+      if((activeOld&&d.version!==old.data.version)||(!activeOld&&d.version))fail(409,'Bảng giá đã thay đổi hoặc bị xóa. Tải lại danh sách trước khi lưu.');
+      if(!activeOld&&(await catalogues(store)).length>=20)fail(400,'Đã có 20 chương trình. Xóa một bảng giá cũ hoặc cập nhật mã hiện có.');
       const saved={id:d.id,name,updatedAt:new Date().toISOString(),version:randomUUID(),items:products};
       const result=await store.setJSON(key,saved,old?{onlyIfMatch:old.etag}:{onlyIfNew:true});
       if(!result.modified)fail(409,'Có cập nhật khác vừa được lưu. Tải lại bảng giá rồi thử lại.');
       return reply({id:saved.id,name:saved.name,version:saved.version,updatedAt:saved.updatedAt,count:products.length});
     }
+    if(route==='delete'&&method==='POST'){
+      if(!user.admin)fail(403,'Chỉ ADMIN được xóa bảng giá.');
+      const d=await body(req),key='campaign-'+id(d.id);
+      if(typeof d.version!=='string'||!d.version)fail(400,'Tải bảng giá đã lưu trước khi xóa.');
+      const old=await store.getWithMetadata(key,{type:'json'});
+      if(!activeCatalogue(old?.data))fail(404,'Bảng giá không còn tồn tại hoặc đã được xóa.');
+      if(d.version!==old.data.version)fail(409,'Bảng giá đã được cập nhật. Tải lại rồi kiểm tra trước khi xóa.');
+      // Blobs delete() has no conditional ETag argument. A minimal marker removes
+      // all product data atomically and prevents a stale delete from erasing a newer save.
+      const deleted={id:d.id,deleted:true,version:randomUUID(),updatedAt:new Date().toISOString()};
+      const result=await store.setJSON(key,deleted,{onlyIfMatch:old.etag});
+      if(!result.modified)fail(409,'Bảng giá vừa thay đổi. Tải lại rồi kiểm tra trước khi xóa.');
+      return reply({id:d.id,deleted:true});
+    }
     if(route==='print'&&method==='POST'){
       const d=await body(req),settings=d.settings||{};
       if(!Array.isArray(d.items)||!d.items.length||d.items.length>10000)fail(400,'Danh sách in không hợp lệ.');
       let catalogue=null;
-      if(settings.catalogueId)catalogue=await store.get('campaign-'+id(settings.catalogueId),{type:'json'});
+      if(settings.catalogueId){
+        catalogue=await store.get('campaign-'+id(settings.catalogueId),{type:'json'});
+        if(!activeCatalogue(catalogue))fail(404,'Bảng giá đã bị xóa. Chọn bảng giá khác trước khi in.');
+      }
       if(!user.admin&&!catalogue)fail(400,'Chọn bảng giá ADMIN đã lưu trước khi in.');
       const index=new Map((catalogue?.items||[]).map(p=>[p.code,p]));
       const items=d.items.map(p=>{

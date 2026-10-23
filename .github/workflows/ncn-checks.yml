@@ -1,0 +1,22 @@
+name: NCN checks
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Kiểm tra JavaScript của hai giao diện Admin
+        run: |
+          node --check netlify/lib/ncn-event-private/ui.js
+          node --check netlify/lib/ncn-gvgs-private/ui.js
+      - name: Kiểm tra trang, công cụ và quyền xóa bảng giá
+        run: node --test tests/*.test.cjs tests/*.test.mjs
