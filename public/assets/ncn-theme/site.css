@@ -1,5 +1,8 @@
 /* NCN — one responsive interface, one floating navigation. */
 @media screen {
+/* Appearance lives here; page heads only set the saved light/dark preference. */
+html[data-ncn-theme="light"]{color-scheme:light;background:#f4f7fb;color:#15263d}
+html[data-ncn-theme="dark"]{color-scheme:dark;background:#0c1628;color:#edf3ff}
 body.ncn-modern{--ncn-accent:#205cb4;--ncn-ink:#15263d;--ncn-muted:#455771;--ncn-bg:#f4f7fb;--ncn-surface:#fff;--ncn-border:#dce4f0;--ncn-glass:#fdfefe;--ncn-glass-strong:#fff;--ncn-glass-soft:#f6f9fd;--ncn-glass-card:#fff;--ncn-rim:rgba(255,255,255,.94);--ncn-highlight:rgba(255,255,255,.75);--ncn-selected:#e6efff;--ncn-selected-ink:#174c9b;--ncn-shadow:0 12px 40px rgba(34,58,99,.10),0 2px 7px rgba(34,58,99,.05),inset 0 1px 0 rgba(255,255,255,.95),inset 0 -1px 0 rgba(183,203,227,.30);--ncn-shadow-high:0 24px 70px rgba(13,34,65,.20),inset 0 1px 0 rgba(255,255,255,.95);--ncn-sidebar:0px;--body-font:-apple-system,BlinkMacSystemFont,'Segoe UI','Inter',Arial,sans-serif;--title-font:var(--body-font);--text-font:var(--body-font);margin:0;min-height:100vh;min-height:100svh;background:var(--ncn-bg);background-image:radial-gradient(ellipse 68% 520px at 9% 0%,rgba(114,183,255,.30),transparent 78%),radial-gradient(ellipse 60% 480px at 92% 12%,rgba(182,163,255,.26),transparent 76%),radial-gradient(ellipse 54% 420px at 45% 35%,rgba(112,222,208,.16),transparent 78%);background-repeat:no-repeat;background-size:100% 1000px;color:var(--ncn-ink);font-family:var(--body-font);font-size:14px;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 html[data-ncn-theme="dark"] body.ncn-modern,body.ncn-modern.dark{--ncn-accent:#a5c4ff;--ncn-ink:#edf3ff;--ncn-muted:#b2c4dc;--ncn-bg:#0c1628;--ncn-surface:#16243b;--ncn-border:#32465f;--ncn-glass:#16243b;--ncn-glass-strong:#16243b;--ncn-glass-soft:#1a2b45;--ncn-glass-card:#16243b;--ncn-rim:rgba(220,235,255,.20);--ncn-highlight:rgba(255,255,255,.12);--ncn-selected:#2c4468;--ncn-selected-ink:#dae7ff;--ncn-shadow:0 12px 40px rgba(0,0,0,.24),inset 0 1px 0 rgba(255,255,255,.11),inset 0 -1px 0 rgba(0,0,0,.30);--ncn-shadow-high:0 24px 70px rgba(0,0,0,.40),inset 0 1px 0 rgba(255,255,255,.12);background-image:radial-gradient(ellipse 68% 520px at 9% 0%,rgba(45,113,212,.24),transparent 78%),radial-gradient(ellipse 60% 480px at 92% 12%,rgba(128,88,204,.20),transparent 76%),radial-gradient(ellipse 54% 420px at 45% 35%,rgba(34,143,153,.12),transparent 78%)}
 body.ncn-modern #header-wrapper,body.ncn-modern #top-bar,body.ncn-modern #footer-wrapper,body.ncn-modern #inner-menu,body.ncn-modern .backTop,body.ncn-modern #ticker-flex,body.ncn-modern #mega-wrap,body.ncn-modern #mega-wrap1,body.ncn-modern #top-wrap,body.ncn-modern #home-ads,body.ncn-modern #footer-ads,body.ncn-modern #mega-wrap0,body.ncn-modern>.overlay{display:none!important}
@@ -313,19 +316,19 @@ body.ncn-mobile-qr #postBody #qrcode canvas{width: 128px !important; height: 128
 @media screen{body.ncn-modern :is(#ncn-sticker-app,#ncn-popup-app,#ncn-store-app) .st-hero{margin-bottom: 20px; gap: 15px;}}
 @media screen{body.ncn-modern :is(#ncn-sticker-app,#ncn-popup-app,#ncn-store-app) h2{font-size: 28px; line-height: 1.3; margin-bottom: 7px;}}
 @media screen{body.ncn-modern .st-catalogue-top{gap: 14px; margin-bottom: 16px;}}
-@media screen{body.ncn-modern .st-tabs{border: 1px solid var(--ncn-border); border-radius: 8px; padding: 4px; background: var(--ncn-surface); gap: 3px; flex: 1;}}
-@media screen{body.ncn-modern :is(#ncn-sticker-app,#ncn-popup-app,#ncn-store-app) .st-tabs button{background: transparent; border-color: transparent; border-radius: 5px; padding: 10px 15px; min-height: 44px; font-size: 13px; flex: 1; white-space: nowrap; color: var(--ncn-muted);}}
-@media screen{body.ncn-modern :is(#ncn-sticker-app,#ncn-popup-app,#ncn-store-app) .st-tabs button[aria-pressed=true]{background: var(--ncn-bg); border-color: var(--ncn-border); color: var(--ncn-ink);}}
+@media screen{body.ncn-modern .st-tabs{border: 1px solid var(--ncn-rim); border-radius: 999px; padding: 4px; background: var(--ncn-glass-soft); gap: 3px; flex: 1;}}
+@media screen{body.ncn-modern :is(#ncn-sticker-app,#ncn-popup-app,#ncn-store-app) .st-tabs button{background: transparent; border-color: transparent; border-radius: 999px; padding: 10px 15px; min-height: 44px; font-size: 13px; flex: 1; white-space: nowrap; color: var(--ncn-muted);}}
+@media screen{body.ncn-modern :is(#ncn-sticker-app,#ncn-popup-app,#ncn-store-app) .st-tabs button[aria-pressed=true]{background: var(--ncn-glass-strong); border-color: var(--ncn-rim); color: var(--ncn-selected-ink); box-shadow: inset 0 1px 0 var(--ncn-highlight);}}
 @media screen{body.ncn-modern :is(#ncn-sticker-app,#ncn-popup-app,#ncn-store-app) .st-cards{grid-template-columns: repeat(4,minmax(0,1fr)); gap: 20px;}}
-@media screen{body.ncn-modern :is(#ncn-sticker-app,#ncn-popup-app,#ncn-store-app) .st-card{padding: 18px; border-radius: 10px; text-align: center; box-shadow: 0 3px 12px #17263b07; display: flex; flex-direction: column; min-width: 0; border: 1px solid var(--ncn-border);}}
+@media screen{body.ncn-modern :is(#ncn-sticker-app,#ncn-popup-app,#ncn-store-app) .st-card{padding: 18px; border-radius: 24px; text-align: center; box-shadow: var(--ncn-shadow); display: flex; flex-direction: column; min-width: 0; border: 1px solid var(--ncn-border);}}
 @media screen{body.ncn-modern :is(#ncn-sticker-app,#ncn-popup-app,#ncn-store-app) .st-card-preview{display: flex; flex-direction: column; align-items: stretch; text-align: center; gap: 5px; padding: 0; border: 0; background: none; cursor: pointer; color: inherit; width: 100%; flex: 1;}}
 @media screen{body.ncn-modern :is(#ncn-sticker-app,#ncn-popup-app,#ncn-store-app) .st-card img{height: 205px; max-width: 100%; object-fit: contain; background: white; margin: 0 0 10px; border-radius: 5px;}}
 @media screen{body.ncn-modern :is(#ncn-sticker-app,#ncn-popup-app,#ncn-store-app) .st-card strong{font-size: 15px; line-height: 1.5; margin: 2px 0 6px;}}
 @media screen{body.ncn-modern .st-card-sizes{display: grid; gap: 8px; margin-top: 16px;}}
-@media screen{body.ncn-modern :is(#ncn-sticker-app,#ncn-popup-app,#ncn-store-app) .st-card-sizes button{width: 100%; min-height: 42px; padding: 9px 7px; font-size: 12px; font-weight: 650; border: 0; border-radius: 5px; background: #2563b8; color: #fff; cursor: pointer; line-height: 1.5;}}
-@media screen{body.ncn-modern :is(#ncn-sticker-app,#ncn-popup-app,#ncn-store-app) .st-card-sizes .st-size-small{background: #1a9a78;}}
-@media screen{body.ncn-modern :is(#ncn-sticker-app,#ncn-popup-app,#ncn-store-app) .st-card-sizes .st-size-medium{background: #d58a00;}}
-@media screen{body.ncn-modern :is(#ncn-sticker-app,#ncn-popup-app,#ncn-store-app) .st-card-sizes .st-size-large{background: #df493c;}}
+@media screen{body.ncn-modern :is(#ncn-sticker-app,#ncn-popup-app,#ncn-store-app) .st-card-sizes button{width: 100%; min-height: 42px; padding: 9px 7px; font-size: 12px; font-weight: 650; border: 1px solid var(--ncn-rim); border-radius: 999px; background: linear-gradient(150deg,#2878cc,#195cac); box-shadow: inset 0 1px 0 #ffffff70; color: #fff; cursor: pointer; line-height: 1.5;}}
+@media screen{body.ncn-modern :is(#ncn-sticker-app,#ncn-popup-app,#ncn-store-app) .st-card-sizes .st-size-small{background: linear-gradient(150deg,#2a9f86,#16775e);}}
+@media screen{body.ncn-modern :is(#ncn-sticker-app,#ncn-popup-app,#ncn-store-app) .st-card-sizes .st-size-medium{background: linear-gradient(150deg,#c18c2b,#916111);}}
+@media screen{body.ncn-modern :is(#ncn-sticker-app,#ncn-popup-app,#ncn-store-app) .st-card-sizes .st-size-large{background: linear-gradient(150deg,#da737a,#af3d4b);}}
 @media screen{body.ncn-modern .st-workspace{margin: 0 !important; padding-top: 0 !important; border-top: 0 !important; scroll-margin-top: 86px;}}
 @media screen{body.ncn-modern .st-work-top{padding: 0 0 18px; border-bottom: 1px solid var(--ncn-border); margin-bottom: 20px;}}
 @media screen{body.ncn-modern :is(#ncn-sticker-app,#ncn-popup-app,#ncn-store-app) .st-work-top h3{font-size: 23px; line-height: 1.4;}}
@@ -437,7 +440,7 @@ body.ncn-modern .st-card-sizes button:focus-visible{outline: 3px solid #2563b8; 
 @media screen{body.ncn-modern .st-card-description{font-size: 11px; line-height: 1.6; color: var(--ncn-muted);}}
 @media screen{body.ncn-modern .ncn-popup-title-note{margin: 0 0 14px !important; font-size: 12px !important;}}
 @media screen{body.ncn-modern .ncn-direct-print{display: none !important;}}
-@media screen{body.ncn-modern .st-search input{min-height: 44px;}}
+@media screen{body.ncn-modern .st-search input{min-height: 44px; border-radius: 999px; background: var(--ncn-glass-soft); border-color: var(--ncn-rim);}}
 @media screen{body.ncn-modern #ncn-cash-app .cq-erp-top+.cq-error{margin: -9px 0 14px;}}
 @media screen{body.ncn-modern #ncn-cash-app .cq-metric[data-kind=short]{border-color: #d7a3a3;}}
 @media screen{body.ncn-modern #ncn-cash-app .cq-metric[data-kind=over]{border-color: #d5b57a;}}
@@ -974,3 +977,9 @@ body.ncn-modern .st-card-sizes button:focus-visible{outline: 3px solid #2563b8; 
   body.ncn-modern #ncn-cash-app .cq-button {background:Highlight!important;color:HighlightText!important;border-color:ButtonText}
 }
 /* END NCN COMPACT TOOLS LIQUID GLASS 20261023-v2 */
+
+@media screen {
+  body.ncn-modern #ncn-event-app .ev-danger {color:#b53b55;background:#f5b9c51c;border:1px solid #c56f843d;border-radius:999px;padding:8px 12px}
+  html[data-ncn-theme="dark"] body.ncn-modern #ncn-event-app .ev-danger {color:#ffbacb}
+}
+@media print {html[data-ncn-theme]{color-scheme:light;background:#fff;color:#000}}

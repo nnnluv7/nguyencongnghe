@@ -98,7 +98,7 @@
       }
       if(el('source-info'))el('source-info').textContent=name+' · '+items.length.toLocaleString('vi-VN')+' sản phẩm'+(details?' · '+details:'');
       if(kind!=='saved'&&isAdmin){if(!publishedId)el('publish-id').value=kind==='mt2'?'mt2-'+state.campaign:'';el('publish-name').value=publishedName||name;}
-      render();showResults();
+      render();showResults();catalogueActions(false);
     }
     async function loadCampaign(id){
       el('connect').disabled=true;el('campaign').disabled=true;
@@ -244,21 +244,43 @@
       var history=JSON.parse(localStorage.getItem(HISTORY)||'[]');
       if(Array.isArray(history))state.history=history.filter(function(h){return h&&h.settings&&Array.isArray(h.items)&&h.createdAt&&Number.isFinite(h.labels)&&Number.isFinite(h.pages);}).slice(0,15);
     }catch(error){}
+    function catalogueActions(busy){
+      ['saved-campaign','refresh-shared','publish'].forEach(function(id){if(el(id))el(id).disabled=!!busy;});
+      if(el('delete-catalogue'))el('delete-catalogue').disabled=!!busy||!publishedId||!publishedVersion||state.kind!=='saved'||el('saved-campaign').value!==publishedId;
+      if(el('clear-prices'))el('clear-prices').disabled=!!busy||!state.catalog.length;
+    }
+    function clearCatalogue(){
+      state.catalog=[];state.selected=[];state.missing=[];state.undo=null;state.kind='';state.print=null;
+      publishedId='';publishedVersion='';publishedName='';
+      el('saved-campaign').value='';el('search').value='';closeResults();
+      if(el('price-file'))el('price-file').value='';
+      if(el('publish-id'))el('publish-id').value='';
+      if(el('publish-name'))el('publish-name').value='';
+      if(el('source-info'))el('source-info').textContent='Chọn nguồn giá để bắt đầu.';
+      el('shared-info').textContent='Chưa chọn bảng giá đã lưu.';
+      if(el('dialog').open)el('dialog').close();
+      el('preview-frame').removeAttribute('srcdoc');
+      render();catalogueActions(false);
+    }
     async function savedList(pick){
       var data=await VIP.call('catalogues');
       el('saved-campaign').innerHTML='<option value="">Chọn chương trình đã được ADMIN lưu</option>'+data.catalogues.map(function(p){return '<option value="'+C.esc(p.id)+'">'+C.esc(p.name)+' · '+p.count+' sản phẩm</option>';}).join('');
+      if(publishedId&&!data.catalogues.some(function(p){return p.id===publishedId;}))clearCatalogue();
       if(pick&&data.catalogues.some(function(p){return p.id===pick;})){el('saved-campaign').value=pick;await loadSaved(pick);}
       else if(data.catalogues.length&&!state.catalog.length){el('saved-campaign').value=data.catalogues[0].id;await loadSaved(data.catalogues[0].id);}
       else if(!data.catalogues.length){el('shared-info').textContent='ADMIN chưa lưu bảng giá GVGS. Thành viên VIP vui lòng chờ ADMIN cập nhật.';if(!isAdmin){state.catalog=[];state.selected=[];publishedId='';render();}}
     }
     async function loadSaved(id){
-      if(!id){if(!isAdmin){state.catalog=[];state.selected=[];publishedId='';render();}return;}
+      if(!id){clearCatalogue();return;}
+      catalogueActions(true);
+      try{
       var data=await VIP.call('catalogue&id='+encodeURIComponent(id));
       useCatalog(data.items,data.name,'saved','');
       publishedId=data.id;publishedVersion=data.version;publishedName=data.name;
       el('shared-info').textContent=data.name+' · '+data.items.length+' sản phẩm · Cập nhật '+new Date(data.updatedAt).toLocaleString('vi-VN');
       if(isAdmin){el('publish-id').value=data.id;el('publish-name').value=data.name;}
       message('Đã tải bảng giá do ADMIN cập nhật. Nhập tồn kho hoặc tìm model để in.');
+      }finally{catalogueActions(false);}
     }
     el('saved-campaign').addEventListener('change',guarded(function(){return loadSaved(el('saved-campaign').value);}));
     el('refresh-shared').addEventListener('click',guarded(function(){return savedList(publishedId||el('saved-campaign').value);}));
@@ -267,13 +289,31 @@
       var id=el('publish-id').value.trim()||(state.kind==='mt2'?'mt2-'+state.campaign:'');
       var name=el('publish-name').value.trim();
       if(!id||!name)throw new Error('Nhập mã và tên chương trình trước khi lưu.');
-      el('publish').disabled=true;
+      catalogueActions(true);
       try{
         var data=await VIP.call('publish',{id:id,name:name,items:state.catalog,version:id===publishedId?publishedVersion:null});
         publishedId=data.id;publishedVersion=data.version;publishedName=data.name;
         await savedList(data.id);message('Đã lưu '+data.count+' sản phẩm. Thành viên VIP đã có thể chọn bảng giá này.');
-      }finally{el('publish').disabled=false;}
+      }finally{catalogueActions(false);}
     }));
+    if(isAdmin){
+      el('delete-catalogue').addEventListener('click',guarded(async function(){
+        if(!publishedId||!publishedVersion||state.kind!=='saved'||el('saved-campaign').value!==publishedId)throw new Error('Chọn và tải bảng giá đã lưu trước khi xóa.');
+        var target=publishedId,version=publishedVersion,name=publishedName;
+        if(!window.confirm('Xóa bảng giá “'+name+'” ('+target+') khỏi web? Thành viên VIP sẽ không còn chọn hoặc in từ bảng giá này.'))return;
+        catalogueActions(true);
+        try{
+          await VIP.call('delete',{id:target,version:version});
+          clearCatalogue();await savedList();message('Đã xóa bảng giá “'+name+'” khỏi web.');
+        }finally{catalogueActions(false);}
+      }));
+      el('clear-prices').addEventListener('click',guarded(function(){
+        if(!state.catalog.length)return;
+        if(!window.confirm('Bỏ bảng giá đang mở và danh sách sản phẩm trên trang? Bảng giá đã lưu trên web vẫn được giữ.'))return;
+        clearCatalogue();message('Đã bỏ file đang nhập. Có thể chọn file mới.');
+      }));
+    }
+    catalogueActions(false);
     savedList().catch(function(error){message(error.message,true);});
 
     historyRender();render();
