@@ -1,5 +1,5 @@
 /* Simple NCN navigation and task-focused forms. Existing controls retain their handlers. */
-const VERSION='20261016-floating-1';
+const VERSION='20261024-first-paint-1';
 export function installToolUI({doc=document,win=window,config={},preview=false}={}){
   const $=id=>doc.getElementById(id),listeners=[],observers=[];
   const listen=(node,event,fn)=>{node?.addEventListener(event,fn);listeners.push(()=>node?.removeEventListener(event,fn));};

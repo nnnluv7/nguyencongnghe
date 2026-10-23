@@ -15,18 +15,22 @@
       document.documentElement.setAttribute('data-ncn-theme',theme);
     })();
   </script>
+
+
   <link rel="stylesheet" href="game.css">
-  <link rel="stylesheet" href="site-bridge.css?v=20261017-glass-icon-v2">
-  <script src="core.js" defer></script>
+<link rel="stylesheet" href="site-bridge.css?v=20261017-glass-icon-v2">
+<link rel="stylesheet" href="/assets/ncn-theme/announcements.css?v=20261024-notice-1">
+<script src="core.js" defer></script>
   <script src="game.js" defer></script>
   <script src="site-bridge.js?v=20261017-glass-icon-v2" defer></script>
 </head>
 <body>
+<aside id="ncn-announcement" aria-label="Thông báo từ Admin" hidden><span class="ncn-announcement-bell" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4M12 2V1"/></svg></span><div class="ncn-announcement-window"><span id="ncn-announcement-text"></span></div><button id="ncn-announcement-pause" type="button" aria-label="Tạm dừng thông báo" aria-pressed="false">Ⅱ</button></aside>
   <!-- Menu nổi đồng bộ NCN. Tách CSS để không ảnh hưởng engine Canvas. -->
   <div id="ncn-game-shade" class="ncn-game-shade" hidden></div>
   <aside id="ncn-game-sidebar" class="ncn-game-sidebar" role="dialog" aria-modal="true" aria-label="Menu Nguyên Công Nghệ" aria-hidden="true" hidden inert>
     <div class="ncn-game-sidebar-head">
-      
+
 <a class="ncn-game-sidebar-brand"
    href="/"
    aria-label="Về trang chủ NCN"
@@ -40,10 +44,10 @@
 
   <span>NCN</span>
 </a>
-  
+
       <button type="button" id="ncn-game-close" class="ncn-game-close" aria-label="Đóng menu" title="Đóng menu">✕</button>
     </div>
-    <nav id="ncn-game-nav" class="ncn-game-nav" aria-label="Điều hướng trang web">
+    <nav id="ncn-game-nav" class="ncn-game-nav" aria-label="Điều hướng trang web"><a href="/thong-bao/" data-ncn-announcement-admin hidden>Quản lý thông báo</a>
       <a href="/">⌂ Trang chủ</a><a href="/flappy-bird/" aria-current="page">✦ Bay Đi Đừng Cáu</a><a href="/thu-vien/">▤ Thư viện</a>
     </nav>
     <div class="ncn-game-admin">
@@ -121,5 +125,6 @@
     <footer class="footer"><span>Một chút thử thách từ <a href="https://nguyencongnghe.com/">Nguyên Công Nghệ</a></span><span>Chơi vui. Nhớ nghỉ tay nhé. <span class="footer-star">✦</span></span></footer>
   </div>
   <noscript><p class="noscript">Bạn cần bật JavaScript để chơi game.</p></noscript>
+<script type="module" src="/assets/ncn-theme/announcements.js?v=20261024-notice-1"></script>
 </body>
 </html>

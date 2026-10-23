@@ -1,6 +1,7 @@
 import {installAppearance} from './appearance.js?v=20261017-mobile-dark-1';
-import './visitor-counter.js?v=20261016-easy-2'; // NCN visitor metrics
-import {installToolUI} from './tool-ui.js?v=20261016-floating-1';
+// A metrics request must never delay or prevent the actual interface.
+if(typeof window!=='undefined')import('./visitor-counter.js?v=20261016-easy-2').catch(()=>{});
+import {installToolUI} from './tool-ui.js?v=20261024-first-paint-1';
 import {installFloatingMenu,orderTools,navigationHTML} from './menu.js?v=20261017-mobile-dark-1';
 /* NCN portal: navigation and local display preferences. VIP authorization stays on the server. */
 const ICONS = {
@@ -202,6 +203,8 @@ export async function bootTheme() {
   installFloatingMenu({doc:document,win:window});
   let config=window.NCN_THEME_CONFIG;
   let configFailed=false;
+  // The final layout must not wait for a separate configuration request.
+  if(!config)try{config=JSON.parse(document.getElementById('ncn-initial-config')?.textContent||'null');}catch{}
   if(!config){
     try {
       const response=await fetch('/assets/ncn-theme/config.json?v=20261016-floating-1');
