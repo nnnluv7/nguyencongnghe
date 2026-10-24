@@ -29,7 +29,7 @@ export function mountBilling({doc=document,identity=identityClient,fetcher=fetch
   }
   function updateButtons(){
     const unlimited=state.user&&(state.user.admin||state.user.vipSource==='manual');
-    doc.querySelectorAll('[data-pay-plan]').forEach(b=>{b.disabled=!state.ready||state.busy||!!unlimited||!!state.user?.paidVipBlocked;});
+    doc.querySelectorAll('[data-pay-plan]').forEach(b=>{b.disabled=!state.ready||!account.state.ready||!!account.state.error&&!state.user||state.busy||!!unlimited||!!state.user?.paidVipBlocked;});
     $('pay-availability').textContent=unlimited?'Tài khoản đã có quyền VIP do ADMIN cấp. Bạn không cần thanh toán.':state.user?.paidVipBlocked?'VIP thanh toán đang bị tạm khóa. Liên hệ ADMIN trước khi gia hạn.':state.ready?'Chuyển khoản một lần cho mỗi gói. Gia hạn khi bạn cần.':'Thanh toán đang tạm đóng. Vui lòng quay lại sau hoặc liên hệ hỗ trợ.';
   }
   function renderUser(){

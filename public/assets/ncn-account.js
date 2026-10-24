@@ -177,10 +177,10 @@ export function mountAccount({doc=document,win=window,identity=identityClient,fe
       state.checkedAt=0;refresh({force:true}).catch(()=>{});
     }
   });
-  listen(doc,'visibilitychange',()=>{if(!doc.hidden&&state.user)refresh().catch(()=>{});});
+  listen(doc,'visibilitychange',()=>{if(!doc.hidden&&(state.user||state.profile||state.error))refresh().catch(()=>{});});
   listen(win,'online',()=>{if(state.user||state.profile||state.error)refresh({force:true}).catch(()=>{});});
   listen(win,'pageshow',event=>{if(event.persisted)refresh({force:true}).catch(()=>{});});
-  const timer=timers.setInterval(()=>{if(!doc.hidden&&state.user)refresh().catch(()=>{});},60000);
+  const timer=timers.setInterval(()=>{if(!doc.hidden&&(state.user||state.profile||state.error))refresh().catch(()=>{});},60000);
   const api={state,open,close,refresh,signOut,ready:null,dispose(){disposed=true;++epoch;unsubscribe?.();timers.clearInterval(timer);listeners.forEach(remove=>remove());dialog.remove();accounts.delete(doc);}};
   accounts.set(doc,api);win.NCNAccount=api;render();
   api.ready=(async()=>{
