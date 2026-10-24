@@ -1,0 +1,48 @@
+{
+  "legacy": [
+    "2022/06/phieu-bao-hiem-xe-may.html",
+    "2022/07/phieu-tu-van-tra-gop.html",
+    "2022/07/popup-phone-1.html",
+    "2022/09/chu-treo-tran-a4-1.html",
+    "2022/09/chu-treo-tran-a4-2.html",
+    "2022/09/popup-tu-phone-san-pham-ban-chay.html",
+    "2022/12/trang-tri-hoa-1.html",
+    "2022/12/trang-tri-hoa-2.html",
+    "2022/12/trang-tri-hoa-3.html",
+    "2023/09/no-nho.html",
+    "2024/01/be-tap-lam-toan.html",
+    "2024/01/qrcode-wifi-demo.html",
+    "2024/01/tao-ma-qrcode-chia-se-wifi-khong-can-nhap-mat-khau.html",
+    "2024/06/phep-tinh-tru.html",
+    "2024/06/toan-so-sanh.html",
+    "2024/08/background-popup-a7.html"
+  ],
+  "sheetHashes": {
+    "2022/06/phieu-bao-hiem-xe-may.html": "08c17ec713ba530bb8b182272faceac704c978810a6359c798aa989537e883a0",
+    "2022/07/phieu-tu-van-tra-gop.html": "08c17ec713ba530bb8b182272faceac704c978810a6359c798aa989537e883a0",
+    "2022/07/popup-phone-1.html": "d82cef8fed7d56488150782ced759150577ed9412efb85482276ef3cb5016930",
+    "2022/09/chu-treo-tran-a4-1.html": "56e5a21d291a743a53143aae4ee43ac608e0baa8aed47b6ddb1bfb8975115e87",
+    "2022/09/chu-treo-tran-a4-2.html": "56e5a21d291a743a53143aae4ee43ac608e0baa8aed47b6ddb1bfb8975115e87",
+    "2022/09/popup-tu-phone-san-pham-ban-chay.html": "858861893bbbac1ca368d3c27ae069a1ee0905206b48614dae12d3e1913e8763",
+    "2022/12/trang-tri-hoa-1.html": "08c17ec713ba530bb8b182272faceac704c978810a6359c798aa989537e883a0",
+    "2022/12/trang-tri-hoa-2.html": "08c17ec713ba530bb8b182272faceac704c978810a6359c798aa989537e883a0",
+    "2022/12/trang-tri-hoa-3.html": "08c17ec713ba530bb8b182272faceac704c978810a6359c798aa989537e883a0",
+    "2023/09/no-nho.html": "08c17ec713ba530bb8b182272faceac704c978810a6359c798aa989537e883a0",
+    "2024/01/be-tap-lam-toan.html": "badb6e80e13b391dd6aaf133ab6b72cd493ddc5b5df9804b964a56509f437dc7",
+    "2024/01/qrcode-wifi-demo.html": "08c17ec713ba530bb8b182272faceac704c978810a6359c798aa989537e883a0",
+    "2024/01/tao-ma-qrcode-chia-se-wifi-khong-can-nhap-mat-khau.html": "bd94a2a296ea269a938b1fc115b9abaf3062ff8643222e7b0171b5ea8d88e4e0",
+    "2024/06/phep-tinh-tru.html": "6d485d5d7047b64d8de02aaeec27b5029220a1e199e22c5e817cc88828f01dc8",
+    "2024/06/toan-so-sanh.html": "56e49dd666631059bf919b32ede971c87adebd3c8eaa1a987b4642180ec9a5ca",
+    "2024/08/background-popup-a7.html": "08c17ec713ba530bb8b182272faceac704c978810a6359c798aa989537e883a0",
+    "2024/01/in-fifo.html": "2c474a9253357d03984e85569275fbc01dd74e708b52755322519fd9b784628f"
+  },
+  "rendererHashes": {
+    "public/assets/ncn-sticker/core.js": "1696a4927cec76c0b5e04c9045ab8ba14be0618863508885cac38613af01175a",
+    "public/assets/ncn-popup/core.js": "e47fbfa1d5e4aed6421d86a1ec1735735b14fd7325c635fc0cf4c3b9fe099ff1",
+    "public/assets/ncn-store-tools/core.js": "e6be85dc225668d4473dd8aa850ea6800720375a917bb20ce9e8640f85857500",
+    "public/assets/ncn-direct/preview.js": "0546a8b238bc5a35b27b4e51dd7ce17ff3f54118f01cca8f17b39a6a832b0fa0",
+    "netlify/lib/ncn-event-private/core.cjs": "d7264685205a506ce9d46831a9c370757ead1d00498f9f01880349357192d930",
+    "netlify/lib/ncn-gvgs-private/core.cjs": "7edcabb577168de7a8e8035a37b23c9f9259d14249d888028749d7e90a5121d7",
+    "netlify/lib/ncn-gvgs-private/gv2-assets.cjs": "23677fa5ce85b91bc387e4d8cde7a0723727089371e98d9e2fc169d1160ebc39"
+  }
+}

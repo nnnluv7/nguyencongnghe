@@ -25,5 +25,8 @@ jobs:
           node --check public/assets/ncn-theme/mobile.js
           node --check public/assets/ncn-wheel/app.js
           node --check public/flappy-bird/site-bridge.js
+          node --check public/assets/ncn-direct/editor.js
+          node --check public/assets/ncn-direct/workspace.js
+          node --check public/assets/ncn-cash/app.js
       - name: Kiểm tra trang, công cụ và quyền xóa bảng giá
         run: node --test tests/*.test.cjs tests/*.test.mjs
