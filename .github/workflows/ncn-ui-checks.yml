@@ -33,6 +33,11 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Check scrolling, editing and compact cash layouts
         run: node tests/browser/ncn-scroll-ui.mjs
+      - name: Verify deployed public pages
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          NCN_UI_BASE_URL: https://nguyencongnghe.com
+        run: node tests/browser/ncn-scroll-ui.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:

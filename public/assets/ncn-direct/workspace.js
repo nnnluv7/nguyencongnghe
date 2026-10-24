@@ -118,7 +118,6 @@ export function installPrintWorkspaces({doc=document,win=window}={}){
   const boot=()=>{enhance();const target=doc.getElementById('vip-app');if(target&&win.MutationObserver)new win.MutationObserver(enhance).observe(target,{childList:true,subtree:true});};
   if(doc.readyState==='loading')doc.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 }
-if(typeof document!=='undefined')installPrintWorkspaces();
 
 let workspaceSerial=0;
 const focusWorkspaces=new WeakMap();
@@ -188,3 +187,5 @@ export function enhancePrintWorkspace({workspace,preview,rail,controls,doc=docum
   }};
   focusWorkspaces.set(workspace,api);return api;
 }
+
+if(typeof document!=='undefined')installPrintWorkspaces();

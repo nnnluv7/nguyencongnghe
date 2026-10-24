@@ -4,7 +4,8 @@ import {readFile,mkdir,writeFile,stat} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
 import assert from 'node:assert/strict';
 
-const root=resolve('public'),out=resolve('artifacts/scroll-ui');
+const production=process.env.NCN_UI_BASE_URL==='https://nguyencongnghe.com';
+const root=resolve('public'),out=resolve('artifacts/scroll-ui'+(production?'/production':'/source'));
 await mkdir(out,{recursive:true});
 const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml','.woff2':'font/woff2'};
 const server=createServer(async(req,res)=>{
@@ -21,7 +22,7 @@ const server=createServer(async(req,res)=>{
   }catch{res.writeHead(404);res.end('Not found');}
 });
 await new Promise(done=>server.listen(0,'127.0.0.1',done));
-const base='http://127.0.0.1:'+server.address().port;
+const base=production?'https://nguyencongnghe.com':'http://127.0.0.1:'+server.address().port;
 const browser=await chromium.launch();
 const results=[];
 let page;
@@ -33,7 +34,7 @@ async function fresh(width=1280,height=900){
   if(page)await page.close();
   page=await browser.newPage({viewport:{width,height}});
   await page.route('**/*',route=>{
-    if(new URL(route.request().url()).hostname!=='127.0.0.1')return route.abort();
+    if(new URL(route.request().url()).hostname!==new URL(base).hostname)return route.abort();
     return route.continue();
   });
   return page;
@@ -61,6 +62,20 @@ async function scrollChrome(){
   await page.waitForTimeout(300);
 }
 try{
+  if(production){
+    const assets=['assets/ncn-theme/scroll-ui.js','assets/ncn-theme/announcements.js','assets/ncn-theme/announcements.css','assets/ncn-direct/style.css','assets/ncn-cash/style.css'];
+    const expected=await Promise.all(assets.map(path=>readFile('public/'+path,'utf8')));
+    const deadline=Date.now()+120000;let ready=false;
+    while(Date.now()<deadline&&!ready){
+      const matches=await Promise.all(assets.map(async(path,index)=>{
+        try{const response=await fetch(base+'/'+path+'?ncn-qa='+Date.now(),{signal:AbortSignal.timeout(10000)});return response.ok&&(await response.text())===expected[index];}
+        catch{return false;}
+      }));
+      ready=matches.every(Boolean);if(!ready)await new Promise(done=>setTimeout(done,3000));
+    }
+    assert.ok(ready,'Production must serve this commit before browser checks run');
+    console.log('Production assets match the tested source.');
+  }
   await fresh();
   await open('/sticker/?mau=ptg&co=1');
   await page.waitForSelector('.ncn-workspace-bar');
@@ -170,7 +185,7 @@ try{
     assert.equal(await page.locator('#ncn-topbar').evaluate(node=>getComputedStyle(node).transitionDuration),'0s');
   });
 }finally{
-  await writeFile(out+'/results.json',JSON.stringify({base:'Local public source; synthetic public announcement only',results},null,2));
+  await writeFile(out+'/results.json',JSON.stringify({base:production?'Production public pages; no authenticated session':'Local public source; synthetic public announcement only',results},null,2));
   await browser.close();await new Promise(done=>server.close(done));
 }
 if(results.some(result=>!result.ok))process.exitCode=1;
