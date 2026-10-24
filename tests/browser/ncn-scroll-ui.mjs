@@ -190,6 +190,10 @@ try{
       assert.equal(await rail.evaluate(node=>getComputedStyle(node).overflowY),'auto');
       assert.equal(await rail.locator('.ncn-workspace-bar .ncn-print-primary').count(),1);
       const viewport=page.locator('.ncn-workspace-paper .ncn-print-stage,.ncn-workspace-paper .ncn-mobile-sheet-viewport');
+      await page.waitForFunction(()=>{
+        const stage=document.querySelector('.ncn-workspace-paper .ncn-print-stage,.ncn-workspace-paper .ncn-mobile-sheet-viewport');
+        return stage&&stage.clientHeight>0;
+      });
       const fit=await viewport.evaluate(node=>({height:node.clientHeight,content:node.scrollHeight}));
       assert.ok(fit.content<=fit.height+1,JSON.stringify(fit));
       await noOverflow();
