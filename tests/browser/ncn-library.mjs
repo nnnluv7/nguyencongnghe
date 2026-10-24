@@ -54,6 +54,8 @@ try{
     await open('/thu-vien/');
     await page.waitForSelector('#ncn-library-results a');
     assert.match(await page.locator('#ncn-library-count').innerText(),new RegExp('^'+rows.length+' nội dung'));
+    const searchBox=await page.locator('.ncn-library-search').boundingBox();
+    assert.ok(searchBox.width>=600&&searchBox.height>=44&&searchBox.height<=80,'full desktop search surface');
     await page.screenshot({path:out+'/library-desktop.jpg',type:'jpeg',quality:75});
     await page.locator('#ncn-library-query').fill('WPS');
     await page.waitForFunction(()=>document.querySelectorAll('#ncn-library-results a').length===1);
@@ -67,6 +69,8 @@ try{
     await page.locator('#ncn-library-next').click();
     assert.match(await page.locator('#ncn-library-page').innerText(),/^Trang 2/);
     await page.setViewportSize({width:390,height:844});await fits();
+    const mobileSearch=await page.locator('.ncn-library-search').boundingBox();
+    assert.ok(mobileSearch.width>=300&&mobileSearch.height>=44,'full mobile search surface');
     await page.evaluate(()=>scrollTo(0,0));await page.waitForTimeout(250);
     await page.screenshot({path:out+'/library-mobile.jpg',type:'jpeg',quality:75});
   });
