@@ -10,6 +10,8 @@ on:
       - 'public/assets/ncn-direct/**'
       - 'public/assets/ncn-cash/**'
       - 'public/assets/ncn-insurance/**'
+      - 'public/assets/ncn-warehouse/**'
+      - 'public/2020/10/kho-ver-52-all-tools-ho-tro-kho.html'
       - 'tests/browser/**'
       - '.github/workflows/ncn-ui-checks.yml'
   push:
@@ -23,6 +25,8 @@ on:
       - 'public/assets/ncn-direct/**'
       - 'public/assets/ncn-cash/**'
       - 'public/assets/ncn-insurance/**'
+      - 'public/assets/ncn-warehouse/**'
+      - 'public/2020/10/kho-ver-52-all-tools-ho-tro-kho.html'
       - 'tests/browser/**'
       - '.github/workflows/ncn-ui-checks.yml'
   workflow_dispatch:
