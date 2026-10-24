@@ -112,8 +112,9 @@ if(typeof window!=='undefined'&&typeof document!=='undefined')installAppearance(
 <script src="/assets/site-config.js"></script><script src="/assets/catalog.js"></script><script src="/assets/js/1cc87d3c87abd588bf.js"></script><script src="/assets/vendor/8ec8dce35a344a43af.js" type="text/javascript"></script><script src="/assets/site-bridge.js"></script><!-- NCN site.css: base -->
 <!-- NCN site.css: titles -->
 <!-- NCN site.css: responsive -->
+<link rel="stylesheet" href="/assets/ncn-theme/library.css?v=20261024-library-1"/>
 </head>
-<body class="item item-view ncn-modern ncn-floating-ui ncn-liquid-glass" id="mainContent">
+<body class="ncn-library-page ncn-library-utility item item-view ncn-modern ncn-floating-ui ncn-liquid-glass" id="mainContent">
 <aside id="ncn-announcement" aria-label="Thông báo từ Admin" hidden><span class="ncn-announcement-bell" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4M12 2V1"/></svg></span><div class="ncn-announcement-window"><span id="ncn-announcement-text"></span></div><button id="ncn-announcement-pause" type="button" aria-label="Tạm dừng thông báo" aria-pressed="false">Ⅱ</button></aside><script data-ncn-appearance-body>window.NCN_APPEARANCE?.refresh();</script>
 <!-- BEGIN NCN MODERN SHELL -->
 <a class="ncn-skip" href="#feed-view">Bỏ qua menu, đến nội dung</a>
@@ -173,7 +174,7 @@ Tác giả -<span class="post-author" itemprop="name">Admin</span>
 </div>
 </div>
 
-<div class="post-body entry-content" id="postBody">
+<div id="ncn-library-detail" class="ncn-library-utility" aria-labelledby="ncn-library-page-title"><header class="ncn-library-page-heading"><p class="ncn-library-kicker"><a href="/thu-vien/">THƯ VIỆN NCN</a><span aria-hidden="true">·</span><span>Tiện ích</span></p><h1 id="ncn-library-page-title">Tạo mã QRcode bằng JavaScript</h1><p class="ncn-library-page-meta"><time datetime="2024-01-10T13:07:00.165+07:00">10/01/2024</time></p></header><div class="post-body entry-content" id="postBody">
 <div class="separator" style="clear: both;"><a href="/assets/vendor/17fd7f573453159b45.jpg" style="display: block; padding: 1em 0; text-align: center; "><img alt="Tạo mã QRcode bằng JavaScript" src="/assets/vendor/17fd7f573453159b45.jpg"/></a></div><br/>
 <input id="textCode" placeholder="Nhập nội dung cần tạo code" type="text"/> <br/>
 <div id="qrcode"></div><br/>
@@ -183,7 +184,7 @@ Tác giả -<span class="post-author" itemprop="name">Admin</span>
 <div><b><u>HTML:</u></b></div><br/>
 <blockquote><div>&lt;input id="text" type-"text"/&gt;</div><div>&lt;div id="qrcode"&gt;&lt;/div&gt;(code-box)</div></blockquote><div></div><div><br/></div><div><b><u>CSS:</u></b></div><div><br/></div><div></div><blockquote><div>#qrcode {</div><div>    position: relative;</div><div>    height: 200px;</div><div>    width: 200px;</div><div>    border: none;</div><div>  }(code-box)</div></blockquote><div></div><div><br/></div><div><b><u>JavaScript:</u></b></div><div><br/></div><div></div><blockquote><div>&lt;script&gt;</div><div>var text =  document.getElementById('text'); //tạo biến text lấy theo id của ô input</div><div>var qrcode = new QRCode("qrcode"); tạo biến qrcode theo id của thẻ div muốn tạo mã</div><div>//Hàm tạo qrcode</div><div>function makeCode() {    </div><div>  const textCode= text .value;  // tạo biến textCode bằng giá trị của biến text</div><div>  qrcode.clear(); //Xóa qrcode cũ đã tạo nếu có.</div><div>  qrcode.makeCode(textCode); //Tạo mã mới theo giá trị của biến textCode</div><div>}</div><div>&lt;/script&gt;(code-box)</div></blockquote><div></div><div><br/></div><div>Lưu ý: Đây chỉ là code mẫu và chưa thể thực thi ngay vì nó còn phụ thuộc vào "sự kiện" mà bạn muốn tạo ra QRCode ví dụ như: "click", "keyup", "blur", ... Vì vậy, dựa vào code mẫu bạn có thể tùy biến để đưa hàm tạo mã vào một sự kiện nào đó mà bạn muốn để thực hiện được điều mà bạn mong đợi.</div><div><br/></div><div>Chúc bạn thành công!</div>
 <script src="/assets/js/141aa86fa4fd4624f1.js" type="text/javascript"></script>
-</div>
+</div></div>
 <div class="below-ads"></div>
 <div class="label-container">
 <span>Tags:</span>

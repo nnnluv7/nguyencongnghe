@@ -3,6 +3,8 @@ on:
   pull_request:
     paths:
       - 'public/assets/ncn-theme/**'
+      - 'public/assets/catalog.js'
+      - 'public/**/*.html'
       - 'public/assets/ncn-account*.js'
       - 'public/assets/ncn-*-auth.js'
       - 'public/assets/ncn-vip-gate.js'
@@ -18,6 +20,8 @@ on:
     branches: [main]
     paths:
       - 'public/assets/ncn-theme/**'
+      - 'public/assets/catalog.js'
+      - 'public/**/*.html'
       - 'public/assets/ncn-account*.js'
       - 'public/assets/ncn-*-auth.js'
       - 'public/assets/ncn-vip-gate.js'
@@ -35,7 +39,7 @@ permissions:
 jobs:
   browser:
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -49,11 +53,18 @@ jobs:
         run: node tests/browser/ncn-account.mjs
       - name: Check print layouts, scrolling and compact calculators
         run: node tests/browser/ncn-scroll-ui.mjs
+      - name: Check every library page at desktop and phone sizes
+        run: node tests/browser/ncn-library.mjs
       - name: Verify deployed public pages
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
           NCN_UI_BASE_URL: https://nguyencongnghe.com
         run: node tests/browser/ncn-scroll-ui.mjs
+      - name: Verify deployed library pages
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          NCN_UI_BASE_URL: https://nguyencongnghe.com
+        run: node tests/browser/ncn-library.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -61,4 +72,5 @@ jobs:
           path: |
             artifacts/scroll-ui/
             artifacts/account/
+            artifacts/library/
           retention-days: 14
