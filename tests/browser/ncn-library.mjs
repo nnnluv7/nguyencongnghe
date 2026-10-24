@@ -54,6 +54,7 @@ try{
     await open('/thu-vien/');
     await page.waitForSelector('#ncn-library-results a');
     assert.match(await page.locator('#ncn-library-count').innerText(),new RegExp('^'+rows.length+' nội dung'));
+    assert.equal((await page.locator('#ncn-library-results').innerText()).includes('full-width'),false,'no template layout tokens in library excerpts');
     const searchBox=await page.locator('.ncn-library-search').boundingBox();
     assert.ok(searchBox.width>=600&&searchBox.height>=44&&searchBox.height<=80,'full desktop search surface');
     await page.screenshot({path:out+'/library-desktop.jpg',type:'jpeg',quality:75});
