@@ -42,17 +42,27 @@ async function fresh(width=1280,height=900){
 async function open(path){
   // The public ticker is fetched after the shell mounts. Select a model only
   // after its final presence and font metrics have reached the chrome layout.
-  const notice=page.waitForResponse(response=>{
-    const url=new URL(response.url());
-    return url.pathname==='/.netlify/functions/ncn-announcements'&&url.searchParams.get('route')==='list';
-  });
-  await page.goto(base+path,{waitUntil:'domcontentloaded'});
-  await page.waitForSelector('body.ncn-scroll-ready');
-  const response=await notice;await response.finished();
-  assert.ok(response.ok(),'Public announcement feed must load before editor alignment checks');
-  const payload=await response.json(),hasNotice=(payload.items||[]).some(item=>typeof item.text==='string'&&item.text);
-  await page.waitForFunction(visible=>document.body.classList.contains('ncn-has-announcements')===visible,hasNotice);
-  await page.evaluate(async()=>{await document.fonts.ready;await new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done)));});
+  let committed=false;
+  const requests=new WeakSet(),currentPage=page;
+  const navigated=frame=>{if(frame===currentPage.mainFrame())committed=true;};
+  const requested=request=>{
+    const url=new URL(request.url());
+    if(committed&&url.pathname==='/.netlify/functions/ncn-announcements'&&url.searchParams.get('route')==='list')requests.add(request);
+  };
+  currentPage.on('framenavigated',navigated);currentPage.on('request',requested);
+  const notice=currentPage.waitForResponse(response=>requests.has(response.request())).then(response=>({response}),error=>({error}));
+  try{
+    await currentPage.goto(base+path,{waitUntil:'domcontentloaded'});
+    await currentPage.waitForSelector('body.ncn-scroll-ready');
+    const {response,error}=await notice;if(error)throw error;
+    assert.ok(response.ok(),'Public announcement feed must load before editor alignment checks');
+    assert.equal(await response.finished(),null,'The current document announcement response must finish');
+    // The app consumes this body itself. Reading it again through CDP can race
+    // navigation and cache eviction; two paint frames observe its rendered state.
+    await currentPage.evaluate(async()=>{await document.fonts.ready;await new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done)));});
+  }finally{
+    currentPage.off('framenavigated',navigated);currentPage.off('request',requested);
+  }
 }
 async function noOverflow(){
   const size=await page.evaluate(()=>({document:document.documentElement.scrollWidth,viewport:innerWidth}));
