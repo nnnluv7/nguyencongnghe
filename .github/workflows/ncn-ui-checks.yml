@@ -1,0 +1,46 @@
+name: NCN UI browser
+on:
+  pull_request:
+    paths:
+      - 'public/assets/ncn-theme/**'
+      - 'public/assets/ncn-direct/**'
+      - 'public/assets/ncn-cash/**'
+      - 'tests/browser/**'
+      - '.github/workflows/ncn-ui-checks.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'public/assets/ncn-theme/**'
+      - 'public/assets/ncn-direct/**'
+      - 'public/assets/ncn-cash/**'
+      - 'tests/browser/**'
+      - '.github/workflows/ncn-ui-checks.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install isolated browser test tools
+        run: npm install --no-save --package-lock=false playwright@1.56.1
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Check scrolling, editing and compact cash layouts
+        run: node tests/browser/ncn-scroll-ui.mjs
+      - name: Verify deployed public pages
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          NCN_UI_BASE_URL: https://nguyencongnghe.com
+        run: node tests/browser/ncn-scroll-ui.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ncn-scroll-ui
+          path: artifacts/scroll-ui/
+          retention-days: 14

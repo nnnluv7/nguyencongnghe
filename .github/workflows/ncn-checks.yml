@@ -18,6 +18,7 @@ jobs:
         run: |
           node --check netlify/lib/ncn-event-private/ui.js
           node --check netlify/lib/ncn-gvgs-private/ui.js
+          node --check public/assets/ncn-theme/scroll-ui.js
           node --check public/assets/ncn-theme/announcements.js
           node --check public/assets/ncn-theme/announcements-admin.js
           node --check netlify/lib/ncn-announcements-api.mjs

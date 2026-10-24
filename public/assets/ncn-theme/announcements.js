@@ -1,3 +1,4 @@
+import './scroll-ui.js?v=20261024-scroll-1';
 /* Shared public ticker. Only the server decides who can manage it. */
 const endpoint='/.netlify/functions/ncn-announcements';
 export async function callAnnouncements(route,data){

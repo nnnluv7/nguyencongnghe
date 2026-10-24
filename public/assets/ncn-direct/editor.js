@@ -1,5 +1,5 @@
 import {copyAt,editCopy} from './preview.js?v=20261015-direct-1';
-import {printHelp} from './workspace.js?v=20261024-print-1';
+import {printHelp,enhancePrintWorkspace} from './workspace.js?v=20261024-scroll-1';
 
 export function createDirectEditor({app,frame,stage,getState,onChange,onSelect,onPage,onPrint,onError,doc=document,win=window}) {
   app.classList.add('ncn-direct-editor');
@@ -14,7 +14,7 @@ export function createDirectEditor({app,frame,stage,getState,onChange,onSelect,o
   const heading=make('div','ncn-direct-heading');heading.append(make('strong','','Bấm vào chữ trên mẫu để nhập'),make('span','','Mỗi mẫu trên tờ được điền riêng.'));
   const tools=make('div','ncn-direct-controls');
   function button(text,label,fn){const b=make('button','',text);b.type='button';b.setAttribute('aria-label',label||text);listen(b,'click',fn);tools.append(b);return b;}
-  let zoom=1,size=null,count=1,page=0,child=null,childCleanup=()=>{},generation=0,linked=false,composing=false;
+  let zoom=1,size=null,count=1,page=0,child=null,childCleanup=()=>{},generation=0,linked=false,composing=false,activeCopy=null,activeField=null;
   const previous=button('←','Tờ trước',()=>onPage?.(page-1)),pageLabel=make('span','ncn-direct-page-count','Tờ 1/1');tools.append(pageLabel);
   const next=button('→','Tờ sau',()=>onPage?.(page+1));
   button('−','Thu nhỏ',()=>{zoom=Math.max(1,zoom-.25);scale();});
@@ -34,14 +34,16 @@ export function createDirectEditor({app,frame,stage,getState,onChange,onSelect,o
   if(summary){summary.classList.add('ncn-print-summary');actions.append(summary);}
   rail.append(actions,toolbar);
   const settings=app.querySelector('.st-settings,.nt-settings');
-  if(settings){const details=make('details','ncn-print-settings'),caption=make('summary','','Cỡ mẫu, khổ giấy & nhập file');details.open=win.innerWidth>=960;details.append(caption,settings);for(const extra of app.querySelectorAll('.ncn-font-toggle,.ncn-popup-title-note'))details.append(extra);rail.append(details);}
-  if(fields){const details=make('details','ncn-print-fields'),caption=make('summary','','Chỉnh nội dung');details.open=win.innerWidth>=960;details.append(caption,linkLabel,fields);rail.append(details);}
+  if(settings){const details=make('details','ncn-print-settings'),caption=make('summary','','Cỡ mẫu, khổ giấy & nhập file');details.open=false;details.append(caption,settings);for(const extra of app.querySelectorAll('.ncn-font-toggle,.ncn-popup-title-note'))details.append(extra);rail.append(details);}
+  if(fields){const details=make('details','ncn-print-fields'),caption=make('summary','','Chỉnh nội dung');details.open=true;details.append(caption,linkLabel,fields);rail.append(details);}
   else rail.append(linkLabel);
-  rail.append(printHelp(doc,{open:win.innerWidth>=960}));
+  rail.append(printHelp(doc));
   const help=app.querySelector('.st-help');if(help)rail.append(help);
   grid.append(rail);const oldBar=app.querySelector('.st-print-bar');if(oldBar)oldBar.hidden=true;
   const canvas=make('div','ncn-direct-canvas');stage.append(canvas);canvas.append(frame);
   stage.classList.add('ncn-direct-stage');
+  const navigation=enhancePrintWorkspace({workspace:grid,preview:grid.querySelector('.st-preview-panel'),rail,controls:toolbar,doc,win});
+  const stageObserver=win.ResizeObserver?new win.ResizeObserver(()=>scale()):null;stageObserver?.observe(stage);
   function fitScale(){return size?(stage.clientWidth||440)/(size.w*96/25.4):1;}
   function scale(){
     if(!size)return;const width=size.w*96/25.4,height=size.h*96/25.4,ratio=fitScale()*zoom;
@@ -49,6 +51,30 @@ export function createDirectEditor({app,frame,stage,getState,onChange,onSelect,o
     canvas.style.width=width*ratio+'px';canvas.style.height=height*ratio+'px';
     frame.style.width=width+'px';frame.style.height=height+'px';frame.style.transform=`scale(${ratio})`;
   }
+  function markActive({reveal=false}={}){
+    if(!child||activeCopy===null||activeField===null)return;
+    child.querySelectorAll('[data-ncn-active]').forEach(node=>node.removeAttribute('data-ncn-active'));
+    const input=child.querySelector('input[data-ncn-copy="'+activeCopy+'"][data-field="'+activeField+'"]');
+    if(!input)return;
+    input.setAttribute('data-ncn-active','');
+    const field=getState().layout?.fields[activeField];
+    heading.lastChild.textContent='Đang sửa mẫu '+(activeCopy+1)+' · '+(field?.label||'Ô '+(activeField+1));
+    if(reveal&&win.innerWidth>=960){
+      const rect=input.getBoundingClientRect(),frameRect=frame.getBoundingClientRect(),stageRect=stage.getBoundingClientRect();
+      const ratio=frame.offsetWidth?frameRect.width/frame.offsetWidth:1;
+      const top=frameRect.top+rect.top*ratio-stageRect.top,bottom=top+rect.height*ratio;
+      if(top<24||bottom>stage.clientHeight-24){
+        const target=Math.max(0,stage.scrollTop+top-(stage.clientHeight-rect.height*ratio)/2);
+        stage.scrollTo?.({top:target,behavior:win.matchMedia?.('(prefers-reduced-motion:reduce)').matches?'instant':'smooth'});
+      }
+    }
+  }
+  listen(rail,'focusin',event=>{
+    const input=event.target;if(input.dataset?.fieldIndex===undefined)return;
+    const selected=Number(app.querySelector('[data-row][aria-pressed=true]')?.dataset.row||0),state=getState();
+    activeCopy=state.rows.slice(0,selected).reduce((sum,row)=>sum+Number(row.qty),0);
+    activeField=Number(input.dataset.fieldIndex);markActive({reveal:true});
+  });
   function syncValues(){
     if(!child)return;const state=getState();if(!state.layout)return;
     child.querySelectorAll('input[data-ncn-copy][data-field]').forEach(input=>{
@@ -61,6 +87,7 @@ export function createDirectEditor({app,frame,stage,getState,onChange,onSelect,o
     child.querySelectorAll('[data-ncn-mirror]').forEach(node=>{
       try{node.textContent=String(copyAt(state.rows,Number(node.dataset.ncnCopy)).row.values[Number(node.dataset.ncnMirror)]??'');}catch{}
     });
+    markActive();
   }
   function commit(input){
     if(!input?.matches?.('input[data-ncn-copy][data-field]'))return;
@@ -78,7 +105,7 @@ export function createDirectEditor({app,frame,stage,getState,onChange,onSelect,o
     childCleanup();child=document;composing=false;
     const bindings=[];
     const bind=(type,fn)=>{child.addEventListener(type,fn);bindings.push(()=>document.removeEventListener(type,fn));};
-    bind('focusin',e=>{const input=e.target;if(input?.matches?.('input[data-ncn-copy][data-field]')){try{const row=copyAt(getState().rows,Number(input.dataset.ncnCopy));onSelect?.(row.rowIndex);syncValues();}catch(error){onError?.(error.message);}}});
+    bind('focusin',e=>{const input=e.target;if(input?.matches?.('input[data-ncn-copy][data-field]')){activeCopy=Number(input.dataset.ncnCopy);activeField=Number(input.dataset.field);try{const row=copyAt(getState().rows,Number(input.dataset.ncnCopy));onSelect?.(row.rowIndex);syncValues();}catch(error){onError?.(error.message);}}});
     bind('input',e=>{if(!e.isComposing&&!composing)commit(e.target);});
     bind('change',e=>{if(e.target.type==='checkbox')commit(e.target);});
     bind('compositionstart',()=>{composing=true;});
@@ -97,9 +124,9 @@ export function createDirectEditor({app,frame,stage,getState,onChange,onSelect,o
     heading.firstChild.textContent=editable?'Bấm vào chữ trên mẫu để nhập':'Mẫu in sẵn';
     heading.lastChild.textContent=editable?'Mỗi mẫu trên tờ được điền riêng. Ô chưa nhập hiện chữ gợi ý.':'Anh chọn số lượng và khổ giấy rồi bấm In.';
     linkLabel.hidden=!editable;
-    const screenRules='<style data-ncn-preview-viewport>@media screen{html,body{overflow:hidden!important}.ncn-sheet{margin:0!important}}</style>';
+    const screenRules='<style data-ncn-preview-viewport>@media screen{html,body{overflow:hidden!important}.ncn-sheet{margin:0!important}input[data-ncn-active]{outline:2px solid #2769b3!important;outline-offset:-2px;background-color:#eaf0ff!important}}</style>';
     frame.srcdoc=html.replace('</head>',screenRules+'</head>').replace('<html ',`<html data-ncn-direct-generation="${generation}" `);
     scale();
   }
-  return {render,scale,flush,bindDocument,syncValues,getZoom:()=>zoom,destroy:()=>{childCleanup();listeners.forEach(fn=>fn());toolbar.remove();}};
+  return {render,scale,flush,bindDocument,syncValues,getZoom:()=>zoom,destroy:()=>{childCleanup();stageObserver?.disconnect();navigation?.destroy();listeners.forEach(fn=>fn());toolbar.remove();}};
 }
