@@ -226,6 +226,6 @@ window.initHistoryPage = function(divId) {
     if(!Sys.root) return console.error("Không tìm thấy div: " + divId);
     
     // 2. Gọi hàm hiển thị lịch sử (chế độ độc lập = true)
-    import('/assets/ncn-account.js?v=20261024-account-1').then(m=>m.getAccount().ready).then(()=>appShowHistory(true));
+    import('/assets/ncn-account.js?v=20261024-account-2').then(m=>m.getAccount().ready).then(()=>appShowHistory(true));
 };
 //]]>

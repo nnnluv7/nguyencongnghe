@@ -1016,3 +1016,38 @@ body.ncn-modern .st-card-sizes button:focus-visible{outline: 3px solid #2563b8; 
 @media(max-width:520px){.ncn-account-dialog{padding:20px}}
 }
 @media print{.ncn-account-dialog{display:none!important}}
+
+/* Shared account controls use the same glass surfaces as the portal. */
+@media screen{
+ #ncn-account-host .auth-btn,#auth-header-mobile .auth-btn{appearance:none!important;position:static!important;float:none!important;display:inline-flex!important;align-items:center;justify-content:center;flex:1;gap:7px;min-height:44px!important;height:auto!important;padding:10px 15px!important;border:1px solid var(--ncn-rim,#d8e4f0)!important;border-radius:999px!important;background:var(--ncn-glass-soft,#eef5ff)!important;box-shadow:inset 0 1px 0 var(--ncn-highlight,#fff);color:var(--ncn-ink,#22324b)!important;font:650 13px/1.4 -apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif!important;text-decoration:none;white-space:nowrap;cursor:pointer}
+ #ncn-account-host .auth-btn[hidden],#auth-header-mobile .auth-btn[hidden]{display:none!important}
+ #ncn-account-host [data-ncn-account-open=login],#auth-header-mobile [data-ncn-account-open=login]{background:linear-gradient(145deg,#3689df,#175eaf)!important;border-color:#ffffff80!important;color:#fff!important;box-shadow:0 4px 14px #1b5f9f24,inset 0 1px 0 #ffffff8c}
+ #ncn-account-host .auth-btn:disabled{opacity:.5;cursor:wait}
+ #ncn-account-host .auth-btn:focus-visible,#auth-header-mobile .auth-btn:focus-visible{outline:3px solid #78a8e0;outline-offset:3px}
+ #auth-header-desktop:not([data-ncn-account-state])>*,#auth-header-mobile:not([data-ncn-account-state])>*{display:none!important}
+ #auth-header-desktop:not([data-ncn-account-state])::before,#auth-header-mobile:not([data-ncn-account-state])::before{content:'Tài khoản của bạn';display:block;min-height:44px;padding:12px 0;color:var(--ncn-muted,#5e7088);font:13px/1.5 var(--body-font,Arial,sans-serif)}
+ .ncn-account-placeholder,.ncn-account-status{display:block;flex-basis:100%;min-height:32px;font-size:12px;line-height:1.7;color:var(--ncn-muted,#5e7088)}
+ .ncn-account-info{gap:6px;margin-bottom:8px}
+ .ncn-account-badge{border-radius:999px;padding:4px 9px;background:var(--ncn-glass-soft,#eef5ff);color:var(--ncn-accent,#2769b3)}
+ .ncn-account-dialog{width:min(460px,calc(100vw - 28px));border-color:var(--ncn-rim,#ffffffb3);border-radius:28px;background:var(--ncn-glass-strong,#eff6fff2);box-shadow:var(--ncn-shadow-high,0 24px 80px #142b4840);-webkit-backdrop-filter:blur(28px) saturate(155%);backdrop-filter:blur(28px) saturate(155%)}
+ .ncn-account-dialog::backdrop{-webkit-backdrop-filter:blur(9px);backdrop-filter:blur(9px);background:#11233b80}
+ .ncn-account-dialog button{min-height:44px;border-radius:999px;background:var(--ncn-glass-soft,#eef5ff);box-shadow:inset 0 1px 0 var(--ncn-highlight,#fff)}
+ .ncn-account-dialog [data-account-close]{width:44px;min-width:44px;border-radius:50%;line-height:1;flex:none}
+ .ncn-account-dialog .ncn-account-primary{background:linear-gradient(145deg,#3689df,#175eaf);border-color:#ffffff80;box-shadow:0 5px 16px #1b5f9f24,inset 0 1px 0 #ffffff8c;font-size:14px}
+ .ncn-account-tabs{gap:4px;padding:4px;border:1px solid var(--ncn-rim,#d8e4f0);border-radius:999px;background:var(--ncn-glass-soft,#eef5ff)}
+ .ncn-account-tabs button{border:1px solid transparent;background:transparent;box-shadow:none;min-width:0}
+ .ncn-account-tabs [aria-pressed=true]{border-color:var(--ncn-rim,#fff);background:var(--ncn-glass-card,#fff);color:var(--ncn-ink,#22324b);box-shadow:0 2px 8px #174c9b14}
+ .ncn-account-dialog input{height:48px;border-radius:16px;box-shadow:inset 0 1px 0 var(--ncn-highlight,#fff)}
+ .ncn-account-dialog .ncn-account-link{box-shadow:none;background:transparent}
+ html[data-ncn-theme=dark] #ncn-account-message.ncn-account-error{color:#ffbbc9}
+ #ncn-billing-app:not([data-ncn-account-panel=ready]) #pay-auth{display:none!important}
+ html:not([data-ncn-account-state]) #pay-email,html:not([data-ncn-account-state]) #pay-entitlement{visibility:hidden}
+ #vip-gate:not([data-ncn-gate-state])>:not(h2):not(.ev-kicker),#vip-gate[data-ncn-gate-state=loading]>:not(h2):not(.ev-kicker):not(.ncn-gate-loading){display:none!important}
+ #vip-gate:not([data-ncn-gate-state])::after{content:'Mở công cụ của bạn';display:block;margin:18px 0;color:var(--ncn-muted,#5e7088);font-size:13px}
+ #vip-gate .ncn-gate-loading{display:none;padding-top:4px}
+ #vip-gate[data-ncn-gate-state=loading] .ncn-gate-loading{display:grid;gap:10px}
+ .ncn-gate-loading p{margin:0 0 4px;color:var(--ncn-muted,#5e7088);font-size:13px}
+ .ncn-gate-loading span{display:block;height:38px;border:1px solid var(--ncn-rim,#ffffff80);border-radius:13px;background:var(--ncn-glass-soft,#eef5ff)}
+ .ncn-gate-loading span:last-child{width:68%}
+ @media(prefers-reduced-transparency:reduce),(prefers-contrast:more),(forced-colors:active){.ncn-account-dialog{background:var(--ncn-surface,#fff);-webkit-backdrop-filter:none;backdrop-filter:none}.ncn-account-dialog .ncn-account-primary,#ncn-account-host [data-ncn-account-open=login]{background:var(--ncn-accent,#2769b3)!important}}
+}

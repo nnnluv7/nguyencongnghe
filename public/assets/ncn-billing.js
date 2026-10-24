@@ -1,5 +1,5 @@
 import * as identityClient from './ncn-identity-client.js';
-import {getAccount} from './ncn-account.js?v=20261024-account-1';
+import {getAccount} from './ncn-account.js?v=20261024-account-2';
 
 const ENDPOINT='/.netlify/functions/ncn-billing';
 const money=value=>Number(value).toLocaleString('vi-VN')+'đ';
@@ -34,6 +34,7 @@ export function mountBilling({doc=document,identity=identityClient,fetcher=fetch
   }
   function renderUser(){
     const user=state.user;
+    $('ncn-billing-app').dataset.ncnAccountPanel='ready';
     if(!user){renderOrder(null);state.transactions=[];state.members=[];clearPreview();$('pay-admin-transactions').replaceChildren();$('pay-admin-members').replaceChildren();}
     $('pay-email').textContent=user?.email||'Đăng nhập để mua VIP';
     $('pay-auth').hidden=!!user;$('pay-logout').hidden=!user;$('pay-history-panel').hidden=!user;$('pay-admin').hidden=!user?.admin;
@@ -83,13 +84,13 @@ export function mountBilling({doc=document,identity=identityClient,fetcher=fetch
       row.append(info,text('span',labels[order.status]||order.status,'pay-badge'),button('Xem đơn',()=>{renderOrder(order,{focus:true});return checkOrder(false);}));target.append(row);
     }
   }
-  async function refreshUser(){const epoch=state.epoch;await identity.ensureSession();const result=await api('me');if(epoch!==state.epoch)return;state.user=result.user;renderUser();return result.user;}
+  async function refreshUser(){const epoch=state.epoch;const user=await account.refresh();if(epoch!==state.epoch)return;state.user=user;renderUser();return user;}
   async function checkOrder(manual=false){
     if(!state.order||!state.user||state.checking)return;state.checking=true;const epoch=state.epoch,id=state.order.id;
     try{
       await identity.ensureSession();const result=await api('order',null,{id});if(epoch!==state.epoch||state.order?.id!==id)return;
       const old=state.order.status;state.user=result.user;renderUser();renderOrder(result.order);
-      if(old!==result.order.status){await history();if(result.order.status==='paid')account.refresh().catch(()=>{});}
+      if(old!==result.order.status){await history();if(result.order.status==='paid')account.refresh({force:true}).catch(()=>{});}
       if(manual)say(result.order.status==='paid'?'VIP đã được kích hoạt.':result.order.status==='review'?'Giao dịch đang chờ ADMIN đối chiếu.':'Đã kiểm tra. '+$('pay-order-note').textContent);
     }catch(e){if(e.status===401){state.epoch++;state.user=null;renderUser();renderOrder(null);say('Phiên đăng nhập đã hết hạn. Đăng nhập lại để kiểm tra đơn.',true);}else if(e.status===404){rememberOrder(null);renderOrder(null);if(manual)say(e.message,true);}else if(manual)say(e.message,true);}
     finally{state.checking=false;}
@@ -125,8 +126,8 @@ export function mountBilling({doc=document,identity=identityClient,fetcher=fetch
   listen($('pay-logout'),'click',()=>run(async()=>{await account.signOut();say('Đã đăng xuất tài khoản website.');}));
   let started=false;
   listen(doc,'ncn-account-change',event=>{
-    if(!started)return;
     const user=event.detail.user;
+    if(!started){state.user=user;renderUser();return;}
     if(user?.id===state.user?.id){state.user=user;renderUser();return;}
     state.epoch++;state.user=null;renderUser();
     if(user)run(signedIn);
@@ -163,6 +164,10 @@ export function mountBilling({doc=document,identity=identityClient,fetcher=fetch
       await signedIn();
     }catch(e){updateButtons();say(e.name==='MissingIdentityError'?'ADMIN cần bật Netlify Identity trước khi đăng nhập.':e.message,true);}
   }
+  $('pay-email').textContent=account.state.profile?.email||'Tài khoản của bạn';
+  $('pay-entitlement').textContent='Một tài khoản dùng chung toàn website.';
+  $('pay-auth').hidden=true;
+  account.ready.then(()=>{if(!state.disposed&&!started&&!account.state.error){state.user=account.state.user;renderUser();}});
   const ready=start();
   return {state,ready,refreshUser,checkOrder,dispose(){state.disposed=true;[tick,poll,authTimer].forEach(t=>timers.clearInterval(t));listeners.forEach(fn=>fn());}};
 }

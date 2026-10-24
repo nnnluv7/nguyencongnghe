@@ -3,7 +3,7 @@ on:
   pull_request:
     paths:
       - 'public/assets/ncn-theme/**'
-      - 'public/assets/ncn-account.js'
+      - 'public/assets/ncn-account*.js'
       - 'public/assets/ncn-*-auth.js'
       - 'public/assets/ncn-vip-gate.js'
       - 'public/assets/ncn-billing.js'
@@ -16,7 +16,7 @@ on:
     branches: [main]
     paths:
       - 'public/assets/ncn-theme/**'
-      - 'public/assets/ncn-account.js'
+      - 'public/assets/ncn-account*.js'
       - 'public/assets/ncn-*-auth.js'
       - 'public/assets/ncn-vip-gate.js'
       - 'public/assets/ncn-billing.js'
@@ -54,5 +54,7 @@ jobs:
         if: always()
         with:
           name: ncn-scroll-ui
-          path: artifacts/scroll-ui/
+          path: |
+            artifacts/scroll-ui/
+            artifacts/account/
           retention-days: 14
