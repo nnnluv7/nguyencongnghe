@@ -69,6 +69,14 @@
       "sticker",
       "popup",
       "store-tools"
-    ]
+    ],
+    "productionRoutesWithLatestAssets": 25,
+    "canonicalAliasesPreserveModel": 2,
+    "stickyRailAfterLastCopyFocus": {
+      "printTop": 169,
+      "headerBottom": 128,
+      "documentWidth": 1348,
+      "scrollWidth": 1348
+    }
   }
 }
