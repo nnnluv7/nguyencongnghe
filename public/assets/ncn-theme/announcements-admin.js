@@ -1,5 +1,5 @@
 import {ensureSession,onAuthChange} from '/assets/ncn-identity-client.js';
-import {callAnnouncements} from './announcements.js?v=20261024-notice-1';
+import {callAnnouncements} from './announcements.js?v=20261024-notice-loop-2';
 
 const $=id=>document.getElementById(id);
 let version=null,busy=false;
