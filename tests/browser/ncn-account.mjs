@@ -197,7 +197,7 @@ try{
       assert.equal(await page.locator('[data-private-fixture]').count(),0);
       assert.equal(await page.evaluate(()=>window.logoutMarker),'same-document');
     }finally{releaseAsset();releaseLogout();assetHold=null;logoutHold=null;}
-    await page.waitForFunction(()=>window.NCNAccount?.state.ready&&!NCNAccount.state.user&&!document.querySelector('[data-private-fixture]'));
+    await page.waitForFunction(()=>!window.logoutMarker&&window.NCNAccount?.state.ready&&!NCNAccount.state.user&&!document.querySelector('[data-private-fixture]'));
     await page.reload();await page.waitForFunction(()=>window.NCNAccount?.state.ready&&!NCNAccount.state.user);
     assert.equal(await page.locator('[data-private-fixture]').count(),0);await page.close();
   });
