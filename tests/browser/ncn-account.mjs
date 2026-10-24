@@ -7,7 +7,8 @@ import assert from 'node:assert/strict';
 const origin='https://ncn-account.test',root=resolve('public');
 const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.png':'image/png','.svg':'image/svg+xml','.jpg':'image/jpeg','.woff2':'font/woff2'};
 const users=new Map(),tokens=new Map(),calls=[];
-let autoconfirm=true,disableSignup=false,orderUser=null,confirmedUser=null,createHold=null;
+let autoconfirm=true,disableSignup=false,orderUser=null,confirmedUser=null,createHold=null,sessionHold=null,profileFailure=false,assetHold=null,logoutHold=null;
+const functionCalls=[];
 const member=(email='member@example.test',name='Thành viên')=>({id:'fixture-'+email,email,name,password:'Example123!',confirmed:true,vip:false,admin:false});
 const existing=member('vip@example.test','VIP hiện có');existing.vip=true;users.set(existing.email,existing);
 const raw=u=>({id:u.id,email:u.email,confirmed_at:u.confirmed?'2026-10-24T00:00:00Z':null,created_at:'2026-10-24T00:00:00Z',app_metadata:{roles:u.admin?['admin']:[]},user_metadata:{full_name:u.name,roles:['admin','vip']}});
@@ -46,19 +47,19 @@ async function fixtureContext(){
         const u=member(data.email,data.data.full_name);u.password=data.password;u.confirmed=autoconfirm;users.set(u.email,u);confirmedUser=u;
         return reply(raw(u));
       }
-      if(action==='recover'||action==='logout')return reply({});
+      if(action==='recover'||action==='logout'){if(action==='logout'&&logoutHold){logoutHold.started();await logoutHold.wait;}return reply({});}
       if(action==='verify'){
         const u=confirmedUser||existing;u.confirmed=true;if(data.password)u.password=data.password;return reply(session(u));
       }
       throw new Error('Unmocked Identity action '+action);
     }
     if(url.pathname.startsWith('/.netlify/functions/')){
-      const tool=url.pathname.split('/').at(-1),action=url.searchParams.get('route');
+      const tool=url.pathname.split('/').at(-1),action=url.searchParams.get('route');functionCalls.push({tool,action});
       if(tool==='ncn-announcements')return reply({items:[]});
       if(tool==='ncn-visitors')return reply({total:1,online:1});
       if(tool==='ncn-billing'){
         if(action==='plans')return reply({ready:true,plans:[{id:'vip30',amount:30000},{id:'vip60',amount:55000}]});
-        if(action==='me')return reply({user:view(user)});
+        if(action==='me'){if(sessionHold){sessionHold.started();await sessionHold.wait;}if(profileFailure)return reply({error:'Temporary connection failure'},503);return reply({user:view(user)});}
         if(action==='orders')return view(user)?reply({orders:[]}):reply({error:'Unauthorized'},401);
         if(action==='create-order'){
           if(!view(user))return reply({error:'Unauthorized'},401);orderUser=user.id;calls.push({action:'create-order',userId:user.id,body});
@@ -72,8 +73,8 @@ async function fixtureContext(){
         const verified=view(user),allowed=!!(verified&&(verified.vip||verified.admin));
         if(action==='me')return reply({user:verified,allowed});
         if(!allowed)return reply({error:'VIP required'},403);
-        if(action==='app')return reply({user:verified,html:'<div data-private-fixture="'+tool+'">Công cụ VIP</div><button id="ev-vip-logout">Đăng xuất</button>'});
-        if(action==='asset')return reply('/* fixture: no private business data */',200,'text/javascript');
+        if(action==='app')return reply({user:verified,html:'<div data-private-fixture="'+tool+'">Công cụ VIP<input id="fixture-edit" aria-label="Ghi chú thử"></div><button id="ev-vip-logout">Đăng xuất</button>'});
+        if(action==='asset'){if(url.searchParams.get('name')==='core'&&assetHold){assetHold.started();await assetHold.wait;}return reply('/* fixture: no private business data */',200,'text/javascript');}
       }
       throw new Error('Unmocked function '+tool+' '+action);
     }
@@ -145,6 +146,61 @@ try{
     await login(home);await home.reload();await home.waitForFunction(()=>window.NCNAccount?.state.ready&&NCNAccount.state.user?.vip);assert.equal(await home.evaluate(()=>NCNAccount.state.user.id),existing.id);
     await event.reload();await event.locator('[data-private-fixture=ncn-event]').waitFor();assert.equal(await event.evaluate(()=>NCN_VIP.user.id),existing.id);
   });
+  await check('full navigation keeps profile text while one shared session request is pending',async()=>{
+    let release,started;const wait=new Promise(resolve=>release=resolve),requested=new Promise(resolve=>started=resolve);sessionHold={wait,started};
+    const before=functionCalls.filter(c=>c.tool==='ncn-billing'&&c.action==='me').length;
+    const navigation=home.goto(origin+'/premium/',{waitUntil:'domcontentloaded'});await requested;await navigation;
+    await home.waitForFunction(()=>NCNAccount.state.profile?.email==='vip@example.test'&&!NCNAccount.state.ready);
+    assert.equal(await home.evaluate(()=>NCNAccount.state.user),null);
+    assert.equal(await home.locator('#auth-header-desktop [data-ncn-account-open]').count(),0);
+    assert.match(await home.locator('#auth-header-desktop').textContent(),/vip@example.test/);
+    assert.equal(await home.locator('#pay-auth').isVisible(),false);
+    assert.equal(await home.locator('[data-pay-plan=vip30]').isEnabled(),false);
+    assert.equal(await home.locator('#ncn-account-dialog').isVisible(),false);
+    release();sessionHold=null;await home.waitForFunction(()=>NCNAccount.state.ready&&NCNAccount.state.user?.vip);
+    await home.waitForFunction(()=>document.getElementById('pay-email').textContent==='vip@example.test');
+    assert.equal(functionCalls.filter(c=>c.tool==='ncn-billing'&&c.action==='me').length-before,1);
+  });
+  await check('parallel refreshes share one request and retain the live private input',async()=>{
+    await event.locator('#fixture-edit').fill('KEEP THIS VALUE');
+    const before=functionCalls.filter(c=>c.tool==='ncn-billing'&&c.action==='me').length;
+    const privateBefore=functionCalls.filter(c=>c.tool==='ncn-event'&&['me','app'].includes(c.action)).length;
+    await event.evaluate(async()=>{window.sameUserEvents=0;document.addEventListener('ncn-account-change',()=>window.sameUserEvents++);await Promise.all([NCNAccount.refresh({force:true}),NCNAccount.refresh({force:true}),NCNAccount.refresh({force:true})]);});
+    assert.equal(functionCalls.filter(c=>c.tool==='ncn-billing'&&c.action==='me').length-before,1);
+    assert.equal(functionCalls.filter(c=>c.tool==='ncn-event'&&['me','app'].includes(c.action)).length,privateBefore);
+    assert.equal(await event.evaluate(()=>window.sameUserEvents),0);
+    assert.equal(await event.locator('#fixture-edit').inputValue(),'KEEP THIS VALUE');
+    assert.equal(functionCalls.filter(c=>['ncn-event','ncn-gvgs'].includes(c.tool)&&c.action==='me').length,0);
+  });
+  await check('a transient profile failure keeps the session and private editor open',async()=>{
+    profileFailure=true;await event.evaluate(()=>NCNAccount.refresh({force:true}).catch(()=>{}));
+    assert.equal(await event.evaluate(()=>NCNAccount.state.user.id),existing.id);
+    assert.equal(await event.locator('#fixture-edit').inputValue(),'KEEP THIS VALUE');
+    assert.equal(await event.locator('#ncn-account-dialog').isVisible(),false);
+    profileFailure=false;await event.evaluate(()=>NCNAccount.refresh({force:true}));
+    assert.equal(await event.locator('[data-ncn-account-retry]').count(),0);
+  });
+  await check('server revocation still clears the private app and manual retry rechecks entitlement',async()=>{
+    existing.vip=false;await event.evaluate(()=>{window.revocationMarker=true;NCNAccount.refresh({force:true}).catch(()=>{});});
+    await event.waitForFunction(()=>!window.revocationMarker&&window.NCNAccount?.state.ready&&!NCNAccount.state.user?.vip&&document.getElementById('vip-gate')?.dataset.ncnGateState==='member'&&!document.querySelector('[data-private-fixture]'));
+    assert.equal(await event.locator('[data-vip-auth]').isVisible(),false);
+    existing.vip=true;await event.locator('#vip-check').click();await event.locator('[data-private-fixture=ncn-event]').waitFor();
+  });
+  await check('logout during private-script loading clears content before the session ends and never restores it',async()=>{
+    let releaseAsset,startAsset,releaseLogout,startLogout;
+    const assetWait=new Promise(resolve=>releaseAsset=resolve),assetRequested=new Promise(resolve=>startAsset=resolve);
+    const logoutWait=new Promise(resolve=>releaseLogout=resolve),logoutRequested=new Promise(resolve=>startLogout=resolve);
+    assetHold={wait:assetWait,started:startAsset};logoutHold={wait:logoutWait,started:startLogout};
+    const page=await open(context,'/in-event/');await assetRequested;
+    try{
+      await page.evaluate(()=>{window.logoutMarker='same-document';window.logoutPromise=NCNAccount.signOut();});await logoutRequested;
+      assert.equal(await page.locator('[data-private-fixture]').count(),0);
+      assert.equal(await page.evaluate(()=>window.logoutMarker),'same-document');
+    }finally{releaseAsset();releaseLogout();assetHold=null;logoutHold=null;}
+    await page.waitForFunction(()=>!window.logoutMarker&&window.NCNAccount?.state.ready&&!NCNAccount.state.user&&!document.querySelector('[data-private-fixture]'));
+    await page.reload();await page.waitForFunction(()=>window.NCNAccount?.state.ready&&!NCNAccount.state.user);
+    assert.equal(await page.locator('[data-private-fixture]').count(),0);await page.close();
+  });
   await check('recovery uses the shared Identity service',async()=>{
     await home.evaluate(()=>NCNAccount.open('recovery'));const f=home.locator('[data-account-form=recovery]');await f.locator('[name=email]').fill(existing.email);await f.locator('[type=submit]').click();await home.waitForFunction(()=>document.getElementById('ncn-account-message').textContent.includes('nhận được thư'));
     assert.ok(calls.some(c=>c.action==='recover'&&JSON.parse(c.body).email===existing.email));await home.evaluate(()=>NCNAccount.close());
@@ -172,6 +228,21 @@ try{
     assert.equal(await page.locator('[data-account-mode=register]').isVisible(),false);
     const sizes=await page.locator('#ncn-account-dialog').evaluate(n=>({width:n.getBoundingClientRect().width,scroll:n.scrollWidth,client:n.clientWidth}));assert.ok(sizes.width<=362&&sizes.scroll<=sizes.client+1,JSON.stringify(sizes));
     await mkdir('artifacts/account',{recursive:true});await page.screenshot({path:'artifacts/account/shared-login-mobile.png'});
+  });
+  await check('premium account buttons and dialogs share Liquid Glass in light, dark and mobile views',async()=>{
+    disableSignup=false;const page=await open(context,'/premium/');await page.setViewportSize({width:1280,height:900});
+    await page.evaluate(()=>document.querySelector('.ncn-account-menu').open=true);
+    const login=page.locator('#auth-header-desktop [data-ncn-account-open=login]');
+    const style=await login.evaluate(node=>({radius:parseFloat(getComputedStyle(node).borderRadius),background:getComputedStyle(node).backgroundImage}));
+    assert.ok(style.radius>20&&style.background.includes('gradient'),JSON.stringify(style));
+    await page.screenshot({path:'artifacts/account/account-dropdown-liquid-glass.png'});
+    await page.evaluate(()=>NCNAccount.open('login'));await page.screenshot({path:'artifacts/account/account-login-liquid-glass.png'});
+    await page.evaluate(()=>document.documentElement.dataset.ncnTheme='dark');
+    await page.screenshot({path:'artifacts/account/account-login-dark.png'});
+    await page.setViewportSize({width:390,height:844});
+    const bounds=await page.locator('#ncn-account-dialog').evaluate(node=>({width:node.getBoundingClientRect().width,scroll:node.scrollWidth,client:node.clientWidth}));
+    assert.ok(bounds.width<=362&&bounds.scroll<=bounds.client+1,JSON.stringify(bounds));
+    await page.screenshot({path:'artifacts/account/account-login-mobile.png'});
   });
   console.log('Shared account: '+checks+' scenarios passed; all external writes blocked.');
 }finally{await context?.close();await browser.close();}

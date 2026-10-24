@@ -1,4 +1,5 @@
 import * as identityClient from './ncn-identity-client.js';
+import {readDisplayProfile,saveDisplayProfile,displayProfile} from './ncn-account-session.js?v=20261024-account-2';
 
 const accounts=new WeakMap();
 const labels={login:'Đăng nhập',register:'Tạo tài khoản',recovery:'Quên mật khẩu',reset:'Đặt mật khẩu mới'};
@@ -10,11 +11,12 @@ export function quizProfile(user,hint=null){
   return {id:user.id,email:user.email,username:String(user.name||(sameEmail&&hint?.username)||user.email)};
 }
 
-export function mountAccount({doc=document,win=window,identity=identityClient,fetcher=fetch,storage=win.localStorage,timers=win}={}){
+export function mountAccount({doc=document,win=window,identity=identityClient,fetcher=fetch,storage=win.localStorage,sessionStorage,timers=win,clock=Date.now}={}){
   if(accounts.has(doc))return accounts.get(doc);
+  if(sessionStorage===undefined)try{sessionStorage=win.sessionStorage;}catch{}
   const $=id=>doc.getElementById(id),listeners=[];
-  const state={user:null,ready:false,busy:false,resetPending:false,settings:null,redirect:null};
-  let epoch=0,disposed=false,origin=null;
+  const state={user:null,profile:readDisplayProfile(sessionStorage,doc.cookie,clock()),ready:false,busy:false,resetPending:false,settings:null,redirect:null,error:null,checkedAt:0,signingOut:false};
+  let epoch=0,disposed=false,origin=null,pending=null;
   const listen=(node,type,fn,options)=>{node?.addEventListener(type,fn,options);listeners.push(()=>node?.removeEventListener(type,fn,options));};
   const node=(tag,text,cls)=>{const el=doc.createElement(tag);if(text)el.textContent=text;if(cls)el.className=cls;return el;};
   function legacyHint(){try{const value=JSON.parse(storage?.getItem('qz_user')||'null');return value&&typeof value.email==='string'?{email:value.email,username:typeof value.username==='string'?value.username:''}:null;}catch{return null;}}
@@ -65,70 +67,97 @@ export function mountAccount({doc=document,win=window,identity=identityClient,fe
     const change=event.target.closest('[data-account-mode]');if(change&&dialog.contains(change)){message('');mode(change.dataset.accountMode);}
   });
   function render(){
-    const user=state.user;
+    const verified=state.user,user=verified||state.profile;
+    const phase=verified?'authenticated':state.error?'error':state.ready?'guest':'restoring';
+    doc.documentElement.dataset.ncnAccountState=phase;
     doc.querySelectorAll('.ncn-account-dropdown>strong').forEach(el=>el.textContent='Tài khoản của bạn');
     const host=$('ncn-account-host');
     let auth=$('auth-header-desktop');
     if(!auth&&host){auth=node('div',null,'auth-wrap-desktop');auth.id='auth-header-desktop';host.replaceChildren(auth);}
     const fill=target=>{
-      if(!target)return;target.replaceChildren();
+      if(!target)return;target.dataset.ncnAccountState=phase;target.replaceChildren();
       if(user){
         const info=node('div',null,'ncn-account-info');info.append(node('strong',user.name||user.email),node('small',user.email));
-        const status=user.admin?'ADMIN':user.vip?'VIP đang hoạt động':'Thành viên';info.append(node('span',status,'ncn-account-badge'));
-        if(user.vipExpiresAt)info.append(node('small','Hạn VIP: '+new Date(user.vipExpiresAt).toLocaleDateString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh'})));
+        const status=!verified?'Tài khoản':verified.admin?'ADMIN':verified.vip?'VIP đang hoạt động':'Thành viên';info.append(node('span',status,'ncn-account-badge'));
+        if(verified?.vipExpiresAt)info.append(node('small','Hạn VIP: '+new Date(verified.vipExpiresAt).toLocaleDateString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh'})));
         target.append(info);
-        const history=node('a','Lịch sử thi','auth-btn btn-login');history.href='/p/lich-su-thi.html';target.append(history);
+        if(verified){const history=node('a','Lịch sử thi','auth-btn btn-login');history.href='/p/lich-su-thi.html';target.append(history);}
         const out=node('button','Đăng xuất','auth-btn btn-login');out.type='button';out.dataset.ncnAccountSignout='';out.disabled=state.busy;target.append(out);
-      }else{
+      }else if(phase==='restoring'){
+        const status=node('span','Tài khoản của bạn','ncn-account-placeholder');status.setAttribute('role','status');target.append(status);
+      }else if(phase!=='error'){
         for(const [value,label] of [['login','Đăng nhập'],['register','Đăng ký']]){
           const button=node('button',label,'auth-btn '+(value==='login'?'btn-login':'btn-reg'));button.type='button';button.dataset.ncnAccountOpen=value;button.hidden=value==='register'&&state.settings?.disableSignup;target.append(button);
         }
+      }
+      if(phase==='error'){
+        target.append(node('span','Kết nối tài khoản đang chậm.','ncn-account-status'));
+        const retry=node('button','Thử lại','auth-btn btn-login');retry.type='button';retry.dataset.ncnAccountRetry='';target.append(retry);
       }
     };
     fill(auth);fill($('auth-header-mobile'));
     doc.querySelectorAll('.ncn-account-dropdown>a[href="/premium/"]').forEach(el=>el.textContent='Đăng ký / gia hạn VIP ↗');
     doc.querySelectorAll('[data-account-mode=register],[data-ncn-account-open=register]').forEach(b=>b.hidden=!!state.settings?.disableSignup);
-    doc.querySelectorAll('[data-ncn-announcement-admin]').forEach(el=>el.hidden=!user?.admin);
-    if(win.QuizSystem)win.QuizSystem.user=quizProfile(user,hint);
+    doc.querySelectorAll('[data-ncn-announcement-admin]').forEach(el=>el.hidden=!verified?.admin);
+    if(win.QuizSystem)win.QuizSystem.user=quizProfile(verified,hint);
   }
+  const userKey=user=>JSON.stringify(user?[user.id,user.email,user.name,user.admin,user.vip,user.vipSource,user.vipExpiresAt,user.paidVipBlocked]:null);
   function publish(user){
-    state.user=user;render();
-    doc.dispatchEvent(new win.CustomEvent('ncn-account-change',{detail:{user}}));
+    const changed=userKey(state.user)!==userKey(user);
+    state.user=user;state.profile=displayProfile(user);saveDisplayProfile(sessionStorage,user,clock());
+    if(changed||!state.ready)render();
+    if(changed)doc.dispatchEvent(new win.CustomEvent('ncn-account-change',{detail:{user}}));
   }
-  async function refresh(){
-    const version=++epoch;
-    try{
-    const session=await identity.ensureSession();if(disposed||version!==epoch)return state.user;
-    let user=null;
-    if(session){
-      const response=await fetcher('/.netlify/functions/ncn-billing?route=me',{credentials:'same-origin',cache:'no-store',signal:AbortSignal.timeout(12000)});
-      const result=await response.json();if(!response.ok)throw Object.assign(new Error(result.error||'Chưa kiểm tra được tài khoản.'),{status:response.status});
-      user=result.user?.id&&result.user?.email?result.user:null;
-    }
-    if(disposed||version!==epoch)return state.user;
-    publish(user);return user;
-    }catch(error){if(!disposed&&version===epoch&&(error.status===401||error.status===403))publish(null);throw error;}
+  function refresh({force=false}={}){
+    if(pending)return pending;
+    if(!force&&state.ready&&!state.error&&clock()-state.checkedAt<15000)return Promise.resolve(state.user);
+    const version=epoch;
+    let task;task=(async()=>{
+      try{
+        const session=await identity.ensureSession();if(disposed||version!==epoch)return state.user;
+        let user=null;
+        if(session){
+          const response=await fetcher('/.netlify/functions/ncn-billing?route=me',{credentials:'same-origin',cache:'no-store',signal:AbortSignal.timeout(12000)});
+          const result=await response.json();if(!response.ok)throw Object.assign(new Error(result.error||'Chưa kiểm tra được tài khoản.'),{status:response.status});
+          user=result.user?.id&&result.user?.email?result.user:null;
+        }
+        if(disposed||version!==epoch)return state.user;
+        const hadError=state.error;state.error=null;state.checkedAt=clock();publish(user);if(hadError)render();return user;
+      }catch(error){
+        if(!disposed&&version===epoch){
+          state.error=error;
+          if(error.status===401||error.status===403){state.error=null;publish(null);}else render();
+        }
+        throw error;
+      }finally{if(pending===task)pending=null;}
+    })();
+    pending=task;return task;
   }
   async function signOut(){
-    ++epoch;publish(null);await identity.signOut();message('Đã đăng xuất tài khoản trên website.');
+    ++epoch;pending=null;state.error=null;state.checkedAt=0;state.signingOut=true;publish(null);
+    try{await identity.signOut();message('Đã đăng xuất tài khoản trên website.');}
+    finally{state.signingOut=false;doc.dispatchEvent(new win.CustomEvent('ncn-account-signed-out'));}
   }
   async function run(work){
     if(state.busy)return;state.busy=true;dialog.querySelectorAll('[type=submit]').forEach(b=>b.disabled=true);
     try{await work();}catch(error){message(error.name==='MissingIdentityError'?'Dịch vụ tài khoản chưa sẵn sàng. Vui lòng liên hệ Admin.':error.message||'Chưa thực hiện được. Vui lòng thử lại.',true);}
     finally{state.busy=false;dialog.querySelectorAll('[type=submit]').forEach(b=>b.disabled=false);render();}
   }
-  listen(doc,'click',event=>{if(event.target.closest('[data-ncn-account-signout]'))run(signOut);});
+  listen(doc,'click',event=>{
+    if(event.target.closest('[data-ncn-account-signout]'))run(signOut);
+    if(event.target.closest('[data-ncn-account-retry]'))run(()=>refresh({force:true}));
+  });
   for(const [name,form] of Object.entries(forms))listen(form,'submit',event=>{event.preventDefault();run(async()=>{
     message('');
     if(name==='login'){
       await identity.signIn(form.elements.email.value.trim(),form.elements.password.value);form.elements.password.value='';
-      const user=await refresh();if(!user)throw new Error('Xác nhận email tài khoản trước khi tiếp tục.');close();
+      const user=await refresh({force:true});if(!user)throw new Error('Xác nhận email tài khoản trước khi tiếp tục.');close();
     }else if(name==='register'){
       const config=await settings();if(config.disableSignup)throw new Error('Đăng ký mới đang tạm đóng.');
       if(form.elements.password.value!==form.elements.repeat.value)throw new Error('Hai mật khẩu chưa khớp.');
       const email=form.elements.email.value.trim(),password=form.elements.password.value;
       await identity.signUp(email,password,{full_name:form.elements.name.value.trim()});form.reset();
-      if(config.autoconfirm){await identity.signIn(email,password);if(!await refresh())throw new Error('Đã tạo tài khoản. Đăng nhập lại để xác nhận phiên trước khi mua VIP.');close();}
+      if(config.autoconfirm){await identity.signIn(email,password);if(!await refresh({force:true}))throw new Error('Đã tạo tài khoản. Đăng nhập lại để xác nhận phiên trước khi mua VIP.');close();}
       else{forms.login.elements.email.value=email;mode('login');message('Đã tạo tài khoản chung. Mở email xác nhận để đăng nhập và đăng ký VIP.');}
     }else if(name==='recovery'){
       await identity.sendRecovery(form.elements.email.value.trim());message('Nếu email đã đăng ký, bạn sẽ nhận được thư đặt lại mật khẩu.');
@@ -138,23 +167,32 @@ export function mountAccount({doc=document,win=window,identity=identityClient,fe
       if(state.redirect?.type==='invite'){
         const user=await identity.acceptInvite(state.redirect.token,password);if(user?.email)await identity.signIn(user.email,password);
       }else await identity.updateUser({password});
-      form.reset();state.resetPending=false;await refresh();mode('login');message('Đã lưu mật khẩu mới cho tài khoản chung.');
+      form.reset();state.resetPending=false;await refresh({force:true});mode('login');message('Đã lưu mật khẩu mới cho tài khoản chung.');
     }
   });});
-  const unsubscribe=identity.onAuthChange(event=>{if(event==='logout'){++epoch;publish(null);}else refresh().catch(()=>{});});
-  listen(doc,'visibilitychange',()=>{if(!doc.hidden&&state.user)refresh().catch(()=>{});});
-  const timer=timers.setInterval(()=>{if(!doc.hidden&&state.user)refresh().catch(()=>{});},60000);
+  const unsubscribe=identity.onAuthChange((event,user)=>{
+    if(event==='logout'){++epoch;pending=null;state.error=null;state.checkedAt=0;publish(null);}
+    else{
+      if(user?.id&&(state.user||state.profile)?.id!==user.id){++epoch;pending=null;publish(null);}
+      state.checkedAt=0;refresh({force:true}).catch(()=>{});
+    }
+  });
+  listen(doc,'visibilitychange',()=>{if(!doc.hidden&&(state.user||state.profile||state.error))refresh().catch(()=>{});});
+  listen(win,'online',()=>{if(state.user||state.profile||state.error)refresh({force:true}).catch(()=>{});});
+  listen(win,'pageshow',event=>{if(event.persisted)refresh({force:true}).catch(()=>{});});
+  const timer=timers.setInterval(()=>{if(!doc.hidden&&(state.user||state.profile||state.error))refresh().catch(()=>{});},60000);
   const api={state,open,close,refresh,signOut,ready:null,dispose(){disposed=true;++epoch;unsubscribe?.();timers.clearInterval(timer);listeners.forEach(remove=>remove());dialog.remove();accounts.delete(doc);}};
   accounts.set(doc,api);win.NCNAccount=api;render();
   api.ready=(async()=>{
+    const callback=/(?:access_token|confirmation_token|recovery_token|invite_token|email_change_token)=/.test(win.location.hash);
     try{
       state.redirect=await identity.consumeRedirect();
       state.resetPending=['recovery','invite'].includes(state.redirect?.type);
       await refresh();
       if(state.resetPending){open('reset');message('Nhập mật khẩu mới để hoàn tất tài khoản chung.');}
       else if(state.redirect?.type==='confirmation'){open('login');message('Email đã được xác nhận. Bạn có thể đăng ký / gia hạn VIP.');}
-    }catch(error){open('login');message(error.message||'Chưa xác nhận được tài khoản.',true);}
-    finally{state.ready=true;doc.dispatchEvent(new win.CustomEvent('ncn-account-ready'));}
+    }catch(error){if(callback){open('login');message(error.message||'Chưa xác nhận được tài khoản.',true);}}
+    finally{state.ready=true;render();doc.dispatchEvent(new win.CustomEvent('ncn-account-ready'));}
     return state.user;
   })();
   return api;

@@ -31,7 +31,7 @@ window.QuizSystem = {
 
 // Legacy callers open the same verified account used by the website and VIP.
 (function() {
-    const account = () => import('/assets/ncn-account.js?v=20261024-account-1').then(module => module.getAccount());
+    const account = () => import('/assets/ncn-account.js?v=20261024-account-2').then(module => module.getAccount());
     window.openModal = id => account().then(service => service.open(id));
     window.closeAuth = () => window.NCNAccount?.close();
     window.doLogin = () => window.openModal('login');
