@@ -1,0 +1,26 @@
+/* The same narrow, simple form as cash counting. Calculation controls stay intact. */
+@media screen{
+ body.ncn-insurance-page #ncn-page-actions{display:none!important}
+ body.ncn-insurance-page :is(#main,.item-post-wrap){width:100%!important;max-width:none!important}
+ body.ncn-insurance-page #ncn-insurance-app{box-sizing:border-box;width:100%;max-width:480px;margin:0 auto;padding:20px;border:1px solid var(--ncn-rim);border-radius:24px;background:var(--ncn-glass-card);box-shadow:var(--ncn-shadow)}
+ #ncn-insurance-app .ncn-tool-heading{margin:0 0 16px}
+ #ncn-insurance-app .ncn-tool-heading h2{font-size:24px;letter-spacing:-.5px;margin:0;line-height:1.3}
+ #ncn-insurance-app .ncn-tool-heading :is(.ncn-tool-eyebrow,p){display:none}
+ #ncn-insurance-app .ncn-insurance-grid{display:block}
+ body.ncn-insurance-page #postBody #ncn-insurance-app .containerz{padding:0!important;border:0;border-radius:0;background:none;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
+ body.ncn-insurance-page #postBody #ncn-insurance-app .containerz+ .containerz{margin-top:12px!important;padding-top:12px!important;border-top:1px solid var(--ncn-border)!important}
+ #ncn-insurance-app h3{font-size:13px;margin:0 0 8px;line-height:1.5}
+ body.ncn-insurance-page #postBody #ncn-insurance-app .containerz table{margin:0;border-collapse:collapse;border-spacing:0}
+ body.ncn-insurance-page #postBody #ncn-insurance-app .containerz :is(td,th){height:34px;min-height:0;padding:3px 0;font-size:13px;line-height:1.5;border-bottom:1px solid var(--ncn-border)}
+ #ncn-insurance-app td.label{width:46%;padding-right:8px!important}
+ #ncn-insurance-app td.label label{cursor:pointer}
+ body.ncn-insurance-page #postBody #ncn-insurance-app .containerz :is(input[type=text],select){height:34px!important;padding:5px 8px!important;border-radius:8px;font-size:14px!important;box-shadow:none}
+ body.ncn-insurance-page #postBody #ncn-insurance-app .ncn-insurance-options{gap:6px!important;margin:0 0 8px!important}
+ #ncn-insurance-app .ncn-insurance-options label{gap:5px;min-height:32px;padding:5px 8px;font-size:11px}
+ body.ncn-insurance-page #postBody #ncn-insurance-app .containerz tr.group-header:not(.hide)>:is(td,th){padding:8px 0 3px;font-size:12px}
+ body.ncn-insurance-page #postBody #ncn-insurance-app .containerz :is(#tratruocfn,#nolai,#gopmoithang,#tongtien,#chenhlech){border-radius:0;padding:5px 8px;background:none!important;font-size:14px;font-weight:650}
+ body.ncn-insurance-page #postBody #ncn-insurance-app .containerz #gopmoithang{background:var(--ncn-selected)!important;color:var(--ncn-selected-ink)!important;font-size:17px;font-weight:750}
+ #ncn-insurance-app .ncn-input-unit>#goi{flex:1}
+ #ncn-insurance-app #ghichu:empty{display:none}
+ @media(max-width:520px){body.ncn-insurance-page #ncn-insurance-app{padding:16px 14px}body.ncn-insurance-page #postBody #ncn-insurance-app .containerz :is(input[type=text],select){font-size:16px!important}}
+}

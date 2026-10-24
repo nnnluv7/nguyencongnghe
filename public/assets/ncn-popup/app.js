@@ -1,6 +1,6 @@
 import {catalogueCard} from '../ncn-theme/cards.js?v=20261016-easy-2';
 import {defaultRow,normalize,normalizeRows,validateForPrint,renderDocument,parseCSV,importTable,sampleCSV,escapeHTML,withHeader,paperSize} from './core.js?v=20261015-direct-1';
-import {createDirectEditor} from '../ncn-direct/editor.js?v=20261024-scroll-1';
+import {createDirectEditor} from '../ncn-direct/editor.js?v=20261024-compact-1';
 import {rowsForValidation} from '../ncn-direct/preview.js?v=20261015-direct-1';
 
 export function createPopupApp({app,data,doc=document,win=window,fetcher=fetch}) {

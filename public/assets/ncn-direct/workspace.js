@@ -28,6 +28,7 @@ export function attachPrintViewport({stage,frame,sheet,controls,doc=document,win
   }
   function scale(){
     if(destroyed||!stage.clientWidth)return;
+    stage.dataset.ncnZoomed=String(zoom>1);
     if(frame){
       if(!naturalWidth)measureFrame();
       const width=naturalWidth+18; // Reserve the iframe's vertical scrollbar without clipping the paper.
@@ -97,6 +98,7 @@ export function installPrintWorkspaces({doc=document,win=window}={}){
     doc.querySelectorAll('dialog.ncn-print-dialog:not([data-ncn-generated-print])').forEach(dialog=>{
       if(dialog.dataset.ncnPrintReady)return;dialog.dataset.ncnPrintReady='true';
       const stage=dialog.querySelector('.ncn-print-stage'),frame=stage?.querySelector('iframe'),rail=dialog.querySelector('.ncn-print-sidebar'),zoom=rail?.querySelector('.ncn-print-zoom');
+      rail?.querySelector('#ev-save-html')?.classList.add('ncn-print-secondary');
       attachPrintViewport({stage,frame,controls:zoom,doc,win});
       if(rail&&!rail.querySelector('.ncn-print-help'))rail.append(printHelp(doc,{open:win.innerWidth>=960}));
       dialog.addEventListener('toggle',()=>win.requestAnimationFrame(()=>win.dispatchEvent(new Event('resize'))));
@@ -142,17 +144,26 @@ export function enhancePrintWorkspace({workspace,preview,rail,controls,doc=docum
   const print=rail.querySelector('.ncn-print-primary');
   const originalParent=print?.parentElement,originalNext=print?.nextSibling;
   bar.append(switcher);if(print)bar.append(print);
-  workspace.prepend(bar);
-  if(controls){controls.classList.add('ncn-workspace-preview-controls');const stage=preview.querySelector('.ncn-direct-stage,.ncn-print-stage,.ncn-mobile-sheet-viewport');if(stage)stage.before(controls);else preview.prepend(controls);}
+  if(controls)controls.classList.add('ncn-workspace-preview-controls');
   const media=win.matchMedia?.('(max-width:959px)');
   const mobile=()=>media?media.matches:win.innerWidth<960;
   const reduced=()=>Boolean(win.matchMedia?.('(prefers-reduced-motion:reduce)').matches);
   let pane='paper',resizeFrame=0,destroyed=false;
+  function placeControls(){
+    if(mobile()){
+      workspace.prepend(bar);
+      if(controls){const stage=preview.querySelector('.ncn-direct-stage,.ncn-print-stage,.ncn-mobile-sheet-viewport');if(stage)stage.before(controls);else preview.prepend(controls);}
+    }else{
+      rail.prepend(bar);
+      if(controls){const actions=rail.querySelector('.ncn-print-actions');if(actions)actions.after(controls);else bar.after(controls);}
+    }
+  }
   function measure(){
     if(destroyed)return;
     workspace.style.setProperty('--ncn-workspace-bar-height',Math.ceil(bar.getBoundingClientRect().height||64)+'px');
   }
   function refresh(){
+    placeControls();
     measure();
     paper.setAttribute('aria-pressed',String(pane==='paper'));fields.setAttribute('aria-pressed',String(pane==='fields'));
     if(!resizeFrame)resizeFrame=win.requestAnimationFrame(()=>{resizeFrame=0;win.dispatchEvent(new win.Event('resize'));});
@@ -179,6 +190,8 @@ export function enhancePrintWorkspace({workspace,preview,rail,controls,doc=docum
   };
   media?.addEventListener?.('change',mediaChanged);
   const observer=win.ResizeObserver?new win.ResizeObserver(measure):null;observer?.observe(bar);
+  rail.querySelectorAll('details.ncn-print-fields').forEach(node=>node.open=false);
+  const help=rail.querySelector('.ncn-print-help');if(help)help.open=!mobile();
   workspace.dataset.ncnPane='paper';refresh();
   const api={select,refresh,destroy(){
     destroyed=true;listeners.forEach(remove=>remove());observer?.disconnect();win.cancelAnimationFrame(resizeFrame);media?.removeEventListener?.('change',mediaChanged);

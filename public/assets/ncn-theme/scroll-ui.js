@@ -24,11 +24,11 @@ export function installScrollUI({doc=document,win=window}={}){
   const chrome=[...doc.querySelectorAll(selector)];
   if(!chrome.length)return;
   const direction=createScrollDirection(),listeners=[],positions=new WeakMap();
-  let previous=Math.max(0,win.scrollY||0),frame=0,destroyed=false;
+  let previous=Math.max(0,win.scrollY||0),frame=0,destroyed=false,keyboardFocus=false,touchY=null,width=win.innerWidth;
   const listen=(node,event,handler,options)=>{node?.addEventListener(event,handler,options);listeners.push(()=>node?.removeEventListener(event,handler,options));};
   const locked=()=>body.matches('.ncn-menu-open,.ncn-game-menu-open')||
     Boolean(doc.querySelector('#ncn-search-dialog[open],.ncn-account-menu[open]'))||
-    chrome.some(node=>node.contains(doc.activeElement));
+    (keyboardFocus&&chrome.some(node=>node.contains(doc.activeElement)));
   function apply(hidden){
     if(destroyed)return;
     body.classList.toggle('ncn-chrome-hidden',Boolean(hidden)&&!locked());
@@ -48,7 +48,20 @@ export function installScrollUI({doc=document,win=window}={}){
     root.style.setProperty('--ncn-chrome-hide-distance',Math.ceil(bottom+24)+'px');
   }
   function scheduleMeasure(){if(!frame)frame=win.requestAnimationFrame(measure);}
+  // Clicking a toolbar button leaves focus on it. Only keyboard focus should
+  // hold the header open; a later wheel/touch gesture must be able to hide it.
+  function gesture(delta){
+    keyboardFocus=false;
+    apply(direction.move(delta,{locked:locked()}));
+  }
+  function wheel(event){if(!event.ctrlKey&&Math.abs(event.deltaY)>Math.abs(event.deltaX))gesture(event.deltaY);}
+  function touchStart(event){touchY=event.touches?.[0]?.clientY??null;keyboardFocus=false;}
+  function touchMove(event){const next=event.touches?.[0]?.clientY;if(touchY!==null&&Number.isFinite(next))gesture(touchY-next);touchY=next??null;}
+  function keyDown(event){if(['Tab','Escape','Home'].includes(event.key)){keyboardFocus=true;show();}}
   function onScroll(event){
+    // Tab can scroll a field into view, including inside the paper iframe.
+    // Keep navigation visible until the next pointer or scroll gesture.
+    if(keyboardFocus){show();return;}
     const target=event.target;
     if(target===doc||target===root||target===body){
       const next=Math.max(0,win.scrollY||root.scrollTop||0),delta=next-previous;previous=next;
@@ -60,10 +73,16 @@ export function installScrollUI({doc=document,win=window}={}){
   }
   body.classList.add('ncn-scroll-ready');measure();
   listen(doc,'scroll',onScroll,{capture:true,passive:true});
+  listen(doc,'wheel',wheel,{capture:true,passive:true});
+  listen(doc,'touchstart',touchStart,{capture:true,passive:true});
+  listen(doc,'touchmove',touchMove,{capture:true,passive:true});
+  listen(doc,'pointerdown',()=>{keyboardFocus=false;},{capture:true,passive:true});
   listen(doc,'focusin',event=>{if(chrome.some(node=>node.contains(event.target)))show();});
-  listen(doc,'keydown',event=>{if(['Tab','Escape','Home'].includes(event.key))show();});
+  listen(doc,'keydown',keyDown);
   listen(doc,'toggle',()=>{if(locked())show();},true);
-  listen(win,'resize',()=>{show();scheduleMeasure();},{passive:true});
+  // Browser address bars and print-preview measurements also emit resize.
+  // Neither is a request to reveal navigation while the user scrolls down.
+  listen(win,'resize',()=>{if(win.innerWidth!==width){width=win.innerWidth;show();}scheduleMeasure();},{passive:true});
   listen(win,'pageshow',()=>{previous=Math.max(0,win.scrollY||0);show();scheduleMeasure();});
   const observer=win.MutationObserver?new win.MutationObserver(()=>{if(locked())show();scheduleMeasure();}):null;
   observer?.observe(body,{attributes:true,attributeFilter:['class']});
@@ -71,7 +90,23 @@ export function installScrollUI({doc=document,win=window}={}){
   if(notice)observer?.observe(notice,{attributes:true,attributeFilter:['hidden']});
   const resize=win.ResizeObserver?new win.ResizeObserver(scheduleMeasure):null;
   chrome.forEach(node=>resize?.observe(node));
-  const api={show,destroy(){destroyed=true;listeners.forEach(remove=>remove());observer?.disconnect();resize?.disconnect();win.cancelAnimationFrame(frame);body.classList.remove('ncn-chrome-hidden','ncn-scroll-ready');root.style.removeProperty('--ncn-chrome-space');root.style.removeProperty('--ncn-chrome-hide-distance');controllers.delete(doc);}};
+  // Preview documents have their own event boundary, even when they use srcdoc.
+  function bindFrame(frame){
+    let cleanup=()=>{};
+    const bind=()=>{cleanup();try{
+      const child=frame.contentDocument;if(!child)return;
+      const options={capture:true,passive:true},events=[['wheel',wheel],['touchstart',touchStart],['touchmove',touchMove],['keydown',keyDown]];
+      events.forEach(([type,handler])=>child.addEventListener(type,handler,options));
+      cleanup=()=>events.forEach(([type,handler])=>child.removeEventListener(type,handler,options));
+    }catch{/* A cross-origin preview cannot be observed. */}};
+    listen(frame,'load',bind);listeners.push(()=>cleanup());bind();
+  }
+  const frames=new WeakSet();
+  function scanFrames(){doc.querySelectorAll('.ncn-direct-stage iframe,.ncn-print-stage iframe').forEach(frame=>{if(!frames.has(frame)){frames.add(frame);bindFrame(frame);}});}
+  scanFrames();
+  const frameObserver=win.MutationObserver?new win.MutationObserver(scanFrames):null;
+  frameObserver?.observe(body,{childList:true,subtree:true});
+  const api={show,destroy(){destroyed=true;listeners.forEach(remove=>remove());observer?.disconnect();frameObserver?.disconnect();resize?.disconnect();win.cancelAnimationFrame(frame);body.classList.remove('ncn-chrome-hidden','ncn-scroll-ready');root.style.removeProperty('--ncn-chrome-space');root.style.removeProperty('--ncn-chrome-hide-distance');controllers.delete(doc);}};
   controllers.set(doc,api);return api;
 }
 if(typeof document!=='undefined'){

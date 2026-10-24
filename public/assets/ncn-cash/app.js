@@ -1,4 +1,4 @@
-import {openPrintPreview} from '../ncn-direct/workspace.js?v=20261024-scroll-1';
+import {openPrintPreview} from '../ncn-direct/workspace.js?v=20261024-compact-1';
 import {DENOMINATIONS,calculate,balanceLabel,numberText,moneyText,erpInputText,timestampText,dateKey,reportContent,printDocument,textReport,csvReport} from './core.js?v=20261024-cash-simple-1';
 
 export function printHTML(html,doc=document,win=window){

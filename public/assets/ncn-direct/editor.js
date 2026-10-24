@@ -1,5 +1,5 @@
 import {copyAt,editCopy} from './preview.js?v=20261015-direct-1';
-import {printHelp,enhancePrintWorkspace} from './workspace.js?v=20261024-scroll-1';
+import {printHelp,enhancePrintWorkspace} from './workspace.js?v=20261024-compact-1';
 
 export function createDirectEditor({app,frame,stage,getState,onChange,onSelect,onPage,onPrint,onError,doc=document,win=window}) {
   app.classList.add('ncn-direct-editor');
@@ -48,6 +48,7 @@ export function createDirectEditor({app,frame,stage,getState,onChange,onSelect,o
   function scale(){
     if(!size)return;const width=size.w*96/25.4,height=size.h*96/25.4,ratio=fitScale()*zoom;
     stage.style.aspectRatio=size.w+'/'+size.h;
+    stage.dataset.ncnZoomed=String(zoom>1);
     canvas.style.width=width*ratio+'px';canvas.style.height=height*ratio+'px';
     frame.style.width=width+'px';frame.style.height=height+'px';frame.style.transform=`scale(${ratio})`;
   }
@@ -63,7 +64,7 @@ export function createDirectEditor({app,frame,stage,getState,onChange,onSelect,o
       const rect=input.getBoundingClientRect(),frameRect=frame.getBoundingClientRect(),stageRect=stage.getBoundingClientRect();
       const ratio=frame.offsetWidth?frameRect.width/frame.offsetWidth:1;
       const top=frameRect.top+rect.top*ratio-stageRect.top,bottom=top+rect.height*ratio;
-      if(top<24||bottom>stage.clientHeight-24){
+      if(stage.dataset.ncnZoomed==='true'&&(top<24||bottom>stage.clientHeight-24)){
         const target=Math.max(0,stage.scrollTop+top-(stage.clientHeight-rect.height*ratio)/2);
         stage.scrollTo?.({top:target,behavior:win.matchMedia?.('(prefers-reduced-motion:reduce)').matches?'instant':'smooth'});
       }

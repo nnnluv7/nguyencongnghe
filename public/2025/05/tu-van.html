@@ -111,6 +111,7 @@ if(typeof window!=='undefined'&&typeof document!=='undefined')installAppearance(
 <!-- NCN site.css: titles -->
 <!-- NCN site.css: responsive -->
 <link rel="stylesheet" href="/assets/ncn-theme/tool-pages.css?v=20261024-tools-2">
+<link rel="stylesheet" href="/assets/ncn-insurance/style.css?v=20261024-compact-1">
 </head>
 <body class="item item-view ncn-modern ncn-floating-ui ncn-liquid-glass ncn-refined-tool ncn-insurance-page ncn-mobile-insurance" id="mainContent">
 <aside id="ncn-announcement" aria-label="Thông báo từ Admin" hidden><span class="ncn-announcement-bell" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4M12 2V1"/></svg></span><div class="ncn-announcement-window"><span id="ncn-announcement-text"></span></div><button id="ncn-announcement-pause" type="button" aria-label="Tạm dừng thông báo" aria-pressed="false">Ⅱ</button></aside><script data-ncn-appearance-body>window.NCN_APPEARANCE?.refresh();</script>
@@ -178,7 +179,7 @@ if(typeof window!=='undefined'&&typeof document!=='undefined')installAppearance(
 </div>
 <table>
 <tr>
-<td class="label" style="background:#C9DBCA">Sản phẩm:</td>
+<td class="label" style="background:#C9DBCA"><label for="nhomhang">Sản phẩm:</label></td>
 <td class="input" style="position: relative;">
 <select id="nhomhang" onchange="updateTotal(this)" style="position: absolute;right: 0;top: 0;height: 100%;width: 100%;border: none;font-size: 14px;text-align: center;">
 <option value="1">Điện thoại</option>
@@ -224,17 +225,17 @@ if(typeof window!=='undefined'&&typeof document!=='undefined')installAppearance(
 </table>
 </div><div class="containerz ncn-glass-panel"><h3>Thông tin trả chậm</h3>
 <table>
-<tr><td class="label" colspan="2"><input placeholder="Tên sản phẩm" style="text-align: center;" type="text"/></td></tr>
+<tr><td class="label" colspan="2"><input aria-label="Tên sản phẩm" placeholder="Tên sản phẩm" style="text-align: center;" type="text"/></td></tr>
 <tr>
-<td class="label">Giá gốc:</td>
+<td class="label"><label for="giagoc">Giá gốc:</label></td>
 <td class="input"><input id="giagoc" inputmode="numeric" oninput="formatInput(this)" pattern="[0-9]*" placeholder="Nhập giá gốc" style="text-align: right;" type="text"/></td>
 </tr>
 <tr>
-<td class="label">Giá bán:</td>
+<td class="label"><label for="giaban">Giá bán:</label></td>
 <td class="input"><input id="giaban" inputmode="numeric" oninput="formatInput(this)" pattern="[0-9]*" placeholder="Nhập giá bán" style="text-align: right;" type="text"/></td>
 </tr>
 <tr>
-<td class="label">Ngân hàng:</td>
+<td class="label"><label for="phidongtien">Ngân hàng:</label></td>
 <td class="input" style="position: relative;">
 <select id="phidongtien" onchange="updateTotal(this)" style="position: absolute;right: 0;top: 0;height: 100%;width: 100%;border: none;font-size: 14px;text-align: center;">
 <option value="11000">Home Credit</option>
@@ -248,7 +249,7 @@ if(typeof window!=='undefined'&&typeof document!=='undefined')installAppearance(
 <td class="input" id="phithuho" style="background: #e1ebeb; text-align: right;">11.000</td>
 </tr>
 <tr>
-<td class="label">Trả trước:</td>
+<td class="label"><label for="tratruoc">Trả trước:</label></td>
 <td class="input" style="position: relative;"><div class="ncn-input-unit">
 <input id="tratruoc" inputmode="numeric" oninput="formatInput(this)" pattern="[0-9]*" style="width: 90px; text-align: right;" type="text" value="30"/>
 <select class="selectItem" id="kieutratruoc" onchange="updateTotal(this)" style="position: absolute;right: 0;top: 0;height: 100%;width: 50px;border: none;font-size: 14px;">
@@ -266,13 +267,13 @@ if(typeof window!=='undefined'&&typeof document!=='undefined')installAppearance(
 <td class="input" id="nolai" style="background: #e1ebeb; text-align: right;"></td>
 </tr>
 <tr>
-<td class="label">Lãi suất phẳng:</td>
+<td class="label"><label for="laisuat">Lãi suất phẳng:</label></td>
 <td class="input"><div class="ncn-input-unit">
 <input id="laisuat" oninput="updateTotal()" style="width: 100px; text-align: right;" type="text" value="0"/>%
       </div></td>
 </tr>
 <tr>
-<td class="label">Số kỳ góp:</td>
+<td class="label"><label for="goi">Số kỳ góp:</label></td>
 <td class="input" style="position: relative;"><div class="ncn-input-unit">
 <select class="selectItem" id="goi" onchange="updateTotal()" style="position: absolute; top: 0; left: 0; height: 100%; width: 50%; border: none; font-size: 16px;
     text-align: center;">

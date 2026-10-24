@@ -48,9 +48,8 @@ async function noOverflow(){
   assert.ok(size.document<=size.viewport+1,JSON.stringify(size));
 }
 async function shot(name){
-  const data=await page.screenshot({path:out+'/'+name+'.jpg',type:'jpeg',quality:55});
-  // Public fixture only; readable remotely when the editing environment is offline.
-  console.log('NCN_QA_IMAGE '+name+' '+data.toString('base64'));
+  await page.screenshot({path:out+'/'+name+'.jpg',type:'jpeg',quality:75});
+  console.log('Screenshot: '+name);
 }
 async function scrollChrome(){
   await page.evaluate(()=>{document.activeElement?.blur();scrollTo(0,0);});
@@ -63,7 +62,7 @@ async function scrollChrome(){
 }
 try{
   if(production){
-    const assets=['assets/ncn-theme/scroll-ui.js','assets/ncn-theme/announcements.js','assets/ncn-theme/announcements.css','assets/ncn-direct/style.css','assets/ncn-cash/style.css'];
+    const assets=['assets/ncn-theme/scroll-ui.js','assets/ncn-theme/announcements.js','assets/ncn-theme/announcements.css','assets/ncn-direct/style.css','assets/ncn-direct/workspace.js','assets/ncn-insurance/style.css','assets/ncn-cash/style.css'];
     const expected=await Promise.all(assets.map(path=>readFile('public/'+path,'utf8')));
     const deadline=Date.now()+120000;let ready=false;
     while(Date.now()<deadline&&!ready){
@@ -79,11 +78,18 @@ try{
   await fresh();
   await open('/sticker/?mau=ptg&co=1');
   await page.waitForSelector('.ncn-workspace-bar');
-  await check('desktop: one form scroll, stable preview and primary print action',async()=>{
+  await check('desktop: full paper and one compact control rail',async()=>{
     const rail=page.locator('.st-editor-grid>.ncn-workspace-fields');
-    assert.equal(await rail.evaluate(node=>getComputedStyle(node).position),'static');
-    assert.equal(await rail.evaluate(node=>getComputedStyle(node).overflowY),'visible');
+    assert.equal(await rail.evaluate(node=>getComputedStyle(node).position),'sticky');
+    assert.equal(await rail.evaluate(node=>getComputedStyle(node).overflowY),'auto');
+    assert.equal(await rail.locator('.ncn-workspace-bar .ncn-print-primary').count(),1);
+    assert.equal(await rail.locator('.ncn-workspace-switch').isVisible(),false);
+    assert.equal(await rail.locator('.ncn-print-fields').evaluate(node=>node.open),false);
+    assert.equal(await rail.locator('.ncn-print-help').evaluate(node=>node.open),true);
+    const stage=await page.locator('.ncn-direct-stage').evaluate(node=>({height:node.clientHeight,content:node.scrollHeight}));
+    assert.ok(stage.content<=stage.height+1,JSON.stringify(stage));
     assert.equal(await rail.locator('.ncn-print-settings').evaluate(node=>node.open),false);
+    await rail.locator('.ncn-print-fields>summary').click();
     const input=rail.locator('input[data-field-index="0"]').first();
     await input.fill('NCN KIEM TRA');
     await page.waitForTimeout(300);
@@ -95,6 +101,22 @@ try{
     assert.ok(rect.y>=0&&rect.y+rect.height<=900,JSON.stringify(rect));
     await noOverflow();
     await shot('print-desktop');
+  });
+  await check('pointer focus, iframe gestures and measurement resize cannot pin the header',async()=>{
+    await page.evaluate(()=>scrollTo(0,0));
+    await page.locator('#ncn-announcement-pause').click();
+    const paper=await page.locator('.ncn-direct-stage').boundingBox();
+    await page.mouse.move(paper.x+100,paper.y+100);
+    await page.mouse.wheel(0,160);
+    await page.waitForFunction(()=>document.body.classList.contains('ncn-chrome-hidden'));
+    await page.evaluate(()=>dispatchEvent(new Event('resize')));
+    await page.waitForTimeout(350);
+    assert.equal(await page.locator('body.ncn-chrome-hidden').count(),1);
+    await page.mouse.wheel(0,-60);
+    await page.waitForFunction(()=>!document.body.classList.contains('ncn-chrome-hidden'));
+    await page.mouse.wheel(0,100);
+    await page.waitForFunction(()=>document.body.classList.contains('ncn-chrome-hidden'));
+    await shot('scroll-down');
   });
   await check('keyboard navigation restores hidden header',async()=>{
     await page.evaluate(()=>{document.activeElement?.blur();scrollBy(0,160);});
@@ -110,6 +132,21 @@ try{
       await noOverflow();
     });
   }
+  await check('insurance: cash-sized form preserves all calculation and insurance choices',async()=>{
+    await open('/2025/05/tu-van.html');
+    const box=await page.locator('#ncn-insurance-app').boundingBox();
+    assert.ok(box.width<=480.5,JSON.stringify(box));
+    await page.locator('#giaban').fill('10000000');
+    await page.locator('#giagoc').fill('10000000');
+    assert.equal((await page.locator('#gopmoithang').textContent()).replace(/\D/g,''),'1178000');
+    for(const [id,group] of [['cb1','bhkv'],['cb2','bhrv'],['cb3','bhmr'],['cb4','bh11']]){
+      await page.locator('#'+id).check();
+      assert.equal(await page.locator('tr.'+group).first().isVisible(),true);
+      await page.locator('#'+id).uncheck();
+      assert.equal(await page.locator('tr.'+group).first().isVisible(),false);
+    }
+    await noOverflow();await shot('insurance-compact');
+  });
   await check('game keeps one aligned navigation control',async()=>{
     await open('/flappy-bird/');
     assert.equal(await page.locator('#ncn-game-menu').count(),1);
@@ -133,15 +170,61 @@ try{
     assert.ok(box.width<=480.5,JSON.stringify(box));assert.ok(table.width<=400.5,JSON.stringify(table));
     await noOverflow();await shot('cash-compact');
   });
+  await check('cash print preview keeps report values and a working close action',async()=>{
+    await page.locator('#cq-print').click();
+    const dialog=page.locator('dialog.ncn-print-dialog[open]');
+    await dialog.locator('.ncn-print-primary').waitFor({state:'visible'});
+    await page.waitForFunction(()=>!document.querySelector('dialog.ncn-print-dialog .ncn-print-primary').disabled);
+    assert.match(await dialog.locator('iframe').evaluate(frame=>frame.contentDocument.body.textContent),/1.000.000/);
+    await noOverflow();await shot('cash-print-preview');
+    await dialog.getByRole('button',{name:'← Quay lại chỉnh sửa'}).click();
+    assert.equal(await page.locator('dialog.ncn-print-dialog').count(),0);
+  });
   const legacy=JSON.parse(await readFile('docs/print-workspace-baseline.json','utf8')).legacy;
   for(const path of [...legacy,'2024/01/in-fifo.html']){
     await check('legacy workspace: '+path,async()=>{
       await open('/'+path);await page.waitForSelector('.ncn-workspace-bar');
       const bar=await page.locator('.ncn-workspace-bar').boundingBox();
-      assert.ok(bar.width>300,JSON.stringify(bar));
+      assert.ok(bar.width>=230,JSON.stringify(bar));
       const rail=page.locator('.ncn-workspace-fields');
-      assert.equal(await rail.evaluate(node=>getComputedStyle(node).overflowY),'visible');
+      assert.equal(await rail.evaluate(node=>getComputedStyle(node).overflowY),'auto');
+      assert.equal(await rail.locator('.ncn-workspace-bar .ncn-print-primary').count(),1);
+      const viewport=page.locator('.ncn-workspace-paper .ncn-print-stage,.ncn-workspace-paper .ncn-mobile-sheet-viewport');
+      const fit=await viewport.evaluate(node=>({height:node.clientHeight,content:node.scrollHeight}));
+      assert.ok(fit.content<=fit.height+1,JSON.stringify(fit));
       await noOverflow();
+      await page.emulateMedia({media:'print'});
+      assert.equal(await rail.isVisible(),false);
+      assert.equal(await page.locator('#printMe,.row-container').first().isVisible(),true);
+      if(path==='2022/07/phieu-tu-van-tra-gop.html')await page.pdf({path:out+'/legacy-print.pdf',format:'A4',preferCSSPageSize:true,printBackground:true});
+      await page.emulateMedia({media:'screen'});
+    });
+  }
+  // Render the exact four private dialog shells with synthetic paper only.
+  // No authenticated account or price API is involved in these fixtures.
+  for(const width of [1280,390])for(const group of ['ncn-event-private','ncn-gvgs-private'])for(const role of ['admin','vip']){
+    await check('private print shell: '+group+'/'+role+' '+width,async()=>{
+      await fresh(width,900);await page.goto(base+'/');
+      const source=await readFile('netlify/lib/'+group+'/'+role+'.html','utf8');
+      const dialog=source.match(/<dialog\b[\s\S]*?<\/dialog>/)[0];
+      const gvgs=group==='ncn-gvgs-private';
+      await page.setContent('<head><link rel="stylesheet" href="'+base+'/assets/ncn-event.css">'+(gvgs?'<link rel="stylesheet" href="'+base+'/assets/ncn-gvgs.css">':'')+'<link rel="stylesheet" href="'+base+'/assets/ncn-theme/site.css"><link rel="stylesheet" href="'+base+'/assets/ncn-direct/style.css"></head><body class="ncn-modern ncn-event-page'+(gvgs?' ncn-gvgs-page':'')+'"><div id="ncn-event-app">'+dialog+'</div></body>');
+      await page.evaluate(async()=>{
+        const dialog=document.querySelector('dialog'),frame=dialog.querySelector('iframe');
+        frame.srcdoc='<html><style>body{margin:0}.sheet{width:794px;height:1123px;background:white;color:black}</style><body><div class="sheet">NCN · Bản in kiểm tra</div></body></html>';
+        dialog.showModal();
+        const {installPrintWorkspaces}=await import('/assets/ncn-direct/workspace.js');installPrintWorkspaces();
+      });
+      await page.locator('.ncn-print-help').waitFor({state:'attached'});
+      assert.equal(await page.locator('#ev-print').isVisible(),true);
+      assert.equal(await page.locator('#ev-close').isVisible(),true);
+      const boxes=await page.locator('dialog').evaluate(node=>({dialog:node.getBoundingClientRect().toJSON(),rail:node.querySelector('aside').getBoundingClientRect().toJSON(),stage:node.querySelector('.ncn-print-stage').getBoundingClientRect().toJSON()}));
+      assert.ok(boxes.dialog.width<=width,JSON.stringify(boxes));
+      assert.ok(boxes.rail.right<=boxes.dialog.right+1,JSON.stringify(boxes));
+      if(width===1280)assert.ok(boxes.stage.right<=boxes.rail.left,JSON.stringify(boxes));
+      else assert.ok(boxes.rail.bottom<=boxes.stage.top+1,JSON.stringify(boxes));
+      await noOverflow();
+      if(group==='ncn-gvgs-private'&&role==='vip')await shot('vip-print-'+width);
     });
   }
   await fresh(390,844);
@@ -172,7 +255,7 @@ try{
       await noOverflow();
     });
   }
-  for(const path of ['/2024/01/in-fifo.html','/2022/07/phieu-tu-van-tra-gop.html','/2024/02/kiem-quy.html']){
+  for(const path of [...legacy.map(path=>'/'+path),'/2024/01/in-fifo.html','/2024/02/kiem-quy.html','/2025/05/tu-van.html']){
     await check('mobile compact form: '+path,async()=>{
       await open(path);
       const switcher=page.locator('.ncn-workspace-bar [data-ncn-pane=fields]');

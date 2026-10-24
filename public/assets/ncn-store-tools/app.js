@@ -1,6 +1,6 @@
 import {catalogueCard} from '../ncn-theme/cards.js?v=20261016-easy-2';
 import {defaultRow,normalize,escapeHTML,normalizeRows,validateForPrint,paginate,paperSize,renderDocument,parseCSV,sampleCSV,importTable} from './core.js?v=20261015-direct-1';
-import {createDirectEditor} from '../ncn-direct/editor.js?v=20261024-scroll-1';
+import {createDirectEditor} from '../ncn-direct/editor.js?v=20261024-compact-1';
 import {rowsForValidation} from '../ncn-direct/preview.js?v=20261015-direct-1';
 export function createStoreApp({app,data,doc=document,win=window,fetcher=fetch}) {
  const $=id=>doc.getElementById(id),section=app.dataset.section||'sales',models=data.models.filter(m=>m.section===section),groups=data.groups.filter(g=>models.some(m=>m.group===g.id));

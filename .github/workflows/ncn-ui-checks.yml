@@ -5,6 +5,7 @@ on:
       - 'public/assets/ncn-theme/**'
       - 'public/assets/ncn-direct/**'
       - 'public/assets/ncn-cash/**'
+      - 'public/assets/ncn-insurance/**'
       - 'tests/browser/**'
       - '.github/workflows/ncn-ui-checks.yml'
   push:
@@ -13,6 +14,7 @@ on:
       - 'public/assets/ncn-theme/**'
       - 'public/assets/ncn-direct/**'
       - 'public/assets/ncn-cash/**'
+      - 'public/assets/ncn-insurance/**'
       - 'tests/browser/**'
       - '.github/workflows/ncn-ui-checks.yml'
   workflow_dispatch:
@@ -31,7 +33,7 @@ jobs:
         run: npm install --no-save --package-lock=false playwright@1.56.1
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
-      - name: Check scrolling, editing and compact cash layouts
+      - name: Check print layouts, scrolling and compact calculators
         run: node tests/browser/ncn-scroll-ui.mjs
       - name: Verify deployed public pages
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
