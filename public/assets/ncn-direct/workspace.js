@@ -89,7 +89,7 @@ export function openPrintPreview(html,{title='Xem trước bản in',margin='Kh�
 export function installPrintWorkspaces({doc=document,win=window}={}){
   function enhance(){
     const fifo=doc.querySelector('.ncn-fifo-workbench');
-    if(fifo&&!fifo.dataset.ncnPrintReady){
+    if(fifo&&fifo.dataset.layout!=='classic'&&!fifo.dataset.ncnPrintReady){
       fifo.dataset.ncnPrintReady='true';
       const controls=doc.getElementById('ncn-fifo-preview-controls'),rail=fifo.querySelector('.ncn-print-sidebar');
       if(controls&&rail){controls.classList.add('ncn-print-zoom');}

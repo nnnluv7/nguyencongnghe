@@ -3,6 +3,10 @@ on:
   pull_request:
     paths:
       - 'public/assets/ncn-theme/**'
+      - 'public/assets/ncn-account.js'
+      - 'public/assets/ncn-*-auth.js'
+      - 'public/assets/ncn-vip-gate.js'
+      - 'public/assets/ncn-billing.js'
       - 'public/assets/ncn-direct/**'
       - 'public/assets/ncn-cash/**'
       - 'public/assets/ncn-insurance/**'
@@ -12,6 +16,10 @@ on:
     branches: [main]
     paths:
       - 'public/assets/ncn-theme/**'
+      - 'public/assets/ncn-account.js'
+      - 'public/assets/ncn-*-auth.js'
+      - 'public/assets/ncn-vip-gate.js'
+      - 'public/assets/ncn-billing.js'
       - 'public/assets/ncn-direct/**'
       - 'public/assets/ncn-cash/**'
       - 'public/assets/ncn-insurance/**'
@@ -35,6 +43,8 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Check print layouts, scrolling and compact calculators
         run: node tests/browser/ncn-scroll-ui.mjs
+      - name: Check shared accounts with isolated Identity and payment fixtures
+        run: node tests/browser/ncn-account.mjs
       - name: Verify deployed public pages
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:

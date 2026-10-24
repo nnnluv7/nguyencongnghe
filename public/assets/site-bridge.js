@@ -154,13 +154,8 @@
     const search = document.querySelector('.search-form .search-input');
     search?.addEventListener('keydown', event => { if(event.key==='Enter' && search.value.trim()) location.href='/search?q='+encodeURIComponent(search.value.trim()); });
 
-    window.switchModal = id => { window.openModal(id); setTimeout(()=>document.querySelector(`#modal-${id} input`)?.focus(),0); };
-    window.doForgot = () => {
-      const email = document.getElementById('forgot-email'), message = document.getElementById('forgot-msg');
-      message.style.display='block';
-      if (!email.value.trim() || !email.checkValidity()) { message.textContent='Anh/chị nhập email hợp lệ nhé.'; return; }
-      message.innerHTML=`Vui lòng <a href="/p/contact-us.html">liên hệ quản trị viên</a> để khôi phục tài khoản theo email đã đăng ký.`;
-    };
+    window.switchModal = id => window.openModal(id);
+    window.doForgot = () => window.openModal('recovery');
     window.CG = {selectPosts, cards, toast};
   }
   if ($) $(ready); else document.addEventListener('DOMContentLoaded', ready);

@@ -29,5 +29,8 @@ jobs:
           node --check public/assets/ncn-direct/editor.js
           node --check public/assets/ncn-direct/workspace.js
           node --check public/assets/ncn-cash/app.js
+          node --check public/assets/ncn-account.js
+          node --check public/assets/ncn-vip-gate.js
+          node --check public/assets/ncn-billing.js
       - name: Kiểm tra trang, công cụ và quyền xóa bảng giá
         run: node --test tests/*.test.cjs tests/*.test.mjs

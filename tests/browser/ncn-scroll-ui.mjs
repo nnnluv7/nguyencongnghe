@@ -62,7 +62,7 @@ async function scrollChrome(){
 }
 try{
   if(production){
-    const assets=['assets/ncn-theme/scroll-ui.js','assets/ncn-theme/announcements.js','assets/ncn-theme/announcements.css','assets/ncn-direct/style.css','assets/ncn-direct/workspace.js','assets/ncn-insurance/style.css','assets/ncn-cash/style.css'];
+    const assets=['assets/ncn-account.js','assets/ncn-vip-gate.js','assets/ncn-vip-auth.js','assets/ncn-gvgs-auth.js','assets/ncn-billing.js','assets/ncn-theme/theme.js','assets/ncn-theme/site.css','assets/ncn-theme/tool-pages.css','assets/ncn-theme/scroll-ui.js','assets/ncn-theme/announcements.js','assets/ncn-theme/announcements.css','assets/ncn-direct/style.css','assets/ncn-direct/workspace.js','assets/ncn-insurance/style.css','assets/ncn-cash/style.css'];
     const expected=await Promise.all(assets.map(path=>readFile('public/'+path,'utf8')));
     const deadline=Date.now()+120000;let ready=false;
     while(Date.now()<deadline&&!ready){
@@ -205,7 +205,7 @@ try{
     assert.equal(await page.locator('dialog.ncn-print-dialog').count(),0);
   });
   const legacy=JSON.parse(await readFile('docs/print-workspace-baseline.json','utf8')).legacy;
-  for(const path of [...legacy,'2024/01/in-fifo.html']){
+  for(const path of legacy){
     await check('legacy workspace: '+path,async()=>{
       await open('/'+path);await page.waitForSelector('.ncn-workspace-bar');
       const bar=await page.locator('.ncn-workspace-bar').boundingBox();
@@ -228,6 +228,35 @@ try{
       await page.emulateMedia({media:'screen'});
     });
   }
+  for(const width of [1280,390])await check('FIFO classic entry and glass preview '+width,async()=>{
+    await fresh(width,900);await open('/2024/01/in-fifo.html');
+    await page.waitForFunction(()=>document.querySelector('.ncn-mobile-sheet-frame').style.getPropertyValue('--ncn-fit-scale'));
+    assert.equal(await page.locator('.ncn-workspace-bar').count(),0);
+    const table=await page.locator('.ncn-fifo-input').boundingBox(),paper=await page.locator('.ncn-fifo-paper').boundingBox();
+    assert.ok(table.y+table.height<paper.y,JSON.stringify({table,paper}));
+    if(width===1280){
+      const fit=await page.locator('.ncn-mobile-table-scroll').evaluate(n=>({width:n.clientWidth,content:n.scrollWidth}));
+      assert.ok(fit.content<=fit.width+1,JSON.stringify(fit));
+      for(let n=1;n<=7;n++)assert.equal(await page.locator('#ff'+n).isVisible(),true);
+    }
+    await page.locator('#ff1').fill('24/10');await page.locator('#ver1').fill('256GB');await page.locator('#sl1').fill('48');
+    assert.match(await page.locator('#printMe textarea').first().inputValue(),/24\/10/);
+    assert.match(await page.locator('#printMe textarea').last().inputValue(),/256GB/i);
+    const bounds=await page.locator('#printMe').evaluate(sheet=>{
+      const s=sheet.getBoundingClientRect();return [...sheet.querySelectorAll('textarea')].map(el=>{const r=el.getBoundingClientRect();return r.left>=s.left-.5&&r.top>=s.top-.5&&r.right<=s.right+.5&&r.bottom<=s.bottom+.5;});
+    });
+    assert.equal(bounds.length,48);assert.ok(bounds.every(Boolean),JSON.stringify(bounds));
+    assert.equal(await page.locator('#printMe textarea').first().evaluate(n=>getComputedStyle(n).fontSize),'10px');
+    assert.equal(await page.locator('#printMe').evaluate(n=>getComputedStyle(n).backgroundColor),'rgba(0, 0, 0, 0)');
+    await noOverflow();await shot('fifo-classic-'+width);await page.locator('.ncn-fifo-paper').screenshot({path:out+'/fifo-paper-'+width+'.png'});
+    await page.emulateMedia({media:'print'});
+    assert.equal(await page.locator('.ncn-fifo-classic-controls').isVisible(),false);
+    assert.equal(await page.locator('#printMe textarea:visible').count(),48);
+    const original=await page.locator('#printMe').evaluate(n=>({width:getComputedStyle(n).width,height:getComputedStyle(n).height,transform:getComputedStyle(n).transform}));
+    assert.deepEqual(original,{width:'775px',height:'560px',transform:'none'});
+    if(width===1280)await page.pdf({path:out+'/fifo-print.pdf',format:'A4',preferCSSPageSize:true,printBackground:true});
+    await page.emulateMedia({media:'screen'});
+  });
   // Render the exact four private dialog shells with synthetic paper only.
   // No authenticated account or price API is involved in these fixtures.
   for(const width of [1280,390])for(const group of ['ncn-event-private','ncn-gvgs-private'])for(const role of ['admin','vip']){

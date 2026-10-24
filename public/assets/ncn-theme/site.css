@@ -983,3 +983,36 @@ body.ncn-modern .st-card-sizes button:focus-visible{outline: 3px solid #2563b8; 
   html[data-ncn-theme="dark"] body.ncn-modern #ncn-event-app .ev-danger {color:#ffbacb}
 }
 @media print {html[data-ncn-theme]{color-scheme:light;background:#fff;color:#000}}
+
+@media screen {
+.ncn-account-dialog{position:fixed;inset:0;width:min(440px,calc(100% - 28px));max-height:calc(100dvh - 40px);margin:auto;padding:24px;overflow:auto;box-sizing:border-box;border:1px solid var(--ncn-rim,#ddd);border-radius:26px;background:var(--ncn-glass-strong,#fff);color:var(--ncn-ink,#182231);box-shadow:0 24px 80px #0003;backdrop-filter:blur(28px) saturate(150%);font:14px/1.55 var(--body-font,Arial,sans-serif);text-align:left}
+.ncn-account-dialog::backdrop{background:#13233770;backdrop-filter:blur(7px)}
+.ncn-account-dialog [hidden]{display:none!important}
+.ncn-account-dialog header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.ncn-account-dialog h2{margin:4px 0;font-size:24px;line-height:1.25;color:inherit}
+.ncn-account-dialog small{font-size:10px;letter-spacing:1px;color:var(--ncn-muted,#567)}
+.ncn-account-dialog button{position:static;min-height:42px;padding:10px 14px;border:1px solid var(--ncn-rim,#ddd);border-radius:13px;background:var(--ncn-glass-soft,#f6f8fb);color:inherit;font:650 13px var(--body-font,Arial,sans-serif);cursor:pointer}
+.ncn-account-dialog button:disabled{opacity:.6;cursor:wait}
+.ncn-account-dialog [data-account-close]{font-size:23px;padding:0;min-width:42px}
+.ncn-account-intro{margin:12px 0;color:var(--ncn-muted,#567)}
+.ncn-account-tabs{display:flex;gap:8px;margin:16px 0}
+.ncn-account-tabs button{flex:1}
+.ncn-account-tabs [aria-pressed=true]{color:var(--ncn-accent,#165ac4);border-color:currentColor}
+.ncn-account-dialog form{display:grid;gap:13px}
+.ncn-account-dialog label{display:grid;gap:5px;font-size:12px;font-weight:650}
+.ncn-account-dialog input{position:static;box-sizing:border-box;width:100%;height:45px;padding:10px 12px;border:1px solid var(--ncn-rim,#ddd);border-radius:12px;background:var(--ncn-glass-soft,#fff);color:inherit;font:16px var(--body-font,Arial,sans-serif);text-align:left}
+.ncn-account-dialog .ncn-account-primary{background:var(--ncn-accent,#165ac4);color:white;border-color:transparent}
+.ncn-account-dialog .ncn-account-link{border:0;background:transparent;color:var(--ncn-accent,#165ac4)}
+#ncn-account-message{padding:12px;border-radius:12px;background:var(--ncn-glass-soft,#f1f5fb);overflow-wrap:anywhere}
+#ncn-account-message.ncn-account-error{color:#bd2336}
+.ncn-account-dialog footer{display:grid;gap:5px;margin-top:20px;padding-top:15px;border-top:1px solid var(--ncn-rim,#ddd);font-size:12px}
+.ncn-account-dialog footer a{color:var(--ncn-accent,#165ac4);font-weight:700}
+.ncn-account-dialog footer span,.ncn-account-legacy{color:var(--ncn-muted,#567);font-size:12px}
+.ncn-account-legacy summary{cursor:pointer}
+.ncn-account-info{flex-basis:100%;display:grid;gap:5px;overflow-wrap:anywhere;white-space:normal;margin-bottom:12px;color:var(--ncn-ink,#182231);font-size:13px}
+.ncn-account-info small{font-size:11px;color:var(--ncn-muted,#567)}
+.ncn-account-badge{justify-self:start;border:1px solid var(--ncn-rim,#ddd);border-radius:8px;padding:3px 7px;font-size:10px;font-weight:700}
+.ncn-account-dialog :is(button,input,a,summary):focus-visible{outline:2px solid var(--ncn-accent,#165ac4);outline-offset:3px}
+@media(max-width:520px){.ncn-account-dialog{padding:20px}}
+}
+@media print{.ncn-account-dialog{display:none!important}}

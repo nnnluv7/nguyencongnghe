@@ -3,6 +3,9 @@
 /* MODULE 4: CORE ENGINE (ĐÃ CẬP NHẬT FIX LỖI HISTORY) */
 let config, quizData=[], userAnswers=[], currentQ=0, timer, timeLeft, studentInfo={}, deadlineTime, quizStartTime;
 const Sys = window.QuizSystem;
+let standaloneHistory=false;
+const quizEscape = value => String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+document.addEventListener('ncn-account-change',()=>{if(Sys.root?.querySelector('.qz-welcome'))renderWelcome();else if(standaloneHistory)appShowHistory(true);});
 
 // 1. Init
 window.initQuizModule = function(cfg, containerId) {
@@ -13,7 +16,7 @@ window.initQuizModule = function(cfg, containerId) {
 
 function renderWelcome() {
     let u = Sys.user;
-    let nameHtml = u ? `<div style="font-size:1.2em;margin:20px;color:var(--qz-primary)">Xin chào, <b>${u.username}</b>!</div>` : `<div style="margin:20px;color:#e74c3c;font-weight:bold">Bạn chưa đăng nhập!</div>`;
+    let nameHtml = u ? `<div style="font-size:1.2em;margin:20px;color:var(--qz-primary)">Xin chào, <b>${quizEscape(u.username)}</b>!</div>` : `<div style="margin:20px;color:#e74c3c;font-weight:bold">Bạn chưa đăng nhập!</div>`;
     let btnTxt = u ? "🚀 Bắt đầu làm bài" : "🚀 Bắt đầu (Thí sinh tự do)";
     Sys.root.innerHTML = `
       <div class="qz-screen active qz-welcome">
@@ -119,7 +122,7 @@ async function finishQuiz() {
     let score = 0; quizData.forEach((q,i) => { let h = window.QuizTypes[q.type]; if(h && h.check(q, userAnswers[i])) score++; });
     let dStr = `${Math.floor(dur/60000)} phút ${Math.floor((dur%60000)/1000)} giây`;
     let rev = config.allowReview==="yes" ? `<button class="qz-btn" onclick="appReview()">Xem đáp án</button>` : '';
-    Sys.root.innerHTML = `<div class="qz-screen active" style="text-align:center"><h2 style="color:var(--qz-primary)">KẾT QUẢ</h2><p>Học sinh: <b>${studentInfo.name}</b></p><div class="qz-score-box">${score}/${quizData.length}</div><p>Thời gian: ${dStr}</p><p id="save-msg" style="color:orange">Đang lưu...</p><div class="qz-footer" style="justify-content:center;gap:10px">${rev}<button class="qz-btn qz-btn-outline" onclick="location.reload()">Làm lại</button></div></div>`;
+    Sys.root.innerHTML = `<div class="qz-screen active" style="text-align:center"><h2 style="color:var(--qz-primary)">KẾT QUẢ</h2><p>Học sinh: <b>${quizEscape(studentInfo.name)}</b></p><div class="qz-score-box">${score}/${quizData.length}</div><p>Thời gian: ${dStr}</p><p id="save-msg" style="color:orange">Đang lưu...</p><div class="qz-footer" style="justify-content:center;gap:10px">${rev}<button class="qz-btn qz-btn-outline" onclick="location.reload()">Làm lại</button></div></div>`;
     try { const saved = await Sys.callApi({ action:'save_score', name:studentInfo.name, email:studentInfo.id, quizName:document.title, score:`${score}/${quizData.length}`, detail:new Date().toLocaleString(), duration:dStr }); if (saved.status !== "success") throw new Error(saved.msg || "Lỗi lưu kết quả"); document.getElementById('save-msg').innerText="✅ Đã lưu kết quả!"; document.getElementById('save-msg').style.color="green"; } catch(e){ document.getElementById('save-msg').innerText="⚠️ Lỗi lưu"; }
 }
 function startTimer() { timer = setInterval(() => { let left = deadlineTime - new Date().getTime(); if(left<=0) { left=0; finishQuiz(); } let m=Math.floor(left/60000), s=Math.floor((left%60000)/1000); document.getElementById('qz-time').innerText = `${m<10?'0'+m:m}:${s<10?'0'+s:s}`; }, 500); }
@@ -217,11 +220,12 @@ window.appShowHistory = function(isAlone) {
 
 // HÀM CẦU NỐI MỚI (MÀY CẦN HÀM NÀY ĐỂ TRANG LỊCH SỬ HTML CHẠY ĐƯỢC)
 window.initHistoryPage = function(divId) {
+    standaloneHistory=true;
     // 1. Tìm cái div chứa lịch sử
     Sys.root = document.getElementById(divId);
     if(!Sys.root) return console.error("Không tìm thấy div: " + divId);
     
     // 2. Gọi hàm hiển thị lịch sử (chế độ độc lập = true)
-    appShowHistory(true);
+    import('/assets/ncn-account.js?v=20261024-account-1').then(m=>m.getAccount().ready).then(()=>appShowHistory(true));
 };
 //]]>

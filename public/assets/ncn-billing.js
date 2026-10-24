@@ -1,11 +1,12 @@
 import * as identityClient from './ncn-identity-client.js';
+import {getAccount} from './ncn-account.js?v=20261024-account-1';
 
 const ENDPOINT='/.netlify/functions/ncn-billing';
 const money=value=>Number(value).toLocaleString('vi-VN')+'đ';
 const date=value=>value?new Date(value).toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh'}):'Chưa có';
 const labels={pending:'Chờ thanh toán',paid:'Đã thanh toán',expired:'Đã hết hạn',review:'Cần đối chiếu',received:'Đã nhận',processing:'Đang xử lý',applied:'Đã cấp VIP'};
 
-export function mountBilling({doc=document,identity=identityClient,fetcher=fetch,clock=Date.now,timers=globalThis,storage=globalThis.localStorage}={}){
+export function mountBilling({doc=document,identity=identityClient,fetcher=fetch,clock=Date.now,timers=globalThis,storage=globalThis.localStorage,account=getAccount(doc)}={}){
   const win=doc.defaultView||globalThis,$=id=>doc.getElementById(id);
   const state={user:null,ready:false,order:null,offset:0,busy:false,checking:false,epoch:0,transactions:[],members:[],nextTransaction:null,nextMember:null,reconcile:null,disposed:false};
   const listeners=[];
@@ -26,7 +27,6 @@ export function mountBilling({doc=document,identity=identityClient,fetcher=fetch
     }catch(e){if(e.name==='AbortError')throw new Error('Kết nối chậm. Vui lòng kiểm tra lại trạng thái, không chuyển tiền thêm.');throw e;}
     finally{timers.clearTimeout(timeout);}
   }
-  function switchForm(name){doc.querySelectorAll('[data-pay-form]').forEach(f=>f.hidden=f.dataset.payForm!==name);doc.querySelectorAll('[data-pay-switch]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.paySwitch===name)));}
   function updateButtons(){
     const unlimited=state.user&&(state.user.admin||state.user.vipSource==='manual');
     doc.querySelectorAll('[data-pay-plan]').forEach(b=>{b.disabled=!state.ready||state.busy||!!unlimited||!!state.user?.paidVipBlocked;});
@@ -39,7 +39,6 @@ export function mountBilling({doc=document,identity=identityClient,fetcher=fetch
     $('pay-auth').hidden=!!user;$('pay-logout').hidden=!user;$('pay-history-panel').hidden=!user;$('pay-admin').hidden=!user?.admin;
     $('pay-open-event').hidden=!(user?.vip||user?.admin);$('pay-open-gvgs').hidden=!(user?.vip||user?.admin);
     $('pay-entitlement').textContent=!user?'Quyền VIP được gắn với email đã xác nhận.':user.admin?'ADMIN · Toàn quyền quản lý':user.vipSource==='manual'?'VIP được ADMIN cấp · Không giới hạn thời gian':user.paidVipBlocked?'VIP thanh toán đang bị tạm khóa. Vui lòng liên hệ ADMIN.':user.vip?'VIP đang hoạt động · Hết hạn '+date(user.vipExpiresAt):user.vipExpiresAt?'Gói VIP đã hết hạn '+date(user.vipExpiresAt):'Chưa có VIP · Chọn gói bên dưới để bắt đầu.';
-    const host=$('auth-header-desktop');if(host)host.replaceChildren(text('span',user?user.email:'Tài khoản NCN'));
     updateButtons();
   }
   function safeStore(key,value){try{if(value===null)storage?.removeItem(key);else storage?.setItem(key,value);}catch{}}
@@ -90,14 +89,15 @@ export function mountBilling({doc=document,identity=identityClient,fetcher=fetch
     try{
       await identity.ensureSession();const result=await api('order',null,{id});if(epoch!==state.epoch||state.order?.id!==id)return;
       const old=state.order.status;state.user=result.user;renderUser();renderOrder(result.order);
-      if(old!==result.order.status)await history();
+      if(old!==result.order.status){await history();if(result.order.status==='paid')account.refresh().catch(()=>{});}
       if(manual)say(result.order.status==='paid'?'VIP đã được kích hoạt.':result.order.status==='review'?'Giao dịch đang chờ ADMIN đối chiếu.':'Đã kiểm tra. '+$('pay-order-note').textContent);
     }catch(e){if(e.status===401){state.epoch++;state.user=null;renderUser();renderOrder(null);say('Phiên đăng nhập đã hết hạn. Đăng nhập lại để kiểm tra đơn.',true);}else if(e.status===404){rememberOrder(null);renderOrder(null);if(manual)say(e.message,true);}else if(manual)say(e.message,true);}
     finally{state.checking=false;}
   }
   async function choose(plan){
-    if(!state.user){switchForm('login');$('pay-auth').scrollIntoView?.({behavior:'smooth'});$('pay-login').elements.email.focus();say('Đăng nhập hoặc tạo tài khoản và xác nhận email trước khi chọn gói.');return;}
-    state.busy=true;updateButtons();try{await identity.ensureSession();const result=await api('create-order',{planId:plan,idempotencyKey:nonce(plan)});renderOrder(result.order,{focus:true});say('Đã tạo mã thanh toán. Kiểm tra người nhận và số tiền trước khi chuyển.');await history();}finally{state.busy=false;updateButtons();}
+    if(!state.user){account.open('login');say('Dùng tài khoản website để đăng nhập hoặc đăng ký trước khi chọn gói.');return;}
+    const epoch=state.epoch;
+    state.busy=true;updateButtons();try{await identity.ensureSession();if(epoch!==state.epoch||!state.user)return;const result=await api('create-order',{planId:plan,idempotencyKey:nonce(plan)});if(epoch!==state.epoch)return;renderOrder(result.order,{focus:true});say('Đã tạo mã thanh toán. Kiểm tra người nhận và số tiền trước khi chuyển.');await history();}finally{state.busy=false;updateButtons();}
   }
   function table(headers,rows){const table=doc.createElement('table'),head=doc.createElement('thead'),tr=doc.createElement('tr');headers.forEach(h=>tr.append(text('th',h)));head.append(tr);table.append(head);const body=doc.createElement('tbody');rows.forEach(cells=>{const row=doc.createElement('tr');cells.forEach(value=>{const td=doc.createElement('td');if(typeof value==='string')td.textContent=value;else td.append(value);row.append(td);});body.append(row);});table.append(body);return table;}
   function renderAdmin(){
@@ -120,16 +120,17 @@ export function mountBilling({doc=document,identity=identityClient,fetcher=fetch
     renderAdmin();
   }
   function clearPreview(){state.reconcile=null;$('pay-reconcile-preview').hidden=true;$('pay-reconcile-apply').hidden=true;}
-  async function signedIn(){state.epoch++;await refreshUser();if(state.user){await history();if(state.user.admin)await loadAdmin();const id=readStore('ncn:pay:last-order');if(/^NCN[A-F0-9]{20}$/.test(id||'')){state.order={id,status:'pending'};await checkOrder();}}}
-  doc.querySelectorAll('[data-pay-switch]').forEach(b=>listen(b,'click',()=>{say('');switchForm(b.dataset.paySwitch);}));
+  async function signedIn(){const epoch=++state.epoch;await refreshUser();if(epoch!==state.epoch||!state.user)return;await history();if(epoch!==state.epoch)return;if(state.user.admin)await loadAdmin();if(epoch!==state.epoch)return;const id=readStore('ncn:pay:last-order');if(/^NCN[A-F0-9]{20}$/.test(id||'')){state.order={id,status:'pending'};await checkOrder();}}
   doc.querySelectorAll('[data-pay-plan]').forEach(b=>listen(b,'click',()=>run(()=>choose(b.dataset.payPlan))));
-  let redirect;
-  function form(name,action){listen($('pay-'+name),'submit',event=>{event.preventDefault();run(()=>action(event.currentTarget),event.currentTarget.querySelector('[type="submit"]'));});}
-  form('login',async f=>{await identity.signIn(f.elements.email.value.trim(),f.elements.password.value);f.elements.password.value='';await signedIn();say(state.user?'Đăng nhập thành công.':'Vui lòng xác nhận email tài khoản trước khi thanh toán.',!state.user);});
-  form('register',async f=>{if(f.elements.password.value!==f.elements.repeat.value)throw new Error('Hai mật khẩu chưa khớp.');await identity.signUp(f.elements.email.value.trim(),f.elements.password.value,{full_name:f.elements.name.value.trim()});f.reset();switchForm('login');say('Đã tạo tài khoản. Mở email xác nhận, sau đó đăng nhập để mua VIP.');});
-  form('recovery',async f=>{await identity.sendRecovery(f.elements.email.value.trim());say('Nếu email đã đăng ký, bạn sẽ nhận được thư đặt lại mật khẩu.');});
-  form('reset',async f=>{if(f.elements.password.value!==f.elements.repeat.value)throw new Error('Hai mật khẩu chưa khớp.');if(redirect?.type==='invite')await identity.acceptInvite(redirect.token,f.elements.password.value);else await identity.updateUser({password:f.elements.password.value});f.reset();switchForm('login');say('Đã cập nhật mật khẩu.');await signedIn();});
-  listen($('pay-logout'),'click',()=>run(async()=>{await identity.signOut();state.epoch++;state.user=null;state.transactions=[];state.members=[];clearPreview();renderOrder(null);renderUser();say('Đã đăng xuất.');}));
+  listen($('pay-logout'),'click',()=>run(async()=>{await account.signOut();say('Đã đăng xuất tài khoản website.');}));
+  let started=false;
+  listen(doc,'ncn-account-change',event=>{
+    if(!started)return;
+    const user=event.detail.user;
+    if(user?.id===state.user?.id){state.user=user;renderUser();return;}
+    state.epoch++;state.user=null;renderUser();
+    if(user)run(signedIn);
+  });
   listen($('pay-check'),'click',()=>run(()=>checkOrder(true),$('pay-check')));
   listen($('pay-new'),'click',()=>{renderOrder(null);$('pay-plan-title').scrollIntoView?.({behavior:'smooth'});});
   listen($('pay-history-refresh'),'click',()=>run(history,$('pay-history-refresh')));
@@ -158,8 +159,7 @@ export function mountBilling({doc=document,identity=identityClient,fetcher=fetch
     try{const plans=await api('plans');
       if(plans.plans?.find(p=>p.id==='vip30')?.amount!==30000||plans.plans?.find(p=>p.id==='vip60')?.amount!==55000)throw new Error('Gói VIP đã thay đổi. Tải lại trang để xem giá mới.');
       state.ready=plans.ready;updateButtons();
-      redirect=await identity.consumeRedirect();const settings=await identity.getSettings();doc.querySelector('[data-pay-switch="register"]').hidden=!!settings.disableSignup;
-      if(['recovery','invite'].includes(redirect?.type)||new URL(win.location.href).searchParams.has('reset')){switchForm('reset');say('Nhập mật khẩu mới cho tài khoản.');return;}
+      await account.ready;started=true;
       await signedIn();
     }catch(e){updateButtons();say(e.name==='MissingIdentityError'?'ADMIN cần bật Netlify Identity trước khi đăng nhập.':e.message,true);}
   }
