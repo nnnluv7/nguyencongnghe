@@ -17,6 +17,9 @@ const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=u
 const server=createServer(async(req,res)=>{
   try{
     const url=new URL(req.url,'http://localhost');
+    if(url.pathname==='/.netlify/identity/settings'){
+      res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify({autoconfirm:false,disable_signup:false,external:{email:true}}));return;
+    }
     if(url.pathname.startsWith('/.netlify/functions/')){
       res.writeHead(200,{'Content-Type':'application/json'});
       res.end(JSON.stringify(url.pathname.endsWith('ncn-announcements')?{items:[{id:'qa',text:'NCN · Thư viện bài viết và hướng dẫn'}]}:{total:123,online:1}));return;
