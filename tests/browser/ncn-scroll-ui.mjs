@@ -40,8 +40,19 @@ async function fresh(width=1280,height=900){
   return page;
 }
 async function open(path){
+  // The public ticker is fetched after the shell mounts. Select a model only
+  // after its final presence and font metrics have reached the chrome layout.
+  const notice=page.waitForResponse(response=>{
+    const url=new URL(response.url());
+    return url.pathname==='/.netlify/functions/ncn-announcements'&&url.searchParams.get('route')==='list';
+  });
   await page.goto(base+path,{waitUntil:'domcontentloaded'});
   await page.waitForSelector('body.ncn-scroll-ready');
+  const response=await notice;await response.finished();
+  assert.ok(response.ok(),'Public announcement feed must load before editor alignment checks');
+  const payload=await response.json(),hasNotice=(payload.items||[]).some(item=>typeof item.text==='string'&&item.text);
+  await page.waitForFunction(visible=>document.body.classList.contains('ncn-has-announcements')===visible,hasNotice);
+  await page.evaluate(async()=>{await document.fonts.ready;await new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done)));});
 }
 async function noOverflow(){
   const size=await page.evaluate(()=>({document:document.documentElement.scrollWidth,viewport:innerWidth}));
