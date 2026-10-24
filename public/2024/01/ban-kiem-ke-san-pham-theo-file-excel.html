@@ -112,8 +112,9 @@ if(typeof window!=='undefined'&&typeof document!=='undefined')installAppearance(
 <script src="/assets/site-config.js"></script><script src="/assets/catalog.js"></script><script src="/assets/js/1cc87d3c87abd588bf.js"></script><script src="/assets/vendor/8ec8dce35a344a43af.js" type="text/javascript"></script><script src="/assets/site-bridge.js"></script><!-- NCN site.css: base -->
 <!-- NCN site.css: titles -->
 <!-- NCN site.css: responsive -->
+<link rel="stylesheet" href="/assets/ncn-theme/tool-pages.css?v=20261024-tools-2">
 </head>
-<body class="item item-view ncn-modern ncn-floating-ui ncn-liquid-glass" id="mainContent">
+<body class="item item-view ncn-modern ncn-floating-ui ncn-liquid-glass ncn-refined-tool ncn-inventory-page" id="mainContent">
 <aside id="ncn-announcement" aria-label="Thông báo từ Admin" hidden><span class="ncn-announcement-bell" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4M12 2V1"/></svg></span><div class="ncn-announcement-window"><span id="ncn-announcement-text"></span></div><button id="ncn-announcement-pause" type="button" aria-label="Tạm dừng thông báo" aria-pressed="false">Ⅱ</button></aside><script data-ncn-appearance-body>window.NCN_APPEARANCE?.refresh();</script>
 <!-- BEGIN NCN MODERN SHELL -->
 <a class="ncn-skip" href="#feed-view">Bỏ qua menu, đến nội dung</a>
@@ -153,7 +154,7 @@ if(typeof window!=='undefined'&&typeof document!=='undefined')installAppearance(
 <article class="hentry item-post" itemscope="itemscope" itemtype="https://schema.org/CreativeWork">
 <div class="post-inner-area">
 
-<h1 class="entry-title can-giua" id="print-button">Bắn kiểm kê sản phẩm theo file Excel</h1>
+
 
 <div class="product-header hide">
 <div class="col-left">
@@ -172,66 +173,10 @@ Bắn kiểm kê sản phẩm theo file Excel
 </div>
 </div>
 </div>
-<div class="post-body entry-content" id="postBody">
-<div class="top-ads"></div>
-<div class="hide" style="clear: both;"><a href="/assets/vendor/710ed4e092216fac28.jpg" style="display: block; padding: 1em 0; text-align: center; "><img alt="Bắn kiểm kê sản phẩm theo file Excel" border="0" data-original-height="1024" data-original-width="1024" src="/assets/vendor/710ed4e092216fac28.jpg"/></a></div>
-
-<table border="1" id="tbl_exporttable_to_xls">
-<thead>
-<th>masanpham</th>
-<th>tensanpham</th>
-<th>soluong</th>
-</thead>
-</table>
-<div class="chuyengia-row">
-<div class="khungtrai">
-<p class="nhaplieu"><b>Nhập liệu</b></p>
-<input accept=".xls,.xlsx" id="input" type="file"/><br/>
-<div class="chuyengia-row">
-<button class="chuyengia-btn" onclick="ExportToExcel('xlsx')">Xuất file mẫu</button>
-<button class="chuyengia-btn" id="start" onclick="startkk()">Bắt đầu</button>
-</div>
-</div>
-<div class="khungphai">
-<p class="huongdankk"><b>**Hướng dẫn:</b></p>
-<p>- Xuất file và nhập thông tin cần kiểm kê theo mẫu</p>
-<p style="color:red;">- Lưu ý quan trọng: Nếu gặp lỗi không thể tạo được mã QR, các bạn định dạng lại cột masanpham trong file mẫu sang dạng text, sau đó copy và dán lại mã sản phẩm vào cột này (Chọn dạng dán là <b>Paste as Value</b> nhé!)</p>
-<p>- Chọn file mẫu vừa nhập thông tin sau đó ấn nút "Bắt đầu".</p>
-<p>- Ấn nút "Sau" để tạo mã QRcode cho sản phẩm tiếp theo.</p>
-<p>- Ấn nút "Trước" để tạo mã QRcode cho sản phẩm trước.</p>
-</div>
-</div>
-<div class="chuyengia-row-full">
-<div class="khungtrai">
-<div id="qrcode"></div>
-<div id="masanpham"></div>
-</div>
-<div class="khungphai">
-<div class="chuyengia-row">
-<button class="chuyengia-btn" id="previous" onclick="prevkk()">&lt;Trước</button>
-<button class="chuyengia-btn" id="next" onclick="nextkk()">Sau&gt;</button>
-</div>
-<div class="chuyengia-row">
-<div class="chuyengia-col-2" id="current"></div>
-<div class="chuyengia-col-2" id="total"></div>
-</div>
-<div id="tensanpham"></div>
-<div id="soluong"></div>
-</div>
-</div>
-<script src="/assets/inventory.js"></script>
-</div>
+<div class="post-body entry-content" id="postBody"><section id="ncn-inventory-app" class="ncn-tool-page"><header class="ncn-tool-heading"><div><span class="ncn-tool-eyebrow">CÔNG CỤ · NCN</span><h2>Kiểm kê bằng QR</h2><p>Chọn file Excel, mở từng sản phẩm và quét mã để kiểm kê.</p></div></header><table id="tbl_exporttable_to_xls" hidden><thead><tr><th>masanpham</th><th>tensanpham</th><th>soluong</th></tr></thead></table><div class="ncn-inventory-source"><section class="ncn-glass-panel"><h3>Nhập danh sách sản phẩm</h3><label for="input" class="ncn-sr-only">Chọn file Excel kiểm kê</label><input id="input" type="file" accept=".xls,.xlsx"><div class="ncn-tool-actions"><button type="button" onclick="ExportToExcel('xlsx')">Tải file mẫu</button><button type="button" id="start" class="ncn-tool-primary" onclick="startkk()">Bắt đầu kiểm kê</button></div></section><section class="ncn-glass-panel"><details class="ncn-tool-help"><summary>Cách chuẩn bị file Excel</summary><p>Nhập dữ liệu theo ba cột: <strong>masanpham, tensanpham, soluong</strong>.</p><p>Định dạng cột <strong>masanpham</strong> thành Text, sau đó dán mã bằng <strong>Paste as Value</strong> để giữ số 0 ở đầu mã.</p><p>Chọn file rồi bấm Bắt đầu kiểm kê. Dùng Trước / Sau hoặc phím ← / → để chuyển sản phẩm.</p></details><p class="ncn-tool-note">Mã QR và số lượng lấy từ file anh chọn. Dữ liệu được xử lý trên trình duyệt.</p></section></div><section class="ncn-glass-panel ncn-inventory-result"><div><div id="qrcode"></div><div id="masanpham" aria-label="Mã sản phẩm"></div></div><div><h3>Sản phẩm đang kiểm kê</h3><div id="tensanpham" aria-label="Tên sản phẩm"></div><div id="soluong" aria-label="Số lượng"></div><div class="ncn-inventory-progress">Sản phẩm <span id="current">0</span> / <span id="total">0</span></div><div class="ncn-tool-actions"><button type="button" id="previous" onclick="prevkk()" disabled>← Trước</button><button type="button" id="next" onclick="nextkk()" disabled>Sau →</button></div></div></section></section><script src="/assets/inventory.js"></script></div>
 <div class="below-ads"></div>
 
-<div class="feed-share">
-<ul class="share-runs colorful-ico social-front-hover">
-<li class="share-icon"><i class="bi bi-share-fill"></i></li>
-<li class="facebook"><a aria-label="Facebook" class="bi-facebook window-t" data-height="650" data-url="https://www.facebook.com/sharer.php?u=https://nguyencongnghe.com/2024/01/ban-kiem-ke-san-pham-theo-file-excel.html" data-width="550" href="javascript:;" rel="nofollow" title="Facebook"><span>Facebook</span></a></li>
-<li class="twitter-x"><a aria-label="Twitter" class="bi-twitter-x window-t" data-height="460" data-url="https://twitter.com/intent/tweet?url=https://nguyencongnghe.com/2024/01/ban-kiem-ke-san-pham-theo-file-excel.html&amp;text=Bắn kiểm kê sản phẩm theo file Excel" data-width="550" href="javascript:;" rel="nofollow" title="Twitter"><span>Twitter</span></a></li>
-<li class="whatsapp"><a aria-label="Whatsapp" class="bi-whatsapp window-t" data-height="650" data-url="https://api.whatsapp.com/send?text=Bắn kiểm kê sản phẩm theo file Excel | https://nguyencongnghe.com/2024/01/ban-kiem-ke-san-pham-theo-file-excel.html" data-width="550" href="javascript:;" rel="nofollow" title="Whatsapp"><span>Whatsapp</span></a></li>
-<li class="show-hid"><a aria-label="Share button" href="javascript:;" rel="nofollow"></a></li>
-</ul>
-</div>
+
 <ul class="primary-nav">
 <li class="post-next">
 <a class="next-post-link" href="/2024/01/messenger-da-cap-nhat-tinh-nang-tat-che-do-da-xem-tin-nhan.html" id="Blog1_blog-pager-newer-link" rel="next"><div class="navigation-posts"><span>Mới hơn</span><p></p></div></a>
@@ -243,7 +188,7 @@ Bắn kiểm kê sản phẩm theo file Excel
 </div>
 
 </article>
-<div class="comments-section" data-shortcode="#type=(local)"></div>
+
 </div>
 </div></div>
 <div id="main-ads-post">
@@ -397,7 +342,7 @@ Liên kết bài đăng</span>
 <!--It is your responsibility to notify your visitors about cookies used and data collected on your blog. Blogger makes a standard notification available for you to use on your blog, and you can customise it or replace it with your own notice. See http://www.blogger.com/go/cookiechoices for more details.-->
 <script type="module" src="/assets/ncn-vip-auth.js"></script>
 <!-- BEGIN NCN MODERN SCRIPT --><script type="module" src="/assets/ncn-theme/theme.js?v=20261024-first-paint-1"></script><!-- END NCN MODERN SCRIPT -->
-<!-- BEGIN NCN MOBILE SCRIPT --><script defer src="/assets/ncn-theme/mobile.js?v=20261017-mobile-dark-1"></script><!-- END NCN MOBILE SCRIPT -->
+<!-- BEGIN NCN MOBILE SCRIPT --><script defer src="/assets/ncn-theme/mobile.js?v=20261024-tools-2"></script><!-- END NCN MOBILE SCRIPT -->
 <script type="module" src="/assets/ncn-theme/announcements.js?v=20261024-notice-1"></script>
 </body>
 </html>

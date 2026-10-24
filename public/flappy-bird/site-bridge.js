@@ -112,7 +112,8 @@
     const items=(Array.isArray(cfg?.tools)?cfg.tools:[]).filter(t=>t&&typeof t.id==='string'&&t.title&&safe(t.href));
     const front=priority.flatMap(id=>items.filter(t=>t.id===id));
     const back=items.filter(t=>!priority.includes(t.id));
-    nav.replaceChildren();section('MỞ NHANH');
+    const adminLink=nav.querySelector('[data-ncn-announcement-admin]');
+    nav.replaceChildren();if(adminLink)nav.append(adminLink);section('MỞ NHANH');
     for (const t of front) anchor(label[t.id]||t.title,t.href,{icon:t.icon||'spark',vip:t.access==='vip'});
     section('TẤT CẢ CÔNG CỤ');anchor('Trang chủ','/',{icon:'home'});
     for (const t of back)anchor(t.title,t.href,{icon:t.icon||'spark',vip:t.access==='vip'});
@@ -124,10 +125,6 @@
     $('ncn-game-line').href=defaultLine;
     $('ncn-game-group').href=defaultGroup;
   }
-  /* NCN FALLBACK TOOL LIST 20261017-v3 */
-  populate({tools:[{"id":"event","title":"Event VIP","href":"/in-event/","access":"vip"},{"id":"gvgs","title":"Giờ Vàng VIP","href":"/in-gvgs/","access":"vip"},{"id":"cash","title":"Kiểm quỹ","href":"/2024/02/kiem-quy.html"},{"id":"insurance","title":"Bảo Hiểm & Trả Chậm","href":"/2025/05/tu-van.html"},{"id":"lucky-wheel","title":"Vòng Quay May Mắn","href":"/vong-quay-may-man/"},{"id":"sticker","title":"Bộ Sticker","href":"/sticker/"},{"id":"popup-a7","title":"Popup A7 / LED","href":"/popup-a7/"},{"id":"popup-large","title":"Popup A4 / A5 / A6","href":"/popup-a4-a5-a6/"},{"id":"sales","title":"Hỗ trợ bán hàng","href":"/ban-hang/"},{"id":"warehouse","title":"File kho","href":"/2020/10/kho-ver-52-all-tools-ho-tro-kho.html"},{"id":"fifo","title":"In FIFO","href":"/2024/01/in-fifo.html"},{"id":"inventory","title":"Kiểm kê bằng QR","href":"/2024/01/ban-kiem-ke-san-pham-theo-file-excel.html"},{"id":"qr","title":"Tạo mã QR","href":"/2024/04/qrcode-generator-tao-ma-qrcode.html"},{"id":"decor","title":"Trang trí","href":"/trang-tri/"},{"id":"vip","title":"Nâng cấp VIP","href":"/premium/"},{"id":"flappy-bird","title":"Bay Đi Đừng Cáu","href":"/flappy-bird/","access":"public"}]});
-  fetch('/assets/ncn-theme/config.json?v=20261017-ncn-arcade-1',{credentials:'same-origin',cache:'no-store'})
-    .then(r => {if(!r.ok)throw Error('config');return r.json();})
-    .then(populate)
-    .catch(() => { /* Fallback navigation already available offline. */ });
+  // Initial markup and its embedded config already use the latest NCN icons/logo.
+  try{const cfg=JSON.parse($('ncn-game-config')?.textContent||'null');if(cfg)populate(cfg);}catch{ /* Complete static navigation stays usable. */ }
 })();

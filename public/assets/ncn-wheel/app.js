@@ -1,6 +1,6 @@
 import {MAX_ENTRIES,MAX_HISTORY,STORAGE_KEY,normalizeName,nameKey,parseNames,secureIndex,landingRotation,sectorPath,emptyState,restoreState} from './core.js?v=20261016-wheel-1';
 const NS='http://www.w3.org/2000/svg';
-const GLASS_COLORS=[['#e1f6ff','#86c7ed'],['#eee5ff','#b5a1e7'],['#dbf9ed','#85cebb'],['#fff2d9','#e6c583'],['#e5edff','#9fb9e9'],['#ffe8f0','#e6b0c8'],['#d9f5f7','#84c8d1'],['#eef5da','#b6ce94']];
+export const GLASS_COLORS=[['#e1f6ff','#86c7ed'],['#eee5ff','#b5a1e7'],['#dbf9ed','#85cebb'],['#fff2d9','#e6c583'],['#e5edff','#9fb9e9'],['#ffe8f0','#e6b0c8'],['#d9f5f7','#84c8d1'],['#eef5da','#b6ce94']];
 let wheelInstance=0;
 export function createLuckyWheel({root=document.getElementById('ncn-wheel-app'),doc=document,win=window,storage,randomIndex,animate,now=()=>Date.now()}={}){
  if(!root)throw new Error('Không tìm thấy vòng quay.');
@@ -9,11 +9,6 @@ export function createLuckyWheel({root=document.getElementById('ncn-wheel-app'),
  const make=(tag,cls,text)=>{const n=doc.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n;};
  const svg=(tag,attrs={})=>{const n=doc.createElementNS(NS,tag);for(const [k,v]of Object.entries(attrs))n.setAttribute(k,v);return n;};
  const paintId='ncn-lw-glass-'+(++wheelInstance);
- for(const [buttonId,titleId,label] of [['clear-list','list-title','Xóa danh sách tham gia'],['clear-history','history-title','Xóa toàn bộ lịch sử']]){
-  const button=$(buttonId),heading=$(titleId)?.parentElement,old=button?.parentElement;
-  if(button&&heading){button.textContent='Xóa';button.setAttribute('aria-label',label);heading.append(button);if(old?.classList.contains('lw-list-actions'))old.remove();}
- }
- const removeCaption=root.querySelector('.lw-check>span');if(removeCaption)removeCaption.textContent='Loại người trúng ở lượt tiếp theo';
  let store=storage,storageOK=true;
  if(store===undefined)try{store=win.localStorage;}catch{storageOK=false;}
  let state;try{state=restoreState(store?.getItem(STORAGE_KEY));}catch{state=emptyState();storageOK=false;}

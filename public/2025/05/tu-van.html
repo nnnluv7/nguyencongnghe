@@ -110,8 +110,9 @@ if(typeof window!=='undefined'&&typeof document!=='undefined')installAppearance(
 <script src="/assets/site-config.js"></script><script src="/assets/catalog.js"></script><script src="/assets/js/1cc87d3c87abd588bf.js"></script><script src="/assets/vendor/8ec8dce35a344a43af.js" type="text/javascript"></script><script src="/assets/site-bridge.js"></script><!-- NCN site.css: base -->
 <!-- NCN site.css: titles -->
 <!-- NCN site.css: responsive -->
+<link rel="stylesheet" href="/assets/ncn-theme/tool-pages.css?v=20261024-tools-2">
 </head>
-<body class="item item-view ncn-modern ncn-floating-ui ncn-liquid-glass" id="mainContent">
+<body class="item item-view ncn-modern ncn-floating-ui ncn-liquid-glass ncn-refined-tool ncn-insurance-page ncn-mobile-insurance" id="mainContent">
 <aside id="ncn-announcement" aria-label="Thông báo từ Admin" hidden><span class="ncn-announcement-bell" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4M12 2V1"/></svg></span><div class="ncn-announcement-window"><span id="ncn-announcement-text"></span></div><button id="ncn-announcement-pause" type="button" aria-label="Tạm dừng thông báo" aria-pressed="false">Ⅱ</button></aside><script data-ncn-appearance-body>window.NCN_APPEARANCE?.refresh();</script>
 <!-- BEGIN NCN MODERN SHELL -->
 <a class="ncn-skip" href="#feed-view">Bỏ qua menu, đến nội dung</a>
@@ -168,15 +169,12 @@ if(typeof window!=='undefined'&&typeof document!=='undefined')installAppearance(
 </div>
 </div>
 </div>
-<div class="post-body entry-content" id="postBody">
-
-
-<div class="containerz">
-<div style="display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-bottom: 10px;">
-<label for="cb1"><input id="cb1" type="checkbox"/>BHKV</label>
-<label for="cb2"><input id="cb2" type="checkbox"/>BHRV</label>
-<label for="cb3"><input id="cb3" type="checkbox"/>BHMR</label>
-<label for="cb4"><input id="cb4" type="checkbox"/>BH1-1</label>
+<div class="post-body entry-content" id="postBody"><section id="ncn-insurance-app" class="ncn-tool-page"><header class="ncn-tool-heading"><div><span class="ncn-tool-eyebrow">CÔNG CỤ · NCN</span><h2>Bảo hiểm &amp; trả chậm</h2><p>Chọn sản phẩm, nhập giá và đối chiếu khoản trả trước, kỳ góp.</p></div></header><div class="ncn-insurance-grid"><div class="containerz ncn-glass-panel"><h3>Chọn bảo hiểm &amp; sản phẩm</h3>
+<div class="ncn-insurance-options">
+<label for="cb1"><input id="cb1" type="checkbox"/>Khoản vay</label>
+<label for="cb2"><input id="cb2" type="checkbox"/>Rơi vỡ</label>
+<label for="cb3"><input id="cb3" type="checkbox"/>Mở rộng</label>
+<label for="cb4"><input id="cb4" type="checkbox"/>1 đổi 1</label>
 </div>
 <table>
 <tr>
@@ -224,8 +222,7 @@ if(typeof window!=='undefined'&&typeof document!=='undefined')installAppearance(
 <label style="display: inline-block; position: absolute; right: 0; width: 35%;"><input checked="" name="bh11" type="radio"/> 12T</label></td>
 </tr>
 </table>
-</div>
-<div class="containerz">
+</div><div class="containerz ncn-glass-panel"><h3>Thông tin trả chậm</h3>
 <table>
 <tr><td class="label" colspan="2"><input placeholder="Tên sản phẩm" style="text-align: center;" type="text"/></td></tr>
 <tr>
@@ -252,13 +249,13 @@ if(typeof window!=='undefined'&&typeof document!=='undefined')installAppearance(
 </tr>
 <tr>
 <td class="label">Trả trước:</td>
-<td class="input" style="position: relative;">
+<td class="input" style="position: relative;"><div class="ncn-input-unit">
 <input id="tratruoc" inputmode="numeric" oninput="formatInput(this)" pattern="[0-9]*" style="width: 90px; text-align: right;" type="text" value="30"/>
 <select class="selectItem" id="kieutratruoc" onchange="updateTotal(this)" style="position: absolute;right: 0;top: 0;height: 100%;width: 50px;border: none;font-size: 14px;">
 <option value="1">%</option>
 <option value="2">VND</option>
 </select>
-</td>
+</div></td>
 </tr>
 <tr>
 <td class="label">Tổng trả trước:</td>
@@ -270,13 +267,13 @@ if(typeof window!=='undefined'&&typeof document!=='undefined')installAppearance(
 </tr>
 <tr>
 <td class="label">Lãi suất phẳng:</td>
-<td class="input">
+<td class="input"><div class="ncn-input-unit">
 <input id="laisuat" oninput="updateTotal()" style="width: 100px; text-align: right;" type="text" value="0"/>%
-      </td>
+      </div></td>
 </tr>
 <tr>
 <td class="label">Số kỳ góp:</td>
-<td class="input" style="position: relative;">
+<td class="input" style="position: relative;"><div class="ncn-input-unit">
 <select class="selectItem" id="goi" onchange="updateTotal()" style="position: absolute; top: 0; left: 0; height: 100%; width: 50%; border: none; font-size: 16px;
     text-align: center;">
 <option value="4">4</option>
@@ -290,7 +287,7 @@ if(typeof window!=='undefined'&&typeof document!=='undefined')installAppearance(
 <option value="12">12</option>
 </select>
 <span class="label" style="position: absolute; top: 6px; right: 0; width: 50%; text-align: center;">tháng</span>
-</td>
+</div></td>
 </tr>
 <tr>
 <td class="label">Góp mỗi tháng:</td>
@@ -306,10 +303,7 @@ if(typeof window!=='undefined'&&typeof document!=='undefined')installAppearance(
 </tr>
 <tr><td class="label" colspan="2" id="ghichu" style="color: red;"></td></tr>
 </table>
-</div>
-<script src="/assets/js/e4ba85afbfe0ce64e7.js"></script>
-<strike>(full-width)</strike>
-</div>
+</div></div></section><script src="/assets/js/e4ba85afbfe0ce64e7.js"></script></div>
 <div class="below-ads"></div>
 
 
@@ -478,7 +472,7 @@ Liên kết bài đăng</span>
 <!--It is your responsibility to notify your visitors about cookies used and data collected on your blog. Blogger makes a standard notification available for you to use on your blog, and you can customise it or replace it with your own notice. See http://www.blogger.com/go/cookiechoices for more details.-->
 <script type="module" src="/assets/ncn-vip-auth.js"></script>
 <!-- BEGIN NCN MODERN SCRIPT --><script type="module" src="/assets/ncn-theme/theme.js?v=20261024-first-paint-1"></script><!-- END NCN MODERN SCRIPT -->
-<!-- BEGIN NCN MOBILE SCRIPT --><script defer src="/assets/ncn-theme/mobile.js?v=20261017-mobile-dark-1"></script><!-- END NCN MOBILE SCRIPT -->
+<!-- BEGIN NCN MOBILE SCRIPT --><script defer src="/assets/ncn-theme/mobile.js?v=20261024-tools-2"></script><!-- END NCN MOBILE SCRIPT -->
 <script type="module" src="/assets/ncn-theme/announcements.js?v=20261024-notice-1"></script>
 </body>
 </html>

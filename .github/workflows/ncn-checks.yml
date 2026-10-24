@@ -22,5 +22,8 @@ jobs:
           node --check public/assets/ncn-theme/announcements-admin.js
           node --check netlify/lib/ncn-announcements-api.mjs
           node --check netlify/functions/ncn-announcements.mjs
+          node --check public/assets/ncn-theme/mobile.js
+          node --check public/assets/ncn-wheel/app.js
+          node --check public/flappy-bird/site-bridge.js
       - name: Kiểm tra trang, công cụ và quyền xóa bảng giá
         run: node --test tests/*.test.cjs tests/*.test.mjs

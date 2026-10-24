@@ -22,15 +22,14 @@
     const sheet = post.querySelector('#printMe');
     if (!table || !sheet || !post.querySelector('#ff1')) return;
     document.body.classList.add('ncn-mobile-fifo');
-    const hint = mobileUI('p', 'Vuốt ngang bảng để nhập đủ 7 nhóm FIFO.');
+    const hint = post.querySelector('#ncn-fifo-mobile-hint') || mobileUI('p', 'Vuốt ngang bảng để nhập đủ 7 nhóm FIFO.');
     hint.id = 'ncn-fifo-mobile-hint';
-    const scroll = element('div', 'ncn-mobile-table-scroll');
+    const scroll = table.closest('.ncn-mobile-table-scroll') || element('div', 'ncn-mobile-table-scroll');
     scroll.tabIndex = 0;
     scroll.setAttribute('role', 'region');
     scroll.setAttribute('aria-label', 'Bảng nhập liệu FIFO');
     scroll.setAttribute('aria-describedby', hint.id);
-    table.before(hint, scroll);
-    scroll.append(table);
+    if (!scroll.contains(table)) {table.before(hint, scroll);scroll.append(table);}
     for (let n = 1; n <= 7; n++) {
       for (const [prefix, label] of [['ff', 'Ngày FIFO'], ['mau', 'Màu'], ['ver', 'Phiên bản'], ['sl', 'Số lượng']]) {
         const field = post.querySelector('#' + prefix + n);
@@ -38,25 +37,19 @@
         if (field && prefix === 'sl') field.setAttribute('inputmode', 'numeric');
       }
     }
-    const controls = mobileUI('div');
+    const controls = post.querySelector('#ncn-fifo-preview-controls') || mobileUI('div');
     const caption = element('span', '', 'Xem trước tem FIFO');
-    const button = element('button', '', 'Phóng to');
+    const button = post.querySelector('#ncn-fifo-zoom') || element('button', '', 'Phóng to');
     button.type = 'button';
     button.setAttribute('aria-pressed', 'false');
-    controls.append(caption, button);
-    const viewport = element('div', 'ncn-mobile-sheet-viewport');
-    const frame = element('div', 'ncn-mobile-sheet-frame');
+    if (!controls.contains(button)) controls.append(caption, button);
+    const viewport = sheet.closest('.ncn-mobile-sheet-viewport') || element('div', 'ncn-mobile-sheet-viewport');
+    const frame = sheet.closest('.ncn-mobile-sheet-frame') || element('div', 'ncn-mobile-sheet-frame');
     viewport.setAttribute('aria-label', 'Xem trước tem FIFO');
     viewport.tabIndex = 0;
-    sheet.before(controls, viewport);
-    viewport.append(frame);
-    frame.append(sheet);
+    if (!viewport.contains(sheet)) {sheet.before(controls, viewport);viewport.append(frame);frame.append(sheet);}
     let fullSize = false;
     function resize() {
-      if (!isMobile()) {
-        frame.style.removeProperty('--ncn-fit-scale');
-        return;
-      }
       const styles = window.getComputedStyle(sheet);
       const width = sheet.offsetWidth || parseFloat(styles.width) || 775;
       const height = Math.max(sheet.scrollHeight, sheet.offsetHeight, parseFloat(styles.height) || 560);
