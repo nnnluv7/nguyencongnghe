@@ -62,7 +62,7 @@ async function scrollChrome(){
 }
 try{
   if(production){
-    const assets=['assets/ncn-account.js','assets/ncn-vip-gate.js','assets/ncn-vip-auth.js','assets/ncn-gvgs-auth.js','assets/ncn-billing.js','assets/ncn-theme/theme.js','assets/ncn-theme/site.css','assets/ncn-theme/tool-pages.css','assets/ncn-theme/scroll-ui.js','assets/ncn-theme/announcements.js','assets/ncn-theme/announcements.css','assets/ncn-direct/style.css','assets/ncn-direct/workspace.js','assets/ncn-insurance/style.css','assets/ncn-cash/style.css'];
+    const assets=['assets/ncn-account.js','assets/ncn-vip-gate.js','assets/ncn-vip-auth.js','assets/ncn-gvgs-auth.js','assets/ncn-billing.js','assets/ncn-theme/theme.js','assets/ncn-theme/site.css','assets/ncn-theme/tool-pages.css','assets/ncn-theme/scroll-ui.js','assets/ncn-theme/announcements.js','assets/ncn-theme/announcements.css','assets/ncn-direct/style.css','assets/ncn-direct/workspace.js','assets/ncn-insurance/style.css','assets/ncn-cash/style.css','assets/ncn-warehouse/style.css'];
     const expected=await Promise.all(assets.map(path=>readFile('public/'+path,'utf8')));
     const deadline=Date.now()+120000;let ready=false;
     while(Date.now()<deadline&&!ready){
@@ -148,12 +148,22 @@ try{
     await page.keyboard.press('Tab');
     await page.waitForFunction(()=>!document.body.classList.contains('ncn-chrome-hidden'));
   });
-  for(const path of ['/','/2025/05/tu-van.html','/vong-quay-may-man/']){
+  for(const path of ['/','/2025/05/tu-van.html','/vong-quay-may-man/','/2020/10/kho-ver-52-all-tools-ho-tro-kho.html']){
     await check('shared chrome: '+path,async()=>{
       await open(path);
       await page.evaluate(()=>{const spacer=document.createElement('div');spacer.dataset.ncnQa='scroll-space';spacer.style.height='1400px';document.body.append(spacer);});
       await scrollChrome();
       await noOverflow();
+      if(path==='/2020/10/kho-ver-52-all-tools-ho-tro-kho.html'){
+        await page.evaluate(()=>scrollTo(0,0));await page.waitForTimeout(300);
+        await shot('warehouse-desktop');
+        await page.setViewportSize({width:390,height:844});await noOverflow();
+        await shot('warehouse-mobile');
+        await page.evaluate(()=>document.documentElement.dataset.ncnTheme='dark');
+        await shot('warehouse-dark');
+        await page.evaluate(()=>document.documentElement.dataset.ncnTheme='light');
+        await page.setViewportSize({width:1280,height:900});
+      }
     });
   }
   await check('insurance: cash-sized form preserves all calculation and insurance choices',async()=>{
