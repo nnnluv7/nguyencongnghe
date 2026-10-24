@@ -1,4 +1,4 @@
-export const DENOMINATIONS=Object.freeze([500000,200000,100000,50000,20000,10000,5000,2000,1000,500]);
+export const DENOMINATIONS=Object.freeze([500000,200000,100000,50000,20000,10000,5000,2000,1000]);
 export const MAX_COUNT=999999999n;
 export const MAX_AMOUNT=999999999999999999999n;
 export const escapeHTML=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -15,6 +15,10 @@ export function parseInteger(raw,{optional=false,currency=false,max=MAX_COUNT}={
   const parsed=BigInt(digits);
   if(parsed>max)throw new Error('Giá trị tối đa là '+numberText(max)+'.');
   return parsed;
+}
+export function erpInputText(raw){
+  const value=parseInteger(raw,{optional:true,currency:true,max:MAX_AMOUNT});
+  return value===null?'':value.toLocaleString('en-US');
 }
 export function calculate(counts={},erpRaw=''){
   const errors={},rows=[];let total=0n,totalCount=0n;

@@ -1,4 +1,4 @@
-import {DENOMINATIONS,calculate,balanceLabel,numberText,moneyText,timestampText,dateKey,reportContent,printDocument,textReport,csvReport} from './core.js';
+import {DENOMINATIONS,calculate,balanceLabel,numberText,moneyText,erpInputText,timestampText,dateKey,reportContent,printDocument,textReport,csvReport} from './core.js?v=20261024-cash-simple-1';
 
 export function printHTML(html,doc=document,win=window){
   const frame=doc.createElement('iframe');frame.title='Phiếu kiểm quỹ để in';frame.setAttribute('aria-hidden','true');
@@ -46,11 +46,27 @@ export function createCashApp({app,doc=document,win=window,clock=()=>new Date(),
     else if(changed)message('');
     updatePrint();return result;
   }
-  listen(app,'input',event=>{if(event.target.matches('[data-cq-value],#cq-erp'))render({changed:true});});
+  function formatERP(event){
+    const input=$('cq-erp'),raw=input.value;
+    try{
+      // Deleting/inserting a digit can temporarily leave an incomplete comma group.
+      // Pasted content still uses the strict parser so decimals stay invalid.
+      const editing=event.inputType?.startsWith('delete')||event.inputType==='insertText'&&/^\d$/.test(event.data??'');
+      const formatted=erpInputText(editing?raw.replaceAll(',',''):raw);if(formatted===raw)return;
+      const caret=input.selectionStart??raw.length,digits=raw.slice(0,caret).replace(/\D/g,'').length;
+      input.value=formatted;let position=0,seen=0;
+      while(position<formatted.length&&seen<digits){if(/\d/.test(formatted[position]))seen++;position++;}
+      input.setSelectionRange(position,position);
+    }catch{/* Keep invalid input visible so the existing validation can explain it. */}
+  }
+  listen(app,'input',event=>{
+    if(event.target.id==='cq-erp')formatERP(event);
+    if(event.target.matches('[data-cq-value],#cq-erp'))render({changed:true});
+  });
   listen(app,'focusout',event=>{
     const input=event.target;
     if(input.matches('[data-cq-value]')){const value=result.rows.find(row=>String(row.denomination)===input.dataset.cqValue)?.count;if(value!==null&&value!==undefined&&input.value.trim())input.value=numberText(value);}
-    if(input.id==='cq-erp'&&!result.errors.erp&&result.erp!==null)input.value=numberText(result.erp);
+    if(input.id==='cq-erp'&&!result.errors.erp&&result.erp!==null)input.value=erpInputText(result.erp);
   });
   listen($('cq-rows'),'keydown',event=>{
     const input=event.target.closest('[data-cq-value]');if(!input)return;
