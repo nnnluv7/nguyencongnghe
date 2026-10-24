@@ -14,14 +14,15 @@
  .ncn-warehouse-icon svg{width:27px;height:27px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
  #ncn-warehouse-app .ncn-warehouse-file-heading h3{margin:2px 0 7px;font-size:21px;line-height:1.4;letter-spacing:-.3px}
  .ncn-warehouse-file-heading p{margin:0;font-size:12px;line-height:1.7;color:var(--ncn-muted)}
- #ncn-warehouse-app .ncn-warehouse-download-link{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:48px;margin-top:22px;padding:12px 21px;border:1px solid #ffffff80;border-radius:999px;background:linear-gradient(145deg,#3689df,#175eaf);box-shadow:0 5px 16px #1b5f9f24,inset 0 1px 0 #ffffff8c;color:#fff;font-size:14px;font-weight:700;line-height:1.5;text-decoration:none}
+ body.ncn-warehouse-page #postBody #ncn-warehouse-app .ncn-warehouse-download-link{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:48px;margin-top:22px;padding:12px 21px;border:1px solid #ffffff80;border-radius:999px;background:linear-gradient(145deg,#3689df,#175eaf);box-shadow:0 5px 16px #1b5f9f24,inset 0 1px 0 #ffffff8c;color:#fff;font-size:14px;font-weight:700;line-height:1.5;text-decoration:none}
  .ncn-warehouse-download-link svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
  #ncn-warehouse-app .ncn-warehouse-download-note{margin:11px 0 0;font-size:11px;line-height:1.6;color:var(--ncn-muted)}
  #ncn-warehouse-app .ncn-warehouse-guides h3{margin:0 0 14px;font-size:18px}
  .ncn-warehouse-guides ol{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0;padding:0;list-style:none}
  .ncn-warehouse-guides li{margin:0;min-width:0}
+ #ncn-warehouse-app .ncn-warehouse-guides ol>li::before{content:none;display:none}
  .ncn-warehouse-guides li:first-child{grid-column:1/-1}
- #ncn-warehouse-app .ncn-warehouse-guide{display:flex;align-items:center;gap:12px;height:100%;min-height:88px;padding:16px;border:1px solid var(--ncn-rim);border-radius:21px;background:var(--ncn-glass-card);box-shadow:var(--ncn-shadow);-webkit-backdrop-filter:blur(20px) saturate(145%);backdrop-filter:blur(20px) saturate(145%);color:var(--ncn-ink);text-decoration:none;transition:background .18s,box-shadow .18s,translate .18s}
+ body.ncn-warehouse-page #postBody #ncn-warehouse-app .ncn-warehouse-guide{display:flex;align-items:center;gap:12px;height:100%;min-height:88px;padding:16px;border:1px solid var(--ncn-rim);border-radius:21px;background:var(--ncn-glass-card);box-shadow:var(--ncn-shadow);-webkit-backdrop-filter:blur(20px) saturate(145%);backdrop-filter:blur(20px) saturate(145%);color:var(--ncn-ink);text-decoration:none;transition:background .18s,box-shadow .18s,translate .18s}
  .ncn-warehouse-guide>span:first-child{display:grid;place-items:center;flex:none;width:34px;height:34px;border:1px solid var(--ncn-rim);border-radius:12px;background:var(--ncn-glass-soft);color:var(--ncn-accent);font-size:11px;font-weight:750}
  .ncn-warehouse-guide>span:nth-child(2){flex:1;min-width:0}
  .ncn-warehouse-guide strong{display:block;font-size:13px;line-height:1.5;overflow-wrap:anywhere}

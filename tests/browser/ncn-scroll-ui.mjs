@@ -160,7 +160,7 @@ try{
         await page.setViewportSize({width:390,height:844});await noOverflow();
         await shot('warehouse-mobile');
         await page.evaluate(()=>document.documentElement.dataset.ncnTheme='dark');
-        await shot('warehouse-dark');
+        await page.waitForTimeout(250);await shot('warehouse-dark');
         await page.evaluate(()=>document.documentElement.dataset.ncnTheme='light');
         await page.setViewportSize({width:1280,height:900});
       }
