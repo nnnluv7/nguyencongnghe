@@ -63,7 +63,7 @@ async function scrollChrome(){
 }
 try{
   if(production){
-    const assets=['assets/ncn-theme/scroll-ui.js','assets/ncn-theme/announcements.js','assets/ncn-theme/announcements.css','assets/ncn-direct/style.css','assets/ncn-cash/style.css'];
+    const assets=['assets/ncn-theme/scroll-ui.js','assets/ncn-theme/announcements.js','assets/ncn-theme/announcements.css','assets/ncn-direct/style.css','assets/ncn-cash/style.css','assets/ncn-theme/tool-pages.css'];
     const expected=await Promise.all(assets.map(path=>readFile('public/'+path,'utf8')));
     const deadline=Date.now()+120000;let ready=false;
     while(Date.now()<deadline&&!ready){
@@ -108,6 +108,18 @@ try{
       await page.evaluate(()=>{const spacer=document.createElement('div');spacer.dataset.ncnQa='scroll-space';spacer.style.height='1400px';document.body.append(spacer);});
       await scrollChrome();
       await noOverflow();
+      if(path==='/2025/05/tu-van.html'){
+        await page.evaluate(()=>scrollTo(0,0));
+        await page.waitForTimeout(300);
+        const geometry=await page.locator('#ncn-insurance-app').boundingBox();
+        console.log('Insurance desktop geometry: '+JSON.stringify(geometry));
+        await shot('insurance-compact-desktop');
+        await page.setViewportSize({width:390,height:844});
+        await page.waitForTimeout(300);
+        console.log('Insurance mobile geometry: '+JSON.stringify(await page.locator('#ncn-insurance-app').boundingBox()));
+        await shot('insurance-compact-mobile');
+        await page.setViewportSize({width:1280,height:900});
+      }
     });
   }
   await check('game keeps one aligned navigation control',async()=>{
