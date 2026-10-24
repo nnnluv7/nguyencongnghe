@@ -59,6 +59,7 @@ try{
     await page.locator('#ncn-library-next').click();
     assert.match(await page.locator('#ncn-library-page').innerText(),/^Trang 2/);
     await page.setViewportSize({width:390,height:844});await fits();
+    await page.evaluate(()=>scrollTo(0,0));await page.waitForTimeout(250);
     await page.screenshot({path:out+'/library-mobile.jpg',type:'jpeg',quality:75});
   });
   for(const [index,row] of rows.entries()){
@@ -69,7 +70,11 @@ try{
       const source=await readFile(file,'utf8'),changed=/class="[^"]*ncn-library-page\b/.test(source);
       if(changed){
         assert.equal(await page.locator('#ncn-library-page-title').isVisible(),true);
-        assert.equal(await page.locator('#ncn-library-page-title').innerText(),row.title);
+        const titleBox=await page.locator('#ncn-library-page-title').boundingBox();
+        const kickerBox=await page.locator('.ncn-library-kicker').boundingBox();
+        assert.ok(kickerBox.height<70,'compact library kicker');
+        assert.ok(titleBox.y>=kickerBox.y+kickerBox.height-1,'heading follows the library kicker');
+        assert.equal((await page.locator('#ncn-library-page-title').innerText()).replace(/\s+/g,' ').trim(),row.title.replace(/\s+/g,' ').trim());
         assert.equal(await page.locator('.entry-title:visible').count(),0,'no duplicate legacy article heading');
         assert.equal(await page.locator('#breadcrumb:visible').count(),0,'no legacy breadcrumb');
         assert.equal(await page.locator('#postBody').isVisible(),true);
@@ -99,6 +104,18 @@ try{
     await open('/2024/01/seo-toi-uu-link-bai-viet-va-link-hinh-anh.html');
     await page.locator('#text-input').fill('xin chào anh');
     await page.waitForFunction(()=>document.querySelector('#text-output').textContent.includes('xin-chao-anh'));
+  });
+  await check('legacy BHRV styles cannot alter shared account layout',async()=>{
+    await open('/2022/10/bhrv.html');
+    await page.locator('.ncn-account-menu>summary').click();
+    await page.locator('#ncn-account-host [data-ncn-account-open=login]').click();
+    await page.locator('#ncn-account-dialog').waitFor({state:'visible'});
+    const intro=await page.locator('.ncn-account-intro').boundingBox();assert.ok(intro.height<100,'no old 215px paragraph boxes in login');
+    const input=page.locator('#ncn-account-dialog input[name=email]').first();
+    assert.equal(await input.evaluate(node=>getComputedStyle(node).borderTopLeftRadius),'16px');
+    await page.screenshot({path:out+'/library-login-desktop.jpg',type:'jpeg',quality:75});
+    await page.setViewportSize({width:390,height:844});await fits();
+    await page.screenshot({path:out+'/library-login-mobile.jpg',type:'jpeg',quality:75});
   });
 }finally{
   await writeFile(out+'/results.json',JSON.stringify({base,pages:rows.length,results},null,2));
