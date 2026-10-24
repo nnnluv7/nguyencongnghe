@@ -41,10 +41,10 @@ jobs:
         run: npm install --no-save --package-lock=false playwright@1.56.1
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
-      - name: Check print layouts, scrolling and compact calculators
-        run: node tests/browser/ncn-scroll-ui.mjs
       - name: Check shared accounts with isolated Identity and payment fixtures
         run: node tests/browser/ncn-account.mjs
+      - name: Check print layouts, scrolling and compact calculators
+        run: node tests/browser/ncn-scroll-ui.mjs
       - name: Verify deployed public pages
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:

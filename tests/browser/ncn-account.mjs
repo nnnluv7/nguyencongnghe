@@ -181,8 +181,8 @@ try{
     assert.equal(await event.locator('[data-ncn-account-retry]').count(),0);
   });
   await check('server revocation still clears the private app and manual retry rechecks entitlement',async()=>{
-    existing.vip=false;await event.evaluate(()=>{NCNAccount.refresh({force:true}).catch(()=>{});});
-    await event.waitForFunction(()=>window.NCNAccount?.state.ready&&!NCNAccount.state.user?.vip&&!document.querySelector('[data-private-fixture]'));
+    existing.vip=false;await event.evaluate(()=>{window.revocationMarker=true;NCNAccount.refresh({force:true}).catch(()=>{});});
+    await event.waitForFunction(()=>!window.revocationMarker&&window.NCNAccount?.state.ready&&!NCNAccount.state.user?.vip&&document.getElementById('vip-gate')?.dataset.ncnGateState==='member'&&!document.querySelector('[data-private-fixture]'));
     assert.equal(await event.locator('[data-vip-auth]').isVisible(),false);
     existing.vip=true;await event.locator('#vip-check').click();await event.locator('[data-private-fixture=ncn-event]').waitFor();
   });
