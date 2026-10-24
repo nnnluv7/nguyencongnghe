@@ -36,3 +36,7 @@
 /p/popup-a7.html  /popup-a7/  301
 /p/popup-a4-a5-a6.html  /popup-a4-a5-a6/  301
 /assets/ncn-theme/easy-ui.js  /assets/ncn-theme/tool-ui.js  200
+
+# Print editor aliases share one current workspace.
+/p/ban-hang.html  /ban-hang/  301
+/p/trang-tri.html  /trang-tri/  301

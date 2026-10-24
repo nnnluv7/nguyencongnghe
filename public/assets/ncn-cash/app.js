@@ -1,12 +1,8 @@
+import {openPrintPreview} from '../ncn-direct/workspace.js?v=20261024-print-1';
 import {DENOMINATIONS,calculate,balanceLabel,numberText,moneyText,erpInputText,timestampText,dateKey,reportContent,printDocument,textReport,csvReport} from './core.js?v=20261024-cash-simple-1';
 
 export function printHTML(html,doc=document,win=window){
-  const frame=doc.createElement('iframe');frame.title='Phiếu kiểm quỹ để in';frame.setAttribute('aria-hidden','true');
-  frame.style.cssText='position:fixed;left:-10000px;top:0;width:800px;height:600px;border:0';
-  let fallback;
-  const cleanup=()=>{win.clearTimeout(fallback);frame.remove();};
-  frame.onload=()=>{const child=frame.contentWindow;if(!child)return;child.addEventListener('afterprint',cleanup,{once:true});child.focus();child.print();fallback=win.setTimeout(cleanup,60000);};
-  frame.srcdoc=html;doc.body.append(frame);return frame;
+  return openPrintPreview(html,{title:'Phiếu kiểm quỹ',margin:'14 mm theo phiếu',doc,win});
 }
 
 export function createCashApp({app,doc=document,win=window,clock=()=>new Date(),printer=html=>printHTML(html,doc,win)}={}){

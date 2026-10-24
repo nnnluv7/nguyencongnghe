@@ -113,6 +113,7 @@ if(typeof window!=='undefined'&&typeof document!=='undefined')installAppearance(
 <!-- NCN site.css: titles -->
 <!-- NCN site.css: responsive -->
 <link rel="stylesheet" href="/assets/ncn-theme/tool-pages.css?v=20261024-tools-2">
+<link rel="stylesheet" href="/assets/ncn-direct/style.css?v=20261024-print-1">
 </head>
 <body class="item item-view ncn-modern ncn-floating-ui ncn-liquid-glass ncn-refined-tool ncn-fifo-page ncn-mobile-fifo" id="mainContent">
 <aside id="ncn-announcement" aria-label="Thông báo từ Admin" hidden><span class="ncn-announcement-bell" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4M12 2V1"/></svg></span><div class="ncn-announcement-window"><span id="ncn-announcement-text"></span></div><button id="ncn-announcement-pause" type="button" aria-label="Tạm dừng thông báo" aria-pressed="false">Ⅱ</button></aside><script data-ncn-appearance-body>window.NCN_APPEARANCE?.refresh();</script>
@@ -173,58 +174,7 @@ In FIFO
 </div>
 </div>
 </div>
-<div class="post-body entry-content" id="postBody"><section id="ncn-fifo-app" class="ncn-tool-page"><header class="ncn-tool-heading"><div><span class="ncn-tool-eyebrow">CÔNG CỤ · NCN</span><h2>In nhãn FIFO</h2><p>Nhập ngày, màu, phiên bản và số lượng cho từng nhóm nhãn.</p></div><button type="button" class="ncn-tool-primary" onclick="window.print()">In nhãn FIFO</button></header><section class="ncn-glass-panel ncn-fifo-input"><h3>Thông tin 7 nhóm nhãn</h3><div class="ncn-mobile-table-scroll" tabindex="0" role="region" aria-label="Bảng nhập liệu FIFO" aria-describedby="ncn-fifo-mobile-hint"><table class="nhaplieu">
-<tr>
-<td style="font-size: 12px;text-align: center;">FIFO</td>
-<td><input id="ff1" oninput="inputcot1()" type="text"/></td>
-<td><input id="ff2" oninput="inputcot2()" type="text"/></td>
-<td><input id="ff3" oninput="inputcot3()" type="text"/></td>
-<td><input id="ff4" oninput="inputcot4()" type="text"/></td>
-<td><input id="ff5" oninput="inputcot5()" type="text"/></td>
-<td><input id="ff6" oninput="inputcot6()" type="text"/></td>
-<td><input id="ff7" oninput="inputcot7()" type="text"/></td>
-</tr>
-<tr>
-<td style="font-size: 12px;text-align: center;">Màu</td>
-<td><input class="viethoa" id="mau1" oninput="inputcot1()" type="text" value="bạc"/></td>
-<td><input class="viethoa" id="mau2" oninput="inputcot2()" type="text" value="đỏ"/></td>
-<td><input class="viethoa" id="mau3" oninput="inputcot3()" type="text" value="tím"/></td>
-<td><input class="viethoa" id="mau4" oninput="inputcot4()" type="text" value="trắng"/></td>
-<td><input class="viethoa" id="mau5" oninput="inputcot5()" type="text" value="đen"/></td>
-<td><input class="viethoa" id="mau6" oninput="inputcot6()" type="text" value="xanh lá"/></td>
-<td><input class="viethoa" id="mau7" oninput="inputcot7()" type="text" value="xanh dương"/></td>
-</tr>
-<tr>
-<td style="font-size: 12px;text-align: center;">Phiên bản</td>
-<td><input class="viethoa" id="ver1" oninput="inputcot1()" type="text"/></td>
-<td><input class="viethoa" id="ver2" oninput="inputcot2()" type="text"/></td>
-<td><input class="viethoa" id="ver3" oninput="inputcot3()" type="text"/></td>
-<td><input class="viethoa" id="ver4" oninput="inputcot4()" type="text"/></td>
-<td><input class="viethoa" id="ver5" oninput="inputcot5()" type="text"/></td>
-<td><input class="viethoa" id="ver6" oninput="inputcot6()" type="text"/></td>
-<td><input class="viethoa" id="ver7" oninput="inputcot7()" type="text"/></td>
-</tr>
-<tr>
-<td style="font-size: 12px;text-align: center;">Số lượng</td>
-<td><input id="sl1" oninput="generateFifoArray()" type="text"/></td>
-<td><input id="sl2" oninput="generateFifoArray()" type="text"/></td>
-<td><input id="sl3" oninput="generateFifoArray()" type="text"/></td>
-<td><input id="sl4" oninput="generateFifoArray()" type="text"/></td>
-<td><input id="sl5" oninput="generateFifoArray()" type="text"/></td>
-<td><input id="sl6" oninput="generateFifoArray()" type="text"/></td>
-<td><input id="sl7" oninput="generateFifoArray()" type="text"/></td>
-</tr>
-<tr class="andong">
-<td style="font-size: 12px;text-align: center;">Total</td>
-<td><textarea id="cot1"></textarea></td>
-<td><textarea id="cot2"></textarea></td>
-<td><textarea id="cot3"></textarea></td>
-<td><textarea id="cot4"></textarea></td>
-<td><textarea id="cot5"></textarea></td>
-<td><textarea id="cot6"></textarea></td>
-<td><textarea id="cot7"></textarea></td>
-</tr>
-</table></div><p id="ncn-fifo-mobile-hint">Vuốt ngang bảng để nhập đủ 7 nhóm FIFO.</p></section><section class="ncn-glass-panel ncn-fifo-preview"><div id="ncn-fifo-preview-controls" data-ncn-mobile-ui><span>Xem trước nhãn FIFO</span><button id="ncn-fifo-zoom" type="button" aria-pressed="false">Phóng to</button></div><div class="ncn-mobile-sheet-viewport" aria-label="Xem trước nhãn FIFO" tabindex="0"><div class="ncn-mobile-sheet-frame"><div id="printMe">
+<div class="post-body entry-content" id="postBody"><section id="ncn-fifo-app" class="ncn-tool-page"><header class="ncn-tool-heading"><div><span class="ncn-tool-eyebrow">CÔNG CỤ · NCN</span><h2>In nhãn FIFO</h2><p>Nhập ngày, màu, phiên bản và số lượng cho từng nhóm nhãn.</p></div></header><div class="ncn-fifo-workbench"><div class="ncn-fifo-paper"><section class="ncn-glass-panel ncn-fifo-preview"><div id="ncn-fifo-preview-controls" data-ncn-mobile-ui><span>Xem trước nhãn FIFO</span><button id="ncn-fifo-zoom" type="button" aria-pressed="false">Phóng to</button></div><div class="ncn-mobile-sheet-viewport" aria-label="Xem trước nhãn FIFO" tabindex="0"><div class="ncn-mobile-sheet-frame"><div id="printMe">
 <div class="table">
 <!-- Hàng 1 -->
 <div class="cell hang hang1"><textarea></textarea></div>
@@ -281,7 +231,58 @@ In FIFO
 <div class="cell hang hang6 col7"><textarea></textarea></div>
 <div class="cell hang hang6 col8"><textarea></textarea></div>
 </div>
-</div></div></div></section></section><script src="/assets/js/3fcb8ddc0ca85c73a0.js"></script></div>
+</div></div></div></section></div><aside class="ncn-print-sidebar"><button type="button" class="ncn-print-primary" onclick="window.print()">In ngay</button><section class="ncn-glass-panel ncn-fifo-input"><h3>Thông tin 7 nhóm nhãn</h3><div class="ncn-mobile-table-scroll" tabindex="0" role="region" aria-label="Bảng nhập liệu FIFO" aria-describedby="ncn-fifo-mobile-hint"><table class="nhaplieu">
+<tr>
+<td style="font-size: 12px;text-align: center;">FIFO</td>
+<td><input id="ff1" oninput="inputcot1()" type="text"/></td>
+<td><input id="ff2" oninput="inputcot2()" type="text"/></td>
+<td><input id="ff3" oninput="inputcot3()" type="text"/></td>
+<td><input id="ff4" oninput="inputcot4()" type="text"/></td>
+<td><input id="ff5" oninput="inputcot5()" type="text"/></td>
+<td><input id="ff6" oninput="inputcot6()" type="text"/></td>
+<td><input id="ff7" oninput="inputcot7()" type="text"/></td>
+</tr>
+<tr>
+<td style="font-size: 12px;text-align: center;">Màu</td>
+<td><input class="viethoa" id="mau1" oninput="inputcot1()" type="text" value="bạc"/></td>
+<td><input class="viethoa" id="mau2" oninput="inputcot2()" type="text" value="đỏ"/></td>
+<td><input class="viethoa" id="mau3" oninput="inputcot3()" type="text" value="tím"/></td>
+<td><input class="viethoa" id="mau4" oninput="inputcot4()" type="text" value="trắng"/></td>
+<td><input class="viethoa" id="mau5" oninput="inputcot5()" type="text" value="đen"/></td>
+<td><input class="viethoa" id="mau6" oninput="inputcot6()" type="text" value="xanh lá"/></td>
+<td><input class="viethoa" id="mau7" oninput="inputcot7()" type="text" value="xanh dương"/></td>
+</tr>
+<tr>
+<td style="font-size: 12px;text-align: center;">Phiên bản</td>
+<td><input class="viethoa" id="ver1" oninput="inputcot1()" type="text"/></td>
+<td><input class="viethoa" id="ver2" oninput="inputcot2()" type="text"/></td>
+<td><input class="viethoa" id="ver3" oninput="inputcot3()" type="text"/></td>
+<td><input class="viethoa" id="ver4" oninput="inputcot4()" type="text"/></td>
+<td><input class="viethoa" id="ver5" oninput="inputcot5()" type="text"/></td>
+<td><input class="viethoa" id="ver6" oninput="inputcot6()" type="text"/></td>
+<td><input class="viethoa" id="ver7" oninput="inputcot7()" type="text"/></td>
+</tr>
+<tr>
+<td style="font-size: 12px;text-align: center;">Số lượng</td>
+<td><input id="sl1" oninput="generateFifoArray()" type="text"/></td>
+<td><input id="sl2" oninput="generateFifoArray()" type="text"/></td>
+<td><input id="sl3" oninput="generateFifoArray()" type="text"/></td>
+<td><input id="sl4" oninput="generateFifoArray()" type="text"/></td>
+<td><input id="sl5" oninput="generateFifoArray()" type="text"/></td>
+<td><input id="sl6" oninput="generateFifoArray()" type="text"/></td>
+<td><input id="sl7" oninput="generateFifoArray()" type="text"/></td>
+</tr>
+<tr class="andong">
+<td style="font-size: 12px;text-align: center;">Total</td>
+<td><textarea id="cot1"></textarea></td>
+<td><textarea id="cot2"></textarea></td>
+<td><textarea id="cot3"></textarea></td>
+<td><textarea id="cot4"></textarea></td>
+<td><textarea id="cot5"></textarea></td>
+<td><textarea id="cot6"></textarea></td>
+<td><textarea id="cot7"></textarea></td>
+</tr>
+</table></div><p id="ncn-fifo-mobile-hint">Vuốt ngang bảng để nhập đủ 7 nhóm FIFO.</p></section><details class="ncn-print-help"><summary>Hướng dẫn in</summary><p>Chọn giấy A4, tỷ lệ 100%, lề Không. Nhập các nhóm nhãn ở bảng phía trên.</p></details></aside></div></section><script src="/assets/js/3fcb8ddc0ca85c73a0.js"></script></div>
 <div class="below-ads"></div>
 
 
@@ -452,5 +453,6 @@ Liên kết bài đăng</span>
 <!-- BEGIN NCN MODERN SCRIPT --><script type="module" src="/assets/ncn-theme/theme.js?v=20261024-first-paint-1"></script><!-- END NCN MODERN SCRIPT -->
 <!-- BEGIN NCN MOBILE SCRIPT --><script defer src="/assets/ncn-theme/mobile.js?v=20261024-tools-2"></script><!-- END NCN MOBILE SCRIPT -->
 <script type="module" src="/assets/ncn-theme/announcements.js?v=20261024-notice-loop-2"></script>
+<script type="module" src="/assets/ncn-direct/workspace.js?v=20261024-print-1"></script>
 </body>
 </html>

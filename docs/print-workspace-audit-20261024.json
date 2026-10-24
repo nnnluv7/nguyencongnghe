@@ -1,0 +1,74 @@
+{
+  "date": "2026-10-24",
+  "publicPagesBefore": 114,
+  "publicPagesAfter": 112,
+  "groups": [
+    {
+      "group": "ncn-sticker",
+      "models": 25,
+      "layouts": 35,
+      "assets": 49
+    },
+    {
+      "group": "ncn-popup",
+      "models": 33,
+      "layouts": 33,
+      "assets": 65
+    },
+    {
+      "group": "ncn-store-tools",
+      "models": 44,
+      "layouts": 44,
+      "assets": 103
+    }
+  ],
+  "uniquePrintAssets": 217,
+  "workspaceRoutes": [
+    "2022/06/phieu-bao-hiem-xe-may.html",
+    "2022/07/phieu-tu-van-tra-gop.html",
+    "2022/07/popup-phone-1.html",
+    "2022/09/chu-treo-tran-a4-1.html",
+    "2022/09/chu-treo-tran-a4-2.html",
+    "2022/09/popup-tu-phone-san-pham-ban-chay.html",
+    "2022/12/trang-tri-hoa-1.html",
+    "2022/12/trang-tri-hoa-2.html",
+    "2022/12/trang-tri-hoa-3.html",
+    "2023/09/no-nho.html",
+    "2024/01/be-tap-lam-toan.html",
+    "2024/01/in-fifo.html",
+    "2024/01/qrcode-wifi-demo.html",
+    "2024/01/tao-ma-qrcode-chia-se-wifi-khong-can-nhap-mat-khau.html",
+    "2024/02/kiem-quy.html",
+    "2024/06/phep-tinh-tru.html",
+    "2024/06/toan-so-sanh.html",
+    "2024/08/background-popup-a7.html",
+    "ban-hang/index.html",
+    "in-event/index.html",
+    "in-gvgs/index.html",
+    "popup-a4-a5-a6/index.html",
+    "popup-a7/index.html",
+    "sticker/index.html",
+    "trang-tri/index.html"
+  ],
+  "legacySheetsPreserved": 17,
+  "privateRoles": [
+    "event/admin",
+    "event/vip",
+    "gvgs/admin",
+    "gvgs/vip"
+  ],
+  "checks": {
+    "nodeTests": 67,
+    "browserGalleryLayouts": 112,
+    "browserFieldsOutsidePaper": 0,
+    "legacyRoutes": 16,
+    "legacyBlankPreviews": 0,
+    "legacyHorizontalOverflow": 0,
+    "mobileGroups": 9,
+    "htmlExports": [
+      "sticker",
+      "popup",
+      "store-tools"
+    ]
+  }
+}

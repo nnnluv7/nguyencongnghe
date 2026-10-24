@@ -1,11 +1,12 @@
 import {copyAt,editCopy} from './preview.js?v=20261015-direct-1';
+import {printHelp} from './workspace.js?v=20261024-print-1';
 
 export function createDirectEditor({app,frame,stage,getState,onChange,onSelect,onPage,onPrint,onError,doc=document,win=window}) {
   app.classList.add('ncn-direct-editor');
   const fieldHeading=app.querySelector('.st-editor-grid > .st-panel:not(.st-preview-panel) h4');
-  if(fieldHeading)fieldHeading.textContent='Ô nhập';
+  if(fieldHeading)fieldHeading.textContent='Nội dung mẫu';
   const previewHeading=app.querySelector('.st-preview-panel .st-panel-heading h4');
-  if(previewHeading)previewHeading.textContent='Nhập trực tiếp trên mẫu';
+  if(previewHeading)previewHeading.textContent='Xem trước bản in';
   const listeners=[];
   const listen=(node,event,fn,options)=>{node?.addEventListener(event,fn,options);listeners.push(()=>node?.removeEventListener(event,fn,options));};
   const make=(tag,className,text)=>{const el=doc.createElement(tag);if(className)el.className=className;if(text)el.textContent=text;return el;};
@@ -20,11 +21,25 @@ export function createDirectEditor({app,frame,stage,getState,onChange,onSelect,o
   button('+','Phóng to',()=>{zoom=Math.min(4,zoom+.25);scale();});
   button('Vừa trang','Xem vừa trang',()=>{zoom=1;scale();});
   button('100%','Xem kích thước thật',()=>{const base=fitScale();zoom=Math.min(4,Math.max(1,1/base));scale();});
-  const printButton=button('In ngay','In mẫu đã nhập',()=>{flush();onPrint?.();});printButton.classList.add('ncn-direct-print');
   const linkLabel=make('label','ncn-direct-link-toggle'),check=make('input');check.type='checkbox';
   linkLabel.append(check,make('span','','Áp dụng cho cả nhóm nội dung'));
   listen(check,'change',()=>{linked=check.checked;});
-  toolbar.append(heading,tools,linkLabel);stage.before(toolbar);
+  toolbar.append(heading,tools);
+  const grid=app.querySelector('.st-editor-grid'),fields=grid.querySelector('.st-panel:not(.st-preview-panel)');
+  const rail=make('aside','ncn-print-sidebar');rail.setAttribute('aria-label','Chỉnh sửa và in mẫu');
+  const actions=make('div','ncn-print-actions'),printButton=app.querySelector('#st-print,#nt-print'),download=app.querySelector('#st-download,#nt-download'),summary=app.querySelector('#st-summary,#nt-summary');
+  // Move the original controls so every app keeps its existing validation/print handlers.
+  if(printButton){printButton.textContent='In ngay';printButton.classList.add('ncn-print-primary');actions.append(printButton);}
+  if(download){download.classList.add('ncn-print-secondary');actions.append(download);}
+  if(summary){summary.classList.add('ncn-print-summary');actions.append(summary);}
+  rail.append(actions,toolbar);
+  const settings=app.querySelector('.st-settings,.nt-settings');
+  if(settings){const details=make('details','ncn-print-settings'),caption=make('summary','','Cỡ mẫu, khổ giấy & nhập file');details.open=win.innerWidth>=960;details.append(caption,settings);for(const extra of app.querySelectorAll('.ncn-font-toggle,.ncn-popup-title-note'))details.append(extra);rail.append(details);}
+  if(fields){const details=make('details','ncn-print-fields'),caption=make('summary','','Chỉnh nội dung');details.open=win.innerWidth>=960;details.append(caption,linkLabel,fields);rail.append(details);}
+  else rail.append(linkLabel);
+  rail.append(printHelp(doc,{open:win.innerWidth>=960}));
+  const help=app.querySelector('.st-help');if(help)rail.append(help);
+  grid.append(rail);const oldBar=app.querySelector('.st-print-bar');if(oldBar)oldBar.hidden=true;
   const canvas=make('div','ncn-direct-canvas');stage.append(canvas);canvas.append(frame);
   stage.classList.add('ncn-direct-stage');
   function fitScale(){return size?(stage.clientWidth||440)/(size.w*96/25.4):1;}
@@ -82,7 +97,8 @@ export function createDirectEditor({app,frame,stage,getState,onChange,onSelect,o
     heading.firstChild.textContent=editable?'Bấm vào chữ trên mẫu để nhập':'Mẫu in sẵn';
     heading.lastChild.textContent=editable?'Mỗi mẫu trên tờ được điền riêng. Ô chưa nhập hiện chữ gợi ý.':'Anh chọn số lượng và khổ giấy rồi bấm In.';
     linkLabel.hidden=!editable;
-    frame.srcdoc=html.replace('<html ',`<html data-ncn-direct-generation="${generation}" `);
+    const screenRules='<style data-ncn-preview-viewport>@media screen{html,body{overflow:hidden!important}.ncn-sheet{margin:0!important}}</style>';
+    frame.srcdoc=html.replace('</head>',screenRules+'</head>').replace('<html ',`<html data-ncn-direct-generation="${generation}" `);
     scale();
   }
   return {render,scale,flush,bindDocument,syncValues,getZoom:()=>zoom,destroy:()=>{childCleanup();listeners.forEach(fn=>fn());toolbar.remove();}};
