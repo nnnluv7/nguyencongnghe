@@ -30,3 +30,9 @@
 - Bốn template riêng được kiểm tra bằng dữ liệu giả tại preview nội bộ, không thao tác với bảng giá/tài khoản thật. Quyền API và tài nguyên dựng bản in được giữ nguyên và có kiểm thử hồi quy.
 
 Fixture QA và dữ liệu giả chỉ có ở bản preview nội bộ, không thuộc nội dung commit. Sau khi GitHub CI và Netlify preview đạt sẽ triển khai và kiểm tra lại các URL thật.
+
+## Kiểm tra cuộn trên tên miền thật
+
+Sau triển khai, 25/25 đường dẫn đã tải asset mới; hai alias chuyển 301 và giữ đúng mã mẫu trên query string. Khi chọn ô của sticker thứ sáu, phát hiện ba lớp Blogger (`#outer-wrapper`, `#main`, `.post-inner-area`) còn `overflow:hidden`, khiến thanh in dính vào khung cũ thay vì viewport. Gỡ clipping riêng trên màn hình chỉnh sửa/in, giữ vùng cuộn của giấy và thanh điều khiển. Phiên bản CSS chuyển thành `20261024-print-2` để trình duyệt nhận bản sửa.
+
+Kiểm tra trước/sau cùng thao tác chọn ô cuối: trước đó nút in lên y=−107px; sau sửa y=169px, bên dưới thanh đầu trang kết thúc ở y=128px. Không tràn ngang, hình và bố cục giấy giữ nguyên. Các trang ngoài công cụ in không chịu rule này.
