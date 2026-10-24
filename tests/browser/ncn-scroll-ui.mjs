@@ -62,7 +62,7 @@ async function scrollChrome(){
 }
 try{
   if(production){
-    const assets=['assets/ncn-account.js','assets/ncn-vip-gate.js','assets/ncn-vip-auth.js','assets/ncn-gvgs-auth.js','assets/ncn-billing.js','assets/ncn-theme/theme.js','assets/ncn-theme/site.css','assets/ncn-theme/tool-pages.css','assets/ncn-theme/scroll-ui.js','assets/ncn-theme/announcements.js','assets/ncn-theme/announcements.css','assets/ncn-direct/style.css','assets/ncn-direct/workspace.js','assets/ncn-insurance/style.css','assets/ncn-cash/style.css','assets/ncn-warehouse/style.css'];
+    const assets=['assets/ncn-account.js','assets/ncn-vip-gate.js','assets/ncn-vip-auth.js','assets/ncn-gvgs-auth.js','assets/ncn-billing.js','assets/ncn-theme/theme.js','assets/ncn-theme/site.css','assets/ncn-theme/tool-pages.css','assets/ncn-theme/scroll-ui.js','assets/ncn-theme/announcements.js','assets/ncn-theme/announcements.css','assets/ncn-direct/style.css','assets/ncn-direct/workspace.js','assets/ncn-insurance/style.css','assets/ncn-cash/style.css','assets/ncn-warehouse/style.css','assets/ncn-theme/library.css','assets/catalog.js'];
     const expected=await Promise.all(assets.map(path=>readFile('public/'+path,'utf8')));
     const deadline=Date.now()+120000;let ready=false;
     while(Date.now()<deadline&&!ready){
