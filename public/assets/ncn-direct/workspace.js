@@ -91,7 +91,8 @@ export function installPrintWorkspaces({doc=document,win=window}={}){
     if(fifo&&!fifo.dataset.ncnPrintReady){
       fifo.dataset.ncnPrintReady='true';
       const controls=doc.getElementById('ncn-fifo-preview-controls'),rail=fifo.querySelector('.ncn-print-sidebar');
-      if(controls&&rail){controls.classList.add('ncn-print-zoom');rail.insertBefore(controls,rail.children[1]||null);}
+      if(controls&&rail){controls.classList.add('ncn-print-zoom');}
+      enhancePrintWorkspace({workspace:fifo,preview:fifo.querySelector('.ncn-fifo-paper'),rail,controls,doc,win});
     }
     doc.querySelectorAll('dialog.ncn-print-dialog:not([data-ncn-generated-print])').forEach(dialog=>{
       if(dialog.dataset.ncnPrintReady)return;dialog.dataset.ncnPrintReady='true';
@@ -105,15 +106,85 @@ export function installPrintWorkspaces({doc=document,win=window}={}){
       const rail=workspace.querySelector('.ncn-print-sidebar'),stage=workspace.querySelector('.ncn-print-stage'),sheet=stage?.querySelector('#printMe,.row-container');
       if(!rail||!sheet)return;
       const controls=rail.querySelector('.ncn-print-zoom');
-      const fields=rail.querySelector('.ncn-print-fields');if(fields)fields.open=win.innerWidth>=960;
+      const fields=rail.querySelector('.ncn-print-fields');if(fields)fields.open=true;
       // Existing title/help dialogs keep their original fixed positioning and handlers.
       rail.querySelectorAll('.modal,.modal_tit').forEach(modal=>workspace.after(modal));
       attachPrintViewport({stage,sheet,controls,doc,win});
       rail.querySelector('[data-ncn-print-now]')?.addEventListener('click',()=>win.print());
-      rail.append(printHelp(doc,{open:win.innerWidth>=960}));
+      rail.append(printHelp(doc));
+      enhancePrintWorkspace({workspace,preview:workspace.querySelector('.ncn-print-preview'),rail,controls,doc,win});
     });
   }
   const boot=()=>{enhance();const target=doc.getElementById('vip-app');if(target&&win.MutationObserver)new win.MutationObserver(enhance).observe(target,{childList:true,subtree:true});};
   if(doc.readyState==='loading')doc.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 }
 if(typeof document!=='undefined')installPrintWorkspaces();
+
+let workspaceSerial=0;
+const focusWorkspaces=new WeakMap();
+export function enhancePrintWorkspace({workspace,preview,rail,controls,doc=document,win=window}={}){
+  if(!workspace||!preview||!rail)return;
+  if(focusWorkspaces.has(workspace))return focusWorkspaces.get(workspace);
+  const make=(tag,cls,text)=>{const node=doc.createElement(tag);node.className=cls;if(text)node.textContent=text;return node;};
+  const serial=++workspaceSerial,listeners=[];
+  const listen=(node,event,fn)=>{node?.addEventListener(event,fn);listeners.push(()=>node?.removeEventListener(event,fn));};
+  workspace.classList.add('ncn-workspace-focus');preview.classList.add('ncn-workspace-paper');rail.classList.add('ncn-workspace-fields');
+  if(!preview.id)preview.id='ncn-workspace-paper-'+serial;
+  if(!rail.id)rail.id='ncn-workspace-fields-'+serial;
+  const bar=make('div','ncn-workspace-bar'),switcher=make('div','ncn-workspace-switch');
+  switcher.setAttribute('role','group');switcher.setAttribute('aria-label','Chuyển vùng làm việc');
+  function choice(text,pane,target){
+    const button=make('button','',text);button.type='button';button.dataset.ncnPane=pane;
+    button.setAttribute('aria-controls',target.id);button.setAttribute('aria-pressed',String(pane==='paper'));
+    switcher.append(button);return button;
+  }
+  const paper=choice('Bản in','paper',preview);
+  const fields=choice(rail.querySelector('input,select,textarea')?'Nhập nội dung':'Tùy chọn','fields',rail);
+  const print=rail.querySelector('.ncn-print-primary');
+  const originalParent=print?.parentElement,originalNext=print?.nextSibling;
+  bar.append(switcher);if(print)bar.append(print);
+  workspace.prepend(bar);
+  if(controls){controls.classList.add('ncn-workspace-preview-controls');const stage=preview.querySelector('.ncn-direct-stage,.ncn-print-stage,.ncn-mobile-sheet-viewport');if(stage)stage.before(controls);else preview.prepend(controls);}
+  const media=win.matchMedia?.('(max-width:959px)');
+  const mobile=()=>media?media.matches:win.innerWidth<960;
+  const reduced=()=>Boolean(win.matchMedia?.('(prefers-reduced-motion:reduce)').matches);
+  let pane='paper',resizeFrame=0,destroyed=false;
+  function measure(){
+    if(destroyed)return;
+    workspace.style.setProperty('--ncn-workspace-bar-height',Math.ceil(bar.getBoundingClientRect().height||64)+'px');
+  }
+  function refresh(){
+    measure();
+    paper.setAttribute('aria-pressed',String(pane==='paper'));fields.setAttribute('aria-pressed',String(pane==='fields'));
+    if(!resizeFrame)resizeFrame=win.requestAnimationFrame(()=>{resizeFrame=0;win.dispatchEvent(new win.Event('resize'));});
+  }
+  function select(next,{focus=false}={}){
+    pane=next==='fields'?'fields':'paper';workspace.dataset.ncnPane=pane;
+    if(pane==='fields')rail.querySelectorAll('details.ncn-print-fields').forEach(node=>node.open=true);
+    refresh();
+    const target=pane==='fields'?rail:preview;
+    if(mobile()){
+      // Only switch visible panels. Original inputs and their current values remain mounted.
+      if(bar.getBoundingClientRect().top<0)workspace.scrollIntoView?.({behavior:reduced()?'instant':'smooth',block:'start'});
+    }else if(pane==='fields'){
+      const field=rail.querySelector('.ncn-print-fields input:not([type=hidden]),.ncn-print-fields select,.ncn-print-fields textarea')||rail.querySelector('input:not([type=hidden]),select,textarea');
+      if(focus)field?.focus({preventScroll:true});
+      rail.scrollIntoView?.({behavior:reduced()?'instant':'smooth',block:'start'});
+    }else target.scrollIntoView?.({behavior:reduced()?'instant':'smooth',block:'start'});
+  }
+  listen(paper,'click',()=>select('paper'));listen(fields,'click',()=>select('fields',{focus:!mobile()}));
+  const mediaChanged=()=>{
+    // Keep keyboard focus on a visible panel when crossing the responsive breakpoint.
+    if(rail.contains(doc.activeElement)){pane='fields';workspace.dataset.ncnPane=pane;}
+    refresh();
+  };
+  media?.addEventListener?.('change',mediaChanged);
+  const observer=win.ResizeObserver?new win.ResizeObserver(measure):null;observer?.observe(bar);
+  workspace.dataset.ncnPane='paper';refresh();
+  const api={select,refresh,destroy(){
+    destroyed=true;listeners.forEach(remove=>remove());observer?.disconnect();win.cancelAnimationFrame(resizeFrame);media?.removeEventListener?.('change',mediaChanged);
+    if(print&&originalParent)originalParent.insertBefore(print,originalNext?.parentNode===originalParent?originalNext:null);
+    bar.remove();workspace.classList.remove('ncn-workspace-focus');preview.classList.remove('ncn-workspace-paper');rail.classList.remove('ncn-workspace-fields');delete workspace.dataset.ncnPane;focusWorkspaces.delete(workspace);
+  }};
+  focusWorkspaces.set(workspace,api);return api;
+}

@@ -27,3 +27,19 @@ html[data-ncn-theme=dark] #ncn-announcement-pause{background:#ffffff12;border-co
 @media(max-width:620px){#ncn-announcement{left:8px;right:8px;gap:7px;font-size:12px}.ncn-notice-manager{padding:20px 16px}.ncn-notice-manager h1{font-size:23px}}
 @media(prefers-reduced-motion:reduce){.ncn-announcement-track{animation:none}.ncn-announcement-track [aria-hidden=true]{display:none}#ncn-announcement-text{padding:0}.ncn-announcement-window{mask-image:none;overflow-x:auto;scrollbar-width:none}#ncn-announcement-pause{display:none}}
 @media print{#ncn-announcement,.ncn-notice-manager{display:none!important}.ncn-has-announcements #ncn-site-shell,.ncn-has-announcements>.app{margin-top:0!important}}
+
+/* Moving chrome uses translate so existing hover and game transforms stay intact. */
+@media screen{
+ body.ncn-scroll-ready{--ncn-chrome-offset:var(--ncn-chrome-space,100px)}
+ body.ncn-scroll-ready.ncn-chrome-hidden{--ncn-chrome-offset:12px}
+ body.ncn-scroll-ready :is(#ncn-announcement,#ncn-topbar,#ncn-menu-open,#ncn-game-topbar,#ncn-game-menu){
+  transition:translate .26s cubic-bezier(.22,.75,.25,1),opacity .2s ease;
+  will-change:translate;
+ }
+ body.ncn-scroll-ready.ncn-chrome-hidden :is(#ncn-announcement,#ncn-topbar,#ncn-menu-open,#ncn-game-topbar,#ncn-game-menu){
+  translate:0 calc(-1 * var(--ncn-chrome-hide-distance,180px));opacity:0;pointer-events:none;
+ }
+ @media(prefers-reduced-motion:reduce){
+  body.ncn-scroll-ready :is(#ncn-announcement,#ncn-topbar,#ncn-menu-open,#ncn-game-topbar,#ncn-game-menu){transition:none!important}
+ }
+}
