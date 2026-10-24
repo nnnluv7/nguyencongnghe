@@ -4,11 +4,14 @@
 .ncn-announcement-bell{display:grid;place-items:center;flex:0 0 30px;height:30px;border-radius:50%;background:linear-gradient(140deg,#ffffffed,#b8d9ff70);border:1px solid #fff;box-shadow:inset 0 1px 1px #fff,0 2px 7px #2864c726}
 .ncn-announcement-bell svg{display:block;width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .ncn-announcement-window{min-width:0;flex:1;overflow:hidden;mask-image:linear-gradient(90deg,transparent,#000 12px,#000 calc(100% - 12px),transparent)}
-#ncn-announcement-text{display:inline-block;white-space:pre;padding-left:24px;animation:ncn-ticker var(--ncn-ticker-duration,25s) linear infinite alternate;will-change:transform}
+.ncn-announcement-track{display:flex;width:max-content;animation:ncn-ticker var(--ncn-ticker-duration,25s) linear infinite;will-change:transform}
+.ncn-announcement-group{display:flex;flex:none}
+.ncn-announcement-copy{display:block;flex:none;white-space:pre;padding-right:64px}
 #ncn-announcement-pause{display:grid;place-items:center;flex:0 0 30px;height:30px;min-width:30px;padding:0;border:1px solid #fff9;border-radius:50%;background:#ffffff70;color:inherit;font:700 12px Arial;cursor:pointer}
 #ncn-announcement-pause:focus-visible{outline:3px solid #2864c7;outline-offset:2px}
-#ncn-announcement:hover #ncn-announcement-text,#ncn-announcement:focus-within #ncn-announcement-text,.ncn-announcement-paused #ncn-announcement-text{animation-play-state:paused}
-@keyframes ncn-ticker{0%,12%{transform:translateX(0)}88%,100%{transform:translateX(min(0px,calc(-100% + 60vw)))}}
+.ncn-announcement-paused .ncn-announcement-track{animation-play-state:paused}
+@media(hover:hover){#ncn-announcement:hover .ncn-announcement-track{animation-play-state:paused}}
+@keyframes ncn-ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 body.ncn-has-announcements{--ncn-notice-offset:calc(48px + env(safe-area-inset-top,0px))}
 .ncn-has-announcements :is(#ncn-topbar,#ncn-menu-open,#ncn-game-topbar,#ncn-game-menu){margin-top:var(--ncn-notice-offset)}
 .ncn-has-announcements #ncn-site-shell,.ncn-has-announcements>.app{margin-top:var(--ncn-notice-offset)}
@@ -22,5 +25,5 @@ html[data-ncn-theme=dark] #ncn-announcement-pause{background:#ffffff12;border-co
 .ncn-notice-manager button[type=submit]{background:#205cb4;color:#fff;border-color:#205cb4}.ncn-notice-manager button:disabled{opacity:.45;cursor:wait}
 #ncn-notice-list{padding:0;list-style:none}#ncn-notice-list li{display:flex;align-items:center;gap:16px;border-top:1px solid var(--ncn-border);padding:14px 0}#ncn-notice-list li p{flex:1;min-width:0;overflow-wrap:anywhere;margin:0}.ncn-notice-delete{color:#ad2938!important;flex:none}.ncn-notice-error{color:#b52b3a}
 @media(max-width:620px){#ncn-announcement{left:8px;right:8px;gap:7px;font-size:12px}.ncn-notice-manager{padding:20px 16px}.ncn-notice-manager h1{font-size:23px}}
-@media(prefers-reduced-motion:reduce){#ncn-announcement-text{animation:none;padding:0}.ncn-announcement-window{mask-image:none;overflow-x:auto;scrollbar-width:none}#ncn-announcement-pause{display:none}}
+@media(prefers-reduced-motion:reduce){.ncn-announcement-track{animation:none}.ncn-announcement-track [aria-hidden=true]{display:none}#ncn-announcement-text{padding:0}.ncn-announcement-window{mask-image:none;overflow-x:auto;scrollbar-width:none}#ncn-announcement-pause{display:none}}
 @media print{#ncn-announcement,.ncn-notice-manager{display:none!important}.ncn-has-announcements #ncn-site-shell,.ncn-has-announcements>.app{margin-top:0!important}}
