@@ -38,7 +38,7 @@
  .ncn-warehouse-history div{margin-top:13px;padding-top:8px;border-top:1px solid var(--ncn-border)}
  .ncn-warehouse-history p{font-size:12px;line-height:1.85;color:var(--ncn-muted);margin:8px 0}
  #ncn-warehouse-app :is(a,summary):focus-visible{outline:3px solid #78a8e0;outline-offset:4px}
- @media(hover:hover){#ncn-warehouse-app .ncn-warehouse-guide:hover{background:var(--ncn-glass-strong);box-shadow:var(--ncn-shadow-high);translate:0 -2px}.ncn-warehouse-download-link:hover{filter:brightness(1.06)}}
+ @media(hover:hover){body.ncn-warehouse-page #postBody #ncn-warehouse-app .ncn-warehouse-guide:hover{background:var(--ncn-glass-strong);box-shadow:var(--ncn-shadow-high);translate:0 -2px}.ncn-warehouse-download-link:hover{filter:brightness(1.06)}}
  @media(max-width:850px){.ncn-warehouse-grid{grid-template-columns:minmax(0,1fr);gap:22px}.ncn-warehouse-aside{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start}.ncn-warehouse-preview{max-width:420px}}
  @media(max-width:520px){#ncn-warehouse-app .ncn-tool-heading h2{font-size:27px}#ncn-warehouse-app .ncn-warehouse-download{padding:21px}.ncn-warehouse-file-heading{gap:12px}.ncn-warehouse-icon{width:44px;height:44px;border-radius:15px}#ncn-warehouse-app .ncn-warehouse-file-heading h3{font-size:18px}.ncn-warehouse-guides ol{grid-template-columns:minmax(0,1fr);gap:10px}#ncn-warehouse-app .ncn-warehouse-guide{min-height:78px;padding:14px}.ncn-warehouse-aside{grid-template-columns:minmax(0,1fr)}#ncn-warehouse-app .ncn-warehouse-download-link{width:100%}.ncn-warehouse-main{gap:22px}}
  @media(prefers-reduced-motion:reduce){#ncn-warehouse-app .ncn-warehouse-guide{transition:none;translate:none!important}}
