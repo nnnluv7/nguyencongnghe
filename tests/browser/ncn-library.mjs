@@ -56,6 +56,11 @@ try{
     await page.waitForFunction(()=>document.querySelectorAll('#ncn-library-results a').length===1);
     assert.ok((await page.locator('#ncn-library-results a').getAttribute('href')).includes('wps-office'));
     await page.locator('#ncn-library-query').fill('');
+    const labels=await page.locator('#ncn-library-label option').allTextContents();
+    assert.ok(!labels.some(label=>/Fix-Title|Căn giữa tiêu đề|^post$|PrintMWG/.test(label)),'hide template-only flags');
+    await page.locator('#ncn-library-label').selectOption('Phần mềm Windows');
+    const filteredCount=parseInt(await page.locator('#ncn-library-count').innerText(),10);assert.ok(filteredCount>0&&filteredCount<rows.length);
+    await page.locator('#ncn-library-label').selectOption('');
     await page.locator('#ncn-library-next').click();
     assert.match(await page.locator('#ncn-library-page').innerText(),/^Trang 2/);
     await page.setViewportSize({width:390,height:844});await fits();
