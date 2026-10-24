@@ -1,6 +1,7 @@
 /* File kho uses the shared Liquid Glass shell and retains its original resources. */
 @media screen{
  body.ncn-warehouse-page #feed-view{width:100%!important}
+ body.ncn-warehouse-page .item-post-wrap{width:100%!important}
  body.ncn-warehouse-page :is(.item-post-wrap,.post-inner-area,.post-body){padding:0!important;margin:0;background:transparent!important;border:0!important;box-shadow:none!important}
  body.ncn-warehouse-page :is(#breadcrumb,.entry-title,.post-inner-area>.all-flex,.product-header,.label-container,.feed-share,.primary-nav,.post-footer,.comments-section,.below-ads){display:none!important}
  #ncn-warehouse-app{width:100%;max-width:1120px;margin:0 auto;color:var(--ncn-ink)}
