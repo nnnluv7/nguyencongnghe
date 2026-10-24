@@ -1,5 +1,5 @@
 import {copyAt,editCopy} from './preview.js?v=20261015-direct-1';
-import {printHelp,enhancePrintWorkspace} from './workspace.js?v=20261024-compact-1';
+import {printHelp,enhancePrintWorkspace} from './workspace.js?v=20261024-selection-1';
 
 export function createDirectEditor({app,frame,stage,getState,onChange,onSelect,onPage,onPrint,onError,doc=document,win=window}) {
   app.classList.add('ncn-direct-editor');
@@ -129,5 +129,21 @@ export function createDirectEditor({app,frame,stage,getState,onChange,onSelect,o
     frame.srcdoc=html.replace('</head>',screenRules+'</head>').replace('<html ',`<html data-ncn-direct-generation="${generation}" `);
     scale();
   }
-  return {render,scale,flush,bindDocument,syncValues,getZoom:()=>zoom,destroy:()=>{childCleanup();stageObserver?.disconnect();navigation?.destroy();listeners.forEach(fn=>fn());toolbar.remove();}};
+  function open({scroll=true}={}){
+    const workspace=app.querySelector('.st-workspace');if(!workspace)return;
+    // Collapse the catalogue synchronously before calculating the scroll target.
+    // A smooth scroll started against the old, tall catalogue lands at the footer.
+    const catalogue=app.querySelector('.st-catalogue');if(catalogue)catalogue.hidden=true;
+    app.classList.add('ncn-editing');workspace.hidden=false;
+    navigation?.select('paper',{scroll:false});zoom=1;scale();
+    stage.scrollTo?.({top:0,left:0,behavior:'instant'});
+    if(scroll){
+      const rect=workspace.getBoundingClientRect();
+      const space=parseFloat(win.getComputedStyle(doc.documentElement).getPropertyValue('--ncn-chrome-space'))||100;
+      // Switching views should cancel any catalogue animation and start at the
+      // heading, below both fixed bars, rather than preserve the old scroll.
+      win.scrollTo({top:Math.max(0,win.scrollY+rect.top-space-12),behavior:'instant'});
+    }
+  }
+  return {render,open,scale,flush,bindDocument,syncValues,getZoom:()=>zoom,destroy:()=>{childCleanup();stageObserver?.disconnect();navigation?.destroy();listeners.forEach(fn=>fn());toolbar.remove();}};
 }

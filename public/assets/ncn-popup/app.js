@@ -1,6 +1,6 @@
 import {catalogueCard} from '../ncn-theme/cards.js?v=20261016-easy-2';
 import {defaultRow,normalize,normalizeRows,validateForPrint,renderDocument,parseCSV,importTable,sampleCSV,escapeHTML,withHeader,paperSize} from './core.js?v=20261015-direct-1';
-import {createDirectEditor} from '../ncn-direct/editor.js?v=20261024-compact-1';
+import {createDirectEditor} from '../ncn-direct/editor.js?v=20261024-selection-1';
 import {rowsForValidation} from '../ncn-direct/preview.js?v=20261015-direct-1';
 
 export function createPopupApp({app,data,doc=document,win=window,fetcher=fetch}) {
@@ -93,7 +93,7 @@ export function createPopupApp({app,data,doc=document,win=window,fetcher=fetch})
     $('st-size').innerHTML=model.variants.map(v=>`<option value="${v.layout}">${escapeHTML(v.size)}</option>`).join('');
     $('st-size').value=layout.id;$('st-size').disabled=model.variants.length===1;
     showCatalogue();showFields();updatePreview();setURL();status('');
-    if(scroll)scrollTo($('st-workspace'));
+    direct.open({scroll});
   }
 
   function download(contents,type,name) {

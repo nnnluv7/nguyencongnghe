@@ -75,6 +75,30 @@ try{
     assert.ok(ready,'Production must serve this commit before browser checks run');
     console.log('Production assets match the tested source.');
   }
+  for(const width of [1280,390])for(const path of ['/sticker/','/popup-a7/','/popup-a4-a5-a6/','/ban-hang/','/trang-tri/']){
+    await check('model selection starts at the editor: '+path+' '+width,async()=>{
+      await fresh(width,900);await open(path);await page.waitForSelector('[data-model]');
+      const prefix=path==='/ban-hang/'||path==='/trang-tri/'?'nt':'st';
+      for(let repeat=0;repeat<2;repeat++){
+        if(repeat){await page.locator('#'+prefix+'-change-model').click();await page.waitForSelector('.st-catalogue:not([hidden])');}
+        const choice=path==='/sticker/'&&!repeat?page.locator('[data-model="grq"][data-variant="0"]'):page.locator('[data-model]').last();
+        await choice.click();
+        await page.waitForFunction(prefix=>{
+          const workspace=document.getElementById(prefix+'-workspace'),rect=workspace.getBoundingClientRect();
+          const space=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ncn-chrome-space'))||100;
+          return !workspace.hidden&&document.querySelector('.st-catalogue').hidden&&rect.top>=space-4&&rect.top<=space+32;
+        },prefix,{timeout:3000});
+        // Fonts, iframe loading and pending smooth scrolls must not move it again.
+        await page.waitForTimeout(650);
+        const position=await page.locator('#'+prefix+'-workspace').evaluate(node=>({top:node.getBoundingClientRect().top,space:parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ncn-chrome-space'))||100}));
+        assert.ok(position.top>=position.space-4&&position.top<=position.space+32,JSON.stringify(position));
+        const print=await page.locator('.ncn-print-primary').boundingBox();
+        assert.ok(print.y>=0&&print.y+print.height<=900,JSON.stringify(print));
+        assert.equal(await page.locator('.ncn-workspace-paper').isVisible(),true);
+        await noOverflow();
+      }
+    });
+  }
   await fresh();
   await open('/sticker/?mau=ptg&co=1');
   await page.waitForSelector('.ncn-workspace-bar');

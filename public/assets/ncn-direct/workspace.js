@@ -168,10 +168,11 @@ export function enhancePrintWorkspace({workspace,preview,rail,controls,doc=docum
     paper.setAttribute('aria-pressed',String(pane==='paper'));fields.setAttribute('aria-pressed',String(pane==='fields'));
     if(!resizeFrame)resizeFrame=win.requestAnimationFrame(()=>{resizeFrame=0;win.dispatchEvent(new win.Event('resize'));});
   }
-  function select(next,{focus=false}={}){
+  function select(next,{focus=false,scroll=true}={}){
     pane=next==='fields'?'fields':'paper';workspace.dataset.ncnPane=pane;
     if(pane==='fields')rail.querySelectorAll('details.ncn-print-fields').forEach(node=>node.open=true);
     refresh();
+    if(!scroll)return;
     const target=pane==='fields'?rail:preview;
     if(mobile()){
       // Only switch visible panels. Original inputs and their current values remain mounted.
