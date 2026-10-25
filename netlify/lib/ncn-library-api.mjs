@@ -41,6 +41,38 @@ async function body(req){
 }
 function destination(href){try{const u=new URL(href,'https://nguyencongnghe.com');return u.origin+u.pathname.replace(/\/$/,'');}catch{return '';}}
 function assertVersion(current,version){if((current?.version??null)!==(version??null))libraryError(409,'Bài viết vừa thay đổi. Mở lại bài để kiểm tra trước khi lưu.');}
+async function purgeArticle(store,old,index,current,seedItem,data,now){
+  if(!['trash','purging'].includes(current.status))libraryError(409,'Đưa bài vào Thùng rác trước khi xoá vĩnh viễn.');
+  if(data.confirmTitle!==current.title)libraryError(400,'Xác nhận đúng bài viết trước khi xoá vĩnh viễn.');
+  let pending=current;
+  if(current.status==='trash'){
+    pending={...current,status:'purging',pageRemoved:current.kind==='article'||!!seedItem?.managedPage,updatedAt:now,version:randomUUID()};
+    const written=await store.setJSON(KEY,{items:[...index.items.filter(x=>x.id!==current.id),pending]},old?{onlyIfMatch:old.etag}:{onlyIfNew:true});
+    if(!written.modified)libraryError(409,'Bài vừa thay đổi. Tải lại danh sách trước khi xoá.');
+  }
+  // The irreversible state is committed before deleting any body. Restore/save
+  // cannot race a partial cleanup and publish a pointer to a deleted body.
+  try{
+    await store.setJSON('gone-'+current.id,{deleted:true},{onlyIfNew:true});
+    const prefix='body-'+current.id+'-',keys=[];
+    for await(const page of store.list({prefix,paginate:true})){
+      for(const blob of page.blobs){if(typeof blob.key!=='string'||!blob.key.startsWith(prefix))throw Error('Invalid body key');keys.push(blob.key);}
+    }
+    for(let offset=0;offset<keys.length;offset+=10)await Promise.all(keys.slice(offset,offset+10).map(k=>store.delete(k)));
+  }catch{libraryError(503,'Bài đã được gỡ nhưng việc xoá dữ liệu chưa hoàn tất. Bấm Xoá vĩnh viễn lần nữa để tiếp tục.');}
+  for(let attempt=0;attempt<4;attempt++){
+    const latest=await readLibrary(store),record=latest?.data.items.find(x=>x.id===current.id);
+    if(!record||record.status==='purged')return {deleted:true,id:current.id};
+    if(record.status!=='purging'||record.version!==pending.version)libraryError(409,'Trạng thái bài vừa thay đổi. Tải lại danh sách để kiểm tra.');
+    // Legacy IDs need a minimal tombstone or the original seed would reappear.
+    // No title, content, author, body pointer or restore information is retained.
+    const tombstone=seedItem?{id:current.id,kind:'legacy',status:'purged',pageRemoved:!!seedItem.managedPage,updatedAt:now,version:randomUUID()}:null;
+    const items=latest.data.items.filter(x=>x.id!==current.id);if(tombstone)items.push(tombstone);
+    const result=await store.setJSON(KEY,{items},{onlyIfMatch:latest.etag});
+    if(result.modified)return {deleted:true,id:current.id};
+  }
+  libraryError(409,'Danh sách đang được cập nhật. Bấm Xoá vĩnh viễn lần nữa để hoàn tất.');
+}
 function validate(input,current,seedItem,now){
   const kind=current?.kind||input.kind;if(!['legacy','article','link'].includes(kind)||(!seedItem&&kind==='legacy'))libraryError(400,'Chọn loại bài viết hợp lệ.');
   if(current&&input.kind!==current.kind)libraryError(400,'Loại bài đã tạo không thể thay đổi.');
@@ -78,18 +110,21 @@ export function createLibraryHandler(deps){return async req=>{
       return reply({html:await deps.app(view)});
     }
     const store=deps.store(),old=await readLibrary(store),index=old?.data||emptyLibrary(),items=mergedLibrary(deps.seed,index);
-    if(route==='manage'&&method==='GET')return reply({items:items.map(summary)});
+    if(route==='manage'&&method==='GET')return reply({items:items.filter(x=>x.status!=='purged').map(summary)});
     if(route==='detail'&&method==='GET'){
-      const id=key(new URL(req.url).searchParams.get('id')),item=items.find(x=>x.id===id);if(!item)libraryError(404,'Không tìm thấy bài viết.');
-      const markdown=item.bodyKey?await store.get(item.bodyKey,{type:'json'}):null;
-      return reply({item:summary(item),body:markdown?.body||'',originalBody:deps.originalBodies?.[id]||''});
+      const id=key(new URL(req.url).searchParams.get('id')),item=items.find(x=>x.id===id);if(!item||item.status==='purged')libraryError(404,'Không tìm thấy bài viết.');
+      const deleting=item.status==='purging',markdown=!deleting&&item.bodyKey?await store.get(item.bodyKey,{type:'json'}):null;
+      return reply({item:summary(item),body:markdown?.body||'',originalBody:deleting?'':deps.originalBodies?.[id]||''});
     }
-    if(method!=='POST'||!['save','visibility','trash','restore'].includes(route))libraryError(404,'Không tìm thấy chức năng.');
+    if(method!=='POST'||!['save','visibility','trash','restore','purge'].includes(route))libraryError(404,'Không tìm thấy chức năng.');
     const data=await body(req),id=key(data.id),current=items.find(x=>x.id===id),seedItem=deps.seed.find(x=>x.id===id);
+    if(route==='purge'&&(current?.status==='purged'||!current&&await store.get('gone-'+id,{type:'json'})))return reply({deleted:true,id});
     assertVersion(current,data.version);
     if(route!=='save'&&!current)libraryError(404,'Không tìm thấy bài viết.');
     const now=(deps.now?.()||new Date()).toISOString();let next;
+    if(route==='purge')return reply(await purgeArticle(store,old,index,current,seedItem,data,now));
     if(route==='save'){
+      if(['purging','purged'].includes(current?.status)||!current&&await store.get('gone-'+id,{type:'json'}))libraryError(409,'Bài đã xoá vĩnh viễn. Tạo bài mới nếu cần.');
       if(current?.status==='trash')libraryError(409,'Khôi phục bài khỏi Thùng rác trước khi sửa.');
       if(!current&&(!id.startsWith('post-')||index.items.filter(x=>x.kind!=='legacy').length>=MAX_CUSTOM))libraryError(400,'Không thể thêm bài. Kiểm tra mã bài hoặc giới hạn 200 bài mới.');
       next=validate(data,current,seedItem,now);
@@ -107,6 +142,7 @@ export function createLibraryHandler(deps){return async req=>{
       if(!['published','hidden'].includes(current.status))libraryError(409,'Khôi phục hoặc mở bản nháp để đăng bài trước.');
       next={...current,status:current.status==='published'?'hidden':'published',updatedAt:now,version:randomUUID()};
     }else if(route==='trash'){
+      if(['purging','purged'].includes(current.status))libraryError(409,'Bài đang hoặc đã được xoá vĩnh viễn.');
       if(current.status==='trash')libraryError(409,'Bài đã ở trong Thùng rác.');
       if(data.removePage!==undefined&&typeof data.removePage!=='boolean')libraryError(400,'Chọn thao tác gỡ trang hợp lệ.');
       if(data.removePage&&!(current.kind==='article'||seedItem?.managedPage))libraryError(400,'Chỉ có thể gỡ lối tắt của trang công cụ hoặc bài ở website khác.');

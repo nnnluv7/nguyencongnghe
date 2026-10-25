@@ -12,7 +12,7 @@ const origin='https://nguyencongnghe.com',admin={id:'admin',admin:true},vip={id:
 const id='post-12345678-1234-4234-8234-123456789abc';
 export function memoryLibrary(){
   const entries=new Map();let serial=0;
-  return {entries,beforeWrite:null,async get(key){return structuredClone(entries.get(key)?.data??null);},async getWithMetadata(key){return structuredClone(entries.get(key)??null);},async setJSON(key,data,options={}){
+  return {entries,beforeWrite:null,beforeDelete:null,async get(key){return structuredClone(entries.get(key)?.data??null);},async getWithMetadata(key){return structuredClone(entries.get(key)??null);},async *list({prefix}){const keys=[...entries.keys()].filter(k=>k.startsWith(prefix));for(let i=0;i<keys.length;i+=2)yield {blobs:keys.slice(i,i+2).map(key=>({key}))};},async delete(key){if(this.beforeDelete)await this.beforeDelete(key);entries.delete(key);},async setJSON(key,data,options={}){
     if(this.beforeWrite){const hook=this.beforeWrite;this.beforeWrite=null;await hook(key);}
     const old=entries.get(key);if(options.onlyIfNew&&old||options.onlyIfMatch&&old?.etag!==options.onlyIfMatch)return {modified:false};
     entries.set(key,{data:structuredClone(data),etag:'"'+(++serial)+'"'});return {modified:true};
@@ -50,7 +50,7 @@ test('guest and VIP cannot read private screens or forge ADMIN in a write',async
   for(const user of [null,vip,{id:'member',user_metadata:{roles:['admin']}}]){
     const f=fixture({user});
     for(const route of ['app','app&view=library','manage','detail&id='+seed[0].id])assert.equal((await call(f,route)).status,user?403:401,route);
-    for(const route of ['save','visibility','trash','restore'])assert.equal((await call(f,route,{...input(),admin:true,user:admin})).status,user?403:401,route);
+    for(const route of ['save','visibility','trash','restore','purge'])assert.equal((await call(f,route,{...input(),admin:true,user:admin})).status,user?403:401,route);
     assert.equal(f.store.entries.size,0);assert.equal((await call(f,'list')).status,200);
   }
 });
@@ -163,4 +163,78 @@ test('original public URLs work when the platform retains the pre-rewrite reques
   const f=fixture(),item=seed.find(x=>x.managedPage);
   for(const path of ['/','/index.html','/thu-vien/','/thu-vien/index.html',item.href,item.href.replace(/\.html$/,''),item.href.replace(/\.html$/,'/')])assert.equal((await f.page(new Request(origin+path))).status,200,path);
   const saved=await call(f,'save',input());assert.equal((await f.page(new Request(origin+saved.body.item.href))).status,200);
+});
+
+test('permanent deletion requires trash, current version and explicit confirmation of the selected title',async()=>{
+  const f=fixture(),saved=await call(f,'save',input());
+  assert.equal((await call(f,'purge',{id,version:saved.body.item.version,confirmTitle:saved.body.item.title})).status,409);
+  const trashed=await call(f,'trash',{id,version:saved.body.item.version});
+  assert.equal((await call(f,'purge',{id,version:trashed.body.item.version})).status,400);
+  assert.equal((await call(f,'purge',{id,version:saved.body.item.version,confirmTitle:saved.body.item.title})).status,409);
+  assert.equal((await call(f,'purge',{id,version:trashed.body.item.version,confirmTitle:saved.body.item.title},{origin:'https://other.example'})).status,403);
+  assert.ok([...f.store.entries.keys()].some(k=>k.startsWith('body-'+id+'-')));
+  assert.equal((await call(f,'detail&id='+id)).body.item.status,'trash');
+});
+test('permanent deletion removes every content revision and cannot restore or recreate the old ID',async()=>{
+  const f=fixture();let saved=await call(f,'save',input());const slug=saved.body.item.slug;
+  for(let n=0;n<4;n++)saved=await call(f,'save',input({version:saved.body.item.version,body:'Revision '+n}));
+  const other='post-87654321-1234-4234-8234-123456789abc';await call(f,'save',input({id:other,title:'Other item'}));
+  const trashed=await call(f,'trash',{id,version:saved.body.item.version});
+  const data={id,version:trashed.body.item.version,confirmTitle:saved.body.item.title},deleted=await call(f,'purge',data);assert.equal(deleted.status,200);
+  assert.equal([...f.store.entries.keys()].filter(k=>k.startsWith('body-'+id+'-')).length,0);
+  assert.ok([...f.store.entries.keys()].some(k=>k.startsWith('body-'+other+'-')));
+  assert.equal((await call(f,'manage')).body.items.some(x=>x.id===id),false);
+  assert.equal((await call(f,'detail&id='+id)).status,404);assert.equal((await page(f,'slug='+slug)).status,404);
+  assert.equal((await call(f,'restore',{id,version:trashed.body.item.version})).status,409);
+  assert.equal((await call(f,'save',input())).status,409);assert.equal((await call(f,'purge',data)).status,200);
+  assert.equal(f.store.entries.get('index').data.items.some(x=>x.id===id),false);
+});
+test('legacy permanent deletion blocks the original URL and aliases without deleting GitHub source files',async()=>{
+  const f=fixture(),item=seed.find(x=>x.id==='legacy-b1a4f4e54bd52f43'),original=read('public/'+item.sourcePath);
+  const trashed=await call(f,'trash',{id:item.id,version:null,removePage:false});assert.equal((await page(f,'legacy='+item.id)).status,200);
+  assert.equal((await call(f,'purge',{id:item.id,version:trashed.body.item.version,confirmTitle:item.title})).status,200);
+  for(const href of [item.href,item.href.replace(/\.html$/,''),item.href.replace(/\.html$/,'/')])assert.equal((await f.page(new Request(origin+href))).status,410,href);
+  const marker=f.store.entries.get('index').data.items.find(x=>x.id===item.id);
+  assert.deepEqual(Object.keys(marker).sort(),['id','kind','pageRemoved','status','updatedAt','version']);
+  assert.equal((await call(f,'manage')).body.items.some(x=>x.id===item.id),false);
+  assert.equal((await call(f,'list')).body.items.some(x=>x.link===item.href),false);
+  assert.equal((await call(f,'restore',{id:item.id,version:marker.version})).status,409);
+  assert.equal((await call(f,'save',{...item,version:marker.version,status:'published',mode:'original'})).status,409);
+  assert.equal(read('public/'+item.sourcePath),original);
+});
+test('permanent deletion of tool shortcuts and external links does not delete the destination',async()=>{
+  const f=fixture(),tool=seed.find(x=>x.href==='/2024/01/in-fifo.html'),original=read('public'+tool.href);
+  const trashed=await call(f,'trash',{id:tool.id,version:null,removePage:false});
+  assert.equal((await call(f,'purge',{id:tool.id,version:trashed.body.item.version,confirmTitle:tool.title})).status,200);
+  assert.equal(read('public'+tool.href),original);assert.equal(read('public/_redirects').includes(tool.href+'  /.netlify/functions/ncn-library-page'),false);
+  const link=await call(f,'save',input({kind:'link',href:'https://example.com/file.xlsx'})),removed=await call(f,'trash',{id,version:link.body.item.version});
+  assert.equal((await call(f,'purge',{id,version:removed.body.item.version,confirmTitle:link.body.item.title})).status,200);
+  assert.equal((await call(f,'manage')).body.items.some(x=>x.id===id||x.id===tool.id),false);
+});
+test('a competing restore prevents a stale purge before any content is erased',async()=>{
+  const f=fixture(),saved=await call(f,'save',input()),trashed=await call(f,'trash',{id,version:saved.body.item.version});
+  f.store.beforeWrite=async key=>{assert.equal(key,'index');assert.equal((await call(f,'restore',{id,version:trashed.body.item.version})).status,200);};
+  const result=await call(f,'purge',{id,version:trashed.body.item.version,confirmTitle:saved.body.item.title});assert.equal(result.status,409);
+  assert.equal((await page(f,'slug='+saved.body.item.slug)).status,200);assert.ok([...f.store.entries.keys()].some(k=>k.startsWith('body-'+id+'-')));
+  assert.equal(f.store.entries.has('gone-'+id),false);
+});
+test('interrupted cleanup cannot publish deleted content and can be safely retried',async()=>{
+  const f=fixture();let saved=await call(f,'save',input());saved=await call(f,'save',input({version:saved.body.item.version,body:'Second revision'}));
+  const trashed=await call(f,'trash',{id,version:saved.body.item.version});let failed=false;
+  f.store.beforeDelete=async()=>{if(!failed){failed=true;throw Error('Transient storage failure');}};
+  const result=await call(f,'purge',{id,version:trashed.body.item.version,confirmTitle:saved.body.item.title});assert.equal(result.status,503);
+  const pending=await call(f,'detail&id='+id);assert.equal(pending.body.item.status,'purging');assert.equal(pending.body.body,'');assert.equal(pending.body.originalBody,'');
+  assert.equal((await page(f,'slug='+saved.body.item.slug)).status,410);
+  assert.equal((await call(f,'restore',{id,version:pending.body.item.version})).status,409);
+  assert.equal((await call(f,'save',input({version:pending.body.item.version}))).status,409);
+  assert.equal((await call(f,'purge',{id,version:pending.body.item.version,confirmTitle:pending.body.item.title})).status,200);
+  assert.equal([...f.store.entries.keys()].filter(k=>k.startsWith('body-'+id+'-')).length,0);
+});
+test('final cleanup preserves unrelated updates and deletion frees the active article slot',async()=>{
+  const f=fixture(),saved=await call(f,'save',input()),trashed=await call(f,'trash',{id,version:saved.body.item.version});
+  const other='post-87654321-1234-4234-8234-123456789abc';let updated=false;
+  f.store.beforeDelete=async()=>{if(!updated){updated=true;assert.equal((await call(f,'save',input({id:other,title:'Concurrent article'}))).status,200);}};
+  assert.equal((await call(f,'purge',{id,version:trashed.body.item.version,confirmTitle:saved.body.item.title})).status,200);
+  assert.equal((await call(f,'manage')).body.items.some(x=>x.id===other&&x.title==='Concurrent article'),true);
+  assert.equal(f.store.entries.get('index').data.items.filter(x=>x.kind!=='legacy').length,1);
 });

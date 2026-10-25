@@ -25,6 +25,26 @@ Original repository files are retained, so selecting the original-content mode
 also recovers the source content after an Admin has written a replacement.
 External sites are never deleted by removing a link entry.
 
+### Permanent deletion
+
+Items in Trash have an **Xoá vĩnh viễn** action with a named confirmation dialog.
+It deletes every website-stored body revision and removes the item from both the
+Library and Trash. Managed legacy article routes and their aliases then return
+410; a deleted custom article returns 404. Tool shortcuts and external links
+remove only the Library entry. Repository HTML, GitHub history, shared assets and
+files hosted by other websites are retained; the dialog states this explicitly.
+
+Permanent deletion first conditionally marks the item `purging`, blocking public
+content, restoration and edits. Content cleanup runs only after that commit.
+An interrupted cleanup remains visible in Trash with a retry action, and final
+index writes preserve concurrent changes to other items. Legacy items retain a
+minimal `purged` marker to prevent the baseline catalogue from resurrecting them.
+A content-free `gone-ID` marker prevents reuse of a deleted custom ID; custom
+records leave the index after cleanup and free their article slot. This action
+requires fresh ADMIN verification, same-origin POST, the selected item version
+and confirmation of its current title. No production articles are deleted by
+deploying this feature.
+
 ## Server boundary
 
 The existing Netlify Identity verification reads server `app_metadata.roles`.

@@ -1,6 +1,7 @@
 import {escapeHTML,renderMarkdown,safeURL} from '../ncn-library/content.js?v=20261025-admin-1';
 
-const statuses={published:'Đang hiện',hidden:'Đang ẩn',draft:'Bản nháp',trash:'Thùng rác'};
+const statuses={published:'Đang hiện',hidden:'Đang ẩn',draft:'Bản nháp',trash:'Thùng rác',purging:'Cần hoàn tất xoá'};
+const inTrash=item=>['trash','purging'].includes(item?.status);
 const fold=value=>String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/gi,'d').toLowerCase();
 export function mountLibraryAdmin({host,api,doc=document,win=window}){
   const $=id=>host.querySelector('#'+id),listeners=[];
@@ -12,10 +13,11 @@ export function mountLibraryAdmin({host,api,doc=document,win=window}){
     return {id:selected?.id||draftId,version:selected?.version??null,kind,mode,title:$('nl-title').value.trim(),summary:$('nl-summary').value.trim(),image:$('nl-image').value.trim(),labels:$('nl-labels').value.split(',').map(x=>x.trim()).filter(Boolean),status:$('nl-state').value,href:$('nl-href').value.trim(),body:mode==='markdown'?$('nl-body').value:''};
   }
   function controls(){
-    const trash=selected?.status==='trash';
+    const trash=inTrash(selected);
     $('nl-form').querySelectorAll('input,select,textarea,button').forEach(node=>node.disabled=busy||trash);
     $('nl-kind').disabled=busy||!!selected;
-    $('nl-restore').disabled=busy;$('nl-restore').hidden=!trash;
+    $('nl-restore').disabled=busy;$('nl-restore').hidden=selected?.status!=='trash';
+    $('nl-purge').disabled=busy;$('nl-purge').hidden=!trash;$('nl-purge').textContent=selected?.status==='purging'?'Thử xoá vĩnh viễn':'Xoá vĩnh viễn';
     $('nl-save').hidden=trash;$('nl-trash').hidden=!selected||trash;
     $('nl-visibility').hidden=!selected||!['published','hidden'].includes(selected.status);
     $('nl-visibility').textContent=selected?.status==='published'?'Ẩn khỏi Thư viện':'Hiện trong Thư viện';
@@ -28,7 +30,7 @@ export function mountLibraryAdmin({host,api,doc=document,win=window}){
     $('nl-state').querySelector('[value=draft]').disabled=kind==='legacy';
     $('nl-href').readOnly=kind!=='link';$('nl-href').required=kind==='link';
     $('nl-href-help').textContent=kind==='link'?'Đường dẫn của bài viết trên website hoặc trang khác.':kind==='legacy'?'Đường dẫn gốc được giữ nguyên.':'Đường dẫn được tạo tự động khi lưu bài.';
-    $('nl-open').hidden=!selected||selected.status==='draft'||selected.status==='trash'&&selected.pageRemoved;
+    $('nl-open').hidden=!selected||selected.status==='draft'||inTrash(selected)&&selected.pageRemoved;
   }
   function preview(){
     const input=collect(),image=safeURL(input.image);
@@ -38,9 +40,9 @@ export function mountLibraryAdmin({host,api,doc=document,win=window}){
   const discard=()=>!dirty||win.confirm('Anh có thay đổi chưa lưu. Chuyển bài và bỏ những thay đổi này?');
   function list(){
     const query=fold($('nl-search').value),filter=$('nl-filter').value;
-    const rows=items.filter(item=>(filter==='all'?item.status!=='trash':item.status===filter)&&fold(item.title+' '+item.labels.join(' ')).includes(query));
+    const rows=items.filter(item=>(filter==='all'?!inTrash(item):filter==='trash'?inTrash(item):item.status===filter)&&fold(item.title+' '+item.labels.join(' ')).includes(query));
     rows.sort((a,b)=>(Date.parse(b.updatedAt||b.datetime)||0)-(Date.parse(a.updatedAt||a.datetime)||0));
-    $('nl-count').textContent=rows.length+' mục · '+items.filter(x=>x.status==='trash').length+' trong Thùng rác';
+    $('nl-count').textContent=rows.length+' mục · '+items.filter(inTrash).length+' trong Thùng rác';
     $('nl-list').innerHTML=rows.map(item=>'<button type="button" class="nl-list-item" data-article-id="'+escapeHTML(item.id)+'" aria-pressed="'+(selected?.id===item.id)+'"><span>'+escapeHTML(item.title)+'</span><small>'+escapeHTML(statuses[item.status])+' · '+escapeHTML(item.labels[0]||'Chưa phân loại')+'</small></button>').join('')||'<p class="na-muted nl-list-empty">Chưa có bài trong mục này.</p>';
     $('nl-categories').innerHTML=[...new Set(items.flatMap(x=>x.labels))].sort((a,b)=>a.localeCompare(b,'vi')).map(name=>'<option value="'+escapeHTML(name)+'"></option>').join('');
     controls();
@@ -49,9 +51,9 @@ export function mountLibraryAdmin({host,api,doc=document,win=window}){
   function fill(item=null,body='',original=''){
     selected=item;draftId=item?.id||'post-'+win.crypto.randomUUID();
     $('nl-kind').value=item?.kind||'article';$('nl-title').value=item?.title||'';$('nl-summary').value=item?.summary||'';$('nl-image').value=item?.image||'';
-    $('nl-labels').value=(item?.labels||[]).join(', ');$('nl-state').value=item?.status==='trash'?(item.previousStatus||'published'):item?.status||'draft';
+    $('nl-labels').value=(item?.labels||[]).join(', ');$('nl-state').value=inTrash(item)?(item.previousStatus||'published'):item?.status||'draft';
     $('nl-mode').value=item?.mode==='markdown'?'markdown':'original';$('nl-body').value=body||original;$('nl-href').value=item?.href||'';
-    $('nl-editor-title').textContent=!item?'Thêm bài viết':item.status==='trash'?'Bài trong Thùng rác':'Chỉnh sửa bài viết';
+    $('nl-editor-title').textContent=!item?'Thêm bài viết':inTrash(item)?'Bài trong Thùng rác':'Chỉnh sửa bài viết';
     $('nl-source').textContent=!item?'Bài mới':item.kind==='legacy'?(item.managedPage?'Bài đã có trên website':'Lối tắt công cụ'):item.kind==='link'?'Bài liên kết':'Bài viết trên website';
     $('nl-open').href=item?.href||'/thu-vien/';$('nl-preview').hidden=true;$('nl-preview-toggle').setAttribute('aria-expanded','false');
     snapshot=JSON.stringify(collect());dirty=false;list();controls();
@@ -61,7 +63,7 @@ export function mountLibraryAdmin({host,api,doc=document,win=window}){
     const result=await api('detail',null,{id});if(disposed||generation!==epoch)return;
     fill(result.item,result.body,result.originalBody);
     const url=new URL(win.location.href);url.searchParams.set('id',id);win.history.replaceState(null,'',url);
-    message(result.item.status==='trash'?'Bài đang trong Thùng rác. Chọn Khôi phục để đưa bài trở lại.':'Đã mở bài viết.');
+    message(result.item.status==='purging'?'Bài đã được gỡ. Bấm Thử xoá vĩnh viễn để hoàn tất xoá dữ liệu.':result.item.status==='trash'?'Bài đang trong Thùng rác. Chọn Khôi phục để đưa bài trở lại.':'Đã mở bài viết.');
   }
   async function run(action){
     if(busy||disposed)return;busy=true;controls();
@@ -89,6 +91,36 @@ export function mountLibraryAdmin({host,api,doc=document,win=window}){
   listen($('nl-remove-page'),'change',trashHelp);listen($('nl-trash-cancel'),'click',()=>trashDialog.close());
   listen($('nl-trash-confirm'),'click',()=>{trashDialog.close();run(async()=>{const result=await api('trash',{id:selected.id,version:selected.version,removePage:$('nl-remove-page').checked});await refresh();await edit(result.item.id,{force:true});announce();message('Đã đưa bài vào Thùng rác. Anh có thể khôi phục khi cần.');});});
   listen($('nl-restore'),'click',()=>run(async()=>{const result=await api('restore',{id:selected.id,version:selected.version});await refresh();await edit(result.item.id,{force:true});announce();message('Đã khôi phục bài viết và trạng thái trước khi xoá.');}));
+  const purgeDialog=$('nl-purge-dialog');let purgeTarget=null;
+  function finishPurge(target){
+    if(disposed)return;++epoch;items=items.filter(x=>x.id!==target.id);fill();
+    const url=new URL(win.location.href);url.searchParams.delete('id');win.history.replaceState(null,'',url);
+    announce();message('Đã xoá vĩnh viễn “'+target.title+'” khỏi Thư viện và Thùng rác.');$('nl-search').focus({preventScroll:true});
+  }
+  listen($('nl-purge'),'click',()=>{
+    if(busy||!inTrash(selected)||!discard())return;
+    purgeTarget={id:selected.id,version:selected.version,title:selected.title};$('nl-purge-name').textContent=selected.title;
+    $('nl-purge-help').textContent=selected.kind==='article'?'Xoá bài khỏi Thư viện, Thùng rác và toàn bộ các bản nội dung đã lưu trên website.':selected.kind==='link'?'Xoá mục liên kết khỏi Thư viện và Thùng rác. Trang hoặc tệp ở website đích không bị xoá.':selected.managedPage?'Xoá bài khỏi Thư viện và Thùng rác, ngừng phục vụ trang bài viết trên website và xoá các bản nội dung đã sửa tại đây.':'Xoá lối tắt khỏi Thư viện và Thùng rác. Trang công cụ vẫn hoạt động bình thường.';
+    purgeDialog.showModal();
+  });
+  listen($('nl-purge-cancel'),'click',()=>purgeDialog.close());
+  listen(purgeDialog,'close',()=>{if(!purgeDialog.open)purgeTarget=null;});
+  listen($('nl-purge-confirm'),'click',()=>{
+    const target=purgeTarget;if(!target||busy)return;purgeDialog.close();
+    run(async()=>{
+      try{
+        await api('purge',{id:target.id,version:target.version,confirmTitle:target.title});if(disposed)return;
+      }catch(error){
+        if(!disposed){
+          let refreshed=false;await refresh().then(()=>refreshed=true).catch(()=>{});
+          if(refreshed&&!items.some(x=>x.id===target.id)){finishPurge(target);return;}
+          if(items.some(x=>x.id===target.id))await edit(target.id,{force:true}).catch(()=>{});announce();
+        }
+        throw error;
+      }
+      finishPurge(target);await refresh().catch(()=>{});
+    });
+  });
   listen(host,'click',event=>{
     const button=event.target.closest('[data-format]');if(!button)return;
     const field=$('nl-body'),start=field.selectionStart,end=field.selectionEnd,text=field.value.slice(start,end)||'nội dung';
@@ -97,5 +129,5 @@ export function mountLibraryAdmin({host,api,doc=document,win=window}){
   });
   const beforeUnload=event=>{if(dirty){event.preventDefault();event.returnValue='';}};win.addEventListener('beforeunload',beforeUnload);
   fill();run(async()=>{await refresh();const id=new URL(win.location.href).searchParams.get('id');if(id)await edit(id,{force:true});else message('Thư viện đã sẵn sàng. Chọn bài để sửa hoặc thêm bài viết mới.');});
-  return {destroy(){disposed=true;++epoch;listeners.forEach(remove=>remove());win.removeEventListener('beforeunload',beforeUnload);if(trashDialog.open)trashDialog.close();}};
+  return {destroy(){disposed=true;++epoch;listeners.forEach(remove=>remove());win.removeEventListener('beforeunload',beforeUnload);if(trashDialog.open)trashDialog.close();if(purgeDialog.open)purgeDialog.close();}};
 }

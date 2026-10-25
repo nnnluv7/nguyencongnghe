@@ -12,8 +12,8 @@ await mkdir(out,{recursive:true});
 const read=path=>readFile(path,'utf8');
 const seed=JSON.parse(await read('netlify/lib/ncn-library/seed.json'));
 const originalBodies=JSON.parse(await read('netlify/lib/ncn-library/original-markdown.json'));
-const entries=new Map();let serial=0;
-const store={async get(key){return structuredClone(entries.get(key)?.data??null);},async getWithMetadata(key){return structuredClone(entries.get(key)??null);},async setJSON(key,data,options={}){
+const entries=new Map();let serial=0,failDelete=false,losePurgeReply=false;
+const store={async get(key){return structuredClone(entries.get(key)?.data??null);},async getWithMetadata(key){return structuredClone(entries.get(key)??null);},async *list({prefix}){yield {blobs:[...entries.keys()].filter(k=>k.startsWith(prefix)).map(key=>({key}))};},async delete(key){if(failDelete){failDelete=false;throw Error('Fixture cleanup interruption');}entries.delete(key);},async setJSON(key,data,options={}){
   const old=entries.get(key);if(options.onlyIfNew&&old||options.onlyIfMatch&&old?.etag!==options.onlyIfMatch)return {modified:false};
   entries.set(key,{data:structuredClone(data),etag:'"'+(++serial)+'"'});return {modified:true};
 }};
@@ -50,7 +50,7 @@ async function context(){
       if(action==='logout')return reply({});
       throw Error('Unmocked Identity action '+action);
     }
-    if(url.pathname==='/.netlify/functions/ncn-library')return respond(await handler(req));
+    if(url.pathname==='/.netlify/functions/ncn-library'){const response=await handler(req);if(losePurgeReply&&url.searchParams.get('route')==='purge'&&response.ok){losePurgeReply=false;return route.abort('failed');}return respond(response);}
     if(url.pathname==='/.netlify/functions/ncn-billing')return reply({user});
     if(url.pathname==='/.netlify/functions/ncn-announcements')return reply({items:[],admin:!!user?.admin});
     if(url.pathname==='/.netlify/functions/ncn-visitors')return reply({total:1,online:1});
@@ -148,6 +148,18 @@ try{
     assert.equal((await reader.goto(origin+newArticle)).status(),410);await editor.locator('#nl-restore').click();await saved(editor,/Đã khôi phục/);assert.equal((await reader.goto(origin+newArticle)).status(),200);
     assert.match(await reader.locator('#postBody').innerText(),/đầy đủ dấu/);
   });
+  await check('permanent deletion offers cancellation, removes all hosted revisions and cannot restore the article',async()=>{
+    assert.equal(await editor.locator('#nl-purge').isVisible(),false);
+    await editor.locator('#nl-trash').click();await editor.locator('#nl-trash-confirm').click();await saved(editor,/Đã đưa bài/);
+    await editor.locator('#nl-filter').selectOption('trash');const id=new URL(editor.url()).searchParams.get('id');
+    assert.ok([...entries.keys()].filter(k=>k.startsWith('body-'+id+'-')).length>=2);
+    await editor.locator('#nl-purge').click();await editor.locator('#nl-purge-dialog[open]').waitFor();assert.match(await editor.locator('#nl-purge-dialog').innerText(),/GitHub vẫn được giữ/);
+    await editor.locator('#nl-purge-cancel').click();assert.equal(await editor.locator('#nl-restore').isVisible(),true);assert.equal((await reader.goto(origin+newArticle)).status(),410);
+    await editor.locator('#nl-purge').click();await editor.locator('#nl-purge-confirm').click();await saved(editor,/Đã xoá vĩnh viễn/);
+    assert.equal(new URL(editor.url()).searchParams.has('id'),false);assert.equal(await editor.locator('[data-article-id="'+id+'"]').count(),0);
+    assert.equal([...entries.keys()].filter(k=>k.startsWith('body-'+id+'-')).length,0);assert.equal((await reader.goto(origin+newArticle)).status(),404);
+    assert.equal(await editor.locator('#nl-restore').isVisible(),false);assert.equal(await editor.locator('#nl-purge').isVisible(),false);
+  });
   const original=seed.find(x=>x.managedPage&&x.href.includes('wps-office'));
   await check('removing a legacy library entry leaves its original article available',async()=>{
     await editor.locator('#nl-filter').selectOption('all');await choose(editor,original);await editor.locator('#nl-trash').click();assert.equal(await editor.locator('#nl-remove-page').isChecked(),false);await editor.locator('#nl-trash-confirm').click();await saved(editor,/Đã đưa bài/);
@@ -157,6 +169,33 @@ try{
     await editor.locator('#nl-trash').click();await editor.locator('#nl-remove-page').check();await editor.locator('#nl-trash-confirm').click();await saved(editor,/Đã đưa bài/);
     for(const path of [original.href,original.href.replace(/\.html$/,''),original.href.replace(/\.html$/,'/')])assert.equal((await reader.goto(origin+path)).status(),410,path);
     await editor.locator('#nl-restore').click();await saved(editor,/Đã khôi phục/);assert.equal((await reader.goto(origin+original.href)).status(),200);
+  });
+  await check('permanent deletion of the pictured legacy page explains GitHub and removes it from trash and every route alias',async()=>{
+    const sm=seed.find(x=>x.id==='legacy-b1a4f4e54bd52f43');await choose(editor,sm);
+    await editor.locator('#nl-trash').click();await editor.locator('#nl-trash-confirm').click();await saved(editor,/Đã đưa bài/);
+    assert.equal((await reader.goto(origin+sm.href)).status(),200);await editor.locator('#nl-filter').selectOption('trash');
+    await editor.locator('#nl-purge').click();assert.match(await editor.locator('#nl-purge-name').innerText(),/SM V7/);await fits(editor);
+    await editor.screenshot({path:out+'/permanent-delete-desktop.jpg',type:'jpeg',quality:85});await editor.locator('#nl-purge-cancel').click();
+    await editor.setViewportSize({width:390,height:844});await editor.evaluate(()=>window.NCN_APPEARANCE.set('dark',true));await editor.locator('#nl-purge').click();await fits(editor);
+    const box=await editor.locator('#nl-purge-dialog').boundingBox();assert.ok(box.x>=0&&box.x+box.width<=391&&box.height<=818,JSON.stringify(box));
+    await editor.screenshot({path:out+'/permanent-delete-phone-dark.jpg',type:'jpeg',quality:85});await editor.locator('#nl-purge-confirm').click();await saved(editor,/Đã xoá vĩnh viễn/);
+    for(const path of [sm.href,sm.href.replace(/\.html$/,''),sm.href.replace(/\.html$/,'/')])assert.equal((await reader.goto(origin+path)).status(),410,path);
+    assert.equal(await editor.locator('[data-article-id="'+sm.id+'"]').count(),0);assert.ok((await read('public/'+sm.sourcePath)).includes('ncn-library-detail'));
+    await editor.setViewportSize({width:1280,height:900});await editor.evaluate(()=>window.NCN_APPEARANCE.set('light',true));await editor.locator('#nl-filter').selectOption('all');
+  });
+  await check('an interrupted permanent deletion stays removed and offers a safe retry',async()=>{
+    await editor.locator('#nl-new').click();await editor.locator('#nl-search').fill('');await editor.locator('#nl-title').fill('Bài xoá lại thử nghiệm');await editor.locator('#nl-body').fill('Chỉ có trong bộ nhớ thử nghiệm.');await editor.locator('#nl-state').selectOption('published');
+    await editor.locator('#nl-save').click();await saved(editor,/Đã lưu và cập nhật/);const href=await editor.locator('#nl-href').inputValue();
+    await editor.locator('#nl-trash').click();await editor.locator('#nl-trash-confirm').click();await saved(editor,/Đã đưa bài/);
+    failDelete=true;await editor.locator('#nl-purge').click();await editor.locator('#nl-purge-confirm').click();await saved(editor,/xoá dữ liệu chưa hoàn tất/);
+    assert.equal(await editor.locator('#nl-restore').isVisible(),false);assert.match(await editor.locator('#nl-purge').innerText(),/Thử xoá vĩnh viễn/);assert.equal((await reader.goto(origin+href)).status(),410);
+    await editor.locator('#nl-purge').click();await editor.locator('#nl-purge-confirm').click();await saved(editor,/Đã xoá vĩnh viễn/);assert.equal((await reader.goto(origin+href)).status(),404);
+  });
+  await check('a lost success response still clears the deleted selection instead of offering restore',async()=>{
+    await editor.locator('#nl-new').click();await editor.locator('#nl-title').fill('Bài mất phản hồi thử nghiệm');await editor.locator('#nl-body').fill('Dữ liệu giả để kiểm tra mất kết nối.');await editor.locator('#nl-state').selectOption('published');await editor.locator('#nl-save').click();await saved(editor,/Đã lưu và cập nhật/);
+    const href=await editor.locator('#nl-href').inputValue();await editor.locator('#nl-trash').click();await editor.locator('#nl-trash-confirm').click();await saved(editor,/Đã đưa bài/);
+    losePurgeReply=true;await editor.locator('#nl-purge').click();await editor.locator('#nl-purge-confirm').click();await saved(editor,/Đã xoá vĩnh viễn/);
+    assert.equal(await editor.locator('#nl-restore').isVisible(),false);assert.equal(new URL(editor.url()).searchParams.has('id'),false);assert.equal((await reader.goto(origin+href)).status(),404);assert.equal(await editor.locator('#nl-status').evaluate(n=>n.classList.contains('na-error')),false);
   });
   const tool=seed.find(x=>x.href==='/2024/01/in-fifo.html');
   await check('print tools expose listing controls without an option to overwrite or remove the tool',async()=>{
