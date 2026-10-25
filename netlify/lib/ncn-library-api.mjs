@@ -20,7 +20,7 @@ export function mergedLibrary(seed,index){
 export function publicCatalog(seed,index){
   return mergedLibrary(seed,index).filter(item=>item.status==='published').map(item=>({
     title:item.title,link:item.href,thumbnail:item.image?{src:item.image,type:'image'}:null,labels:item.labels,
-    datetime:item.datetime,summary:item.summary,isPage:!!item.isPage,isArticle:item.kind!=='legacy'||!!item.managedPage&&!item.isPage,author:'NCN',date:''
+    datetime:item.datetime,summary:item.summary,featured:!!item.featured,isPage:!!item.isPage,isArticle:item.kind!=='legacy'||!!item.managedPage&&!item.isPage,author:'NCN',date:''
   }));
 }
 function summary(item){
@@ -88,7 +88,9 @@ function validate(input,current,seedItem,now){
   const slug=current?.slug||(kind==='article'?slugify(title)+'-'+input.id.slice(5,13):null);
   const href=kind==='legacy'?seedItem.href:kind==='article'?'/bai-viet/'+slug+'/':url(input.href,'Đường dẫn bài viết',true);
   const firstPublishedAt=current?.firstPublishedAt||(current&&current.status!=='draft'?current.datetime:null)||(input.status==='published'?now:null);
+  if(input.featured!==undefined&&typeof input.featured!=='boolean')libraryError(400,'Chọn nội dung nổi bật hợp lệ.');
   return {id:input.id,kind,title,summary:excerpt,image,labels,status:input.status,mode,href,slug,
+    featured:input.featured??current?.featured??false,
     managedPage:kind==='article'||!!seedItem?.managedPage,isPage:current?.isPage??false,
     datetime:firstPublishedAt||current?.datetime||now,firstPublishedAt,updatedAt:now,version:randomUUID(),pageRemoved:false,content};
 }

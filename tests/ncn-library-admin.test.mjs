@@ -19,6 +19,14 @@ export function memoryLibrary(){
   }};
 }
 const input=(overrides={})=>({id,version:null,kind:'article',mode:'markdown',title:'Bài viết mới',summary:'Mô tả ngắn',image:'',labels:['Hướng dẫn'],status:'published',body:'## Nội dung\nBài viết **tiếng Việt**.',...overrides});
+
+test('Admin can feature a published item, preserve the flag with older editors, and hide it with the article',async()=>{
+  const f=fixture(),saved=await call(f,'save',input({featured:true}));assert.equal(saved.status,200);assert.equal(saved.body.item.featured,true);
+  assert.equal((await call(f,'list')).body.items.find(x=>x.title==='Bài viết mới').featured,true);
+  const edited=await call(f,'save',input({version:saved.body.item.version}));assert.equal(edited.body.item.featured,true);
+  assert.equal((await call(f,'save',input({version:edited.body.item.version,featured:'yes'}))).status,400);
+  await call(f,'visibility',{id,version:edited.body.item.version});assert.equal((await call(f,'list')).body.items.some(x=>x.title==='Bài viết mới'),false);
+});
 function fixture({user=admin,production=true,now}={}){
   const store=memoryLibrary();
   const deps={seed,originalBodies,now,store:()=>store,production:()=>production,verify:async()=>user,app:async view=>read('netlify/lib/ncn-library/admin-'+(view==='library'?'library':'hub')+'.html')};

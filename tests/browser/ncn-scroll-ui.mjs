@@ -14,6 +14,7 @@ const server=createServer(async(req,res)=>{
   try{
     const url=new URL(req.url,'http://127.0.0.1');
     if(url.pathname.startsWith('/.netlify/functions/')){
+      if(url.pathname.endsWith('ncn-stories')){res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify({items:[]}));return;}
       if(url.pathname.endsWith('ncn-library')&&url.searchParams.get('route')==='list'){res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify({items:publicCatalog(seedLibraryForFixture)}));return;}
       const body=url.pathname.endsWith('ncn-announcements')?{items:[{id:'qa',text:'NCN · Kiểm tra giao diện cuộn và nhập liệu'}]}:{total:123,online:1};
       res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify(body));return;

@@ -109,7 +109,8 @@ if(typeof window!=='undefined'&&typeof document!=='undefined')installAppearance(
 <script src="/assets/site-config.js"></script><script src="/assets/catalog.js"></script><script src="/assets/js/2ef0baed16077abedf.js"></script><script src="/assets/vendor/8ec8dce35a344a43af.js" type="text/javascript"></script><script src="/assets/site-bridge.js"></script><!-- NCN site.css: base -->
 <!-- NCN site.css: titles -->
 <!-- NCN site.css: responsive -->
-<link rel="stylesheet" href="/assets/ncn-theme/library.css?v=20261024-library-1"/>
+<link rel="stylesheet" href="/assets/ncn-theme/library.css?v=20261025-stories-1"/>
+<link rel="stylesheet" href="/assets/ncn-stories/style.css?v=20261025-stories-1">
 </head>
 <body class="ncn-modern ncn-library-page ncn-floating-ui ncn-liquid-glass" id="mainContent">
 <aside id="ncn-announcement" aria-label="Thông báo từ Admin" hidden><span class="ncn-announcement-bell" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4M12 2V1"/></svg></span><div class="ncn-announcement-window"><span id="ncn-announcement-text"></span></div><button id="ncn-announcement-pause" type="button" aria-label="Tạm dừng thông báo" aria-pressed="false">Ⅱ</button></aside><script data-ncn-appearance-body>window.NCN_APPEARANCE?.refresh();</script>
@@ -151,7 +152,10 @@ if(typeof window!=='undefined'&&typeof document!=='undefined')installAppearance(
 <main id="feed-view">
 <div id="ncn-library" class="ncn-ui">
  <div class="ncn-library-heading"><span class="ncn-eyebrow">THƯ VIỆN NCN</span><h1>Tìm điều bạn cần.</h1><p>Bài viết, hướng dẫn và các công cụ đã có trên nguyencongnghe.com.</p><label class="ncn-library-search"><span data-ncn-icon="search"></span><input id="ncn-library-query" type="search" placeholder="Nhập tên bài viết hoặc từ khóa…" aria-label="Tìm trong thư viện"></label></div>
- <a class="ncn-library-admin-link" href="/admin/thu-vien/" data-ncn-admin-only hidden>Quản lý Thư viện →</a><div class="ncn-library-controls"><p id="ncn-library-count" role="status" aria-live="polite"></p><label>Nhóm nội dung<select id="ncn-library-label"><option value="">Tất cả</option></select></label></div>
+ <a class="ncn-library-admin-link" href="/admin/thu-vien/" data-ncn-admin-only hidden>Quản lý Thư viện →</a>
+ <section id="ncn-library-featured" aria-labelledby="ncn-featured-heading" hidden><div class="ncn-library-section-title"><div><span class="ncn-eyebrow">ĐƯỢC ĐỀ XUẤT</span><h2 id="ncn-featured-heading">Nội dung nổi bật</h2></div><span class="ncn-library-section-note">Một vài lựa chọn dành cho bạn</span></div><div id="ncn-featured-results" class="ncn-featured-grid"></div></section>
+ <section id="ncn-stories" aria-labelledby="ncn-stories-heading"><div class="ncn-library-section-title"><div><span class="ncn-eyebrow">GÓC THÀNH VIÊN</span><h2 id="ncn-stories-heading">Story <span class="ncn-story-dot" aria-hidden="true"></span></h2></div><div class="ncn-story-rail-actions"><button type="button" data-story-scroll="-1" aria-label="Story trước">←</button><button type="button" data-story-scroll="1" aria-label="Story tiếp theo">→</button></div></div><p class="ncn-story-intro">Một bức ảnh, một câu chuyện. Chia sẻ cùng cộng đồng NCN · Tự xoá sau 24 giờ.</p><div class="ncn-story-rail" data-story-rail><button type="button" class="ncn-story-add" data-story-add><span aria-hidden="true"><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span><strong>Đăng Story</strong><small>Dành cho thành viên NCN</small></button><div data-story-items class="ncn-story-items"></div></div><p data-story-status class="ncn-story-status" role="status" aria-live="polite">Đang tải Story…</p></section>
+ <div class="ncn-library-controls"><p id="ncn-library-count" role="status" aria-live="polite"></p><label>Nhóm nội dung<select id="ncn-library-label"><option value="">Tất cả</option></select></label></div>
  <div id="ncn-library-results" class="ncn-article-grid"></div>
  <nav class="ncn-pagination" aria-label="Trang kết quả"><button type="button" id="ncn-library-prev">← Trước</button><span id="ncn-library-page"></span><button type="button" id="ncn-library-next">Sau →</button></nav>
 </div>
@@ -273,7 +277,7 @@ if(typeof window!=='undefined'&&typeof document!=='undefined')installAppearance(
 <script src="/assets/js/0ca0b0d3937c316ea2.js" type="text/javascript"></script>
 <!--It is your responsibility to notify your visitors about cookies used and data collected on your blog. Blogger makes a standard notification available for you to use on your blog, and you can customise it or replace it with your own notice. See http://www.blogger.com/go/cookiechoices for more details.-->
 <script type="module" src="/assets/ncn-vip-auth.js"></script>
-<!-- BEGIN NCN MODERN SCRIPT --><script type="module" src="/assets/ncn-theme/theme.js?v=20261025-library-admin-1"></script><!-- END NCN MODERN SCRIPT -->
+<!-- BEGIN NCN MODERN SCRIPT --><script type="module" src="/assets/ncn-theme/theme.js?v=20261025-stories-1"></script><!-- END NCN MODERN SCRIPT -->
 <!-- BEGIN NCN MOBILE SCRIPT --><script defer src="/assets/ncn-theme/mobile.js?v=20261017-mobile-dark-1"></script><!-- END NCN MOBILE SCRIPT -->
 <script type="module" src="/assets/ncn-theme/announcements.js?v=20261024-notice-loop-2"></script>
 </body>

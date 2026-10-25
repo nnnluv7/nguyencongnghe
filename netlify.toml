@@ -84,3 +84,11 @@
   included_files = ["netlify/lib/ncn-library/**", "public/index.html", "public/thu-vien/index.html", "public/20*/*/*.html", "public/p/*.html"]
   external_node_modules = ["@netlify/blobs"]
 # END NCN LIBRARY ADMIN
+
+[functions."ncn-stories"]
+  node_bundler = "esbuild"
+  external_node_modules = ["@netlify/identity", "@netlify/blobs", "sharp"]
+
+[functions."ncn-stories-cleanup"]
+  node_bundler = "esbuild"
+  external_node_modules = ["@netlify/blobs", "sharp"]

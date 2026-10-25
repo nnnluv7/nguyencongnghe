@@ -27,6 +27,7 @@ const server=createServer(async(req,res)=>{
       res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify({autoconfirm:false,disable_signup:false,external:{email:true}}));return;
     }
     if(url.pathname.startsWith('/.netlify/functions/')){
+      if(url.pathname.endsWith('ncn-stories')){res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify({items:[]}));return;}
       if(url.pathname.endsWith('ncn-library')&&url.searchParams.get('route')==='list'){res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify({items:publicCatalog(seedLibraryForFixture)}));return;}
       res.writeHead(200,{'Content-Type':'application/json'});
       res.end(JSON.stringify(url.pathname.endsWith('ncn-announcements')?{items:[{id:'qa',text:'NCN · Thư viện bài viết và hướng dẫn'}]}:{total:123,online:1}));return;

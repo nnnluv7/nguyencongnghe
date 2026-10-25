@@ -14,6 +14,7 @@
    <label class="na-field">Tiêu đề<input id="nl-title" required maxlength="200" placeholder="Nhập tên bài viết"></label>
    <div class="nl-form-row"><label class="na-field">Chuyên mục<input id="nl-labels" maxlength="300" list="nl-categories" placeholder="Ví dụ: Hướng dẫn, Công nghệ"><small>Tối đa 5 chuyên mục, ngăn cách bằng dấu phẩy.</small></label><label class="na-field">Trạng thái<select id="nl-state"><option value="published">Đang hiện trong Thư viện</option><option value="hidden">Ẩn khỏi Thư viện, vẫn mở được bằng liên kết</option><option value="draft">Bản nháp, chưa công khai</option></select></label></div>
    <datalist id="nl-categories"></datalist>
+   <label class="na-check"><input type="checkbox" id="nl-featured">Đưa vào nội dung nổi bật</label><p class="na-muted">Thư viện hiển thị tối đa 3 mục nổi bật, ưu tiên mục mới. Khi chưa chọn, website giới thiệu các bài viết mới nhất.</p>
    <label class="na-field">Mô tả ngắn<textarea id="nl-summary" maxlength="500" rows="3" placeholder="Nội dung giới thiệu trên thẻ bài viết…"></textarea></label>
    <label class="na-field">Ảnh đại diện<input id="nl-image" type="text" maxlength="2048" placeholder="Dán liên kết ảnh HTTPS (có thể bỏ trống)"></label>
    <label class="na-field" id="nl-href-field">Đường dẫn bài viết<input id="nl-href" type="text" maxlength="2048" placeholder="https://…"><small id="nl-href-help">Đường dẫn của bài viết trên website hoặc trang khác.</small></label>

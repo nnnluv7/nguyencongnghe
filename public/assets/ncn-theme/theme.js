@@ -175,6 +175,13 @@ export function createTheme({doc=document,win=window,config,catalog=win.CG_CATAL
   let sortedRows=rows.slice().sort((a,b)=>(Date.parse(b.datetime)||0)-(Date.parse(a.datetime)||0));
   function renderArticleFeed(){if($('ncn-articles')) $('ncn-articles').innerHTML=sortedRows.filter(row=>row.isArticle!==false&&!row.isPage&&!tools.some(t=>canonicalPath(t.href)===canonicalPath(row.link))).slice(0,4).map(articleCard).join('')||'<p class="ncn-empty">Các bài viết sẽ xuất hiện khi danh mục nội dung được tải.</p>';}
   renderArticleFeed();
+  function renderFeatured(){
+    const host=$('ncn-library-featured');if(!host)return;
+    const pinned=sortedRows.filter(row=>row.featured===true),latest=sortedRows.filter(row=>row.isArticle!==false&&!row.isPage&&!tools.some(t=>canonicalPath(t.href)===canonicalPath(row.link)));
+    const featured=(pinned.length?pinned:latest).slice(0,3);host.hidden=!featured.length;
+    $('ncn-featured-results').innerHTML=featured.map(articleCard).join('');previewLinks(host);
+  }
+  renderFeatured();
   let page=1,libraryQuery='',libraryLabel='';
   const PAGE_SIZE=12;
   function renderLibrary() {
@@ -197,7 +204,7 @@ export function createTheme({doc=document,win=window,config,catalog=win.CG_CATAL
     listen($('ncn-library-prev'),'click',()=>{page--;renderLibrary();});listen($('ncn-library-next'),'click',()=>{page++;renderLibrary();});renderLibrary();
   }
   function replaceCatalogue(catalog){
-    rows=normalizeCatalog(catalog);sortedRows=rows.slice().sort((a,b)=>(Date.parse(b.datetime)||0)-(Date.parse(a.datetime)||0));searchItems=buildSearchItems();renderArticleFeed();
+    rows=normalizeCatalog(catalog);sortedRows=rows.slice().sort((a,b)=>(Date.parse(b.datetime)||0)-(Date.parse(a.datetime)||0));searchItems=buildSearchItems();renderArticleFeed();renderFeatured();
     if(library){
       const labels=[...new Set(rows.flatMap(libraryLabels))].sort((a,b)=>a.localeCompare(b,'vi'));
       if(!labels.includes(libraryLabel))libraryLabel='';
@@ -232,6 +239,12 @@ export async function bootTheme() {
     }
   }
   const result=createTheme({config,preview:window.NCN_THEME_PREVIEW===true});
+  const stories=document.getElementById('ncn-stories');
+  if(stories&&!window.NCN_THEME_PREVIEW){
+    import('../ncn-stories/app.js?v=20261025-stories-1').then(({mountStories})=>{
+      const controller=mountStories({host:stories});const destroy=result.destroy;result.destroy=()=>{controller.destroy();destroy();};
+    }).catch(()=>{stories.querySelector('[data-story-status]').textContent='Chưa tải được Story. Vui lòng tải lại trang.';});
+  }
   if(!window.NCN_THEME_PREVIEW){
     let pending=null,queued=false,closed=false;
     const refresh=()=>{

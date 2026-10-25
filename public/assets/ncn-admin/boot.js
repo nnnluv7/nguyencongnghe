@@ -42,7 +42,7 @@ export function mountAdminGate({host,doc=document,win=window,fetcher=fetch,ident
       if(typeof result.html!=='string')throw Error('Chưa tải được khu vực quản trị.');
       host.innerHTML=result.html;loadedUser=win.NCNAccount?.state.user?.id||session.id||session.user?.id||null;
       if(host.dataset.view==='library'){
-        const module=await import('./library.js?v=20261025-admin-1');if(disposed||generation!==epoch)return;
+        const module=await import('./library.js?v=20261025-featured-1');if(disposed||generation!==epoch)return;
         disposeApp=module.mountLibraryAdmin({host,doc,win,api}).destroy;
       }
     }catch(error){if(!disposed&&generation===epoch&&(error.name!=='AbortError'||timedOut))access(timedOut?'Kết nối quản trị đang chậm. Anh thử lại nhé.':error.message||'Chưa tải được khu vực quản trị.',true);}

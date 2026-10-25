@@ -53,6 +53,7 @@ async function context(){
     if(url.pathname==='/.netlify/functions/ncn-library'){const response=await handler(req);if(losePurgeReply&&url.searchParams.get('route')==='purge'&&response.ok){losePurgeReply=false;return route.abort('failed');}return respond(response);}
     if(url.pathname==='/.netlify/functions/ncn-billing')return reply({user});
     if(url.pathname==='/.netlify/functions/ncn-announcements')return reply({items:[],admin:!!user?.admin});
+    if(url.pathname==='/.netlify/functions/ncn-stories')return reply({items:[]});
     if(url.pathname==='/.netlify/functions/ncn-visitors')return reply({total:1,online:1});
     if(url.pathname.startsWith('/.netlify/functions/'))throw Error('Unexpected function '+url.pathname);
     let query=null;

@@ -1,0 +1,35 @@
+name: NCN member Stories
+on:
+  pull_request:
+    paths: ['public/thu-vien/**', 'public/assets/ncn-stories/**', 'public/assets/ncn-theme/**', 'public/assets/ncn-account*', 'public/assets/ncn-admin/**', 'netlify/lib/ncn-stories*', 'netlify/functions/ncn-stories*', 'netlify/lib/ncn-library*', 'netlify/lib/ncn-library/**', 'tests/*stories*', 'tests/fixtures/ncn-stories.mjs', 'tests/browser/ncn-stories.mjs', 'package.json', 'netlify.toml', '.github/workflows/ncn-stories.yml']
+  push:
+    branches: [main]
+    paths: ['public/thu-vien/**', 'public/assets/ncn-stories/**', 'public/assets/ncn-theme/**', 'public/assets/ncn-account*', 'public/assets/ncn-admin/**', 'netlify/lib/ncn-stories*', 'netlify/functions/ncn-stories*', 'netlify/lib/ncn-library*', 'netlify/lib/ncn-library/**', 'tests/*stories*', 'tests/fixtures/ncn-stories.mjs', 'tests/browser/ncn-stories.mjs', 'package.json', 'netlify.toml', '.github/workflows/ncn-stories.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  stories:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install verification tools and image processor
+        run: npm install --no-save --package-lock=false playwright@1.56.1 esbuild@0.25.12
+      - name: Verify member uploads, image sanitation, ownership and permanent deletion
+        run: node --test tests/ncn-stories.test.mjs tests/ncn-library-admin.test.mjs
+      - name: Bundle public upload and scheduled orphan cleanup functions
+        run: npx esbuild netlify/functions/ncn-stories.mjs netlify/functions/ncn-stories-cleanup.mjs --bundle --platform=node --format=esm --external:@netlify/identity --external:@netlify/blobs --external:sharp --outdir=/tmp/ncn-story-bundles
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Exercise the actual Library, shared login, member photos and Admin controls
+        run: node tests/browser/ncn-stories.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ncn-member-stories
+          path: artifacts/stories/
+          retention-days: 14

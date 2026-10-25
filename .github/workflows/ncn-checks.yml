@@ -14,6 +14,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Install server dependencies
+        run: npm install --no-save --package-lock=false
       - name: Kiểm tra JavaScript giao diện Admin và thông báo
         run: |
           node --check netlify/lib/ncn-event-private/ui.js

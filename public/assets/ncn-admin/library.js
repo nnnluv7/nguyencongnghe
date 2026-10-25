@@ -10,7 +10,7 @@ export function mountLibraryAdmin({host,api,doc=document,win=window}){
   const message=(text,error=false)=>{if(disposed)return;$('nl-status').textContent=text;$('nl-status').classList.toggle('na-error',error);};
   function collect(){
     const kind=$('nl-kind').value,mode=kind==='legacy'?$('nl-mode').value:kind==='article'?'markdown':'link';
-    return {id:selected?.id||draftId,version:selected?.version??null,kind,mode,title:$('nl-title').value.trim(),summary:$('nl-summary').value.trim(),image:$('nl-image').value.trim(),labels:$('nl-labels').value.split(',').map(x=>x.trim()).filter(Boolean),status:$('nl-state').value,href:$('nl-href').value.trim(),body:mode==='markdown'?$('nl-body').value:''};
+    return {id:selected?.id||draftId,version:selected?.version??null,kind,mode,title:$('nl-title').value.trim(),summary:$('nl-summary').value.trim(),image:$('nl-image').value.trim(),labels:$('nl-labels').value.split(',').map(x=>x.trim()).filter(Boolean),status:$('nl-state').value,featured:$('nl-featured').checked,href:$('nl-href').value.trim(),body:mode==='markdown'?$('nl-body').value:''};
   }
   function controls(){
     const trash=inTrash(selected);
@@ -52,6 +52,7 @@ export function mountLibraryAdmin({host,api,doc=document,win=window}){
     selected=item;draftId=item?.id||'post-'+win.crypto.randomUUID();
     $('nl-kind').value=item?.kind||'article';$('nl-title').value=item?.title||'';$('nl-summary').value=item?.summary||'';$('nl-image').value=item?.image||'';
     $('nl-labels').value=(item?.labels||[]).join(', ');$('nl-state').value=inTrash(item)?(item.previousStatus||'published'):item?.status||'draft';
+    $('nl-featured').checked=!!item?.featured;
     $('nl-mode').value=item?.mode==='markdown'?'markdown':'original';$('nl-body').value=body||original;$('nl-href').value=item?.href||'';
     $('nl-editor-title').textContent=!item?'Thêm bài viết':inTrash(item)?'Bài trong Thùng rác':'Chỉnh sửa bài viết';
     $('nl-source').textContent=!item?'Bài mới':item.kind==='legacy'?(item.managedPage?'Bài đã có trên website':'Lối tắt công cụ'):item.kind==='link'?'Bài liên kết':'Bài viết trên website';
