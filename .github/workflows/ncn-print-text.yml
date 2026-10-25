@@ -1,0 +1,45 @@
+name: NCN print text
+on:
+  pull_request:
+    paths:
+      - 'public/**/*.html'
+      - 'public/assets/ncn-sticker/**'
+      - 'public/assets/ncn-popup/**'
+      - 'public/assets/ncn-store-tools/**'
+      - 'netlify/lib/ncn-*-private/**'
+      - 'tests/browser/ncn-print-text.mjs'
+      - '.github/workflows/ncn-print-text.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'public/**/*.html'
+      - 'public/assets/ncn-sticker/**'
+      - 'public/assets/ncn-popup/**'
+      - 'public/assets/ncn-store-tools/**'
+      - 'netlify/lib/ncn-*-private/**'
+      - 'tests/browser/ncn-print-text.mjs'
+      - '.github/workflows/ncn-print-text.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  text:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install isolated browser test tools
+        run: npm install --no-save --package-lock=false playwright@1.56.1
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Inspect all printable text in preview and print
+        run: node tests/browser/ncn-print-text.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ncn-print-text
+          path: artifacts/print-text/
+          retention-days: 14

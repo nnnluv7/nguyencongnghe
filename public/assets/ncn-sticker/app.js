@@ -203,7 +203,7 @@ export function createStickerApp({app,data,doc=document,win=window,fetcher=fetch
 
 if(typeof document!=='undefined'&&document.getElementById('ncn-sticker-app')) {
   const app=document.getElementById('ncn-sticker-app');
-  fetch('/assets/ncn-sticker/catalogue.json?v=20261014-1').then(response=>{
+  fetch('/assets/ncn-sticker/catalogue.json?v=20261025-print-text-1').then(response=>{
     if(!response.ok)throw new Error('Chưa tải được bộ mẫu sticker.');return response.json();
   }).then(data=>createStickerApp({app,data})).catch(error=>{
     const status=document.getElementById('st-status');status.hidden=false;status.classList.add('st-error');status.textContent=error.message+' Anh nhấn Ctrl+Shift+R để tải lại trang.';
