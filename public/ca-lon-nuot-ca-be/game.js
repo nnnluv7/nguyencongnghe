@@ -76,7 +76,7 @@ function start(){
   canvas.focus({preventScroll:true});stage.scrollIntoView({block:'start',behavior:record.reduced?'instant':'smooth'});toast('Bạn được bảo vệ 4 giây. Bơi về phía cá nhỏ để bắt đầu.',3600);
 }
 function pause(reason='manual'){
-  if(!ocean.pause())return;clearInput();siteChrome?.show();audio.suspend();text('ff-pause-note',reason==='tab'?'Ván chơi đã nghỉ cùng bạn. Cá, combo và thời gian đều được giữ lại.':'Cá, combo và thời gian đều đã tạm dừng.');syncState();
+  if(!ocean.pause())return;clearInput();siteChrome?.show();audio.suspend();text('ff-pause-note',reason==='tab'?'Ván chơi đã nghỉ cùng bạn. Cá, combo và thời gian đều được giữ lại.':'Cá, combo và thời gian đều đã tạm dừng.');hud();syncState();
 }
 function resume(){if(externalPanel()||document.hidden)return;if(ocean.resume()){clearInput();accumulator=0;lastFrame=performance.now();audio.unlock();syncState();canvas.focus({preventScroll:true});}}
 function dash(){if(ocean.dash())hud();}
