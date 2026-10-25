@@ -96,7 +96,11 @@ async function check(name,fn){await fn();checks++;console.log('PASS '+name);}
 async function login(page,email=existing.email,password=existing.password){
   await page.evaluate(()=>window.openModal?window.openModal('login'):window.NCNAccount.open('login'));
   const form=page.locator('[data-account-form=login]');await form.locator('[name=email]').fill(email);await form.locator('[name=password]').fill(password);await form.locator('[type=submit]').click();
-  await page.waitForFunction(()=>!document.getElementById('ncn-account-dialog').open&&!!window.NCNAccount.state.user);
+  try{await page.waitForFunction(()=>!document.getElementById('ncn-account-dialog').open&&!!window.NCNAccount.state.user);}
+  catch(error){
+    await mkdir('artifacts/account',{recursive:true});await page.screenshot({path:'artifacts/account/login-failure.jpg',type:'jpeg',quality:80});
+    console.log(await page.evaluate(()=>({message:document.getElementById('ncn-account-message')?.textContent,state:{ready:NCNAccount.state.ready,busy:NCNAccount.state.busy,signingOut:NCNAccount.state.signingOut,user:NCNAccount.state.user,error:NCNAccount.state.error?.message},hasSessionCookie:/(?:^|;\s*)nf_jwt=/.test(document.cookie)})));throw error;
+  }
 }
 let context;
 try{

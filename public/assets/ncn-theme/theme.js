@@ -233,16 +233,16 @@ export async function bootTheme() {
   }
   const result=createTheme({config,preview:window.NCN_THEME_PREVIEW===true});
   if(!window.NCN_THEME_PREVIEW){
-    let pending=null;
+    let pending=null,queued=false,closed=false;
     const refresh=()=>{
-      if(pending)return pending;
+      if(closed)return;if(pending){queued=true;return pending;}
       pending=fetch('/.netlify/functions/ncn-library?route=list',{credentials:'same-origin',cache:'no-store',signal:AbortSignal.timeout(10000)}).then(async response=>{
-        if(!response.ok)return;const data=await response.json();if(Array.isArray(data.items))result.replaceCatalogue(data.items);
-      }).catch(()=>{}).finally(()=>pending=null);return pending;
+        if(!response.ok||closed)return;const data=await response.json();if(Array.isArray(data.items)&&!closed)result.replaceCatalogue(data.items);
+      }).catch(()=>{}).finally(()=>{pending=null;if(queued){queued=false;refresh();}});return pending;
     };
     const storage=event=>{if(event.key==='ncn:library:changed')refresh();};
     window.addEventListener('ncn-library-changed',refresh);window.addEventListener('storage',storage);
-    const destroy=result.destroy;result.destroy=()=>{window.removeEventListener('ncn-library-changed',refresh);window.removeEventListener('storage',storage);destroy();};
+    const destroy=result.destroy;result.destroy=()=>{closed=true;window.removeEventListener('ncn-library-changed',refresh);window.removeEventListener('storage',storage);destroy();};
     if(!window.NCN_LIBRARY_SNAPSHOT)refresh();
   }
   if(configFailed){const host=document.getElementById('ncn-tool-grid');if(host)host.innerHTML='<p class="ncn-empty">Chưa tải được danh mục công cụ. <a href="/thu-vien/">Mở thư viện</a> hoặc tải lại trang.</p>';}

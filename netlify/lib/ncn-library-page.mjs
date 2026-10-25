@@ -31,8 +31,10 @@ export function createLibraryPageHandler(deps){return async req=>{
   try{
     if(!['GET','HEAD'].includes(req.method))return new Response('Method not allowed',{status:405,headers});
     const url=new URL(req.url),old=deps.production()?await readLibrary(deps.store()):null,index=old?.data,catalog=publicCatalog(deps.seed,index);
-    if(url.searchParams.get('view')==='index')return new Response(req.method==='HEAD'?null:injectCatalog(await deps.indexShell(),catalog),{headers});
-    const legacy=url.searchParams.get('legacy'),slug=url.searchParams.get('slug');
+    const internal=url.pathname==='/.netlify/functions/ncn-library-page';
+    const originalRoute=deps.seed.find(x=>x.managedPage&&[x.href,x.href.replace(/\.html$/,''),x.href.replace(/\.html$/,'/')].includes(url.pathname));
+    if(['/thu-vien','/thu-vien/','/thu-vien/index.html'].includes(url.pathname)||internal&&url.searchParams.get('view')==='index')return new Response(req.method==='HEAD'?null:injectCatalog(await deps.indexShell(),catalog),{headers});
+    const legacy=originalRoute?.id||(internal?url.searchParams.get('legacy'):null),slug=url.pathname.match(/^\/bai-viet\/([^/]+)\/?$/)?.[1]||(internal?url.searchParams.get('slug'):null);
     const items=mergedLibrary(deps.seed,index),item=legacy?items.find(x=>x.id===legacy&&x.kind==='legacy'&&x.managedPage):items.find(x=>x.kind==='article'&&x.slug===slug);
     if(!item||item.status==='draft')return new Response(req.method==='HEAD'?null:await statusHTML(deps,catalog,404),{status:404,headers});
     if(item.status==='trash'&&item.pageRemoved)return new Response(req.method==='HEAD'?null:await statusHTML(deps,catalog,410),{status:410,headers});

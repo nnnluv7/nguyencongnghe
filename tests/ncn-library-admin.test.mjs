@@ -138,3 +138,8 @@ test('Markdown keeps links, images, lists and code passive',()=>{
 test('source routes only render managed articles, not arbitrary files',async()=>{
   const f=fixture();for(const query of ['legacy=../../netlify.toml','slug=../admin','legacy=unknown'])assert.equal((await page(f,query)).status,404);
 });
+test('original public URLs work when the platform retains the pre-rewrite request URL',async()=>{
+  const f=fixture(),item=seed.find(x=>x.managedPage);
+  for(const path of ['/thu-vien/','/thu-vien/index.html',item.href,item.href.replace(/\.html$/,''),item.href.replace(/\.html$/,'/')])assert.equal((await f.page(new Request(origin+path))).status,200,path);
+  const saved=await call(f,'save',input());assert.equal((await f.page(new Request(origin+saved.body.item.href))).status,200);
+});

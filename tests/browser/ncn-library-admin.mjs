@@ -34,7 +34,8 @@ async function context(){
     if(url.origin!==origin){assert.notEqual(request.method(),'POST','No external writes');return route.abort();}
     const headers=await request.allHeaders();
     const req=new Request(request.url(),{method:request.method(),headers,...(['GET','HEAD'].includes(request.method())?{}:{body:request.postData()||''})});
-    const user=tokenUser(req),reply=(data,status=200,type='application/json')=>route.fulfill({status,contentType:type,body:typeof data==='string'?data:JSON.stringify(data)});
+    const user=tokenUser(req),identityUser=tokens.get((headers.authorization||'').replace(/^Bearer /,''))||user;
+    const reply=(data,status=200,type='application/json')=>route.fulfill({status,contentType:type,body:typeof data==='string'?data:JSON.stringify(data)});
     const respond=async response=>route.fulfill({status:response.status,headers:Object.fromEntries(response.headers),body:await response.text()});
     if(url.pathname.startsWith('/.netlify/identity/')){
       const action=url.pathname.split('/').at(-1);
@@ -45,7 +46,7 @@ async function context(){
         const token=Buffer.from('{"alg":"fixture"}').toString('base64url')+'.'+Buffer.from(JSON.stringify({sub:u.id,exp:Math.floor(Date.now()/1000)+3600})).toString('base64url')+'.fixture';tokens.set(token,u);
         return reply({access_token:token,refresh_token:'refresh-'+u.id,expires_in:3600,token_type:'bearer',user:raw(u)});
       }
-      if(action==='user')return reply(user?raw(user):{error:'Unauthorized'},user?200:401);
+      if(action==='user')return reply(identityUser?raw(identityUser):{error:'Unauthorized'},identityUser?200:401);
       if(action==='logout')return reply({});
       throw Error('Unmocked Identity action '+action);
     }
@@ -72,7 +73,8 @@ async function open(ctx,path){const p=await ctx.newPage();await p.goto(origin+pa
 async function login(p,email){
   await p.evaluate(()=>window.NCNAccount.open('login'));
   const form=p.locator('[data-account-form=login]');await form.locator('[name=email]').fill(email);await form.locator('[name=password]').fill('Example123!');await form.locator('[type=submit]').click();
-  await p.waitForFunction(()=>!!window.NCNAccount.state.user&&!document.getElementById('ncn-account-dialog').open);
+  try{await p.waitForFunction(()=>!!window.NCNAccount.state.user&&!document.getElementById('ncn-account-dialog').open);}
+  catch(error){await p.screenshot({path:out+'/login-failure.jpg',type:'jpeg',quality:80});console.log(await p.evaluate(()=>({message:document.getElementById('ncn-account-message')?.textContent,ready:NCNAccount.state.ready,user:NCNAccount.state.user,error:NCNAccount.state.error?.message})));throw error;}
 }
 async function check(name,action){try{await action();results.push({name,ok:true});console.log('PASS '+name);}catch(error){results.push({name,ok:false,error:error.message});await page?.screenshot({path:out+'/failure-'+results.length+'.jpg',type:'jpeg',quality:80}).catch(()=>{});throw error;}}
 async function saved(p,pattern=/Đã lưu/){await p.waitForFunction(()=>!document.getElementById('nl-refresh').disabled);await p.locator('#nl-status').filter({hasText:pattern}).waitFor();}
@@ -91,7 +93,7 @@ try{
   await check('VIP and forged browser roles cannot see Admin or write articles',async()=>{
     assert.equal(await page.locator('#ncn-admin-navigation').count(),0);
     await page.evaluate(()=>localStorage.setItem('qz_user',JSON.stringify({roles:['admin'],admin:true})));
-    const denied=await open(vip,'/admin/');await denied.getByText('Chỉ ADMIN được quản lý Thư viện.').waitFor();assert.equal(await denied.locator('.na-module').count(),0);
+    const denied=await open(vip,'/admin/');await denied.getByText('Chỉ ADMIN được sử dụng khu vực quản trị.').waitFor();assert.equal(await denied.locator('.na-module').count(),0);
     const status=await denied.evaluate(async()=>{const r=await fetch('/.netlify/functions/ncn-library?route=save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({admin:true})});return r.status;});assert.equal(status,403);await denied.close();
   });
   admin=await context();page=await open(admin,'/');await login(page,'admin@example.test');

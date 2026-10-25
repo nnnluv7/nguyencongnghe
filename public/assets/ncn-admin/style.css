@@ -67,3 +67,5 @@ body.ncn-admin-page #ncn-page-actions{display:none!important}
 @media(max-width:950px){#ncn-admin-app .na-hub-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#ncn-admin-app .nl-layout{grid-template-columns:minmax(230px,.8fr) minmax(0,1.5fr)}#ncn-admin-app .na-surface{padding:18px}#ncn-admin-app .nl-form-row{grid-template-columns:1fr;gap:0}}
 @media(max-width:700px){#ncn-admin-app .nl-layout{grid-template-columns:1fr}#ncn-admin-app .nl-list{max-height:300px}#ncn-admin-app .na-hub-grid{grid-template-columns:1fr}#ncn-admin-app .na-module-featured{grid-column:auto}#ncn-admin-app .na-module{min-height:0}#ncn-admin-app .na-access{padding:25px}#ncn-admin-app .na-surface{border-radius:21px}#ncn-admin-app :is(input:not([type=checkbox]),select,textarea){font-size:16px}#ncn-admin-app .nl-save-bar>*{flex:1 1 130px}}
 @media(prefers-reduced-motion:reduce){#ncn-admin-app *{transition:none!important}}
+
+#ncn-admin-app .na-icon svg{width:25px;height:25px}

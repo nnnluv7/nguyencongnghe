@@ -30,17 +30,17 @@ export function mountAdminGate({host,doc=document,win=window,fetcher=fetch,ident
   async function load(){
     const user=win.NCNAccount?.state.user;
     if(disposed||loadedUser&&user?.admin&&loadedUser===user.id)return;
-    const generation=++epoch;abort?.abort();abort=new AbortController();access('Đang kiểm tra quyền quản trị…');
-    let timedOut=false;const timer=win.setTimeout(()=>{timedOut=true;abort?.abort();},20000);
+    const generation=++epoch;abort?.abort();const controller=new AbortController();abort=controller;access('Đang kiểm tra quyền quản trị…');
+    let timedOut=false;const timer=win.setTimeout(()=>{timedOut=true;controller.abort();},20000);
     try{
       const session=await identity.ensureSession();if(disposed||generation!==epoch)return;
       if(!session){access('Đăng nhập tài khoản có quyền ADMIN để mở khu vực quản trị.');return;}
       const url=new URL('/.netlify/functions/ncn-library',win.location.origin);url.searchParams.set('route','app');url.searchParams.set('view',host.dataset.view||'hub');
-      const response=await fetcher(url.href,{credentials:'same-origin',cache:'no-store',signal:abort.signal});
+      const response=await fetcher(url.href,{credentials:'same-origin',cache:'no-store',signal:controller.signal});
       const result=await response.json();if(disposed||generation!==epoch)return;
       if(!response.ok){access(result.error||'Chưa kiểm tra được quyền quản trị.',![401,403].includes(response.status));return;}
       if(typeof result.html!=='string')throw Error('Chưa tải được khu vực quản trị.');
-      host.innerHTML=result.html;loadedUser=win.NCNAccount?.state.user?.id||session.user?.id||'admin';
+      host.innerHTML=result.html;loadedUser=win.NCNAccount?.state.user?.id||session.id||session.user?.id||null;
       if(host.dataset.view==='library'){
         const module=await import('./library.js?v=20261025-admin-1');if(disposed||generation!==epoch)return;
         disposeApp=module.mountLibraryAdmin({host,doc,win,api}).destroy;

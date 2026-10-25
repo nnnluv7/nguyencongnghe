@@ -71,7 +71,7 @@ export function createLibraryHandler(deps){return async req=>{
     if(!deps.production())libraryError(503,'Quản trị chỉ hoạt động trên website chính thức.');
     const user=await deps.verify(req);
     if(!user)libraryError(401,'Đăng nhập tài khoản ADMIN để tiếp tục.');
-    if(!user.admin)libraryError(403,'Chỉ ADMIN được quản lý Thư viện.');
+    if(!user.admin)libraryError(403,'Chỉ ADMIN được sử dụng khu vực quản trị.');
     if(route==='app'&&method==='GET'){
       const view=new URL(req.url).searchParams.get('view')==='library'?'library':'hub';
       return reply({html:await deps.app(view)});
