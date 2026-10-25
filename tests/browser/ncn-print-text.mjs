@@ -64,13 +64,13 @@ const results=[];
 
 function inspectText(){
   const problems=[],seen=new Set();
+  const context=document.createElement('canvas').getContext('2d');
   const describe=n=>n.tagName.toLowerCase()+(n.id?'#'+n.id:'')+(typeof n.className==='string'&&n.className?'.'+n.className.trim().replace(/\s+/g,'.'):'');
   const add=(type,node,text,detail)=>{
     const key=[type,describe(node),text].join('|');if(seen.has(key))return;seen.add(key);
     problems.push({type,element:describe(node),text:text.slice(0,150),...detail});
   };
   const roots=document.querySelectorAll('.ncn-sheet,.sheet,#printMe,.row-container');
-  const outside=(r,b)=>r.left<b.left-1.2||r.right>b.right+1.2||r.top<b.top-1.2||r.bottom>b.bottom+1.2;
   for(const root of roots){
     const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
     let node;
@@ -80,6 +80,20 @@ function inspectText(){
       const ps=getComputedStyle(parent);
       if(ps.display==='none'||ps.visibility==='hidden'||!parent.getClientRects().length)continue;
       const range=document.createRange();range.selectNodeContents(node);
+      context.font=[ps.fontStyle,ps.fontWeight,ps.fontSize,ps.fontFamily].join(' ');
+      const metrics=context.measureText(ps.textTransform==='uppercase'?text.toUpperCase():text);
+      const fontHeight=metrics.fontBoundingBoxAscent+metrics.fontBoundingBoxDescent;
+      // Condensed display fonts have large ascent/descent boxes. Test visible
+      // glyph ink, not empty font leading that browsers legitimately clip.
+      const rotated=(()=>{for(let el=parent;el&&el!==root;el=el.parentElement){
+        const transform=getComputedStyle(el).transform;
+        if(transform!=='none'){const m=new DOMMatrix(transform);if(Math.abs(m.b)>.001||Math.abs(m.c)>.001)return true;}
+      }return false;})();
+      const outside=(r,b)=>{
+        const top=rotated||!fontHeight?r.top:r.top+r.height*(metrics.fontBoundingBoxAscent-metrics.actualBoundingBoxAscent)/fontHeight;
+        const bottom=rotated||!fontHeight?r.bottom:r.top+r.height*(metrics.fontBoundingBoxAscent+metrics.actualBoundingBoxDescent)/fontHeight;
+        return r.left<b.left-1.2||r.right>b.right+1.2||top<b.top-1.2||bottom>b.bottom+1.2;
+      };
       for(let ancestor=parent;ancestor&&ancestor!==root.parentElement;ancestor=ancestor.parentElement){
         const style=getComputedStyle(ancestor),b=ancestor.getBoundingClientRect();
         const framed=['Top','Right','Bottom','Left'].every(side=>parseFloat(style['border'+side+'Width'])>0);
