@@ -299,6 +299,9 @@
 /premium/index.html  /.netlify/functions/ncn-site-page?page=premium%2Findex.html  200!
 /premium/  /.netlify/functions/ncn-site-page?page=premium%2Findex.html  200!
 /premium  /.netlify/functions/ncn-site-page?page=premium%2Findex.html  200!
+/ran-luot/index.html  /.netlify/functions/ncn-site-page?page=ran-luot%2Findex.html  200!
+/ran-luot/  /.netlify/functions/ncn-site-page?page=ran-luot%2Findex.html  200!
+/ran-luot  /.netlify/functions/ncn-site-page?page=ran-luot%2Findex.html  200!
 /search/index.html  /.netlify/functions/ncn-site-page?page=search%2Findex.html  200!
 /search/  /.netlify/functions/ncn-site-page?page=search%2Findex.html  200!
 /search  /.netlify/functions/ncn-site-page?page=search%2Findex.html  200!

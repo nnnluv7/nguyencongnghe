@@ -41,7 +41,7 @@ test('modern form markup retains every existing calculation and stocktaking cont
 test('game starts with the NCN logo, complete icon navigation and its current embedded configuration',()=>{
   const html=read('flappy-bird/index.html');
   assert.match(html,/id="ncn-game-logo" src="\/assets\/ncn-theme\/logo\.png"/);
-  assert.equal((html.match(/class="ncn-item-icon"/g)||[]).length,18);
+  assert.equal((html.match(/class="ncn-item-icon"/g)||[]).length,JSON.parse(read('assets/ncn-theme/config.json')).tools.length+2);
   assert.ok(html.includes('site-bridge.css?v=20261024-tools-2'));
   const config=JSON.parse(html.match(/<script id="ncn-game-config" type="application\/json">([\s\S]*?)<\/script>/)[1]);
   assert.deepEqual(config,JSON.parse(read('assets/ncn-theme/config.json')));

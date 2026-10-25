@@ -1125,5 +1125,20 @@
     "isPage": true,
     "managedPage": false,
     "sourcePath": ""
+  },
+  {
+    "id": "legacy-d31639f2cc0afbba",
+    "kind": "legacy",
+    "title": "Rắn Lướt NCN: Đấu trường năng lượng",
+    "href": "/ran-luot/",
+    "image": "/ran-luot/cover.svg",
+    "labels": [
+      "Giải trí"
+    ],
+    "datetime": "2026-10-25T20:30:00+07:00",
+    "summary": "Game rắn đấu trường với 10 đối thủ AI, combo cuồng nhiệt, lướt pha xuyên rắn, sự kiện năng lượng và thử thách 3 phút. Chơi trên máy tính và điện thoại.",
+    "isPage": true,
+    "managedPage": false,
+    "sourcePath": ""
   }
 ]

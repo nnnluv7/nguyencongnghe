@@ -200,6 +200,16 @@
       "tone": "violet",
       "access": "public",
       "group": "arcade"
+    },
+    {
+      "id": "ran-luot",
+      "title": "Rắn Lướt NCN",
+      "description": "Rắn đấu trường, combo cuồng nhiệt, lướt pha và thử thách 3 phút cùng 10 đối thủ AI.",
+      "href": "/ran-luot/",
+      "group": "arcade",
+      "icon": "spark",
+      "tone": "teal",
+      "access": "public"
     }
   ],
   "adminContact": {

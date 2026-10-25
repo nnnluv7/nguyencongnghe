@@ -36,8 +36,8 @@ function request(route,data,headers={}){return new Request(origin+'/.netlify/fun
 async function call(f,route,data,headers){const response=await f.handler(request(route,data,headers));return {status:response.status,body:await response.json()};}
 async function page(f,query){const response=await f.page(new Request(origin+'/.netlify/functions/ncn-library-page?'+query));return {status:response.status,html:await response.text()};}
 
-test('library seed covers all 77 current entries and only 40 article/resource pages get managed routes',()=>{
-  assert.equal(seed.length,77);assert.equal(new Set(seed.map(x=>x.id)).size,77);assert.equal(seed.filter(x=>x.managedPage).length,40);
+test('library seed preserves unique entries and only 40 article/resource pages get managed routes',()=>{
+  assert.ok(seed.length>=77);assert.equal(new Set(seed.map(x=>x.id)).size,seed.length);assert.equal(seed.filter(x=>x.managedPage).length,40);
   const redirects=read('public/_redirects');
   for(const item of seed){
     const rule=item.href+'  /.netlify/functions/ncn-library-page?legacy='+item.id+'  200!';
@@ -50,8 +50,8 @@ test('library seed covers all 77 current entries and only 40 article/resource pa
 });
 test('public catalogue never exposes drafts, trash, hidden items, body keys or creator metadata',async()=>{
   const f=fixture();const saved=await call(f,'save',input());assert.equal(saved.status,200);
-  let list=await call(f,'list');assert.equal(list.body.items.length,78);assert.equal(JSON.stringify(list.body).includes('body-post-'),false);assert.equal(JSON.stringify(list.body).includes('createdBy'),false);
-  const hidden=await call(f,'visibility',{id,version:saved.body.item.version});assert.equal(hidden.status,200);list=await call(f,'list');assert.equal(list.body.items.length,77);
+  let list=await call(f,'list');assert.equal(list.body.items.length,seed.length+1);assert.equal(JSON.stringify(list.body).includes('body-post-'),false);assert.equal(JSON.stringify(list.body).includes('createdBy'),false);
+  const hidden=await call(f,'visibility',{id,version:saved.body.item.version});assert.equal(hidden.status,200);list=await call(f,'list');assert.equal(list.body.items.length,seed.length);
   assert.equal((await page(f,'slug='+hidden.body.item.slug)).status,200);
 });
 test('guest and VIP cannot read private screens or forge ADMIN in a write',async()=>{
@@ -64,14 +64,14 @@ test('guest and VIP cannot read private screens or forge ADMIN in a write',async
 });
 test('production, method and origin checks happen before writes',async()=>{
   const f=fixture({production:false});assert.equal((await call(f,'save',input())).status,503);assert.equal(f.store.entries.size,0);
-  assert.equal((await call(f,'list')).body.items.length,77);
+  assert.equal((await call(f,'list')).body.items.length,seed.length);
   const active=fixture();assert.equal((await call(active,'save',input(),{origin:'https://other.example'})).status,403);assert.equal(active.store.entries.size,0);
   const response=await active.handler(new Request(origin+'/.netlify/functions/ncn-library?route=save',{method:'DELETE'}));assert.equal(response.status,405);
 });
 test('ADMIN can load the hub and library management screens',async()=>{
   const f=fixture();const hub=await call(f,'app'),library=await call(f,'app&view=library');
   assert.match(hub.body.html,/Quản trị Admin/);assert.match(hub.body.html,/\/admin\/thu-vien\//);assert.match(library.body.html,/id="nl-form"/);
-  assert.equal((await call(f,'manage')).body.items.length,77);
+  assert.equal((await call(f,'manage')).body.items.length,seed.length);
 });
 test('new articles publish, retain stable links after edits and reject stale saves',async()=>{
   const f=fixture(),saved=await call(f,'save',input());assert.equal(saved.status,200);
