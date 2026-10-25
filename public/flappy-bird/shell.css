@@ -1,0 +1,23 @@
+/* The arcade keeps its artwork; navigation and accounts use the shared NCN shell. */
+html,body{max-width:100%;overflow-x:clip}
+/* Make the opening drawer focusable immediately while its slide/fade animates. */
+.ncn-flight-page.ncn-menu-open #ncn-sidebar{transition-property:transform,opacity}
+.ncn-game-tools{display:flex;align-items:center;justify-content:space-between;gap:14px;min-height:53px;margin:0 0 13px;padding:0 4px}
+.ncn-game-page-title{font-size:13px;font-weight:800;color:var(--ncn-ink)}
+.ncn-game-tool-actions{display:flex;align-items:center;gap:8px}
+.ncn-game-tool-actions .icon-button{display:grid;place-items:center;width:38px;height:38px;background:var(--ncn-glass-soft);color:var(--ncn-muted);border:1px solid var(--ncn-rim);border-radius:12px}
+.ncn-game-tool-actions .icon-button:hover{color:var(--ncn-accent);background:var(--ncn-glass-strong)}
+.game-shell{max-width:100%;margin:0;border-radius:24px;border:1px solid var(--ncn-rim);box-shadow:var(--ncn-shadow-high);color:#fff4dd;color-scheme:dark;scroll-margin-top:calc(var(--ncn-chrome-space,100px) + 12px)}
+.game-shell:fullscreen{max-width:none;border-radius:0;border:0}
+.underbar{border-bottom:1px solid var(--ncn-border);color:var(--ncn-ink);gap:15px}
+.underbar .under-record>span,.underbar .under-record small,.underbar .under-item div>span{color:var(--ncn-muted)}
+.underbar .under-icon{background:var(--ncn-glass-soft);border-color:var(--ncn-rim)}
+@media(max-width:620px){
+ .ncn-game-tools{min-height:46px;margin-bottom:11px;padding:0 2px}
+ .ncn-game-tool-actions{gap:6px}
+ .ncn-game-tool-actions .icon-button{width:38px;height:40px}
+ .ncn-game-page-title{font-size:11px}
+ .game-shell{border-radius:21px}
+ .underbar{gap:8px}
+}
+@media(max-width:380px){.ncn-game-page-title{font-size:10px}.underbar .under-item:nth-child(2){display:none}}

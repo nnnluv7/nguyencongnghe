@@ -13,6 +13,7 @@ const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=u
 const server=createServer(async(req,res)=>{
   try{
     const url=new URL(req.url,'http://127.0.0.1');
+    if(url.pathname.startsWith('/.netlify/identity/')){res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify({disable_signup:false,external:{email:true}}));return;}
     if(url.pathname.startsWith('/.netlify/functions/')){
       if(url.pathname.endsWith('ncn-stories')){res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify({items:[]}));return;}
       if(url.pathname.endsWith('ncn-library')&&url.searchParams.get('route')==='list'){res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify({items:publicCatalog(seedLibraryForFixture)}));return;}
@@ -223,12 +224,42 @@ try{
   });
   await check('game keeps one aligned navigation control',async()=>{
     await open('/flappy-bird/');
-    assert.equal(await page.locator('#ncn-game-menu').count(),1);
-    await page.locator('#ncn-game-menu').click();
-    await page.waitForSelector('body.ncn-game-menu-open');
+    assert.equal(await page.locator('#ncn-menu-open').count(),1);
+    assert.equal(await page.locator('#ncn-game-menu').count(),0);
+    await page.locator('#ncn-menu-open').click();
+    await page.waitForSelector('body.ncn-menu-open');
     assert.equal(await page.locator('body.ncn-chrome-hidden').count(),0);
     await page.keyboard.press('Escape');
     await noOverflow();
+  });
+  await check('flight pauses for shared navigation, search and login without stealing panel focus',async()=>{
+    await fresh(1280,900);await page.clock.install();await open('/flappy-bird/');
+    await page.locator('#startButton').click();
+    await page.locator('#ncn-menu-open').click();
+    assert.equal(await page.locator('body.ncn-menu-open').count(),1);
+    assert.equal(await page.locator('#pauseScreen').isVisible(),true);
+    assert.equal(await page.locator('#ncn-menu-close').evaluate(el=>el===document.activeElement),true,JSON.stringify(await page.evaluate(()=>({focus:document.activeElement?.id,body:document.body.className,menu:document.getElementById('ncn-menu-open').outerHTML,visibility:getComputedStyle(document.getElementById('ncn-sidebar')).visibility}))));
+    await page.keyboard.press('Tab');
+    assert.equal(await page.locator('#ncn-sidebar').evaluate(el=>el.contains(document.activeElement)),true);
+    await page.keyboard.press('Escape');await page.clock.runFor(300);
+    assert.equal(await page.locator('body.ncn-menu-open').count(),0);
+    assert.equal(await page.locator('#pauseScreen').isVisible(),true);
+    await page.locator('#resumeButton').click();
+    await page.locator('[data-ncn-search-open]').click();
+    assert.equal(await page.locator('#pauseScreen').isVisible(),true);
+    await page.locator('#ncn-global-query').fill('ca lon');
+    assert.equal(await page.locator('#ncn-global-query').inputValue(),'ca lon');
+    await page.keyboard.press('Escape');await page.locator('#resumeButton').click();
+    await page.locator('.ncn-account-menu>summary').click();
+    assert.equal(await page.locator('#pauseScreen').isVisible(),true);
+    await page.locator('#ncn-account-host [data-ncn-account-open=login]').click();
+    assert.equal(await page.locator('#ncn-account-dialog').count(),1);
+    assert.equal(await page.locator('#ncn-account-dialog').isVisible(),true);
+    await page.keyboard.press('p');
+    assert.equal(await page.locator('#pauseScreen').isVisible(),true);
+    await page.locator('[data-account-close]').click();
+    await page.locator('#pauseHomeButton').click();await page.clock.resume();
+    await shot('flight-shared-toolbar');
   });
   await check('cash retains nine denominations and comma ERP in a narrower glass card',async()=>{
     await open('/2024/02/kiem-quy.html');

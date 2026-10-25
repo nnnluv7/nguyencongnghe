@@ -16,11 +16,12 @@ html[data-ncn-theme=dark] .ff-badge{color:#9be7f4}
 .ff-toolbar{display:flex;gap:7px;flex:none}.ff-tool{display:grid;place-items:center;width:42px;height:44px;padding:11px;border:1px solid var(--ncn-rim,#c3d7df);border-radius:14px;background:var(--ncn-glass-soft,#f5fbff);color:inherit;box-shadow:inset 0 1px 0 #ffffff66}
 .ff-tool svg,.ff-primary svg,.ff-pause svg,.ff-dash svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .ff-tool[aria-pressed=true]{color:var(--ncn-accent,#1768bd);border-color:#66abd677;background:#6bbbd81a}
-.ff-stage{position:relative;height:min(650px,65vw);min-height:545px;border:1px solid #60b9d17a;border-radius:27px;overflow:hidden;isolation:isolate;background:#0782be;color:#f1fdff;touch-action:none;user-select:none;scroll-margin-top:calc(var(--ncn-chrome-space,100px) + 12px);box-shadow:0 18px 55px #083a5e26;color-scheme:dark}
+.ff-stage{position:relative;height:min(650px,65vw);min-height:545px;border:1px solid #60b9d17a;border-radius:27px;overflow:hidden;isolation:isolate;background:#0782be;color:#f1fdff;touch-action:auto;user-select:none;scroll-margin-top:calc(var(--ncn-chrome-space,100px) + 12px);box-shadow:0 18px 55px #083a5e26;color-scheme:dark}
 .ff-stage:fullscreen{width:100%;height:100dvh;min-height:0;border:0;border-radius:0;margin:0}
-.ff-stage canvas{display:block;width:100%;height:100%;outline-offset:-4px!important;touch-action:none;cursor:crosshair}
+.ff-stage canvas{display:block;width:100%;height:100%;outline-offset:-4px!important;touch-action:auto;cursor:crosshair}
 .ff-stage[data-state=ready] canvas,.ff-stage[data-state=paused] canvas,.ff-stage[data-state=over] canvas,.ff-stage[data-state=won] canvas{cursor:default}
-.ff-overlay{position:absolute;inset:0;z-index:5;display:flex;align-items:center;padding:40px 6%;overflow-y:auto;overscroll-behavior:contain}
+.ff-stage[data-state="playing"] canvas{touch-action:none}
+.ff-overlay{position:absolute;inset:0;z-index:5;display:flex;align-items:center;padding:40px 6%;overflow-y:auto;overscroll-behavior:auto;touch-action:pan-y pinch-zoom}
 .ff-welcome{background:linear-gradient(90deg,#073956f5 0%,#073956e3 28%,#063b5f70 53%,#063b5f00 86%)}
 .ff-intro{max-width:455px;width:46%;padding:3px 0}
 .ff-kicker{display:flex;align-items:center;gap:8px;font-size:9px;font-weight:800;letter-spacing:2px;color:#b8f4f4;margin:0 0 20px}

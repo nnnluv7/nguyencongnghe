@@ -84,6 +84,25 @@ try{
     const blocked=await context();await blocked.addInitScript(()=>{const get=Storage.prototype.getItem,set=Storage.prototype.setItem;Storage.prototype.getItem=function(key){if(key==='ncn:fish:record:v1')throw new DOMException('blocked','SecurityError');return get.call(this,key);};Storage.prototype.setItem=function(key,value){if(key==='ncn:fish:record:v1')throw new DOMException('blocked','SecurityError');return set.call(this,key,value);};});
     const previous=page;page=await blocked.newPage();page.on('pageerror',e=>errors.push(e.message));await page.clock.install();await page.goto(base+'/ca-lon-nuot-ca-be/');await tick(150);await page.locator('#ff-start').click();await page.keyboard.down('ArrowRight');await tick(2000);await page.keyboard.up('ArrowRight');await page.keyboard.press('p');await page.locator('#ff-end').click();assert.equal(await state(),'over');assert.match(await page.locator('#ff-storage-note').innerText(),/chưa lưu được/);await blocked.close();page=previous;
   });
+  await check('mouse wheel over the ocean scrolls the page in welcome, play, pause and result states',async()=>{
+    const wheelContext=await context(),wheelPage=await wheelContext.newPage();wheelPage.on('pageerror',e=>errors.push(e.message));
+    try{
+      await wheelPage.goto(base+'/ca-lon-nuot-ca-be/');
+      const wheelScroll=async()=>{
+        await wheelPage.evaluate(()=>{document.activeElement?.blur();scrollTo({top:0,behavior:'instant'});});
+        const box=await wheelPage.locator('#ff-stage').boundingBox();
+        await wheelPage.mouse.move(box.x+box.width*.75,box.y+Math.min(box.height*.5,250));
+        await wheelPage.mouse.wheel(0,180);
+        await wheelPage.waitForFunction(()=>scrollY>40);
+        await wheelPage.mouse.wheel(0,-300);
+        await wheelPage.waitForFunction(()=>scrollY<5);
+      };
+      await wheelScroll();
+      await wheelPage.locator('#ff-start').click();await wheelScroll();
+      await wheelPage.keyboard.press('p');assert.equal(await wheelPage.locator('#ff-stage').getAttribute('data-state'),'paused');await wheelScroll();
+      await wheelPage.locator('#ff-end').click();assert.equal(await wheelPage.locator('#ff-stage').getAttribute('data-state'),'over');await wheelScroll();
+    }finally{await wheelContext.close();}
+  });
   await check('no browser exceptions or game/account writes reach an external service',async()=>{
     assert.deepEqual(errors,[]);assert.ok(requests.filter(x=>x.method!=='GET').every(x=>x.method==='POST'&&x.path==='/.netlify/functions/ncn-visitors'),JSON.stringify(requests.filter(x=>x.method!=='GET')));
   });

@@ -38,11 +38,12 @@ test('modern form markup retains every existing calculation and stocktaking cont
     ['2025/05/tu-van.html',['cb1','cb2','cb3','cb4','nhomhang','giagoc','giaban','phidongtien','tratruoc','kieutratruoc','laisuat','goi','tratruocfn','nolai','gopmoithang','tongtien','chenhlech']]
   ]){const html=read(path);for(const id of ids)assert.ok(html.includes('id="'+id+'"'),path+': '+id);}
 });
-test('game starts with the NCN logo, complete icon navigation and its current embedded configuration',()=>{
+test('flight starts with the same NCN shell, search, account and current configuration as every page',()=>{
   const html=read('flappy-bird/index.html');
-  assert.match(html,/id="ncn-game-logo" src="\/assets\/ncn-theme\/logo\.png"/);
-  assert.equal((html.match(/class="ncn-item-icon"/g)||[]).length,JSON.parse(read('assets/ncn-theme/config.json')).tools.length+2);
-  assert.ok(html.includes('site-bridge.css?v=20261024-tools-2'));
-  const config=JSON.parse(html.match(/<script id="ncn-game-config" type="application\/json">([\s\S]*?)<\/script>/)[1]);
+  assert.match(html,/<img src="\/assets\/ncn-theme\/logo\.png"/);
+  assert.equal((html.match(/class="ncn-nav-link"/g)||[]).length,JSON.parse(read('assets/ncn-theme/config.json')).tools.length+2);
+  for(const id of ['ncn-site-shell','ncn-menu-open','ncn-sidebar','ncn-topbar','ncn-search-dialog','ncn-account-host'])assert.ok(html.includes('id="'+id+'"'),id);
+  assert.equal(html.includes('site-bridge.'),false);
+  const config=JSON.parse(html.match(/<script id="ncn-initial-config" type="application\/json">([\s\S]*?)<\/script>/)[1]);
   assert.deepEqual(config,JSON.parse(read('assets/ncn-theme/config.json')));
 });

@@ -13,10 +13,6 @@ test('all public pages have one navigation and no duplicate DOM IDs',()=>{
     const source=readFileSync(path,'utf8'),markup=stripScripts(source);
     const ids=(markup.match(/<[a-z][^>]*>/gi)||[]).map(tag=>tag.match(/\sid="([^"]+)"/)?.[1]).filter(Boolean);
     assert.equal(new Set(ids).size,ids.length,path);
-    if(path===join(root,'flappy-bird/index.html')){
-      assert.equal(ids.filter(id=>id==='ncn-game-sidebar').length,1,path);
-      continue;
-    }
     assert.equal(ids.filter(id=>id==='ncn-site-shell').length,1,path);
     assert.equal(ids.filter(id=>id==='ncn-footer').length,1,path);
     assert.equal([...source.matchAll(/<script[^>]+src="\/assets\/ncn-theme\/theme\.js[^"<>]*"/g)].length,1,path);
@@ -61,7 +57,7 @@ test('every page discovers final styles in its head and includes one shared anno
     assert.equal((source.match(/id="ncn-announcement"/g)||[]).length,1,path);
     assert.equal((source.match(/src="\/assets\/ncn-theme\/announcements\.js[^"<>]*"/g)||[]).length,1,path);
     assert.equal(source.includes('/assets/js/d4f21841d43fe64968.js'),false,path);
-    if(!path.includes('flappy-bird'))assert.match(source,/site\.css\?v=[^"']+/,path);
+    assert.match(source,/site\.css\?v=[^"']+/,path);
   }
 });
 test('cash and private editor layouts are compact before any script executes',()=>{
@@ -75,7 +71,6 @@ test('cash and private editor layouts are compact before any script executes',()
 test('initial page configuration matches the latest shared catalogue',()=>{
   const config=JSON.parse(readFileSync(join(root,'assets/ncn-theme/config.json'),'utf8'));
   for(const path of pages){
-    if(path===join(root,'flappy-bird/index.html'))continue;
     const source=readFileSync(path,'utf8'),match=source.match(/<script id="ncn-initial-config" type="application\/json">([\s\S]*?)<\/script>/);
     assert.ok(match,path);assert.deepEqual(JSON.parse(match[1]),config,path);
   }
