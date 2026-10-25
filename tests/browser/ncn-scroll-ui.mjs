@@ -233,11 +233,12 @@ try{
     await noOverflow();
   });
   await check('flight pauses for shared navigation, search and login without stealing panel focus',async()=>{
-    await page.clock.install();
+    await fresh(1280,900);await page.clock.install();await open('/flappy-bird/');
     await page.locator('#startButton').click();
     await page.locator('#ncn-menu-open').click();
+    assert.equal(await page.locator('body.ncn-menu-open').count(),1);
     assert.equal(await page.locator('#pauseScreen').isVisible(),true);
-    assert.equal(await page.locator('#ncn-menu-close').evaluate(el=>el===document.activeElement),true);
+    assert.equal(await page.locator('#ncn-menu-close').evaluate(el=>el===document.activeElement),true,await page.evaluate(()=>({focus:document.activeElement?.id,body:document.body.className,menu:document.getElementById('ncn-menu-open').outerHTML})));
     await page.keyboard.press('Tab');
     assert.equal(await page.locator('#ncn-sidebar').evaluate(el=>el.contains(document.activeElement)),true);
     await page.keyboard.press('Escape');await page.clock.runFor(300);
