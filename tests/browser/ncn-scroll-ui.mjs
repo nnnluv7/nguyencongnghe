@@ -63,6 +63,15 @@ async function open(path){
     // The app consumes this body itself. Reading it again through CDP can race
     // navigation and cache eviction; two paint frames observe its rendered state.
     await currentPage.evaluate(async()=>{await document.fonts.ready;await new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done)));});
+    await currentPage.locator('#ncn-toolbar-clock').waitFor();
+    assert.match(await currentPage.locator('#ncn-toolbar-clock time').innerText(),/^\d{2}:\d{2}:\d{2}$/);
+    const clock=await currentPage.locator('#ncn-toolbar-clock').evaluate(node=>{
+      const r=node.getBoundingClientRect(),bar=node.closest('header').getBoundingClientRect();
+      const next=document.querySelector('.ncn-top-search,#ncn-game-topbar .top-actions')?.getBoundingClientRect();
+      return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,barLeft:bar.left,barRight:bar.right,barTop:bar.top,barBottom:bar.bottom,nextLeft:next?.left};
+    });
+    assert.ok(clock.left>=clock.barLeft&&clock.right<=clock.barRight&&clock.top>=clock.barTop&&clock.bottom<=clock.barBottom,JSON.stringify(clock));
+    assert.ok(!clock.nextLeft||clock.right<=clock.nextLeft,JSON.stringify(clock));
   }finally{
     currentPage.off('framenavigated',navigated);currentPage.off('request',requested);
   }
@@ -99,6 +108,12 @@ try{
     assert.ok(ready,'Production must serve this commit before browser checks run');
     console.log('Production assets match the tested source.');
   }
+  for(const width of [1280,390,360,320])for(const path of ['/','/flappy-bird/'])await check('live Vietnam clock fits the shared toolbar: '+path+' '+width,async()=>{
+    await fresh(width,900);await open(path);await noOverflow();
+    const previous=await page.locator('#ncn-toolbar-clock time').getAttribute('datetime');
+    await page.waitForFunction(previous=>document.querySelector('#ncn-toolbar-clock time').dateTime!==previous,previous);
+    await shot('toolbar-clock-'+(path==='/'?'home':'game')+'-'+width);
+  });
   for(const width of [1280,390])for(const path of ['/sticker/','/popup-a7/','/popup-a4-a5-a6/','/ban-hang/','/trang-tri/']){
     await check('model selection starts at the editor: '+path+' '+width,async()=>{
       await fresh(width,900);await open(path);await page.waitForSelector('[data-model]');

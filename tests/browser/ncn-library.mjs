@@ -82,6 +82,7 @@ try{
     await check('library page '+(index+1)+'/'+rows.length+': '+row.link,async()=>{
       await open(row.link);await fits();
       assert.equal(await page.locator('#ncn-site-shell').count(),1,'one shared navigation shell');
+      await page.locator('#ncn-toolbar-clock').waitFor();assert.equal(await page.locator('#ncn-toolbar-clock').count(),1,'one live toolbar clock on every Library page');
       const file=root+row.link+(row.link.endsWith('/')?'index.html':'');
       const source=await readFile(file,'utf8'),changed=/class="[^"]*ncn-library-page\b/.test(source);
       if(changed){
