@@ -49,7 +49,9 @@ export class OceanPainter{
     const bubbleCount=this.reduced?12:35;
     for(let i=0;i<bubbleCount;i++){const x=(i*117.71+Math.sin(time*.33+i)*9)%w,y=h-((i*49.3+(this.reduced?0:time*(5+i%4)))%(h+30)),r=1.5+i%4;c.strokeStyle='#d7ffff35';c.lineWidth=.8;c.beginPath();c.arc(x,y,r,0,TAU);c.stroke();ellipse(c,x-r*.25,y-r*.3,.7,.7,'#ecffff55');}
     c.save();c.translate(w/2-this.camera.x*z,h/2-this.camera.y*z);c.scale(z,z);
-    c.drawImage(this.floor,0,755,1600,270);
+    // A foreground reef follows the camera gently, keeping the ocean grounded
+    // on both wide monitors and portrait phones without adding collision walls.
+    c.drawImage(this.floor,0,this.camera.y+vh/2-235,1600,270);
     for(const j of ocean.jellies)this.jelly(c,j,time);
     for(const item of ocean.items)this.item(c,item,time);
     const playerPoint=this.point(p.x,p.y);let hints=0;
