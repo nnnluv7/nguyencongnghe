@@ -1,0 +1,32 @@
+<section class="na-heading"><a class="na-back" href="/admin/">← Quản trị Admin</a><span class="na-kicker">NỘI DUNG WEBSITE</span><h1>Quản lý Thư viện</h1><p>Thêm bài mới, chỉnh bài đã có và quản lý nội dung hiển thị.</p><div class="na-heading-actions"><button type="button" id="nl-new" class="na-primary">＋ Thêm bài viết</button><a href="/thu-vien/" class="na-button" target="_blank" rel="noopener">Xem Thư viện ↗</a></div></section>
+<p id="nl-status" class="na-status" role="status" aria-live="polite">Đang tải danh sách…</p>
+<div class="nl-layout">
+ <section class="na-surface nl-list-panel" aria-label="Danh sách bài viết">
+  <div class="nl-list-top"><h2>Bài viết</h2><button type="button" id="nl-refresh" class="na-text">Tải lại</button></div>
+  <label class="na-field">Tìm bài<input type="search" id="nl-search" placeholder="Tên bài viết hoặc chuyên mục…"></label>
+  <label class="na-field">Trạng thái<select id="nl-filter"><option value="all">Tất cả đang quản lý</option><option value="published">Đang hiện</option><option value="hidden">Ẩn khỏi Thư viện</option><option value="draft">Bản nháp</option><option value="trash">Thùng rác</option></select></label>
+  <p id="nl-count" class="na-muted" aria-live="polite"></p><div id="nl-list" class="nl-list"></div>
+ </section>
+ <section class="na-surface nl-editor" aria-labelledby="nl-editor-title">
+  <div class="nl-editor-top"><div><span id="nl-source" class="na-tag">Bài mới</span><h2 id="nl-editor-title">Thêm bài viết</h2></div><a id="nl-open" class="na-text" href="/thu-vien/" target="_blank" rel="noopener" hidden>Mở trang ↗</a></div>
+  <form id="nl-form">
+   <label class="na-field">Loại nội dung<select id="nl-kind"><option value="article">Soạn bài viết trên website</option><option value="link">Thêm liên kết vào Thư viện</option><option value="legacy" hidden>Trang đã có</option></select></label>
+   <label class="na-field">Tiêu đề<input id="nl-title" required maxlength="200" placeholder="Nhập tên bài viết"></label>
+   <div class="nl-form-row"><label class="na-field">Chuyên mục<input id="nl-labels" maxlength="300" list="nl-categories" placeholder="Ví dụ: Hướng dẫn, Công nghệ"><small>Tối đa 5 chuyên mục, ngăn cách bằng dấu phẩy.</small></label><label class="na-field">Trạng thái<select id="nl-state"><option value="published">Đang hiện trong Thư viện</option><option value="hidden">Ẩn khỏi Thư viện, vẫn mở được bằng liên kết</option><option value="draft">Bản nháp, chưa công khai</option></select></label></div>
+   <datalist id="nl-categories"></datalist>
+   <label class="na-field">Mô tả ngắn<textarea id="nl-summary" maxlength="500" rows="3" placeholder="Nội dung giới thiệu trên thẻ bài viết…"></textarea></label>
+   <label class="na-field">Ảnh đại diện<input id="nl-image" type="text" maxlength="2048" placeholder="Dán liên kết ảnh HTTPS (có thể bỏ trống)"></label>
+   <label class="na-field" id="nl-href-field">Đường dẫn bài viết<input id="nl-href" type="text" maxlength="2048" placeholder="https://…"><small id="nl-href-help">Đường dẫn của bài viết trên website hoặc trang khác.</small></label>
+   <label class="na-field" id="nl-mode-field" hidden>Nội dung trang<select id="nl-mode"><option value="original">Giữ nguyên nội dung trang hiện tại</option><option value="markdown">Soạn nội dung thay thế</option></select><small>Bản gốc được giữ lại. Anh có thể chọn giữ nguyên nội dung để quay về bản gốc.</small></label>
+   <p id="nl-tool-note" class="na-note" hidden>Đây là trang công cụ hoặc trang in. Anh có thể sửa thẻ giới thiệu và gỡ lối tắt khỏi Thư viện; chức năng và đường dẫn gốc được giữ nguyên.</p>
+   <section id="nl-body-section" aria-label="Soạn nội dung">
+    <div class="nl-write-heading"><label for="nl-body">Nội dung bài viết</label><button type="button" id="nl-preview-toggle" class="na-text" aria-expanded="false" aria-controls="nl-preview">Xem trước</button></div>
+    <div class="nl-format" aria-label="Định dạng nội dung"><button type="button" data-format="heading">Tiêu đề</button><button type="button" data-format="bold"><strong>Đậm</strong></button><button type="button" data-format="italic"><em>Nghiêng</em></button><button type="button" data-format="list">Danh sách</button><button type="button" data-format="link">Liên kết</button><button type="button" data-format="image">Ảnh</button></div>
+    <textarea id="nl-body" maxlength="50000" rows="15" placeholder="Viết nội dung ở đây. Dùng các nút phía trên để thêm tiêu đề, liên kết hoặc ảnh."></textarea>
+    <div id="nl-preview" class="nl-preview" hidden></div>
+   </section>
+   <div class="nl-save-bar"><button type="submit" class="na-primary" id="nl-save">Lưu bài viết</button><button type="button" class="na-button" id="nl-visibility" hidden>Ẩn khỏi Thư viện</button><button type="button" class="na-danger na-button" id="nl-trash" hidden>Đưa vào Thùng rác</button><button type="button" class="na-primary" id="nl-restore" hidden>Khôi phục bài viết</button></div>
+  </form>
+ </section>
+</div>
+<dialog id="nl-trash-dialog" class="na-dialog" aria-labelledby="nl-trash-title"><h2 id="nl-trash-title">Đưa bài vào Thùng rác?</h2><p id="nl-trash-name"></p><label id="nl-remove-page-option" class="na-check"><input type="checkbox" id="nl-remove-page">Đồng thời vô hiệu hoá trang bài viết trên website</label><p id="nl-trash-help" class="na-muted">Chỉ gỡ bài khỏi danh sách Thư viện. Liên kết trang gốc vẫn mở được. Anh có thể khôi phục từ Thùng rác.</p><div class="na-dialog-actions"><button type="button" id="nl-trash-cancel" class="na-button">Giữ lại</button><button type="button" id="nl-trash-confirm" class="na-primary">Đưa vào Thùng rác</button></div></dialog>

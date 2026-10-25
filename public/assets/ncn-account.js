@@ -35,6 +35,17 @@ export function mountAccount({doc=document,win=window,identity=identityClient,fe
     <footer><a href="/premium/">Đăng ký / gia hạn VIP ↗</a><span>VIP được gắn với email đã xác nhận.</span></footer>`;
   doc.body.append(dialog);
   const forms=Object.fromEntries([...dialog.querySelectorAll('[data-account-form]')].map(f=>[f.dataset.accountForm,f]));
+  function renderAdminNavigation(){
+    const admin=!!state.user?.admin;
+    doc.querySelectorAll('[data-ncn-admin-only]').forEach(el=>el.hidden=!admin);
+    const nav=$('ncn-navigation');let entry=$('ncn-admin-navigation');
+    if(!admin){entry?.remove();return;}
+    if(nav&&!entry){
+      entry=node('a',null,'ncn-nav-link');entry.id='ncn-admin-navigation';entry.href='/admin/';
+      entry.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6ZM8 12l3 3 5-6"/></svg><span>Quản trị Admin</span>';
+      nav.append(entry);
+    }
+  }
   for(const form of Object.values(forms))if(form.elements.email&&hint)form.elements.email.value=hint.email;
   if(hint?.username)forms.register.elements.name.value=hint.username;
   function message(text,error=false){const el=$('ncn-account-message');el.textContent=text;el.hidden=!text;el.classList.toggle('ncn-account-error',error);}
@@ -82,6 +93,7 @@ export function mountAccount({doc=document,win=window,identity=identityClient,fe
         if(verified?.vipExpiresAt)info.append(node('small','Hạn VIP: '+new Date(verified.vipExpiresAt).toLocaleDateString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh'})));
         target.append(info);
         if(verified){const history=node('a','Lịch sử thi','auth-btn btn-login');history.href='/p/lich-su-thi.html';target.append(history);}
+        if(verified?.admin){const admin=node('a','Quản trị Admin','auth-btn btn-login');admin.href='/admin/';target.append(admin);}
         const out=node('button','Đăng xuất','auth-btn btn-login');out.type='button';out.dataset.ncnAccountSignout='';out.disabled=state.busy;target.append(out);
       }else if(phase==='restoring'){
         const status=node('span','Tài khoản của bạn','ncn-account-placeholder');status.setAttribute('role','status');target.append(status);
@@ -99,6 +111,7 @@ export function mountAccount({doc=document,win=window,identity=identityClient,fe
     doc.querySelectorAll('.ncn-account-dropdown>a[href="/premium/"]').forEach(el=>el.textContent='Đăng ký / gia hạn VIP ↗');
     doc.querySelectorAll('[data-account-mode=register],[data-ncn-account-open=register]').forEach(b=>b.hidden=!!state.settings?.disableSignup);
     doc.querySelectorAll('[data-ncn-announcement-admin]').forEach(el=>el.hidden=!verified?.admin);
+    renderAdminNavigation();
     if(win.QuizSystem)win.QuizSystem.user=quizProfile(verified,hint);
   }
   const userKey=user=>JSON.stringify(user?[user.id,user.email,user.name,user.admin,user.vip,user.vipSource,user.vipExpiresAt,user.paidVipBlocked]:null);
@@ -177,6 +190,7 @@ export function mountAccount({doc=document,win=window,identity=identityClient,fe
       state.checkedAt=0;refresh({force:true}).catch(()=>{});
     }
   });
+  listen(doc,'ncn-navigation-ready',renderAdminNavigation);
   listen(doc,'visibilitychange',()=>{if(!doc.hidden&&(state.user||state.profile||state.error))refresh().catch(()=>{});});
   listen(win,'online',()=>{if(state.user||state.profile||state.error)refresh({force:true}).catch(()=>{});});
   listen(win,'pageshow',event=>{if(event.persisted)refresh({force:true}).catch(()=>{});});

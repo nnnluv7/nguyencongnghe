@@ -1,3 +1,5 @@
+const seedLibraryForFixture=JSON.parse(await readFile('netlify/lib/ncn-library/seed.json','utf8'));
+import {publicCatalog} from '../../netlify/lib/ncn-library-api.mjs';
 import {chromium} from 'playwright';
 import {createServer} from 'node:http';
 import {readFile,mkdir,writeFile,stat} from 'node:fs/promises';
@@ -12,6 +14,7 @@ const server=createServer(async(req,res)=>{
   try{
     const url=new URL(req.url,'http://127.0.0.1');
     if(url.pathname.startsWith('/.netlify/functions/')){
+      if(url.pathname.endsWith('ncn-library')&&url.searchParams.get('route')==='list'){res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify({items:publicCatalog(seedLibraryForFixture)}));return;}
       const body=url.pathname.endsWith('ncn-announcements')?{items:[{id:'qa',text:'NCN · Kiểm tra giao diện cuộn và nhập liệu'}]}:{total:123,online:1};
       res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify(body));return;
     }

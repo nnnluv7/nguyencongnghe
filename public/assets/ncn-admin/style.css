@@ -1,0 +1,71 @@
+body.ncn-admin-page #ncn-page-actions{display:none!important}
+#ncn-admin-app{width:100%;max-width:1160px;margin:0 auto 48px;color:var(--ncn-ink);font:15px/1.65 var(--body-font);overflow-wrap:anywhere}
+#ncn-admin-app *{box-sizing:border-box}
+#ncn-admin-app [hidden]{display:none!important}
+#ncn-admin-app :is(h1,h2,p){position:static;float:none;width:auto;height:auto;padding:0;border:0;background:none;color:inherit}
+#ncn-admin-app h1{font-size:clamp(28px,4vw,38px);line-height:1.2;letter-spacing:-1px;font-weight:750;margin:8px 0 12px}
+#ncn-admin-app h2{font-size:20px;line-height:1.35;font-weight:700;margin:0 0 10px}
+#ncn-admin-app p{margin:0 0 16px;line-height:1.7}
+#ncn-admin-app .na-kicker{display:block;font-size:11px;letter-spacing:1.6px;font-weight:750;color:var(--ncn-accent);margin-bottom:8px}
+#ncn-admin-app .na-heading{margin-bottom:26px;max-width:920px}
+#ncn-admin-app .na-heading>p,#ncn-admin-app .na-muted{color:var(--ncn-muted);font-size:13px}
+#ncn-admin-app .na-back{display:inline-flex;color:var(--ncn-accent);font-size:13px;text-decoration:none;margin-bottom:20px}
+#ncn-admin-app :is(.na-surface,.na-access,.na-module){border:1px solid var(--ncn-rim);background:var(--ncn-glass-card);box-shadow:var(--ncn-shadow);border-radius:26px;-webkit-backdrop-filter:blur(24px) saturate(145%);backdrop-filter:blur(24px) saturate(145%)}
+#ncn-admin-app .na-surface{padding:24px;min-width:0}
+#ncn-admin-app .na-access{padding:40px;max-width:720px;margin:30px auto}
+#ncn-admin-app .na-heading-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+#ncn-admin-app :is(button,.na-button){font-family:inherit;cursor:pointer}
+#ncn-admin-app :is(.na-button,.na-primary){display:inline-flex;align-items:center;justify-content:center;min-height:43px;padding:11px 18px;border:1px solid var(--ncn-border);border-radius:16px;background:var(--ncn-surface);color:var(--ncn-ink);font-size:13px;font-weight:650;line-height:1.4;text-decoration:none;box-shadow:inset 0 1px 0 #fff5}
+#ncn-admin-app .na-primary{color:#fff;background:linear-gradient(135deg,#328fdf,#14569c);border-color:#5eacf47a;box-shadow:inset 0 1px 0 #ffffff70,0 5px 15px #0a4b8d1a}
+#ncn-admin-app :is(button,a):focus-visible{outline:3px solid var(--ncn-accent);outline-offset:3px}
+#ncn-admin-app button:disabled{opacity:.5;cursor:default}
+#ncn-admin-app .na-text{background:none;border:0;box-shadow:none;color:var(--ncn-accent);font:650 12px/1.5 var(--body-font);padding:6px 0;text-decoration:none;cursor:pointer}
+#ncn-admin-app .na-danger{color:#c3374b;border-color:#c3374b44}
+#ncn-admin-app .na-field{display:flex;flex-direction:column;gap:7px;font-size:13px;font-weight:650;margin:0 0 17px;min-width:0}
+#ncn-admin-app .na-field small{font-size:11px;line-height:1.5;font-weight:400;color:var(--ncn-muted)}
+#ncn-admin-app :is(input:not([type=checkbox]),select,textarea){display:block;width:100%;max-width:100%;min-width:0;border:1px solid var(--ncn-border);border-radius:13px;background:var(--ncn-input-bg,var(--ncn-surface));color:var(--ncn-ink);padding:12px 13px;font:400 14px/1.5 var(--body-font);outline:none;box-shadow:inset 0 1px 2px #00000004;appearance:auto}
+#ncn-admin-app :is(input,select,textarea):focus{border-color:var(--ncn-accent);box-shadow:0 0 0 3px #368bd81c}
+#ncn-admin-app input[readonly]{color:var(--ncn-muted)}
+#ncn-admin-app textarea{resize:vertical;min-height:90px}
+#ncn-admin-app .na-status{border:1px solid var(--ncn-border);padding:13px 17px;background:var(--ncn-glass-card);border-radius:16px;font-size:13px;margin-bottom:20px}
+#ncn-admin-app .na-status.na-error{color:#bd3446;border-color:#bd34464d}
+#ncn-admin-app .na-note{border:1px solid var(--ncn-border);padding:13px 15px;border-radius:14px;font-size:12px;color:var(--ncn-muted)}
+#ncn-admin-app .na-tag{display:inline-block;font-size:10px;font-weight:700;color:var(--ncn-accent);letter-spacing:.4px;margin-bottom:8px}
+#ncn-admin-app .na-hub-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+#ncn-admin-app .na-module{display:block;padding:26px;min-height:255px;color:var(--ncn-ink);text-decoration:none;transition:transform .18s,border-color .18s}
+#ncn-admin-app .na-module:hover{transform:translateY(-3px);border-color:var(--ncn-accent)}
+#ncn-admin-app .na-module-featured{grid-column:span 2;background:linear-gradient(125deg,#64aaf71f,#75dec519),var(--ncn-glass-card)}
+#ncn-admin-app .na-icon{display:flex;align-items:center;justify-content:center;width:43px;height:43px;border:1px solid var(--ncn-rim);border-radius:14px;color:var(--ncn-accent);background:#5ab0f61c;font-size:27px;margin-bottom:22px}
+#ncn-admin-app .na-module p{font-size:13px;color:var(--ncn-muted);max-width:480px}
+#ncn-admin-app .na-module>strong{display:block;font-size:12px;color:var(--ncn-accent);margin-top:24px}
+#ncn-admin-app .nl-layout{display:grid;grid-template-columns:minmax(250px,.82fr) minmax(0,1.85fr);gap:20px;align-items:start}
+#ncn-admin-app .nl-list-top,#ncn-admin-app .nl-editor-top{display:flex;align-items:start;justify-content:space-between;gap:12px;margin-bottom:18px}
+#ncn-admin-app .nl-list-top h2{margin:0}
+#ncn-admin-app .nl-list{display:flex;flex-direction:column;gap:8px;max-height:690px;overflow:auto;overscroll-behavior:contain;padding:2px}
+#ncn-admin-app .nl-list-item{display:block;width:100%;text-align:left;border:1px solid var(--ncn-border);background:var(--ncn-surface);color:var(--ncn-ink);padding:12px 13px;border-radius:14px;white-space:normal;line-height:1.5}
+#ncn-admin-app .nl-list-item span{display:block;font-size:12px;font-weight:650}
+#ncn-admin-app .nl-list-item small{display:block;font-size:10px;color:var(--ncn-muted);margin-top:6px}
+#ncn-admin-app .nl-list-item[aria-pressed=true]{border-color:var(--ncn-accent);background:#548fdf14;box-shadow:0 0 0 1px #548fdf22}
+#ncn-admin-app .nl-list-empty{padding:12px}
+#ncn-admin-app .nl-form-row{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+#ncn-admin-app .nl-write-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:20px 0 10px;font-size:13px;font-weight:650}
+#ncn-admin-app .nl-format{display:flex;flex-wrap:wrap;gap:5px;border:1px solid var(--ncn-border);border-bottom:0;border-radius:13px 13px 0 0;padding:8px;background:var(--ncn-surface)}
+#ncn-admin-app .nl-format button{background:transparent;border:0;border-radius:7px;padding:7px 9px;color:var(--ncn-ink);font-size:11px}
+#ncn-admin-app .nl-format button:hover{background:#548fdf16}
+#ncn-admin-app #nl-body{border-top-left-radius:0;border-top-right-radius:0;min-height:320px}
+#ncn-admin-app .nl-preview{padding:22px;border:1px solid var(--ncn-border);border-radius:16px;background:var(--ncn-surface);margin-top:16px;font-size:14px;line-height:1.8}
+#ncn-admin-app .nl-preview img{display:block;max-width:100%;height:auto;border-radius:12px;margin:15px 0}
+#ncn-admin-app .nl-preview :is(h2,h3){margin:22px 0 12px}
+#ncn-admin-app .nl-preview a{color:var(--ncn-accent);text-decoration:underline}
+#ncn-admin-app .nl-preview pre{overflow:auto;padding:12px;background:#778baa12;border-radius:10px}
+#ncn-admin-app .nl-save-bar{display:flex;gap:8px;flex-wrap:wrap;margin-top:23px;padding-top:20px;border-top:1px solid var(--ncn-border)}
+#ncn-admin-app .na-dialog{width:min(510px,calc(100% - 28px));padding:28px;border:1px solid var(--ncn-rim);border-radius:25px;color:var(--ncn-ink);background:var(--ncn-surface);box-shadow:0 24px 100px #10264744}
+#ncn-admin-app .na-dialog::backdrop{background:#1d334b55;backdrop-filter:blur(10px)}
+#ncn-admin-app .na-dialog-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:24px}
+#ncn-admin-app .na-check{display:flex;gap:10px;align-items:flex-start;font-size:13px;margin:20px 0}
+#ncn-admin-app .na-check input{flex:none;width:17px;height:17px;margin-top:3px;appearance:auto;accent-color:var(--ncn-accent)}
+@media(max-width:950px){#ncn-admin-app .na-hub-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#ncn-admin-app .nl-layout{grid-template-columns:minmax(230px,.8fr) minmax(0,1.5fr)}#ncn-admin-app .na-surface{padding:18px}#ncn-admin-app .nl-form-row{grid-template-columns:1fr;gap:0}}
+@media(max-width:700px){#ncn-admin-app .nl-layout{grid-template-columns:1fr}#ncn-admin-app .nl-list{max-height:300px}#ncn-admin-app .na-hub-grid{grid-template-columns:1fr}#ncn-admin-app .na-module-featured{grid-column:auto}#ncn-admin-app .na-module{min-height:0}#ncn-admin-app .na-access{padding:25px}#ncn-admin-app .na-surface{border-radius:21px}#ncn-admin-app :is(input:not([type=checkbox]),select,textarea){font-size:16px}#ncn-admin-app .nl-save-bar>*{flex:1 1 130px}}
+@media(prefers-reduced-motion:reduce){#ncn-admin-app *{transition:none!important}}
+
+#ncn-admin-app .na-icon svg{width:25px;height:25px}

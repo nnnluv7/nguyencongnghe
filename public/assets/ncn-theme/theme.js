@@ -2,7 +2,7 @@ import '../ncn-account.js?v=20261024-account-2';
 import {installAppearance} from './appearance.js?v=20261017-mobile-dark-1';
 // A metrics request must never delay or prevent the actual interface.
 if(typeof window!=='undefined')import('./visitor-counter.js?v=20261016-easy-2').catch(()=>{});
-import {installToolUI} from './tool-ui.js?v=20261024-first-paint-1';
+import {installToolUI} from './tool-ui.js?v=20261025-home-latest-1';
 import {installFloatingMenu,orderTools,navigationHTML} from './menu.js?v=20261017-mobile-dark-1';
 /* NCN portal: navigation and local display preferences. VIP authorization stays on the server. */
 const ICONS = {
@@ -69,7 +69,7 @@ export function createTheme({doc=document,win=window,config,catalog=win.CG_CATAL
   const groups=(Array.isArray(cfg.groups)?cfg.groups:[]).filter(g=>g&&typeof g.id==='string'&&g.name);
   const tools=orderTools((Array.isArray(cfg.tools)?cfg.tools:[]).filter(t=>t&&/^[a-z0-9-]+$/i.test(t.id)&&t.title&&safeHref(t.href)).map(t=>({...t,href:safeHref(t.href)})));
   const toolIds=new Set(tools.map(t=>t.id));
-  const rows=normalizeCatalog(catalog);
+  let rows=normalizeCatalog(catalog);
   let favorites;
   try { const value=JSON.parse(read('ncn-favorites')||'[]'); favorites=new Set(Array.isArray(value)?value.filter(x=>toolIds.has(x)):[]); } catch {favorites=new Set();}
   const icons=root=>(root||doc).querySelectorAll('[data-ncn-icon]').forEach(el=>{el.innerHTML=svg(el.dataset.ncnIcon);});
@@ -103,6 +103,7 @@ export function createTheme({doc=document,win=window,config,catalog=win.CG_CATAL
     return `<a class="ncn-nav-link" href="${escapeHTML(href)}"${id?` data-ncn-tool="${escapeHTML(id)}"`:""}${active?' aria-current="page"':''}>${svg(icon)}<span>${escapeHTML(title)}</span>${badge?'<b class="ncn-nav-pill">VIP</b>':''}</a>`;
   }
   if(tools.length&&$('ncn-navigation')) $('ncn-navigation').innerHTML=navigationHTML(tools,navLink);
+  doc.dispatchEvent(new win.CustomEvent('ncn-navigation-ready'));
   // A repository without Event still gets a useful portal, without dead VIP links.
   if(!tools.some(t=>t.id==='event')) doc.querySelectorAll('#ncn-site-shell a[href="/in-event/"],.ncn-hero-actions a[href="/in-event/"]').forEach(a=>a.hidden=true);
   icons();const appearance=installAppearance({doc,win});appearance.refresh();
@@ -115,7 +116,8 @@ export function createTheme({doc=document,win=window,config,catalog=win.CG_CATAL
   listen($('ncn-tools-toggle'),'click',()=>setDrawer($('ncn-page-tools')?.hidden));
   listen($('ncn-tools-close'),'click',()=>setDrawer(false));
   listen(doc,'click',e=>{const details=doc.querySelector('.ncn-account-menu');if(details&&!details.contains(e.target)) details.open=false;});
-  const searchItems=[...tools.map(t=>({title:t.title,link:t.href,summary:t.description,labels:[groups.find(g=>g.id===t.group)?.name||'Công cụ'],kind:t.access==='vip'?'Công cụ VIP':'Công cụ',icon:t.icon})),...rows.filter(row=>!tools.some(t=>canonicalPath(t.href)===canonicalPath(row.link))).map(row=>({...row,kind:row.isPage?'Trang':'Bài viết',icon:'book'}))];
+  const buildSearchItems=()=>[...tools.map(t=>({title:t.title,link:t.href,summary:t.description,labels:[groups.find(g=>g.id===t.group)?.name||'Công cụ'],kind:t.access==='vip'?'Công cụ VIP':'Công cụ',icon:t.icon})),...rows.filter(row=>!tools.some(t=>canonicalPath(t.href)===canonicalPath(row.link))).map(row=>({...row,kind:row.isPage?'Trang':'Bài viết',icon:'book'}))];
+  let searchItems=buildSearchItems();
   const matches=(row,query)=>fold(`${row.title} ${row.summary||row.description||''} ${(row.labels||[]).join(' ')}`).includes(fold(query));
   function renderSearch() {
     const query=$('ncn-global-query')?.value||'',result=searchItems.filter(row=>matches(row,query));
@@ -166,12 +168,13 @@ export function createTheme({doc=document,win=window,config,catalog=win.CG_CATAL
     if(image && image.startsWith('https://i.ibb.co/') && safeHref(cfg.logo))image=safeHref(cfg.logo);
     if(image)image=imageURL(image);
     const time=new Date(row.datetime);if(!Number.isNaN(time.getTime())) date=new Intl.DateTimeFormat('vi-VN',{day:'2-digit',month:'2-digit',year:'numeric',timeZone:'Asia/Ho_Chi_Minh'}).format(time);
-    const label=(library?libraryLabels(row):row.labels)[0]|| (row.isPage?'Trang nội dung':'Bài viết');
-    const summary=library?String(row.summary||'').replace(/\(?full-width\)?/gi,'').replace(/^\s*Đang tải dữ liệu\.{3}\s*$/,'').trim():row.summary;
+    const label=libraryLabels(row)[0]|| (row.isPage?'Trang nội dung':'Bài viết');
+    const summary=String(row.summary||'').replace(/\(?full-width\)?/gi,'').replace(/^\s*Đang tải dữ liệu\.{3}\s*$/,'').trim();
     return `<a class="ncn-article-card" href="${escapeHTML(row.link)}">${image?`<img class="ncn-article-image" src="${escapeHTML(image)}" alt="" loading="lazy">`:`<div class="ncn-article-placeholder">${svg('book')}</div>`}<div class="ncn-article-card-body"><div class="ncn-article-meta"><span>${escapeHTML(label)}</span><time>${escapeHTML(date)}</time></div><h3>${escapeHTML(row.title)}</h3><p>${escapeHTML(summary||'Mở trang để xem nội dung.')}</p><span class="ncn-article-read">Xem nội dung ↗</span></div></a>`;
   }
-  const sortedRows=rows.slice().sort((a,b)=>(Date.parse(b.datetime)||0)-(Date.parse(a.datetime)||0));
-  if($('ncn-articles')) $('ncn-articles').innerHTML=sortedRows.filter(row=>!row.isPage&&!tools.some(t=>canonicalPath(t.href)===canonicalPath(row.link))).slice(0,3).map(articleCard).join('')||'<p class="ncn-empty">Các bài viết sẽ xuất hiện khi danh mục nội dung được tải.</p>';
+  let sortedRows=rows.slice().sort((a,b)=>(Date.parse(b.datetime)||0)-(Date.parse(a.datetime)||0));
+  function renderArticleFeed(){if($('ncn-articles')) $('ncn-articles').innerHTML=sortedRows.filter(row=>row.isArticle!==false&&!row.isPage&&!tools.some(t=>canonicalPath(t.href)===canonicalPath(row.link))).slice(0,3).map(articleCard).join('')||'<p class="ncn-empty">Các bài viết sẽ xuất hiện khi danh mục nội dung được tải.</p>';}
+  renderArticleFeed();
   let page=1,libraryQuery='',libraryLabel='';
   const PAGE_SIZE=12;
   function renderLibrary() {
@@ -193,13 +196,23 @@ export function createTheme({doc=document,win=window,config,catalog=win.CG_CATAL
     listen($('ncn-library-label'),'change',e=>{libraryLabel=e.target.value;page=1;updateLibraryURL();renderLibrary();});
     listen($('ncn-library-prev'),'click',()=>{page--;renderLibrary();});listen($('ncn-library-next'),'click',()=>{page++;renderLibrary();});renderLibrary();
   }
+  function replaceCatalogue(catalog){
+    rows=normalizeCatalog(catalog);sortedRows=rows.slice().sort((a,b)=>(Date.parse(b.datetime)||0)-(Date.parse(a.datetime)||0));searchItems=buildSearchItems();renderArticleFeed();
+    if(library){
+      const labels=[...new Set(rows.flatMap(libraryLabels))].sort((a,b)=>a.localeCompare(b,'vi'));
+      if(!labels.includes(libraryLabel))libraryLabel='';
+      $('ncn-library-label').innerHTML='<option value="">Tất cả</option>'+labels.map(label=>`<option value="${escapeHTML(label)}">${escapeHTML(label)}</option>`).join('');
+      $('ncn-library-label').value=libraryLabel;renderLibrary();
+    }
+    if(dialog?.open)renderSearch();
+  }
   listen(win,'storage',e=>{if(e.key==='ncn-favorites'){try{const value=JSON.parse(e.newValue||'[]');favorites=new Set(Array.isArray(value)?value.filter(x=>toolIds.has(x)):[]);}catch{favorites=new Set();}renderTools();}});
   if(preview){
     // The preview uses the same UI, and opens existing website routes in the browser.
     previewLinks();
   }
   const toolUI=installToolUI({doc,win,config:cfg,preview});
-  return {tools,rows,renderTools,renderSearch,renderLibrary,openSearch,closeSearch,menu,appearance,destroy:()=>{menu.destroy();toolUI.destroy();listeners.splice(0).forEach(remove=>remove());}};
+  return {tools,get rows(){return rows;},replaceCatalogue,renderTools,renderSearch,renderLibrary,openSearch,closeSearch,menu,appearance,destroy:()=>{menu.destroy();toolUI.destroy();listeners.splice(0).forEach(remove=>remove());}};
 }
 
 export async function bootTheme() {
@@ -219,6 +232,19 @@ export async function bootTheme() {
     }
   }
   const result=createTheme({config,preview:window.NCN_THEME_PREVIEW===true});
+  if(!window.NCN_THEME_PREVIEW){
+    let pending=null,queued=false,closed=false;
+    const refresh=()=>{
+      if(closed)return;if(pending){queued=true;return pending;}
+      pending=fetch('/.netlify/functions/ncn-library?route=list',{credentials:'same-origin',cache:'no-store',signal:AbortSignal.timeout(10000)}).then(async response=>{
+        if(!response.ok||closed)return;const data=await response.json();if(Array.isArray(data.items)&&!closed)result.replaceCatalogue(data.items);
+      }).catch(()=>{}).finally(()=>{pending=null;if(queued){queued=false;refresh();}});return pending;
+    };
+    const storage=event=>{if(event.key==='ncn:library:changed')refresh();};
+    window.addEventListener('ncn-library-changed',refresh);window.addEventListener('storage',storage);
+    const destroy=result.destroy;result.destroy=()=>{closed=true;window.removeEventListener('ncn-library-changed',refresh);window.removeEventListener('storage',storage);destroy();};
+    if(!window.NCN_LIBRARY_SNAPSHOT)refresh();
+  }
   if(configFailed){const host=document.getElementById('ncn-tool-grid');if(host)host.innerHTML='<p class="ncn-empty">Chưa tải được danh mục công cụ. <a href="/thu-vien/">Mở thư viện</a> hoặc tải lại trang.</p>';}
   return result;
 }

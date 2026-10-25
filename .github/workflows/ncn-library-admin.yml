@@ -1,0 +1,63 @@
+name: NCN library Admin
+on:
+  pull_request:
+    paths:
+      - 'public/index.html'
+      - 'public/admin/**'
+      - 'public/thu-vien/**'
+      - 'public/assets/ncn-admin/**'
+      - 'public/assets/ncn-library/**'
+      - 'public/assets/ncn-account.js'
+      - 'public/assets/ncn-theme/**'
+      - 'netlify/lib/ncn-library*'
+      - 'netlify/lib/ncn-library/**'
+      - 'netlify/functions/ncn-library*'
+      - 'netlify.toml'
+      - 'public/_redirects'
+      - 'tests/*library*'
+      - 'tests/browser/ncn-library-admin.mjs'
+      - '.github/workflows/ncn-library-admin.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'public/index.html'
+      - 'public/admin/**'
+      - 'public/thu-vien/**'
+      - 'public/assets/ncn-admin/**'
+      - 'public/assets/ncn-library/**'
+      - 'public/assets/ncn-account.js'
+      - 'public/assets/ncn-theme/**'
+      - 'netlify/lib/ncn-library*'
+      - 'netlify/lib/ncn-library/**'
+      - 'netlify/functions/ncn-library*'
+      - 'netlify.toml'
+      - 'public/_redirects'
+      - 'tests/*library*'
+      - 'tests/browser/ncn-library-admin.mjs'
+      - '.github/workflows/ncn-library-admin.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  admin:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install isolated verification tools
+        run: npm install --no-save --package-lock=false playwright@1.56.1 esbuild@0.25.12
+      - name: Check function bundles
+        run: npx esbuild netlify/functions/ncn-library.mjs netlify/functions/ncn-library-page.mjs --bundle --platform=node --format=esm --external:@netlify/identity --external:@netlify/blobs --outdir=/tmp/ncn-library-bundles
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Check Admin, member access and every content lifecycle action
+        run: node tests/browser/ncn-library-admin.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ncn-library-admin
+          path: artifacts/library-admin/
+          retention-days: 14

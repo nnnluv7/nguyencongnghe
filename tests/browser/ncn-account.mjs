@@ -1,3 +1,5 @@
+const seedLibraryForFixture=JSON.parse(await readFile('netlify/lib/ncn-library/seed.json','utf8'));
+import {publicCatalog} from '../../netlify/lib/ncn-library-api.mjs';
 import {chromium} from 'playwright';
 import {readFile,stat,mkdir} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
@@ -55,6 +57,7 @@ async function fixtureContext(){
     }
     if(url.pathname.startsWith('/.netlify/functions/')){
       const tool=url.pathname.split('/').at(-1),action=url.searchParams.get('route');functionCalls.push({tool,action});
+      if(tool==='ncn-library'&&action==='list')return reply({items:publicCatalog(seedLibraryForFixture)});
       if(tool==='ncn-announcements')return reply({items:[]});
       if(tool==='ncn-visitors')return reply({total:1,online:1});
       if(tool==='ncn-billing'){
@@ -93,7 +96,11 @@ async function check(name,fn){await fn();checks++;console.log('PASS '+name);}
 async function login(page,email=existing.email,password=existing.password){
   await page.evaluate(()=>window.openModal?window.openModal('login'):window.NCNAccount.open('login'));
   const form=page.locator('[data-account-form=login]');await form.locator('[name=email]').fill(email);await form.locator('[name=password]').fill(password);await form.locator('[type=submit]').click();
-  await page.waitForFunction(()=>!document.getElementById('ncn-account-dialog').open&&!!window.NCNAccount.state.user);
+  try{await page.waitForFunction(()=>!document.getElementById('ncn-account-dialog').open&&!!window.NCNAccount.state.user);}
+  catch(error){
+    await mkdir('artifacts/account',{recursive:true});await page.screenshot({path:'artifacts/account/login-failure.jpg',type:'jpeg',quality:80});
+    console.log(await page.evaluate(()=>({message:document.getElementById('ncn-account-message')?.textContent,state:{ready:NCNAccount.state.ready,busy:NCNAccount.state.busy,signingOut:NCNAccount.state.signingOut,user:NCNAccount.state.user,error:NCNAccount.state.error?.message},hasSessionCookie:/(?:^|;\s*)nf_jwt=/.test(document.cookie)})));throw error;
+  }
 }
 let context;
 try{
