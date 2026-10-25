@@ -1,5 +1,6 @@
 import {Ocean,LEVELS,clamp,cleanRecord,awardRecord} from './core.js';
 import {OceanPainter} from './draw.js';
+import {installScrollUI} from '../assets/ncn-theme/scroll-ui.js?v=20261024-compact-1';
 
 const $=id=>document.getElementById(id),stage=$('ff-stage'),canvas=$('ff-canvas');
 const KEY='ncn:fish:record:v1';
@@ -25,6 +26,7 @@ class OceanAudio{
   }
 }
 const audio=new OceanAudio(),painter=new OceanPainter(canvas),ocean=new Ocean({onEvent:event});
+const siteChrome=installScrollUI();
 let settled=false,keys=new Set(),mouse=null,touch=null,touchVector=null,lastFrame=performance.now(),accumulator=0,sceneTime=0,toastTimer=0,lastHUD=0,disposed=false;
 const reducedQuery=matchMedia('(prefers-reduced-motion: reduce)');
 record.reduced=record.reduced||reducedQuery.matches;
@@ -63,7 +65,7 @@ function event(e){
   if(e.type==='won'||e.type==='over')finish();
 }
 function finish(){
-  if(settled)return;settled=true;clearInput();const wasBest=record.best,won=ocean.status==='won';record=awardRecord(record,ocean);save();updateSettings();
+  if(settled)return;settled=true;clearInput();siteChrome?.show();const wasBest=record.best,won=ocean.status==='won';record=awardRecord(record,ocean);save();updateSettings();
   text('ff-result-kicker',won?'CHÀO VUA ĐẠI DƯƠNG':'MỘT CHUYẾN ĐI ĐÁNG NHỚ');text('ff-result-title',won?'Từ cá bé, thành huyền thoại.':'Lớn hơn một chút rồi.');
   text('ff-final-score',format(ocean.score));text('ff-record-note',ocean.score>wasBest?'✦ Kỷ lục mới trên máy này!':'Vùng '+(ocean.level+1)+' · '+LEVELS[ocean.level].name);
   text('ff-final-fish',ocean.eaten);text('ff-final-time',clock(ocean.elapsed));text('ff-final-combo','×'+ocean.bestCombo);
@@ -74,7 +76,7 @@ function start(){
   canvas.focus({preventScroll:true});stage.scrollIntoView({block:'start',behavior:record.reduced?'instant':'smooth'});toast('Bạn được bảo vệ 4 giây. Bơi về phía cá nhỏ để bắt đầu.',3600);
 }
 function pause(reason='manual'){
-  if(!ocean.pause())return;clearInput();audio.suspend();text('ff-pause-note',reason==='tab'?'Ván chơi đã nghỉ cùng bạn. Cá, combo và thời gian đều được giữ lại.':'Cá, combo và thời gian đều đã tạm dừng.');syncState();
+  if(!ocean.pause())return;clearInput();siteChrome?.show();audio.suspend();text('ff-pause-note',reason==='tab'?'Ván chơi đã nghỉ cùng bạn. Cá, combo và thời gian đều được giữ lại.':'Cá, combo và thời gian đều đã tạm dừng.');syncState();
 }
 function resume(){if(externalPanel()||document.hidden)return;if(ocean.resume()){clearInput();accumulator=0;lastFrame=performance.now();audio.unlock();syncState();canvas.focus({preventScroll:true});}}
 function dash(){if(ocean.dash())hud();}
