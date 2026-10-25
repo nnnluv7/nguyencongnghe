@@ -238,7 +238,7 @@ try{
     await page.locator('#ncn-menu-open').click();
     assert.equal(await page.locator('body.ncn-menu-open').count(),1);
     assert.equal(await page.locator('#pauseScreen').isVisible(),true);
-    assert.equal(await page.locator('#ncn-menu-close').evaluate(el=>el===document.activeElement),true,await page.evaluate(()=>({focus:document.activeElement?.id,body:document.body.className,menu:document.getElementById('ncn-menu-open').outerHTML})));
+    assert.equal(await page.locator('#ncn-menu-close').evaluate(el=>el===document.activeElement),true,JSON.stringify(await page.evaluate(()=>({focus:document.activeElement?.id,body:document.body.className,menu:document.getElementById('ncn-menu-open').outerHTML,visibility:getComputedStyle(document.getElementById('ncn-sidebar')).visibility}))));
     await page.keyboard.press('Tab');
     assert.equal(await page.locator('#ncn-sidebar').evaluate(el=>el.contains(document.activeElement)),true);
     await page.keyboard.press('Escape');await page.clock.runFor(300);
