@@ -1,0 +1,1 @@
+{"private":true,"type":"module","name":"ncn-arcade-server","version":"1.0.0","engines":{"node":">=22"},"scripts":{"start":"node index.mjs"},"dependencies":{"ws":"8.22.0"}}

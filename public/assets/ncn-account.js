@@ -26,6 +26,7 @@ export function mountAccount({doc=document,win=window,identity=identityClient,fe
   const dialog=node('dialog',null,'ncn-account-dialog');dialog.id='ncn-account-dialog';dialog.setAttribute('aria-labelledby','ncn-account-title');
   dialog.innerHTML=`<header><div><small>NGUYENCONGNGHE.COM</small><h2 id="ncn-account-title">Đăng nhập</h2></div><button type="button" data-account-close aria-label="Đóng tài khoản">×</button></header>
     <p class="ncn-account-intro">Một tài khoản dùng chung toàn website, Event và Giờ Vàng VIP.</p>
+    <div class="ncn-account-social" hidden><button type="button" data-account-facebook>Tiếp tục với Facebook</button><small>Dùng tên hồ sơ của bạn để chơi và so sánh thành tích.</small></div>
     <div class="ncn-account-tabs" role="group" aria-label="Tài khoản"><button type="button" data-account-mode="login">Đăng nhập</button><button type="button" data-account-mode="register">Đăng ký</button></div>
     <p id="ncn-account-message" role="status" aria-live="polite" hidden></p>
     <form data-account-form="login"><label>Email<input name="email" type="email" autocomplete="username" required maxlength="254"></label><label>Mật khẩu<input name="password" type="password" autocomplete="current-password" required maxlength="128"></label><button type="submit" class="ncn-account-primary">Đăng nhập</button><button type="button" class="ncn-account-link" data-account-mode="recovery">Quên mật khẩu?</button></form>
@@ -71,13 +72,21 @@ export function mountAccount({doc=document,win=window,identity=identityClient,fe
     }).catch(error=>message(error.message||'Chưa kết nối được dịch vụ tài khoản.',true));
   }
   function close(){dialog.close();}
+  async function facebook(){
+    try{const config=await settings();if(!config.providers?.facebook)throw Error('Facebook chưa được mở. Bạn có thể đăng nhập bằng email NCN.');
+      const path=win.location.pathname+win.location.search;if(path.startsWith('/ran-luot/'))try{sessionStorage?.setItem('ncn-oauth-return',path);}catch{}
+      win.location.assign('/.netlify/identity/authorize?provider=facebook');
+    }catch(error){message(error.message||'Chưa kết nối được Facebook.',true);}
+  }
   listen(dialog,'close',()=>{dialog.querySelectorAll('input[type=password]').forEach(input=>input.value='');origin?.focus?.({preventScroll:true});});
   listen(dialog,'click',event=>{if(event.target===dialog||event.target.closest('[data-account-close]'))close();});
   listen(doc,'click',event=>{
+    if(event.target.closest('[data-account-facebook]')){event.preventDefault();facebook();return;}
     const button=event.target.closest('[data-ncn-account-open]');if(button){event.preventDefault();open(button.dataset.ncnAccountOpen);}
     const change=event.target.closest('[data-account-mode]');if(change&&dialog.contains(change)){message('');mode(change.dataset.accountMode);}
   });
   function render(){
+    dialog.querySelector('.ncn-account-social').hidden=!state.settings?.providers?.facebook||state.resetPending;
     const verified=state.user,user=verified||state.profile;
     const phase=verified?'authenticated':state.error?'error':state.ready?'guest':'restoring';
     doc.documentElement.dataset.ncnAccountState=phase;
@@ -195,7 +204,7 @@ export function mountAccount({doc=document,win=window,identity=identityClient,fe
   listen(win,'online',()=>{if(state.user||state.profile||state.error)refresh({force:true}).catch(()=>{});});
   listen(win,'pageshow',event=>{if(event.persisted)refresh({force:true}).catch(()=>{});});
   const timer=timers.setInterval(()=>{if(!doc.hidden&&(state.user||state.profile||state.error))refresh().catch(()=>{});},60000);
-  const api={state,open,close,refresh,signOut,ready:null,dispose(){disposed=true;++epoch;unsubscribe?.();timers.clearInterval(timer);listeners.forEach(remove=>remove());dialog.remove();accounts.delete(doc);}};
+  const api={state,open,close,refresh,signOut,facebook,ready:null,dispose(){disposed=true;++epoch;unsubscribe?.();timers.clearInterval(timer);listeners.forEach(remove=>remove());dialog.remove();accounts.delete(doc);}};
   accounts.set(doc,api);win.NCNAccount=api;render();
   api.ready=(async()=>{
     const callback=/(?:access_token|confirmation_token|recovery_token|invite_token|email_change_token)=/.test(win.location.hash);
@@ -203,6 +212,7 @@ export function mountAccount({doc=document,win=window,identity=identityClient,fe
       state.redirect=await identity.consumeRedirect();
       state.resetPending=['recovery','invite'].includes(state.redirect?.type);
       await refresh();
+      if(state.redirect?.type==='oauth'&&state.user){let path;try{path=sessionStorage?.getItem('ncn-oauth-return');sessionStorage?.removeItem('ncn-oauth-return');}catch{}if(typeof path==='string'&&/^\/ran-luot\/(?:\?room=[\w-]{22})?$/.test(path)&&path!==win.location.pathname+win.location.search)win.location.replace(path);}
       if(state.resetPending){open('reset');message('Nhập mật khẩu mới để hoàn tất tài khoản chung.');}
       else if(state.redirect?.type==='confirmation'){open('login');message('Email đã được xác nhận. Bạn có thể đăng ký / gia hạn VIP.');}
     }catch(error){if(callback){open('login');message(error.message||'Chưa xác nhận được tài khoản.',true);}}
