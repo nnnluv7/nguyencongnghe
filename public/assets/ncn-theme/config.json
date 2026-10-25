@@ -210,6 +210,16 @@
       "icon": "spark",
       "tone": "teal",
       "access": "public"
+    },
+    {
+      "id": "ca-lon-nuot-ca-be",
+      "title": "Cá lớn nuốt cá bé",
+      "description": "Đại dương tuổi thơ: ăn cá nhỏ, né cá lớn, combo cuồng ăn và lớn lên qua 6 vùng biển.",
+      "href": "/ca-lon-nuot-ca-be/",
+      "group": "arcade",
+      "icon": "fish",
+      "tone": "blue",
+      "access": "public"
     }
   ],
   "adminContact": {

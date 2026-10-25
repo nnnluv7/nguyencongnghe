@@ -2,18 +2,25 @@
 import {readFile,writeFile,readdir} from 'node:fs/promises';
 const read=path=>readFile(path,'utf8'),config=JSON.parse(await read('public/assets/ncn-theme/config.json'));
 async function pages(dir){const all=[];for(const item of await readdir(dir,{withFileTypes:true})){const path=dir+'/'+item.name;if(item.isDirectory())all.push(...await pages(path));else if(item.name.endsWith('.html'))all.push(path);}return all;}
-const game=config.tools.find(t=>t.id==='ran-luot');if(!game)throw Error('Rắn Lướt must be registered in the shared configuration first.');
+const games=config.tools.filter(t=>t.group==='arcade');if(!games.length)throw Error('Register arcade games in the shared configuration first.');
 const json=JSON.stringify(config).replace(/</g,'\\u003c');let count=0;
 for(const path of [...await pages('public'),'netlify/lib/ncn-library/article-shell.html']){
  let html=await read(path),before=html;
  html=html.replace(/(<script id="ncn-(?:initial|game)-config" type="application\/json">)[\s\S]*?(<\/script>)/g,(_,a,b)=>a+json+b);
  // Existing static menus remain complete even before any module downloads.
  html=html.replace(/(<nav id="ncn-(?:navigation|game-nav)"[^>]*>)([\s\S]*?)(<\/nav>)/g,(_,open,content,close)=>{
-  if(content.includes('href="/ran-luot/"'))return open+content+close;
   const template=content.match(/<a\b[^>]*href="\/thu-vien\/"[^>]*>[\s\S]*?<\/a>/)?.[0];
   if(!template)throw Error('Missing library link in '+path);
-  const link=template.replace('href="/thu-vien/"','href="/ran-luot/"').replace(/Thư viện bài viết/g,'Rắn Lướt NCN').replace(/<svg[\s\S]*?<\/svg>/,'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5Z"/></svg>');
-  return open+content.replace(template,link+template)+close;
+  let next=content;
+  for(const game of games){
+   if(next.includes('href="'+game.href+'"'))continue;
+   const fish='<ellipse cx="13" cy="12" rx="8" ry="6"/><path d="m5 12-4-5v10ZM17 10h.01M11 6l2-3 3 4M10 17l3 4 3-4"/>';
+   const icon=game.icon==='fish'?fish:'<path d="m12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5Z"/>';
+   let link=template.replace('href="/thu-vien/"','href="'+game.href+'"').replace(/Thư viện bài viết/g,game.title).replace(/ aria-current="page"/g,'').replace(/<svg[\s\S]*?<\/svg>/,'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+icon+'</svg>');
+   if(path==='public'+game.href+'index.html')link=link.replace('<a ','<a aria-current="page" ');
+   next=next.replace(template,link+template);
+  }
+  return open+next+close;
  });
  if(html.includes('id="ncn-tool-grid"')){
   // Arcade entries were previously missing from the static grid. Add both so
