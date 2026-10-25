@@ -2,9 +2,11 @@
 
 The website stays on Netlify. A single Node 22+ WebSocket service runs the authoritative arena. No new database or paid resource is required: persistent leaderboards and friend-room membership use a separate strongly consistent Netlify Blobs store, `ncn-arcade-v1`.
 
-## Deploy after choosing the Render workspace
+## Live host configuration
 
-Create **one** web service from `https://github.com/nnnluv7/nguyencongnghe`, branch `main`:
+The confirmed workspace is **My Workspace** (`tea-dbf1taa9lscs738gtp1g`). Service `srv-dbf2cr2vcj2c73ejc2j0` was created on the free plan in Singapore. Its public origin is `https://ncn-ran-luot-online.onrender.com`; the initial deploy of `c6a2842` was verified live with HTTP health/key checks and an accepted WSS upgrade (no account joined).
+
+Use **one** web service from `https://github.com/nnnluv7/nguyencongnghe`, branch `main`:
 
 - Name: `ncn-ran-luot-online`
 - Runtime: Node; region: Singapore; compute plan: `free`; one instance.

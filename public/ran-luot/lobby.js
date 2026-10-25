@@ -5,7 +5,7 @@ export function mountLobby({onJoin,pause=()=>{}}){
  let ready=false,busy=false,room=new URLSearchParams(location.search).get('room')||'public',period='daily',boardRoom='public',facebook=false;
  if(room!=='public'&&!/^[\w-]{22}$/.test(room))room='invalid';
  const user=()=>window.NCNAccount?.state?.user;
- function render(){const signed=!!user();$('online-account').textContent=signed?'Đang chơi với tên '+(user().name?.includes('@')?'thành viên NCN':user().name||'thành viên NCN'):'Đăng nhập để chơi online và lưu điểm.';$('online-login').hidden=signed;$('online-facebook').hidden=signed||!facebook;$('online-play').disabled=!signed||busy;$('online-create').disabled=!signed||busy;$('online-play').textContent=busy?'Đang mở đấu trường…':room==='public'?'Vào đấu trường chung':'Vào phòng bạn bè';$('online-room').value=room==='public'?'':room;}
+ function render(){const signed=!!user(),accounts=facebook?'tài khoản NCN hoặc Facebook':'tài khoản NCN';$('rank-login-note').textContent='Đăng nhập bằng '+accounts+' để ghi tên lên bảng.';document.querySelector('.rl-intro .rl-note').textContent='Chơi AI miễn phí. Online dùng '+accounts+' và có bảng xếp hạng chung.';$('online-account').textContent=signed?'Đang chơi với tên '+(user().name?.includes('@')?'thành viên NCN':user().name||'thành viên NCN'):'Đăng nhập để chơi online và lưu điểm.';$('online-login').hidden=signed;$('online-facebook').hidden=signed||!facebook;$('online-play').disabled=!signed||busy;$('online-create').disabled=!signed||busy;$('online-play').textContent=busy?'Đang mở đấu trường…':room==='public'?'Vào đấu trường chung':'Vào phòng bạn bè';$('online-room').value=room==='public'?'':room;}
  function status(message){$('online-status').textContent=message;}
  function open(){if(!ready)return;pause();render();if(!$('online-dialog').open)$('online-dialog').showModal();}
  async function board(){
@@ -32,6 +32,6 @@ export function mountLobby({onJoin,pause=()=>{}}){
  $('rank-scope').addEventListener('change',()=>{boardRoom=$('rank-scope').value==='friends'&&room!=='public'?room:'public';board();});$('rank-refresh').addEventListener('click',board);
  for(const event of ['ncn-account-ready','ncn-account-change'])document.addEventListener(event,()=>{render();if(ready)board();});
  getSettings().then(settings=>{facebook=!!settings.providers?.facebook;render();}).catch(()=>{});
- arcadeAPI('config').then(config=>{if(!config.ready)return;ready=true;document.body.classList.add('ncn-online-enabled');$('stage').dataset.online='true';$('online-panel').hidden=false;$('online-start').hidden=false;$('start').className='rl-secondary';$('start').firstElementChild.textContent='Chơi với AI';document.querySelector('.rl-intro .rl-note').textContent='Chơi AI miễn phí. Online dùng tài khoản NCN hoặc Facebook và có bảng xếp hạng chung.';board();}).catch(()=>{});
+ arcadeAPI('config').then(config=>{if(!config.ready)return;ready=true;document.body.classList.add('ncn-online-enabled');$('stage').dataset.online='true';$('online-panel').hidden=false;$('online-start').hidden=false;$('start').className='rl-secondary';$('start').firstElementChild.textContent='Chơi với AI';render();board();}).catch(()=>{});
  return {open,refresh:board,get room(){return room;},isOpen:()=>$('online-dialog').open};
 }
