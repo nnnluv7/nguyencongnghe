@@ -117,7 +117,7 @@ try{
   });
   editor=await open(admin,'/admin/thu-vien/');page=editor;
   await check('Admin editor lists all existing articles with the approved glass layout',async()=>{
-    await editor.locator('[data-article-id]').first().waitFor();assert.equal(await editor.locator('[data-article-id]').count(),77);await fits(editor);
+    await editor.locator('[data-article-id]').first().waitFor();assert.equal(await editor.locator('[data-article-id]').count(),seed.length);await fits(editor);
     await editor.screenshot({path:out+'/library-admin-desktop.jpg',type:'jpeg',quality:80});
   });
   homeReader=await open(admin,'/');

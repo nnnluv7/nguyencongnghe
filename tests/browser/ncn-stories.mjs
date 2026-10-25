@@ -100,7 +100,7 @@ try{
     assert.equal(await page.locator('[data-story-rail]').evaluate(el=>getComputedStyle(el).display),'flex');
     assert.equal(Math.round((await page.locator('[data-story-add]').boundingBox()).height),196);
     const order=await page.evaluate(()=>['ncn-library-featured','ncn-stories','ncn-library-count'].map(id=>document.getElementById(id).getBoundingClientRect().top));assert.ok(order[0]<order[1]&&order[1]<order[2]);
-    assert.match(await page.locator('#ncn-library-count').innerText(),/^77 nội dung/);await fits(page);await page.screenshot({path:out+'/library-desktop-empty.jpg',fullPage:true,type:'jpeg',quality:80});
+    assert.equal(await page.locator('#ncn-library-count').innerText(),seed.length+' nội dung');await fits(page);await page.screenshot({path:out+'/library-desktop-empty.jpg',fullPage:true,type:'jpeg',quality:80});
   });
   await check('guest posting uses the single shared login and registration dialog',async()=>{
     await page.locator('[data-story-add]').click();await page.locator('#ncn-account-dialog').waitFor({state:'visible'});assert.equal(await page.locator('#ncn-account-dialog').count(),1);

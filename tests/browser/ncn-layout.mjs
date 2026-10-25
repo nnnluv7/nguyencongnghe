@@ -73,8 +73,14 @@ try{
  await page.setViewportSize({width:1280,height:900});await page.goto(origin+'/thu-vien/',{waitUntil:'domcontentloaded'});
  await check('library hover eases in and out instead of jumping and respects reduced motion',async()=>{
   const card=page.locator('#ncn-library-results a').first();await card.scrollIntoViewIfNeeded();await page.mouse.move(0,0);await paint(page);const normal=await card.evaluate(el=>el.getBoundingClientRect().top);
-  await card.hover();await page.waitForTimeout(70);const middle=await card.evaluate(el=>el.getBoundingClientRect().top);await page.waitForTimeout(240);const end=await card.evaluate(el=>el.getBoundingClientRect().top);assert.ok(middle<normal&&middle>end+.05);assert.ok(normal-end>2.5&&normal-end<3.5);
-  await page.mouse.move(0,0);await page.waitForTimeout(70);const leaving=await card.evaluate(el=>el.getBoundingClientRect().top);assert.ok(leaving>end&&leaving<normal);
+  // Freeze the actual CSS transition when it starts, then sample its own
+  // timeline. Runner scheduling can otherwise consume the entire 220ms before
+  // a nominal 70ms sleep is inspected, falsely reporting a smooth hover as a jump.
+  await card.evaluate(el=>el.addEventListener('transitionrun',e=>{if(e.propertyName==='transform')for(const a of el.getAnimations())if(a.transitionProperty==='transform')a.pause();}));
+  const sample=async ms=>{await card.evaluate((el,ms)=>{const a=el.getAnimations().find(a=>a.transitionProperty==='transform');if(!a)throw Error('Missing actual transform transition');a.currentTime=ms;},ms);await paint(page);return card.evaluate(el=>el.getBoundingClientRect().top);};
+  const finish=async()=>{await card.evaluate(el=>{for(const a of el.getAnimations())if(a.transitionProperty==='transform')a.finish();});await paint(page);};
+  await card.hover();await paint(page);const middle=await sample(70),end=await sample(220);assert.ok(middle<normal&&middle>end+.05);assert.ok(normal-end>2.5&&normal-end<3.5);await finish();
+  await page.mouse.move(0,0);await paint(page);const leaving=await sample(70);assert.ok(leaving>end&&leaving<normal);await finish();
   await page.emulateMedia({reducedMotion:'reduce'});await card.hover();await paint(page);assert.equal(await card.evaluate(el=>getComputedStyle(el).transform),'none');await page.emulateMedia({reducedMotion:'no-preference'});
  });
  await page.close();
