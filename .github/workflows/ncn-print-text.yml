@@ -36,8 +36,6 @@ jobs:
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
       - name: Inspect all printable text in preview and print
-        env:
-          NCN_PRINT_AUDIT_REPORT_ONLY: '1'
         run: node tests/browser/ncn-print-text.mjs
       - uses: actions/upload-artifact@v4
         if: always()

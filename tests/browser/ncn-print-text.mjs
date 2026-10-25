@@ -10,6 +10,7 @@ import assert from 'node:assert/strict';
 const root=resolve('public'),out=resolve('artifacts/print-text');
 await mkdir(out,{recursive:true});
 const generated=new Map(),cases=[];
+generated.set('/__print-text/boundary-control.html','<!doctype html><style>.ncn-sheet{width:400px;height:400px}.test-frame{border:2px solid;width:90px;height:35px;font:20px/24px Arial}.rotated{transform:rotate(-90deg);margin:100px}</style><section class="ncn-sheet"><div class="test-frame">FIRST LINE<br>SECOND LINE<br>THIRD LINE</div><div class="test-frame rotated">ROTATED<br>SECOND LINE<br>THIRD LINE</div><input type="text" style="width:70px" value="TEXT THAT CANNOT FIT IN THIS FIELD"></section>');
 for(const group of ['ncn-sticker','ncn-popup','ncn-store-tools']){
   const data=JSON.parse(await readFile(root+'/assets/'+group+'/catalogue.json','utf8'));
   const core=await import('../../public/assets/'+group+'/core.js');
@@ -89,24 +90,32 @@ function inspectText(){
         const transform=getComputedStyle(el).transform;
         if(transform!=='none'){const m=new DOMMatrix(transform);if(Math.abs(m.b)>.001||Math.abs(m.c)>.001)return true;}
       }return false;})();
-      const outside=(r,b)=>{
+      const outside=(r,b,{horizontal=true,vertical=true}={})=>{
         const top=rotated||!fontHeight?r.top:r.top+r.height*(metrics.fontBoundingBoxAscent-metrics.actualBoundingBoxAscent)/fontHeight;
         const bottom=rotated||!fontHeight?r.bottom:r.top+r.height*(metrics.fontBoundingBoxAscent+metrics.actualBoundingBoxDescent)/fontHeight;
-        return r.left<b.left-1.2||r.right>b.right+1.2||top<b.top-1.2||bottom>b.bottom+1.2;
+        return horizontal&&(r.left<b.left-1.2||r.right>b.right+1.2)||vertical&&(top<b.top-1.2||bottom>b.bottom+1.2);
       };
       for(let ancestor=parent;ancestor&&ancestor!==root.parentElement;ancestor=ancestor.parentElement){
         const style=getComputedStyle(ancestor),b=ancestor.getBoundingClientRect();
         const framed=['Top','Right','Bottom','Left'].every(side=>parseFloat(style['border'+side+'Width'])>0);
-        const clipped=['hidden','clip'].includes(style.overflowX)||['hidden','clip'].includes(style.overflowY);
-        if(!framed&&!clipped&&ancestor!==root)continue;
-        if([...range.getClientRects()].some(r=>r.width&&r.height&&outside(r,b))){
+        const horizontal=framed||ancestor===root||['hidden','clip'].includes(style.overflowX);
+        // Internal display-font boxes may have empty leading outside their
+        // line box. Flag vertical clipping when content actually scrolls, or
+        // visible ink leaves a printed border/the physical sheet.
+        const vertical=framed||ancestor===root||(['hidden','clip'].includes(style.overflowY)&&ancestor.scrollHeight>ancestor.clientHeight+2);
+        if(!horizontal&&!vertical)continue;
+        if([...range.getClientRects()].some(r=>r.width&&r.height&&outside(r,b,{horizontal,vertical}))){
           add('text outside frame',ancestor,text,{font:ps.font,box:{width:b.width,height:b.height},scroll:{width:ancestor.scrollWidth,height:ancestor.scrollHeight}});break;
         }
       }
     }
     for(const input of root.querySelectorAll('input[type=text],textarea')){
       if(!input.value||!input.getClientRects().length)continue;
-      if(input.scrollWidth>input.clientWidth+2||input.scrollHeight>input.clientHeight+2){
+      const style=getComputedStyle(input);
+      context.font=[style.fontStyle,style.fontWeight,style.fontSize,style.fontFamily].join(' ');
+      const ink=context.measureText(style.textTransform==='uppercase'?input.value.toUpperCase():input.value);
+      const contentHeight=input.clientHeight-parseFloat(style.paddingTop)-parseFloat(style.paddingBottom);
+      if(input.scrollWidth>input.clientWidth+2||(input.tagName==='TEXTAREA'?input.scrollHeight>input.clientHeight+2:ink.actualBoundingBoxAscent+ink.actualBoundingBoxDescent>contentHeight+2)){
         add('input text clipped',input,input.value,{font:getComputedStyle(input).font,box:{width:input.clientWidth,height:input.clientHeight},scroll:{width:input.scrollWidth,height:input.scrollHeight}});
       }
     }
@@ -115,6 +124,13 @@ function inspectText(){
 }
 
 try{
+  const control=await browser.newPage();
+  await control.goto(base+'/__print-text/boundary-control.html');
+  const detected=(await control.evaluate(inspectText)).problems;
+  assert.ok(detected.some(p=>p.element==='div.test-frame'),'Audit must catch ordinary frame overflow');
+  assert.ok(detected.some(p=>p.element==='div.test-frame.rotated'),'Audit must catch rotated frame overflow');
+  assert.ok(detected.some(p=>p.type==='input text clipped'),'Audit must catch truncated input text');
+  await control.close();
   // Bounded parallelism keeps each template independent and the audit fast.
   for(let start=0;start<cases.length;start+=4)await Promise.all(cases.slice(start,start+4).map(async item=>{
     const page=await browser.newPage({viewport:{width:820,height:1140}});
@@ -123,6 +139,7 @@ try{
       assert.equal((await page.goto(base+item.path)).status(),200,item.name);
       await page.evaluate(()=>document.fonts.ready);
       const screen=await page.evaluate(inspectText);
+      assert.ok(screen.roots,item.name+': missing printable sheet');
       await page.emulateMedia({media:'print'});
       const print=await page.evaluate(inspectText);
       const result={...item,screen,print};results.push(result);
@@ -136,6 +153,15 @@ try{
   for(const path of [...legacy,'2024/01/in-fifo.html']){
     await page.goto(base+'/'+path,{waitUntil:'domcontentloaded'});
     await page.waitForSelector('#printMe,.row-container',{state:'attached'});
+    await page.waitForLoadState('load');
+    if(path==='2024/01/in-fifo.html'){
+      await page.locator('#ff1').fill('25/10');await page.locator('#ver1').fill('256GB');await page.locator('#sl1').fill('48');
+      assert.equal(await page.locator('#printMe textarea').count(),48);
+    }
+    if(path==='2024/01/tao-ma-qrcode-chia-se-wifi-khong-can-nhap-mat-khau.html'){
+      await page.locator('#tenwifi').fill('NCN QA');await page.locator('#loaiwifi').selectOption('2');await page.locator('#submitcode').click();
+      await page.locator('#qrcode1 img').waitFor({state:'attached'});
+    }
     await page.evaluate(()=>document.fonts.ready);
     await page.emulateMedia({media:'print'});
     const print=await page.evaluate(inspectText);
@@ -145,10 +171,52 @@ try{
     await page.emulateMedia({media:'screen'});
   }
   await page.close();
+  // Exercise the actual entry points and downloads too: the app must use the
+  // corrected catalogue, and its offline HTML must keep the same typography.
+  for(const width of [1280,390])for(const [id,count] of [['sales-tv-tc',5],['sales-tv-bh',6],['sales-the-tt',5]]){
+    const editor=await browser.newPage({viewport:{width,height:900},acceptDownloads:true});
+    await editor.route('**/*',route=>new URL(route.request().url()).origin===base?route.continue():route.abort());
+    await editor.goto(base+'/ban-hang/?mau='+id,{waitUntil:'domcontentloaded'});
+    await editor.waitForFunction(()=>document.getElementById('ncn-store-app')?.dataset.ready==='true');
+    await editor.frameLocator('#nt-preview').locator(id==='sales-the-tt'?'.ttz':'.fh').first().waitFor();
+    if(width<960)await editor.locator('.ncn-workspace-bar [data-ncn-pane=fields]').click();
+    await editor.locator('.ncn-print-settings').evaluate(n=>n.open=true);
+    for(const paper of ['A4','A5']){
+      const navigated=editor.waitForEvent('framenavigated',frame=>frame.parentFrame()===editor.mainFrame()&&frame.url()==='about:srcdoc');
+      await editor.locator('#nt-paper').selectOption(paper);
+      await navigated;
+      await editor.waitForFunction(paper=>{
+        const d=document.getElementById('nt-preview')?.contentDocument;
+        return d?.querySelector('.ncn-sheet')&&d.head.textContent.includes('@page{size:'+paper);
+      },paper);
+      const frame=await (await editor.locator('#nt-preview').elementHandle()).contentFrame();
+      await frame.evaluate(()=>document.fonts.ready);
+      const screen=await frame.evaluate(inspectText);
+      assert.equal(await frame.locator(id==='sales-the-tt'?'.ttz':'.fh').count(),count,id);
+      const downloadReady=editor.waitForEvent('download');
+      await editor.locator('#nt-download').click();
+      const download=await downloadReady;
+      const filename=id+'-'+width+'-'+paper+'.html';await download.saveAs(out+'/'+filename);
+      const html=await readFile(out+'/'+filename,'utf8');
+      assert.equal(/(?:src|url)\s*[(=]\s*["']?\/assets\//i.test(html),false,'Downloaded print must embed its artwork and fonts');
+      const path='/__print-text/download-'+filename;generated.set(path,html);
+      const offline=await browser.newPage({viewport:{width:820,height:1140}});
+      await offline.goto(base+path);await offline.evaluate(()=>document.fonts.ready);
+      assert.equal(await offline.locator('[data-ncn-copy],script').count(),0,'Downloaded forms stay passive');
+      await offline.emulateMedia({media:'print'});
+      const print=await offline.evaluate(inspectText);
+      results.push({name:'download/'+id+'/'+width+'/'+paper,screen,print});
+      await offline.pdf({path:out+'/'+filename.replace('.html','.pdf'),preferCSSPageSize:true,printBackground:true});
+      await offline.close();
+      console.log('CHECK download/'+id+'/'+width+'/'+paper+' · '+screen.problems.length+'/'+print.problems.length);
+    }
+    await editor.screenshot({path:out+'/editor-'+id+'-'+width+'.jpg',type:'jpeg',quality:75});
+    await editor.close();
+  }
 }finally{
   await writeFile(out+'/results.json',JSON.stringify({results},null,2));
   await browser.close();await new Promise(done=>server.close(done));
 }
 const failures=results.filter(r=>(r.screen?.problems.length||r.print.problems.length||r.screen?.fonts.length||r.print.fonts.length));
 console.log('Print documents: '+results.length+'; templates requiring review: '+failures.length);
-if(process.env.NCN_PRINT_AUDIT_REPORT_ONLY!=='1')assert.deepEqual(failures.map(r=>r.name),[],'Print text must remain inside its frame in preview and print');
+assert.deepEqual(failures.map(r=>r.name),[],'Print text must remain inside its frame in preview and print');
