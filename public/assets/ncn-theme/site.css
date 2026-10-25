@@ -1051,3 +1051,31 @@ body.ncn-modern .st-card-sizes button:focus-visible{outline: 3px solid #2563b8; 
  .ncn-gate-loading span:last-child{width:68%}
  @media(prefers-reduced-transparency:reduce),(prefers-contrast:more),(forced-colors:active){.ncn-account-dialog{background:var(--ncn-surface,#fff);-webkit-backdrop-filter:none;backdrop-filter:none}.ncn-account-dialog .ncn-account-primary,#ncn-account-host [data-ncn-account-open=login]{background:var(--ncn-accent,#2769b3)!important}}
 }
+
+/* The homepage opens with the three latest Library articles. */
+@media screen {
+  #ncn-home-latest{margin:0 0 30px}
+  #ncn-home-latest h1{margin:5px 0 0;color:var(--ncn-ink);font-size:clamp(26px,3vw,34px);line-height:1.2;font-weight:750;letter-spacing:-.8px}
+  #ncn-home-latest .ncn-section-heading{align-items:center}
+  #ncn-home-latest .ncn-article-card{height:100%;text-decoration:none}
+  #ncn-home-latest .ncn-article-image{height:160px}
+  #ncn-home-latest .ncn-article-placeholder{height:160px}
+  #ncn-home-latest .ncn-article-card-body{display:flex;flex:1;flex-direction:column;min-width:0}
+  #ncn-home-latest .ncn-article-card h3{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;overflow-wrap:anywhere}
+  #ncn-home-latest .ncn-article-card p{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:anywhere}
+  #ncn-home-latest .ncn-article-meta{flex-wrap:wrap}
+  #ncn-home-latest .ncn-article-read{margin-top:auto}
+  #ncn-home-latest .ncn-article-card:focus-visible{outline:3px solid var(--ncn-accent);outline-offset:4px}
+}
+@media screen and (max-width:640px) {
+  #ncn-home-latest{margin-bottom:26px}
+  #ncn-home-latest .ncn-section-heading{gap:10px}
+  #ncn-home-latest .ncn-article-grid{gap:12px}
+  #ncn-home-latest .ncn-article-card{display:grid;grid-template-columns:100px minmax(0,1fr);border-radius:22px}
+  #ncn-home-latest :is(.ncn-article-image,.ncn-article-placeholder){height:100%;min-height:136px}
+  #ncn-home-latest .ncn-article-placeholder svg{width:28px;height:28px}
+  #ncn-home-latest .ncn-article-card-body{padding:14px}
+  #ncn-home-latest .ncn-article-card h3{-webkit-line-clamp:2;font-size:13px;line-height:1.5;margin-bottom:6px}
+  #ncn-home-latest .ncn-article-card p{-webkit-line-clamp:1;margin-bottom:8px}
+  #ncn-home-latest .ncn-article-meta{gap:4px 8px;margin-bottom:7px}
+}

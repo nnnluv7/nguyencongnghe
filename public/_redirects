@@ -1,4 +1,6 @@
 # BEGIN NCN LIBRARY CMS: enforce article state before returning HTML.
+/  /.netlify/functions/ncn-library-page?view=home  200!
+/index.html  /.netlify/functions/ncn-library-page?view=home  200!
 /thu-vien/  /.netlify/functions/ncn-library-page?view=index  200!
 /bai-viet/:slug/  /.netlify/functions/ncn-library-page?slug=:slug  200!
 /bai-viet/:slug  /.netlify/functions/ncn-library-page?slug=:slug  200!

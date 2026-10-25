@@ -2,7 +2,7 @@ import '../ncn-account.js?v=20261024-account-2';
 import {installAppearance} from './appearance.js?v=20261017-mobile-dark-1';
 // A metrics request must never delay or prevent the actual interface.
 if(typeof window!=='undefined')import('./visitor-counter.js?v=20261016-easy-2').catch(()=>{});
-import {installToolUI} from './tool-ui.js?v=20261024-first-paint-1';
+import {installToolUI} from './tool-ui.js?v=20261025-home-latest-1';
 import {installFloatingMenu,orderTools,navigationHTML} from './menu.js?v=20261017-mobile-dark-1';
 /* NCN portal: navigation and local display preferences. VIP authorization stays on the server. */
 const ICONS = {
@@ -168,8 +168,8 @@ export function createTheme({doc=document,win=window,config,catalog=win.CG_CATAL
     if(image && image.startsWith('https://i.ibb.co/') && safeHref(cfg.logo))image=safeHref(cfg.logo);
     if(image)image=imageURL(image);
     const time=new Date(row.datetime);if(!Number.isNaN(time.getTime())) date=new Intl.DateTimeFormat('vi-VN',{day:'2-digit',month:'2-digit',year:'numeric',timeZone:'Asia/Ho_Chi_Minh'}).format(time);
-    const label=(library?libraryLabels(row):row.labels)[0]|| (row.isPage?'Trang nội dung':'Bài viết');
-    const summary=library?String(row.summary||'').replace(/\(?full-width\)?/gi,'').replace(/^\s*Đang tải dữ liệu\.{3}\s*$/,'').trim():row.summary;
+    const label=libraryLabels(row)[0]|| (row.isPage?'Trang nội dung':'Bài viết');
+    const summary=String(row.summary||'').replace(/\(?full-width\)?/gi,'').replace(/^\s*Đang tải dữ liệu\.{3}\s*$/,'').trim();
     return `<a class="ncn-article-card" href="${escapeHTML(row.link)}">${image?`<img class="ncn-article-image" src="${escapeHTML(image)}" alt="" loading="lazy">`:`<div class="ncn-article-placeholder">${svg('book')}</div>`}<div class="ncn-article-card-body"><div class="ncn-article-meta"><span>${escapeHTML(label)}</span><time>${escapeHTML(date)}</time></div><h3>${escapeHTML(row.title)}</h3><p>${escapeHTML(summary||'Mở trang để xem nội dung.')}</p><span class="ncn-article-read">Xem nội dung ↗</span></div></a>`;
   }
   let sortedRows=rows.slice().sort((a,b)=>(Date.parse(b.datetime)||0)-(Date.parse(a.datetime)||0));

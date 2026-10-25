@@ -7,7 +7,7 @@ export function installToolUI({doc=document,win=window,config={},preview=false}=
   doc.body.classList.add('ncn-modern');
   if(!$('ncn-site-style')&&!$('ncn-easy-style')){const link=make('link');link.id='ncn-site-style';link.rel='stylesheet';link.href='/assets/ncn-theme/site.css?v='+VERSION;doc.head.append(link);}
   const articles=$('ncn-articles')?.closest('section');
-  if(articles&&!articles.closest('details.ncn-article-disclosure')){const details=make('details','ncn-article-disclosure'),summary=make('summary','','Bài viết & hướng dẫn');articles.before(details);details.append(summary,articles);}
+  if(articles&&!articles.hasAttribute('data-ncn-home-latest')&&!articles.closest('details.ncn-article-disclosure')){const details=make('details','ncn-article-disclosure'),summary=make('summary','','Bài viết & hướng dẫn');articles.before(details);details.append(summary,articles);}
   function disclosure(node,label,className='ncn-advanced'){
     if(!node||node.closest('details.'+className))return null;
     const details=make('details',className),summary=make('summary','',label);node.before(details);details.append(summary,node);return details;

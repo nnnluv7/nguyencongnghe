@@ -9,6 +9,6 @@ const file=path=>readFile(join(process.cwd(),path),'utf8');
 export default (req,context)=>createLibraryPageHandler({
   production:()=>context?.deploy?.context==='production',seed,
   store:()=>getStore({name:'ncn-site-library-v1',consistency:'strong'}),
-  indexShell:()=>file('public/thu-vien/index.html'),articleShell:()=>file('netlify/lib/ncn-library/article-shell.html'),
+  homeShell:()=>file('public/index.html'),indexShell:()=>file('public/thu-vien/index.html'),articleShell:()=>file('netlify/lib/ncn-library/article-shell.html'),
   original:path=>file('public/'+path)
 })(req);

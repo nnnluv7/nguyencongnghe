@@ -22,7 +22,7 @@ const input=(overrides={})=>({id,version:null,kind:'article',mode:'markdown',tit
 function fixture({user=admin,production=true}={}){
   const store=memoryLibrary();
   const deps={seed,originalBodies,store:()=>store,production:()=>production,verify:async()=>user,app:async view=>read('netlify/lib/ncn-library/admin-'+(view==='library'?'library':'hub')+'.html')};
-  return {store,handler:createLibraryHandler(deps),page:createLibraryPageHandler({...deps,indexShell:async()=>read('public/thu-vien/index.html'),articleShell:async()=>read('netlify/lib/ncn-library/article-shell.html'),original:async path=>read('public/'+path)})};
+  return {store,handler:createLibraryHandler(deps),page:createLibraryPageHandler({...deps,homeShell:async()=>read('public/index.html'),indexShell:async()=>read('public/thu-vien/index.html'),articleShell:async()=>read('netlify/lib/ncn-library/article-shell.html'),original:async path=>read('public/'+path)})};
 }
 function request(route,data,headers={}){return new Request(origin+'/.netlify/functions/ncn-library?route='+route,{method:data===undefined?'GET':'POST',...(data===undefined?{}:{body:JSON.stringify(data)}),headers:{origin,'content-type':'application/json',...headers}});}
 async function call(f,route,data,headers){const response=await f.handler(request(route,data,headers));return {status:response.status,body:await response.json()};}
@@ -138,8 +138,19 @@ test('Markdown keeps links, images, lists and code passive',()=>{
 test('source routes only render managed articles, not arbitrary files',async()=>{
   const f=fixture();for(const query of ['legacy=../../netlify.toml','slug=../admin','legacy=unknown'])assert.equal((await page(f,query)).status,404);
 });
+test('homepage and library HTML contain the current published catalogue before rendering',async()=>{
+  const f=fixture(),saved=await call(f,'save',input({title:'BÀI MỚI ĐÃ ĐĂNG'}));
+  for(const query of ['view=home','view=index']){
+    const response=await page(f,query);assert.equal(response.status,200);assert.match(response.html,/window.NCN_LIBRARY_SNAPSHOT=true/);assert.ok(response.html.includes('BÀI MỚI ĐÃ ĐĂNG'));
+    assert.equal(response.html.includes('src="/assets/catalog.js"'),false);
+  }
+  await call(f,'visibility',{id,version:saved.body.item.version});
+  const home=await page(f,'view=home');assert.equal(home.html.includes('BÀI MỚI ĐÃ ĐĂNG'),false);assert.match(home.html,/id="ncn-home-latest"/);assert.equal(home.html.includes('id="ncn-welcome-panel"'),false);
+  const draft=await call(f,'save',input({id:'post-aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',title:'BẢN NHÁP RIÊNG',status:'draft'}));assert.equal(draft.status,200);
+  assert.equal((await page(f,'view=home')).html.includes('BẢN NHÁP RIÊNG'),false);
+});
 test('original public URLs work when the platform retains the pre-rewrite request URL',async()=>{
   const f=fixture(),item=seed.find(x=>x.managedPage);
-  for(const path of ['/thu-vien/','/thu-vien/index.html',item.href,item.href.replace(/\.html$/,''),item.href.replace(/\.html$/,'/')])assert.equal((await f.page(new Request(origin+path))).status,200,path);
+  for(const path of ['/','/index.html','/thu-vien/','/thu-vien/index.html',item.href,item.href.replace(/\.html$/,''),item.href.replace(/\.html$/,'/')])assert.equal((await f.page(new Request(origin+path))).status,200,path);
   const saved=await call(f,'save',input());assert.equal((await f.page(new Request(origin+saved.body.item.href))).status,200);
 });

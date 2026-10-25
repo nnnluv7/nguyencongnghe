@@ -2,6 +2,7 @@ name: NCN library Admin
 on:
   pull_request:
     paths:
+      - 'public/index.html'
       - 'public/admin/**'
       - 'public/thu-vien/**'
       - 'public/assets/ncn-admin/**'
@@ -19,6 +20,7 @@ on:
   push:
     branches: [main]
     paths:
+      - 'public/index.html'
       - 'public/admin/**'
       - 'public/thu-vien/**'
       - 'public/assets/ncn-admin/**'

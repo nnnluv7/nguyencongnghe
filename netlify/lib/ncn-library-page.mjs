@@ -33,6 +33,7 @@ export function createLibraryPageHandler(deps){return async req=>{
     const url=new URL(req.url),old=deps.production()?await readLibrary(deps.store()):null,index=old?.data,catalog=publicCatalog(deps.seed,index);
     const internal=url.pathname==='/.netlify/functions/ncn-library-page';
     const originalRoute=deps.seed.find(x=>x.managedPage&&[x.href,x.href.replace(/\.html$/,''),x.href.replace(/\.html$/,'/')].includes(url.pathname));
+    if(['/','/index.html'].includes(url.pathname)||internal&&url.searchParams.get('view')==='home')return new Response(req.method==='HEAD'?null:injectCatalog(await deps.homeShell(),catalog),{headers});
     if(['/thu-vien','/thu-vien/','/thu-vien/index.html'].includes(url.pathname)||internal&&url.searchParams.get('view')==='index')return new Response(req.method==='HEAD'?null:injectCatalog(await deps.indexShell(),catalog),{headers});
     const legacy=originalRoute?.id||(internal?url.searchParams.get('legacy'):null),slug=url.pathname.match(/^\/bai-viet\/([^/]+)\/?$/)?.[1]||(internal?url.searchParams.get('slug'):null);
     const items=mergedLibrary(deps.seed,index),item=legacy?items.find(x=>x.id===legacy&&x.kind==='legacy'&&x.managedPage):items.find(x=>x.kind==='article'&&x.slug===slug);

@@ -39,7 +39,12 @@ write is the publish point; stale writes cannot overwrite a newer article.
 Public catalogue responses contain only published metadata and never body keys,
 draft bodies or creator information.
 
-The public library landing and 40 legacy article/resource pages are routed
+The homepage replaces the welcome panel with the three newest published Library
+articles, ordered by publication date. Drafts, hidden/trash entries and tool
+shortcuts are excluded; a newly published article automatically joins this feed.
+The cards retain Liquid Glass styling and stack compactly on phones.
+
+The homepage, public library landing and 40 legacy article/resource pages are routed
 through `ncn-library-page`, returning the current HTML before browser rendering.
 The 77 baseline entries, original files, print renderers, download destinations
 and business-tool endpoints remain in the repository. The original editable

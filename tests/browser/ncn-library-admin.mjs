@@ -24,7 +24,7 @@ const users=new Map([
 const raw=user=>({id:user.id,email:user.email,confirmed_at:'2026-10-01T00:00:00Z',app_metadata:{roles:user.admin?['admin']:['vip']},user_metadata:{full_name:user.name,roles:['admin']}});
 const tokenUser=req=>tokens.get(decodeURIComponent((req.headers.get('cookie')||'').match(/(?:^|;\s*)nf_jwt=([^;]+)/)?.[1]||''))||null;
 const deps={seed,originalBodies,production:()=>true,store:()=>store,verify:async req=>tokenUser(req),app:view=>read('netlify/lib/ncn-library/admin-'+(view==='library'?'library':'hub')+'.html')};
-const handler=createLibraryHandler(deps),pageHandler=createLibraryPageHandler({...deps,indexShell:()=>read('public/thu-vien/index.html'),articleShell:()=>read('netlify/lib/ncn-library/article-shell.html'),original:path=>read('public/'+path)});
+const handler=createLibraryHandler(deps),pageHandler=createLibraryPageHandler({...deps,homeShell:()=>read('public/index.html'),indexShell:()=>read('public/thu-vien/index.html'),articleShell:()=>read('netlify/lib/ncn-library/article-shell.html'),original:path=>read('public/'+path)});
 const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml','.woff2':'font/woff2','.ttf':'font/ttf'};
 const browser=await chromium.launch(),results=[];let page;
 async function context(){
@@ -56,6 +56,7 @@ async function context(){
     if(url.pathname==='/.netlify/functions/ncn-visitors')return reply({total:1,online:1});
     if(url.pathname.startsWith('/.netlify/functions/'))throw Error('Unexpected function '+url.pathname);
     let query=null;
+    if(['/','/index.html'].includes(url.pathname))query='view=home';
     if(['/thu-vien/','/thu-vien/index.html'].includes(url.pathname))query='view=index';
     const article=url.pathname.match(/^\/bai-viet\/([^/]+)\/?$/);if(article)query='slug='+encodeURIComponent(article[1]);
     const original=seed.find(x=>x.managedPage&&[x.href,x.href.replace(/\.html$/,''),x.href.replace(/\.html$/,'/')].includes(url.pathname));if(original)query='legacy='+original.id;
@@ -80,9 +81,19 @@ async function check(name,action){try{await action();results.push({name,ok:true}
 async function saved(p,pattern=/Đã lưu/){await p.waitForFunction(()=>!document.getElementById('nl-refresh').disabled);await p.locator('#nl-status').filter({hasText:pattern}).waitFor();}
 async function choose(p,item){await p.locator('#nl-search').fill(item.title);await p.locator('[data-article-id="'+item.id+'"]').click();await p.waitForFunction(id=>new URL(location.href).searchParams.get('id')===id,item.id);await p.waitForFunction(()=>!document.getElementById('nl-save').disabled);}
 async function fits(p){const size=await p.evaluate(()=>({content:document.documentElement.scrollWidth,viewport:innerWidth}));assert.ok(size.content<=size.viewport+1,JSON.stringify(size));}
-let guest,vip,admin,reader,editor,newArticle;
+let guest,vip,admin,reader,editor,newArticle,homeReader;
 try{
   guest=await context();page=await open(guest,'/');
+  await check('the homepage welcome panel is replaced by exactly the three newest public articles',async()=>{
+    await page.locator('#ncn-articles a').first().waitFor();assert.equal(await page.locator('#ncn-welcome-panel').count(),0);assert.equal(await page.locator('details #ncn-articles').count(),0);
+    assert.equal(await page.locator('#ncn-home').evaluate(node=>node.firstElementChild.id),'ncn-home-latest');assert.equal(await page.locator('#ncn-articles a').count(),3);
+    assert.deepEqual(await page.locator('#ncn-articles a').evaluateAll(nodes=>nodes.map(x=>x.getAttribute('href'))),[
+      '/2024/08/background-popup-a7.html',
+      '/2024/06/copilot-plus-cua-windows-11-bi-be-khoa-chay-muot-ma-tren-cac-may-doi-cu.html',
+      '/2024/06/microsoft-tien-gan-den-giai-doan-loai-bo-nhung-thanh-phan-quen-thuoc-tren-windows.html'
+    ]);
+    assert.equal(await page.evaluate(()=>window.NCN_LIBRARY_SNAPSHOT),true);await fits(page);await page.screenshot({path:out+'/home-latest-desktop.jpg',type:'jpeg',quality:80});
+  });
   await check('guests do not see the Admin menu or private management screens',async()=>{
     assert.equal(await page.locator('#ncn-admin-navigation').count(),0);
     const denied=await open(guest,'/admin/thu-vien/');await denied.getByText('Đăng nhập tài khoản có quyền ADMIN để mở khu vực quản trị.').waitFor();
@@ -107,12 +118,14 @@ try{
     await editor.locator('[data-article-id]').first().waitFor();assert.equal(await editor.locator('[data-article-id]').count(),77);await fits(editor);
     await editor.screenshot({path:out+'/library-admin-desktop.jpg',type:'jpeg',quality:80});
   });
+  homeReader=await open(admin,'/');
   await check('Admin can save a private draft with Vietnamese text and safe preview formatting',async()=>{
     await editor.locator('#nl-title').fill('Hướng dẫn thử nghiệm Admin');await editor.locator('#nl-summary').fill('Mô tả bài viết thử nghiệm');await editor.locator('#nl-labels').fill('Hướng dẫn, Kiểm tra');
     await editor.locator('#nl-body').fill('## Nội dung mới\nBài viết **tiếng Việt** đầy đủ dấu.\n\n<script>window.ATTACKED=true</script>\n\n[Không thực thi](javascript:alert)');
     await editor.locator('#nl-preview-toggle').click();assert.equal(await editor.locator('#nl-preview script').count(),0);assert.match(await editor.locator('#nl-preview strong').innerText(),/tiếng Việt/);
     await editor.locator('#nl-save').click();await saved(editor,/Đã lưu bản nháp/);newArticle=await editor.locator('#nl-href').inputValue();assert.ok(newArticle.startsWith('/bai-viet/'));
     reader=await guest.newPage();const response=await reader.goto(origin+newArticle);assert.equal(response.status(),404);assert.equal((await reader.content()).includes('window.ATTACKED=true'),false);
+    assert.equal(await homeReader.locator('#ncn-articles a[href="'+newArticle+'"]').count(),0);
   });
   await check('publishing updates the public library and serves a full Liquid Glass article',async()=>{
     await editor.locator('#nl-state').selectOption('published');await editor.locator('#nl-save').click();await saved(editor,/Đã lưu và cập nhật/);
@@ -120,11 +133,14 @@ try{
     assert.match(await reader.locator('#postBody').innerText(),/đầy đủ dấu/);assert.equal(await reader.evaluate(()=>window.ATTACKED),undefined);assert.equal(await reader.locator('#postBody script,a[href^="javascript:"]').count(),0);
     assert.equal(await reader.locator('link[rel=canonical]').getAttribute('href'),'https://nguyencongnghe.com'+newArticle);await fits(reader);
     await reader.goto(origin+'/thu-vien/?q=Hướng+dẫn+thử+nghiệm+Admin');await reader.locator('#ncn-library-results a').waitFor();assert.equal(await reader.locator('#ncn-library-results a').count(),1);
+    await homeReader.locator('#ncn-articles a[href="'+newArticle+'"]').waitFor();assert.equal(await homeReader.locator('#ncn-articles a').count(),3);assert.equal(await homeReader.locator('#ncn-articles a').first().getAttribute('href'),newArticle);
   });
   await check('hiding removes the library entry while retaining its direct public page',async()=>{
     await editor.locator('#nl-visibility').click();await saved(editor,/Đã ẩn khỏi Thư viện/);
     await reader.reload();await reader.locator('#ncn-library-results .ncn-empty').waitFor();assert.equal((await reader.goto(origin+newArticle)).status(),200);
+    await homeReader.locator('#ncn-articles a[href="'+newArticle+'"]').waitFor({state:'detached'});assert.equal(await homeReader.locator('#ncn-articles a').count(),3);
     await editor.locator('#nl-visibility').click();await saved(editor,/Đã hiện bài/);
+    await homeReader.locator('#ncn-articles a[href="'+newArticle+'"]').waitFor();
   });
   await check('trash removes an owned article page and restore recovers all of its content',async()=>{
     await editor.locator('#nl-trash').click();await editor.locator('#nl-trash-dialog[open]').waitFor();await editor.locator('#nl-trash-confirm').click();await saved(editor,/Đã đưa bài/);
@@ -152,6 +168,11 @@ try{
   await check('phone and dark-mode management remain readable without horizontal overflow',async()=>{
     await editor.setViewportSize({width:390,height:844});await editor.evaluate(()=>window.NCN_APPEARANCE.set('dark',true));await fits(editor);await editor.screenshot({path:out+'/library-admin-phone-dark.jpg',type:'jpeg',quality:80});
     const hub=await open(admin,'/admin/');await hub.setViewportSize({width:390,height:844});await hub.locator('.na-module').first().waitFor();await fits(hub);await hub.screenshot({path:out+'/admin-hub-phone.jpg',type:'jpeg',quality:80});await hub.close();
+  });
+  await check('the three homepage article cards remain visible and compact on a dark phone screen',async()=>{
+    const home=await open(guest,'/');await home.setViewportSize({width:390,height:844});await home.evaluate(()=>window.NCN_APPEARANCE.set('dark',true));await home.locator('#ncn-articles a').first().waitFor();await fits(home);
+    assert.equal(await home.locator('#ncn-articles a').count(),3);assert.equal(await home.locator('details #ncn-articles').count(),0);
+    const cards=await home.locator('#ncn-articles').boundingBox();assert.ok(cards.height<600,JSON.stringify(cards));await home.screenshot({path:out+'/home-latest-phone-dark.jpg',type:'jpeg',quality:80});await home.close();
   });
   await check('logout immediately removes private forms and the verified Admin navigation',async()=>{
     await editor.evaluate(()=>window.NCNAccount.signOut());await editor.locator('#ncn-admin-access').waitFor();assert.equal(await editor.locator('#nl-form').count(),0);assert.equal(await editor.locator('#ncn-admin-navigation').count(),0);
