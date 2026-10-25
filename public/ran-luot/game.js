@@ -1,4 +1,6 @@
 import {Arena,SKINS,TAU,clamp,hash,vietnamDate,challengeDate,cleanProfile,awardProfile} from './core.js?v=20261025-snake-1';
+import {joinOnline} from './online.js?v=20261025-online-1';
+import {mountLobby} from './lobby.js?v=20261025-online-1';
 
 const $=id=>document.getElementById('rl-'+id),stage=$('stage'),canvas=$('canvas'),ctx=canvas.getContext('2d',{alpha:false}),radar=$('radar').getContext('2d');
 const KEY='ncn-ran-luot-v1',keys=new Set(),events={bloom:['MƯA NĂNG LƯỢNG','Mọi mồi đều nhân đôi điểm'],core:['TRANH LÕI TRUNG TÂM','Lõi vàng ở tâm bản đồ · +250 điểm'],magnet:['TRƯỜNG HÚT','Ánh sáng tự tìm đến bạn']};
@@ -8,7 +10,7 @@ let reduced=profile.reduced??matchMedia('(prefers-reduced-motion: reduce)').matc
 let mode='arena',date='',width=1280,height=650,dpr=1,lastFrame=0,accumulator=0,time=0,uiAt=0,toastUntil=0,shake=0;
 let camera={x:0,y:0,zoom:.8},particles=[],floaters=[],inputMode='keyboard',pointer={x:0,y:0,active:false},angle=0,boost=false,stickId=null,boostId=null,dragId=null;
 let audio=null,lastTone=0,runAwarded=false,previewTime=0;
-const arena=new Arena({onEvent});
+const soloArena=new Arena({onEvent});let arena=soloArena;
 const sprites=SKINS.map(s=>{const c=document.createElement('canvas');c.width=c.height=48;const g=c.getContext('2d'),glow=g.createRadialGradient(24,24,1,24,24,23);glow.addColorStop(0,s.color+'a0');glow.addColorStop(.3,s.color+'35');glow.addColorStop(1,s.color+'00');g.fillStyle=glow;g.fillRect(0,0,48,48);g.fillStyle=s.color;g.beginPath();g.arc(24,24,3.4,0,TAU);g.fill();g.fillStyle='#e9fff4';g.beginPath();g.arc(23,23,1.4,0,TAU);g.fill();return c;});
 function persist(){try{profile.muted=profile.muted!==false;profile.reduced=reduced;localStorage.setItem(KEY,JSON.stringify(profile));storageOK=true;}catch{storageOK=false;}storageNotice();}
 function storageNotice(){$('storage-note').textContent=storageOK?'':' · Không lưu được trên máy này';}
@@ -32,6 +34,7 @@ function soundUI(){const enabled=!profile.muted;$('sound').setAttribute('aria-pr
 function toast(text,seconds=2){$('toast').textContent=text;$('toast').classList.add('show');toastUntil=time+seconds;}
 function burst(x,y,color,count=12){if(reduced)count=Math.min(3,count);for(let i=0;i<count&&particles.length<(reduced?35:170);i++){const a=Math.random()*TAU,v=30+Math.random()*110;particles.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:.35+Math.random()*.4,color,r:1+Math.random()*2});}}
 function onEvent(e){
+  if(e.type==='record'){if(arena.remote){$('record-note').textContent=e.recorded?'✓ Điểm đã lên bảng xếp hạng online.':'Chưa xác nhận được việc lưu điểm. Xem bảng xếp hạng sau.';lobby.refresh();}return;}
   tone(e.type);
   if(e.type==='eat'){burst(e.x,e.y,e.core?'#ffdc86':SKINS.find(s=>s.id===profile.skin).color,4);if(e.points>=40&&floaters.length<12)floaters.push({x:e.x,y:e.y,text:'+'+e.points,life:.7});}
   if(e.type==='phase'){burst(e.x,e.y,'#93fddf',25);toast('LƯỚT PHA · Xuyên rắn, không xuyên biên',1.3);}
@@ -50,15 +53,17 @@ function stateUI(){
   $('hud').hidden=state==='ready';$('bottom').hidden=state!=='playing';$('stick').hidden=state!=='playing';$('welcome').hidden=state!=='ready';$('paused').hidden=state!=='paused';$('result').hidden=state!=='over';
 }
 function start(nextMode=mode,keepDate=false){
+  if(arena.remote){arena.close();arena=soloArena;}
   mode=nextMode;if(mode==='daily'&&!keepDate)date=challengeDate(new URLSearchParams(location.search).get('challenge'))||vietnamDate();
   clearInput();unlockAudio();particles=[];floaters=[];accumulator=0;shake=0;runAwarded=false;
   arena.start({seed:mode==='daily'?hash('ncn-ran-luot-v1:'+date):(Date.now()^Math.floor(Math.random()*0xffffffff))>>>0,mode,skin:profile.skin,name:$('name').value.trim().slice(0,20)||'Rắn Nhỏ'});
   angle=0;camera={x:0,y:0,zoom:width<640?.69:.82};stateUI();updateHUD();canvas.focus({preventScroll:true});toast(stage.dataset.touch==='true'?'Kéo joystick để lái · Giữ ϟ tăng tốc':'Gom ánh sáng · Q lướt pha · Né biên đỏ',2.4);
 }
-function pause(){if(arena.status!=='playing')return;arena.pause();clearInput();accumulator=0;stateUI();$('resume').focus({preventScroll:true});}
+function pause(){if(arena.status!=='playing')return;arena.pause();clearInput();accumulator=0;stateUI();if(arena.remote){toast('Đang kết thúc ván và ghi điểm…');return;}$('resume').focus({preventScroll:true});}
 function resume(){if(arena.status!=='paused'||document.querySelector('dialog[open]')||document.body.classList.contains('ncn-menu-open'))return;arena.resume();clearInput();accumulator=0;lastFrame=performance.now();stateUI();canvas.focus({preventScroll:true});unlockAudio();}
-function home(){arena.status='ready';clearInput();particles=[];floaters=[];stateUI();paintProfile();$('toast').classList.remove('show');$('start').focus({preventScroll:true});}
+function home(){if(arena.remote){arena.close();arena=soloArena;}arena.status='ready';clearInput();particles=[];floaters=[];stateUI();paintProfile();$('toast').classList.remove('show');$('start').focus({preventScroll:true});}
 function showResult(){
+  if(arena.remote){if(runAwarded)return;runAwarded=true;clearInput();stateUI();$('final-score').textContent=score(arena.score);$('final-time').textContent=clock(arena.elapsed);$('final-kills').textContent=arena.kills;$('final-combo').textContent='×'+arena.maxCombo;$('result-kicker').textContent='ĐẤU TRƯỜNG ONLINE';$('result-title').textContent=arena.reason==='time'?'Trọn 3 phút. Quá lì!':arena.reason==='leave'?'Hẹn ván sau!':arena.reason==='disconnect'?'Kết nối bị gián đoạn.':'Ván đấu đã kết thúc.';$('record-note').textContent=arena.recorded===false?'Kết nối gián đoạn. Kiểm tra lại bảng điểm.':'Đang xác nhận điểm với máy chủ…';$('result-tip').textContent='Chỉ thành tích từ đấu trường online được ghi vào bảng xếp hạng công khai.';$('xp-note').textContent='Điểm chơi với AI được lưu riêng trên máy.';$('share-status').textContent='';$('retry').firstElementChild.textContent='Chơi online tiếp';$('retry').focus({preventScroll:true});return;}
   if(runAwarded)return;runAwarded=true;const before=record(),oldXP=profile.xp;profile=awardProfile(profile,arena,date);persist();paintProfile();clearInput();stateUI();
   $('final-score').textContent=score(arena.score);$('final-time').textContent=clock(arena.elapsed);$('final-kills').textContent=arena.kills;$('final-combo').textContent='×'+arena.maxCombo;
   $('result-kicker').textContent=mode==='daily'?'THỬ THÁCH '+date:'ĐẤU TRƯỜNG · HẸN VÁN SAU';
@@ -71,6 +76,7 @@ function showResult(){
 }
 function updateHUD(){
   if(!arena.player)return;$('score').textContent=score(arena.score);$('run-info').textContent=mode==='daily'?'Thử thách '+date.slice(8)+'/'+date.slice(5,7)+' · Còn '+clock(180-arena.elapsed):'Đấu trường tự do · '+clock(arena.elapsed);
+  if(arena.remote){$('run-info').textContent='Online · Còn '+clock(180-arena.elapsed);$('pause').setAttribute('aria-label','Rời ván online');$('pause').title='Rời ván và lưu điểm (P)';document.querySelector('.rl-board-footer').textContent=(arena.bots.length+1)+' người chơi thật · Online';}else{$('pause').setAttribute('aria-label','Tạm dừng');$('pause').title='Tạm dừng (P)';document.querySelector('.rl-board-footer').textContent='Bạn + 10 rắn AI · Chơi đơn';$('retry').firstElementChild.textContent='Thêm một ván';}
   const shield=arena.player.shield>0?' · ◇ Lá chắn '+Math.ceil(arena.player.shield)+'s':'',magnet=arena.player.magnet>0?' · Hút mồi '+Math.ceil(arena.player.magnet)+'s':'';
   $('combo').textContent=(arena.fever>0?'✦ CUỒNG NHIỆT ×2 · '+arena.fever.toFixed(1)+'s':arena.combo>1?'COMBO ×'+arena.combo:'')+shield+magnet;
   const event=arena.event,eventTitle=arena.fever>0?'CUỒNG NHIỆT · ×2 ĐIỂM':event?events[event.type][0]:'SỰ KIỆN KẾ TIẾP · '+Math.ceil((arena.elapsed%35<20?20:55)-arena.elapsed%35)+'s';
@@ -90,13 +96,13 @@ function strokeCircle(x,y,r,color,w=1){ctx.strokeStyle=color;ctx.lineWidth=w;ctx
 function snake(s,preview=false){
   if(!s.alive||!s.points.length)return;const r=arena.size(s),skin=s.skin;
   const path=()=>{ctx.beginPath();ctx.moveTo(s.x,s.y);for(const p of s.points)ctx.lineTo(p.x,p.y);};
-  ctx.save();ctx.lineCap='round';ctx.lineJoin='round';if(s.player&&arena.phase>0&&!preview)ctx.globalAlpha=.52;
+  ctx.save();ctx.lineCap='round';ctx.lineJoin='round';const phasing=s.player?arena.phase>0:s.phase>0;if(phasing&&!preview)ctx.globalAlpha=.52;
   path();ctx.strokeStyle='#031a21';ctx.lineWidth=r*2+5;ctx.stroke();
   if(s.player&&!reduced){ctx.shadowColor=skin.color;ctx.shadowBlur=s.boosting?21:8;}
   path();ctx.strokeStyle=skin.dark;ctx.lineWidth=r*2;ctx.stroke();ctx.shadowBlur=0;
   for(let i=s.points.length-1;i>=0;i-=2){const p=s.points[i];circle(p.x,p.y,r*.89,i%4===0?skin.color:skin.dark);circle(p.x-2,p.y-3,r*.35,skin.color+'69');}
   ctx.save();ctx.translate(s.x,s.y);ctx.rotate(s.angle);circle(0,0,r+1,skin.color);circle(-3,-3,r*.65,skin.color);circle(r*.4,-r*.55,r*.36,'#f1fff6');circle(r*.4,r*.55,r*.36,'#f1fff6');circle(r*.55,-r*.55,r*.17,'#0b3840');circle(r*.55,r*.55,r*.17,'#0b3840');ctx.restore();
-  if(s.player&&!preview&&(s.safe>0||s.shield>0||arena.phase>0)){ctx.setLineDash(s.shield>0?[]:[4,5]);strokeCircle(s.x,s.y,r+9,arena.phase>0?'#92ffe6':'#9ae4ff88',1.7);ctx.setLineDash([]);}
+  if(!preview&&(s.safe>0||s.shield>0||phasing)){ctx.setLineDash(s.shield>0?[]:[4,5]);strokeCircle(s.x,s.y,r+9,phasing?'#92ffe6':'#9ae4ff88',1.7);ctx.setLineDash([]);}
   if(!preview){ctx.font='600 11px system-ui';ctx.textAlign='center';ctx.fillStyle=s.player?'#ddfff2':'#9ac3b8';ctx.fillText(s.name,s.x,s.y-r-16);}
   ctx.restore();
 }
@@ -177,13 +183,16 @@ document.addEventListener('keyup',e=>keys.delete(e.code));
 addEventListener('blur',pause);addEventListener('pagehide',pause);document.addEventListener('visibilitychange',()=>{if(document.hidden)pause();else if(arena.status==='ready')$('daily-date').textContent='Ngày '+(challengeDate(new URLSearchParams(location.search).get('challenge'))||vietnamDate())+' · Cùng bản đồ xuất phát';});
 document.addEventListener('click',e=>{if(e.target.closest('#ncn-menu-open,[data-ncn-search-open],[data-ncn-account-open],.ncn-account-menu>summary'))pause();},true);
 const modals=new MutationObserver(()=>{if(document.querySelector('dialog[open]')||document.body.classList.contains('ncn-menu-open'))pause();});modals.observe(document.body,{subtree:true,attributes:true,attributeFilter:['open','class']});
-$('start').addEventListener('click',()=>start('arena'));$('daily').addEventListener('click',()=>start('daily'));$('retry').addEventListener('click',()=>start(mode,true));$('pause').addEventListener('click',pause);$('resume').addEventListener('click',resume);$('home-paused').addEventListener('click',home);$('result-home').addEventListener('click',home);
+$('start').addEventListener('click',()=>start('arena'));$('daily').addEventListener('click',()=>start('daily'));$('retry').addEventListener('click',()=>arena.remote?lobby.open():start(mode,true));$('pause').addEventListener('click',pause);$('resume').addEventListener('click',resume);$('home-paused').addEventListener('click',home);$('result-home').addEventListener('click',home);
 $('sound').addEventListener('click',()=>{profile.muted=!profile.muted;unlockAudio();soundUI();persist();if(!profile.muted)tone('power');});
 $('help-open').addEventListener('click',()=>{pause();$('help').showModal();});$('help-close').addEventListener('click',()=>$('help').close());$('help').addEventListener('click',e=>{if(e.target===$('help'))$('help').close();});
 $('reduced').checked=reduced;$('reduced').addEventListener('change',()=>{reduced=$('reduced').checked;particles=[];floaters=[];shake=0;persist();});
 $('fullscreen').addEventListener('click',async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else if(stage.requestFullscreen)await stage.requestFullscreen();else{toast('Trình duyệt này chưa hỗ trợ toàn màn hình.');return;}resize();}catch{toast('Chưa mở được toàn màn hình trên trình duyệt này.');}});
 document.addEventListener('fullscreenchange',resize);
-$('share').addEventListener('click',async()=>{const link=new URL('/ran-luot/',location.origin);if(mode==='daily')link.searchParams.set('challenge',date);const text='Mình vừa đạt '+score(arena.score)+' điểm trong Rắn Lướt NCN'+(mode==='daily'?' · thử thách '+date:'')+'. Thử vượt kỷ lục nhé! '+link.href;try{await navigator.clipboard.writeText(text);$('share-status').textContent='Đã sao chép điểm và liên kết thách đấu.';}catch{$('share-status').textContent='Liên kết thách đấu: '+link.href;}});
+$('share').addEventListener('click',async()=>{const link=new URL('/ran-luot/',location.origin);if(mode==='daily')link.searchParams.set('challenge',date);if(arena.remote&&lobby.room!=='public')link.searchParams.set('room',lobby.room);const text='Mình vừa đạt '+score(arena.score)+' điểm trong Rắn Lướt NCN'+(mode==='daily'?' · thử thách '+date:'')+'. Thử vượt kỷ lục nhé! '+link.href;try{await navigator.clipboard.writeText(text);$('share-status').textContent='Đã sao chép điểm và liên kết thách đấu.';}catch{$('share-status').textContent='Liên kết thách đấu: '+link.href;}});
+const lobby=mountLobby({pause,onJoin:async room=>{
+  let session;session=await joinOnline({room,skin:profile.skin,onEvent:e=>{if(arena===session)onEvent(e);}});if($('online-dialog').open)$('online-dialog').close();if(arena.remote)arena.close();arena=session;mode='online';clearInput();unlockAudio();particles=[];floaters=[];accumulator=0;runAwarded=false;angle=arena.player.angle;camera={x:arena.player.x,y:arena.player.y,zoom:width<640?.69:.82};stateUI();updateHUD();canvas.focus({preventScroll:true});toast('ONLINE · '+(arena.bots.length+1)+' người chơi thật');
+}});
 let nameTouched=false;$('name').addEventListener('input',()=>{nameTouched=true;});
 function accountName(){const a=window.NCNAccount?.state,user=a?.user||a?.profile;if(!nameTouched&&user?.name&&arena.status==='ready')$('name').value=String(user.name).slice(0,20);}
 document.addEventListener('ncn-account-ready',accountName);document.addEventListener('ncn-account-change',accountName);accountName();

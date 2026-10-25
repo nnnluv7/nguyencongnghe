@@ -101,3 +101,7 @@
 [functions."ncn-genk-sync"]
   node_bundler = "esbuild"
   external_node_modules = ["@netlify/blobs"]
+
+[functions."ncn-arcade"]
+  node_bundler = "esbuild"
+  external_node_modules = ["@netlify/identity", "@netlify/blobs"]

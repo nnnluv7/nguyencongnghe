@@ -21,7 +21,7 @@ export async function verifyIdentity(req,config,fetcher=fetch){
   if(raw.banned_until&&new Date(raw.banned_until)>new Date())return null;
   // user_metadata and any role sent by the browser are deliberately ignored.
   const roles=Array.isArray(raw.app_metadata?.roles)?raw.app_metadata.roles:[];
-  return {id:String(raw.id),email:String(raw.email),name:String(raw.user_metadata?.full_name||raw.email),admin:roles.includes('admin'),vip:roles.includes('vip')};
+  return {id:String(raw.id),email:String(raw.email),name:String(raw.user_metadata?.full_name||raw.user_metadata?.name||raw.email),admin:roles.includes('admin'),vip:roles.includes('vip')};
 }
 async function body(req){
   if(Number(req.headers.get('content-length')||0)>3_000_000)fail(413,'Bảng giá quá lớn. Chia nhỏ chương trình.');

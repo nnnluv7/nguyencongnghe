@@ -2,9 +2,9 @@ name: NCN Snake Arcade
 on:
   push:
     branches: [main]
-    paths: ['public/ran-luot/**', 'public/assets/ncn-theme/**', 'scripts/sync-site-config.mjs', 'tests/ncn-snake.test.mjs', 'tests/browser/ncn-snake.mjs', '.github/workflows/ncn-snake.yml']
+    paths: ['public/ran-luot/**', 'public/assets/ncn-theme/**', 'public/assets/ncn-account.js', 'server/arcade/**', 'netlify/**', 'scripts/sync-site-config.mjs', 'tests/ncn-*.test.mjs', 'tests/online-wire.mjs', 'tests/browser/ncn-snake*.mjs', '.github/workflows/ncn-snake.yml']
   pull_request:
-    paths: ['public/ran-luot/**', 'public/assets/ncn-theme/**', 'scripts/sync-site-config.mjs', 'tests/ncn-snake.test.mjs', 'tests/browser/ncn-snake.mjs', '.github/workflows/ncn-snake.yml']
+    paths: ['public/ran-luot/**', 'public/assets/ncn-theme/**', 'public/assets/ncn-account.js', 'server/arcade/**', 'netlify/**', 'scripts/sync-site-config.mjs', 'tests/ncn-*.test.mjs', 'tests/online-wire.mjs', 'tests/browser/ncn-snake*.mjs', '.github/workflows/ncn-snake.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -18,9 +18,12 @@ jobs:
         with:
           node-version: '22'
       - run: npm install --no-save --package-lock=false playwright@1.56.1
+      - run: npm ci --prefix server/arcade --ignore-scripts --omit=dev
       - run: node --check public/ran-luot/game.js && node --test tests/ncn-snake.test.mjs
+      - run: node --test tests/ncn-online.test.mjs tests/online-wire.mjs
       - run: npx playwright install --with-deps chromium
       - run: node tests/browser/ncn-snake.mjs
+      - run: node tests/browser/ncn-snake-online.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
