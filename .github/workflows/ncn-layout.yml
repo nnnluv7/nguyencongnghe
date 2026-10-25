@@ -1,0 +1,35 @@
+name: NCN layout and RSS
+on:
+  push:
+    branches: [main]
+    paths: ['public/**', 'netlify/**', 'scripts/prepare-public-shells.mjs', 'tests/ncn-public-render.test.mjs', 'tests/browser/ncn-layout.mjs', 'package.json', '.github/workflows/ncn-layout.yml']
+  pull_request:
+    paths: ['public/**', 'netlify/**', 'scripts/prepare-public-shells.mjs', 'tests/ncn-public-render.test.mjs', 'tests/browser/ncn-layout.mjs', 'package.json', '.github/workflows/ncn-layout.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  layout:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install source verification tools
+        run: npm install --no-save --package-lock=false playwright@1.56.1 esbuild@0.25.12
+      - name: Check RSS input, cache, public rendering and route isolation
+        run: node --test tests/ncn-public-render.test.mjs tests/ncn-library-admin.test.mjs tests/ncn-site.test.mjs
+      - name: Bundle public page and feed functions
+        run: npx esbuild netlify/functions/ncn-site-page.mjs netlify/functions/ncn-library.mjs netlify/functions/ncn-library-page.mjs netlify/functions/ncn-genk-sync.mjs --bundle --platform=node --format=esm --external:@netlify/blobs --external:@netlify/identity --outdir=/tmp/ncn-public-bundles
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Verify delayed first paint, source filters, hover and every public page
+        run: node tests/browser/ncn-layout.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ncn-layout-rss
+          path: artifacts/layout/
+          retention-days: 14

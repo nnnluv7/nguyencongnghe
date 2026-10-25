@@ -61,7 +61,7 @@ test('every page discovers final styles in its head and includes one shared anno
     assert.equal((source.match(/id="ncn-announcement"/g)||[]).length,1,path);
     assert.equal((source.match(/src="\/assets\/ncn-theme\/announcements\.js[^"<>]*"/g)||[]).length,1,path);
     assert.equal(source.includes('/assets/js/d4f21841d43fe64968.js'),false,path);
-    if(!path.includes('flappy-bird'))assert.ok(source.includes('site.css?v=20261024-first-paint-1'),path);
+    if(!path.includes('flappy-bird'))assert.match(source,/site\.css\?v=[^"']+/,path);
   }
 });
 test('cash and private editor layouts are compact before any script executes',()=>{

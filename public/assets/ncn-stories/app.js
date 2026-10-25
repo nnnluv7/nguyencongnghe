@@ -128,6 +128,7 @@ export function mountStories({host,doc=document,win=window,fetcher=fetch}){
   listen(frame,'touchend',event=>{if(touchX===null)return;const delta=event.changedTouches[0].clientX-touchX;touchX=null;if(Math.abs(delta)>60)step(delta>0?-1:1);});
   listen(doc,'ncn-account-change',authChanged);listen(doc,'ncn-account-ready',authChanged);
   listen(doc,'visibilitychange',()=>{if(!doc.hidden){render();refresh();}});
-  controls();authChanged();refresh();
+  controls();authChanged();
+  if(win.NCN_STORIES_SNAPSHOT){const snapshot=win.NCN_STORIES_SNAPSHOT;items=(snapshot.items||[]).filter(x=>validID.test(x.id));if(Number.isFinite(Date.parse(snapshot.serverNow)))serverOffset=Date.parse(snapshot.serverNow)-Date.now();render();}else refresh();
   return {refresh,destroy(){disposed=true;epoch++;photoEpoch++;win.clearTimeout(expiryTimer);clearPhoto();listeners.forEach(remove=>remove());dialog.remove();viewer.remove();delete host.dataset.mounted;}};
 }

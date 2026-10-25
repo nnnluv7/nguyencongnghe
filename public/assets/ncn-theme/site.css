@@ -1081,3 +1081,25 @@ body.ncn-modern .st-card-sizes button:focus-visible{outline: 3px solid #2563b8; 
   #ncn-home-latest .ncn-article-card p{-webkit-line-clamp:1;margin-bottom:8px}
   #ncn-home-latest .ncn-article-meta{gap:4px 8px;margin-bottom:7px}
 }
+
+/* Shared search fields retain their geometry beside headings and on legacy pages. */
+@media screen {
+ body.ncn-modern .ncn-section-heading{align-items:flex-end}
+ body.ncn-modern .ncn-inline-search{display:flex;align-items:center;flex:0 0 280px;width:280px;min-width:0;max-width:100%;height:46px;min-height:46px;margin:0;padding:0 15px;gap:10px;box-sizing:border-box;align-self:flex-end}
+ body.ncn-modern .ncn-inline-search>span{display:grid;place-items:center;flex:0 0 18px;width:18px;height:18px;margin:0;padding:0;line-height:1}
+ body.ncn-modern .ncn-inline-search svg{display:block;width:18px;height:18px;margin:0}
+ body.ncn-modern .ncn-inline-search input{display:block;position:static;float:none;flex:1;width:0;min-width:0;max-width:100%;height:44px;min-height:0;margin:0;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;outline:0;font:400 14px/1.4 var(--body-font);color:var(--ncn-ink);text-align:left;appearance:none}
+ body.ncn-modern .ncn-inline-search:focus-within{outline:3px solid #78a8e0;outline-offset:3px}
+ body.ncn-modern :is(#ncn-home-latest h1,#ncn-tools .ncn-section-heading h2){margin:0 0 5px;font-size:25px;line-height:1.3;font-weight:800;letter-spacing:-.5px}
+ body.ncn-modern .ncn-search-dialog-head label{width:auto;min-height:44px;margin:0;padding:0;text-align:left}
+ body.ncn-modern #ncn-global-query{position:static;float:none;height:44px;min-height:0;margin:0;padding:0;border:0;border-radius:0;box-shadow:none;line-height:1.4;text-align:left}
+ body.ncn-modern :is(#ncn-home-latest,#ncn-library) .ncn-article-card{transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease;translate:none!important;transform:translateY(0)}
+ body.ncn-modern :is(#ncn-home-latest,#ncn-library) .ncn-article-image{transition:transform .3s ease}
+ body.ncn-modern :is(#ncn-home-latest,#ncn-library) .ncn-article-read{transition:color .2s ease}
+ .ncn-article-source{display:inline-flex;align-items:center;font-size:9px;font-weight:750;color:var(--ncn-accent);white-space:nowrap}
+ body.ncn-modern :is(#ncn-home-latest,#ncn-library-results) .ncn-article-read{color:var(--ncn-accent)}
+ .ncn-library-source-filter{margin-left:auto}
+ @media(hover:hover) and (pointer:fine){body.ncn-modern :is(#ncn-home-latest,#ncn-library) .ncn-article-card:hover{transform:translateY(-3px);box-shadow:var(--ncn-shadow-high);border-color:var(--ncn-accent)}body.ncn-modern :is(#ncn-home-latest,#ncn-library) .ncn-article-card:hover .ncn-article-image{transform:scale(1.025)}}
+ @media(max-width:640px){body.ncn-modern .ncn-section-heading{align-items:flex-start;flex-wrap:wrap}body.ncn-modern .ncn-inline-search{flex-basis:100%;width:100%;align-self:auto}body.ncn-modern .ncn-inline-search input{font-size:16px}body.ncn-modern :is(#ncn-home-latest h1,#ncn-tools .ncn-section-heading h2){font-size:21px}.ncn-library-source-filter{margin-left:0}}
+ @media(prefers-reduced-motion:reduce){body.ncn-modern :is(#ncn-home-latest,#ncn-library) :is(.ncn-article-card,.ncn-article-image){transition:none!important;transform:none!important}}
+}

@@ -1,5 +1,6 @@
 import {escapeHTML,renderMarkdown} from '../../public/assets/ncn-library/content.js';
 import {mergedLibrary,publicCatalog,readLibrary} from './ncn-library-api.mjs';
+import {renderPublicHTML} from './ncn-public-render.mjs';
 
 const headers={'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','Netlify-CDN-Cache-Control':'no-store','X-Content-Type-Options':'nosniff'};
 const json=value=>JSON.stringify(value).replace(/</g,'\\u003c').replace(/\u2028/g,'\\u2028').replace(/\u2029/g,'\\u2029');
@@ -30,11 +31,12 @@ async function statusHTML(deps,catalog,status){
 export function createLibraryPageHandler(deps){return async req=>{
   try{
     if(!['GET','HEAD'].includes(req.method))return new Response('Method not allowed',{status:405,headers});
-    const url=new URL(req.url),old=deps.production()?await readLibrary(deps.store()):null,index=old?.data,catalog=publicCatalog(deps.seed,index);
+    const url=new URL(req.url),initial=deps.state?await deps.state({stories:url.pathname.includes('thu-vien')||url.searchParams.get('view')==='index'}):{},old=!deps.state&&deps.production()?await readLibrary(deps.store()):null,index=initial.index||old?.data,catalog=initial.catalog||publicCatalog(deps.seed,index);
+    const render=html=>injectCatalog(renderPublicHTML(html,catalog,{...initial,query:url.searchParams}),catalog);
     const internal=url.pathname==='/.netlify/functions/ncn-library-page';
     const originalRoute=deps.seed.find(x=>x.managedPage&&[x.href,x.href.replace(/\.html$/,''),x.href.replace(/\.html$/,'/')].includes(url.pathname));
-    if(['/','/index.html'].includes(url.pathname)||internal&&url.searchParams.get('view')==='home')return new Response(req.method==='HEAD'?null:injectCatalog(await deps.homeShell(),catalog),{headers});
-    if(['/thu-vien','/thu-vien/','/thu-vien/index.html'].includes(url.pathname)||internal&&url.searchParams.get('view')==='index')return new Response(req.method==='HEAD'?null:injectCatalog(await deps.indexShell(),catalog),{headers});
+    if(['/','/index.html'].includes(url.pathname)||internal&&url.searchParams.get('view')==='home')return new Response(req.method==='HEAD'?null:render(await deps.homeShell()),{headers});
+    if(['/thu-vien','/thu-vien/','/thu-vien/index.html'].includes(url.pathname)||internal&&url.searchParams.get('view')==='index')return new Response(req.method==='HEAD'?null:render(await deps.indexShell()),{headers});
     const legacy=originalRoute?.id||(internal?url.searchParams.get('legacy'):null),slug=url.pathname.match(/^\/bai-viet\/([^/]+)\/?$/)?.[1]||(internal?url.searchParams.get('slug'):null);
     const items=mergedLibrary(deps.seed,index),item=legacy?items.find(x=>x.id===legacy&&x.kind==='legacy'&&x.managedPage):items.find(x=>x.kind==='article'&&x.slug===slug);
     if(!item||item.status==='draft')return new Response(req.method==='HEAD'?null:await statusHTML(deps,catalog,404),{status:404,headers});
@@ -49,6 +51,6 @@ export function createLibraryPageHandler(deps){return async req=>{
       const content=await deps.store().get(item.bodyKey,{type:'json'});if(typeof content?.body!=='string')throw Error('Missing content');
       html=await articleHTML(deps,item,content.body,catalog);
     }
-    return new Response(req.method==='HEAD'?null:html,{headers});
+    return new Response(req.method==='HEAD'?null:renderPublicHTML(html,catalog,initial),{headers});
   }catch{return new Response('<!doctype html><html lang="vi"><meta charset="utf-8"><title>Thư viện NCN</title><p>Thư viện đang kết nối lại. Anh tải lại trang sau ít phút nhé.</p><a href="/">Về trang chủ</a></html>',{status:503,headers});}
 };}

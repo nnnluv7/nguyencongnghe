@@ -76,12 +76,12 @@
 # BEGIN NCN LIBRARY ADMIN
 [functions."ncn-library"]
   node_bundler = "esbuild"
-  included_files = ["netlify/lib/ncn-library/**"]
+  included_files = ["netlify/lib/ncn-library/**", "netlify/lib/ncn-news/**"]
   external_node_modules = ["@netlify/identity", "@netlify/blobs"]
 
 [functions."ncn-library-page"]
   node_bundler = "esbuild"
-  included_files = ["netlify/lib/ncn-library/**", "public/index.html", "public/thu-vien/index.html", "public/20*/*/*.html", "public/p/*.html"]
+  included_files = ["netlify/lib/ncn-library/**", "netlify/lib/ncn-news/**", "public/index.html", "public/thu-vien/index.html", "public/20*/*/*.html", "public/p/*.html"]
   external_node_modules = ["@netlify/blobs"]
 # END NCN LIBRARY ADMIN
 
@@ -92,3 +92,12 @@
 [functions."ncn-stories-cleanup"]
   node_bundler = "esbuild"
   external_node_modules = ["@netlify/blobs", "sharp"]
+
+[functions."ncn-site-page"]
+  node_bundler = "esbuild"
+  included_files = ["public/**/*.html", "netlify/lib/ncn-shell/**", "netlify/lib/ncn-library/seed.json", "netlify/lib/ncn-news/**"]
+  external_node_modules = ["@netlify/blobs"]
+
+[functions."ncn-genk-sync"]
+  node_bundler = "esbuild"
+  external_node_modules = ["@netlify/blobs"]
