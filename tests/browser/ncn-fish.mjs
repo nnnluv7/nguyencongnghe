@@ -42,6 +42,25 @@ try{
       if(width===1440)await shot('welcome-desktop');if(width===390)await shot('welcome-phone');
     }
   });
+  await check('mouse wheel over the ocean scrolls the page in welcome, play, pause and result states',async()=>{
+    const wheelPage=await desktop.newPage();wheelPage.on('pageerror',e=>errors.push(e.message));
+    try{
+      await wheelPage.goto(base+'/ca-lon-nuot-ca-be/');
+      const wheelScroll=async()=>{
+        await wheelPage.evaluate(()=>{document.activeElement?.blur();scrollTo({top:0,behavior:'instant'});});
+        const box=await wheelPage.locator('#ff-stage').boundingBox();
+        await wheelPage.mouse.move(box.x+box.width*.75,box.y+Math.min(box.height*.5,250));
+        await wheelPage.mouse.wheel(0,180);
+        await wheelPage.waitForFunction(()=>scrollY>40);
+        await wheelPage.mouse.wheel(0,-300);
+        await wheelPage.waitForFunction(()=>scrollY<5);
+      };
+      await wheelScroll();
+      await wheelPage.locator('#ff-start').click();await wheelScroll();
+      await wheelPage.keyboard.press('p');assert.equal(await wheelPage.locator('#ff-stage').getAttribute('data-state'),'paused');await wheelScroll();
+      await wheelPage.locator('#ff-end').click();assert.equal(await wheelPage.locator('#ff-stage').getAttribute('data-state'),'over');await wheelScroll();
+    }finally{await wheelPage.close();}
+  });
   await page.setViewportSize({width:1440,height:1050});await tick(150);
   await check('ordinary swimming eats real fish, earns points, and dash spends energy',async()=>{
     await page.locator('#ff-start').click();await tick(300);assert.equal(await state(),'playing');assert.equal(await page.locator('#ff-lives').getAttribute('aria-label'),'Còn 3 mạng');

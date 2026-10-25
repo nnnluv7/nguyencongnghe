@@ -1,3 +1,5 @@
+import {installScrollUI} from '../assets/ncn-theme/scroll-ui.js?v=20261024-compact-1';
+const scrollUI = installScrollUI();
 (function () {
   'use strict';
   const { Engine, MODES, hash, clamp } = NCNFlight;
@@ -136,13 +138,17 @@
     $('welcomeScreen').hidden = false; $('sceneCaption').hidden = false; $('runMessage').classList.remove('show');
     updateRecords(); $('startButton').focus({ preventScroll: true });
   }
-  function pause() {
+  function externalPanel() {
+    return document.body.classList.contains('ncn-menu-open') || Boolean(document.querySelector('dialog[open],.ncn-account-menu[open]'));
+  }
+  function pause({focus = true} = {}) {
     if (engine.status !== 'playing') return;
     engine.pause(); held = false; flapKeys.clear(); accumulator = 0;
-    $('pauseScreen').hidden = false; $('dashButton').hidden = true; $('resumeButton').focus({ preventScroll: true });
+    $('pauseScreen').hidden = false; $('dashButton').hidden = true; scrollUI?.show();
+    if (focus && !externalPanel()) $('resumeButton').focus({ preventScroll: true });
   }
   function resume() {
-    if (engine.status !== 'paused') return;
+    if (engine.status !== 'paused' || externalPanel()) return;
     $('pauseScreen').hidden = true; $('helpScreen').hidden = true; $('dashButton').hidden = false;
     held = false; flapKeys.clear(); accumulator = 0; engine.resume(); canvas.focus({ preventScroll: true }); audioUnlock();
   }
@@ -385,6 +391,7 @@
   $('dashButton').addEventListener('pointerdown', e => { e.preventDefault(); if (engine.status === 'playing') { audioUnlock(); engine.activateDash(); } });
   $('dashButton').addEventListener('click', e => { if (e.detail === 0) engine.activateDash(); });
   document.addEventListener('keydown', e => {
+    if (e.defaultPrevented || externalPanel() || e.target.isContentEditable) return;
     if (e.code === 'Tab') {
       const modal = ['helpScreen', 'pauseScreen', 'overScreen'].map($).find(el => !el.hidden);
       if (modal) {
@@ -409,6 +416,10 @@
     else if (engine.status === 'over' && e.code === 'KeyR' && overPresented && !e.repeat) { e.preventDefault(); start(daily, true); }
   });
   document.addEventListener('keyup', e => flapKeys.delete(e.code));
+  const checkPanels = () => { if (externalPanel()) pause({focus: false}); };
+  const panelObserver = new MutationObserver(checkPanels);
+  panelObserver.observe(document.body, {attributes: true, subtree: true, attributeFilter: ['class', 'open']});
+  document.addEventListener('toggle', checkPanels, true);
   window.addEventListener('blur', () => { held = false; flapKeys.clear(); pause(); });
   document.addEventListener('visibilitychange', () => { if (document.hidden) { held = false; flapKeys.clear(); pause(); } lastFrame = 0; });
   function soundButton() { $('soundButton').setAttribute('aria-pressed', String(!muted)); $('soundButton').setAttribute('aria-label', muted ? 'Bật âm thanh' : 'Tắt âm thanh'); $('soundButton').title = muted ? 'Bật âm thanh' : 'Tắt âm thanh'; $('soundButton').style.opacity = muted ? '.5' : '1'; }
