@@ -19,9 +19,9 @@ export function memoryLibrary(){
   }};
 }
 const input=(overrides={})=>({id,version:null,kind:'article',mode:'markdown',title:'Bài viết mới',summary:'Mô tả ngắn',image:'',labels:['Hướng dẫn'],status:'published',body:'## Nội dung\nBài viết **tiếng Việt**.',...overrides});
-function fixture({user=admin,production=true}={}){
+function fixture({user=admin,production=true,now}={}){
   const store=memoryLibrary();
-  const deps={seed,originalBodies,store:()=>store,production:()=>production,verify:async()=>user,app:async view=>read('netlify/lib/ncn-library/admin-'+(view==='library'?'library':'hub')+'.html')};
+  const deps={seed,originalBodies,now,store:()=>store,production:()=>production,verify:async()=>user,app:async view=>read('netlify/lib/ncn-library/admin-'+(view==='library'?'library':'hub')+'.html')};
   return {store,handler:createLibraryHandler(deps),page:createLibraryPageHandler({...deps,homeShell:async()=>read('public/index.html'),indexShell:async()=>read('public/thu-vien/index.html'),articleShell:async()=>read('netlify/lib/ncn-library/article-shell.html'),original:async path=>read('public/'+path)})};
 }
 function request(route,data,headers={}){return new Request(origin+'/.netlify/functions/ncn-library?route='+route,{method:data===undefined?'GET':'POST',...(data===undefined?{}:{body:JSON.stringify(data)}),headers:{origin,'content-type':'application/json',...headers}});}
@@ -78,6 +78,16 @@ test('drafts stay private until explicitly published',async()=>{
   const hidden=await page(f,'slug='+draft.body.item.slug);assert.equal(hidden.status,404);assert.equal(hidden.html.includes('NỘI DUNG NHÁP RIÊNG'),false);
   const detail=await call(f,'detail&id='+id);assert.equal(detail.body.body,'NỘI DUNG NHÁP RIÊNG');
   assert.equal((await call(f,'save',input({version:draft.body.item.version,status:'published'}))).status,200);
+});
+test('the homepage feed identifies articles and dates old drafts from their first publication',async()=>{
+  let clock='2026-10-01T00:00:00Z';const f=fixture({now:()=>new Date(clock)});
+  const baseline=(await call(f,'list')).body.items;
+  assert.equal(baseline.find(x=>x.link==='/2024/08/background-popup-a7.html').isArticle,false);
+  assert.equal(baseline.find(x=>x.link==='/2021/10/wps-office.html').isArticle,true);
+  let saved=await call(f,'save',input({status:'draft'}));assert.equal(saved.status,200);
+  clock='2026-10-25T00:00:00Z';saved=await call(f,'save',input({version:saved.body.item.version}));assert.equal(saved.body.item.datetime,'2026-10-25T00:00:00.000Z');
+  clock='2026-10-26T00:00:00Z';saved=await call(f,'save',input({version:saved.body.item.version,status:'draft'}));
+  saved=await call(f,'save',input({version:saved.body.item.version}));assert.equal(saved.body.item.datetime,'2026-10-25T00:00:00.000Z');
 });
 test('trash and restore of owned articles removes the actual public page and recovers its body',async()=>{
   const f=fixture(),saved=await call(f,'save',input()),removed=await call(f,'trash',{id,version:saved.body.item.version});assert.equal(removed.status,200);

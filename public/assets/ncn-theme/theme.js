@@ -173,7 +173,7 @@ export function createTheme({doc=document,win=window,config,catalog=win.CG_CATAL
     return `<a class="ncn-article-card" href="${escapeHTML(row.link)}">${image?`<img class="ncn-article-image" src="${escapeHTML(image)}" alt="" loading="lazy">`:`<div class="ncn-article-placeholder">${svg('book')}</div>`}<div class="ncn-article-card-body"><div class="ncn-article-meta"><span>${escapeHTML(label)}</span><time>${escapeHTML(date)}</time></div><h3>${escapeHTML(row.title)}</h3><p>${escapeHTML(summary||'Mở trang để xem nội dung.')}</p><span class="ncn-article-read">Xem nội dung ↗</span></div></a>`;
   }
   let sortedRows=rows.slice().sort((a,b)=>(Date.parse(b.datetime)||0)-(Date.parse(a.datetime)||0));
-  function renderArticleFeed(){if($('ncn-articles')) $('ncn-articles').innerHTML=sortedRows.filter(row=>!row.isPage&&!tools.some(t=>canonicalPath(t.href)===canonicalPath(row.link))).slice(0,3).map(articleCard).join('')||'<p class="ncn-empty">Các bài viết sẽ xuất hiện khi danh mục nội dung được tải.</p>';}
+  function renderArticleFeed(){if($('ncn-articles')) $('ncn-articles').innerHTML=sortedRows.filter(row=>row.isArticle!==false&&!row.isPage&&!tools.some(t=>canonicalPath(t.href)===canonicalPath(row.link))).slice(0,3).map(articleCard).join('')||'<p class="ncn-empty">Các bài viết sẽ xuất hiện khi danh mục nội dung được tải.</p>';}
   renderArticleFeed();
   let page=1,libraryQuery='',libraryLabel='';
   const PAGE_SIZE=12;

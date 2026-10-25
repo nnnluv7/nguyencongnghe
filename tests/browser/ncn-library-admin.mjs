@@ -88,9 +88,9 @@ try{
     await page.locator('#ncn-articles a').first().waitFor();assert.equal(await page.locator('#ncn-welcome-panel').count(),0);assert.equal(await page.locator('details #ncn-articles').count(),0);
     assert.equal(await page.locator('#ncn-home').evaluate(node=>node.firstElementChild.id),'ncn-home-latest');assert.equal(await page.locator('#ncn-articles a').count(),3);
     assert.deepEqual(await page.locator('#ncn-articles a').evaluateAll(nodes=>nodes.map(x=>x.getAttribute('href'))),[
-      '/2024/08/background-popup-a7.html',
       '/2024/06/copilot-plus-cua-windows-11-bi-be-khoa-chay-muot-ma-tren-cac-may-doi-cu.html',
-      '/2024/06/microsoft-tien-gan-den-giai-doan-loai-bo-nhung-thanh-phan-quen-thuoc-tren-windows.html'
+      '/2024/06/microsoft-tien-gan-den-giai-doan-loai-bo-nhung-thanh-phan-quen-thuoc-tren-windows.html',
+      '/2024/06/leica-lux-ra-mat-tren-iphone-gia-1-trieu-8-cho-nguoi-dung-tan-huong-may-anh-cua-nha-giau.html'
     ]);
     assert.equal(await page.evaluate(()=>window.NCN_LIBRARY_SNAPSHOT),true);await fits(page);await page.screenshot({path:out+'/home-latest-desktop.jpg',type:'jpeg',quality:80});
   });
