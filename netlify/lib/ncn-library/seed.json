@@ -1140,5 +1140,20 @@
     "isPage": true,
     "managedPage": false,
     "sourcePath": ""
+  },
+  {
+    "id": "legacy-2a30a2156160e3ad",
+    "kind": "legacy",
+    "title": "Cá lớn nuốt cá bé · Đại dương tuổi thơ",
+    "href": "/ca-lon-nuot-ca-be/",
+    "image": "/ca-lon-nuot-ca-be/cover.svg",
+    "labels": [
+      "Giải trí"
+    ],
+    "datetime": "2026-10-25T22:30:00+07:00",
+    "summary": "Ăn cá nhỏ, né cá lớn, săn ngọc, combo cuồng ăn và chinh phục 6 vùng biển. Chơi bằng chuột, bàn phím hoặc cảm ứng.",
+    "isPage": true,
+    "managedPage": false,
+    "sourcePath": ""
   }
 ]
