@@ -1,7 +1,6 @@
 import {chromium} from 'playwright';
-import {readFile,writeFile,mkdir,stat} from 'node:fs/promises';
+import {readFile,writeFile,mkdir,stat,readdir} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
-import {execFileSync} from 'node:child_process';
 import assert from 'node:assert/strict';
 import {createLibraryPageHandler,injectCatalog} from '../../netlify/lib/ncn-library-page.mjs';
 import {createSitePageHandler} from '../../netlify/lib/ncn-site-page.mjs';
@@ -79,7 +78,8 @@ try{
   await page.emulateMedia({reducedMotion:'reduce'});await card.hover();await paint(page);assert.equal(await card.evaluate(el=>getComputedStyle(el).transform),'none');await page.emulateMedia({reducedMotion:'no-preference'});
  });
  await page.close();
- const files=execFileSync('rg',['--files','public','-g','*.html'],{encoding:'utf8'}).trim().split('\n');
+ async function htmlFiles(dir){const result=[];for(const item of await readdir(dir,{withFileTypes:true})){const path=dir+'/'+item.name;if(item.isDirectory())result.push(...await htmlFiles(path));else if(item.name.endsWith('.html'))result.push(path);}return result;}
+ const files=(await htmlFiles('public')).sort();
  for(const [i,file] of files.entries())await check('shared layout '+(i+1)+'/'+files.length+': '+file.slice(7),async()=>{
   page=await ctx.newPage();const response=await page.goto(origin+'/'+file.slice(7),{waitUntil:'domcontentloaded'});const initial=await response.text();assert.ok(initial.includes('window.NCN_NOTICE_SNAPSHOT'),file+' server notice snapshot');assert.ok(initial.includes('site.css?v=20261025-sync-1')||file.includes('flappy-bird'),file+' final stylesheet');await paint(page);
   for(const width of [1280,390]){await page.setViewportSize({width,height:844});await paint(page);await fits(page);
