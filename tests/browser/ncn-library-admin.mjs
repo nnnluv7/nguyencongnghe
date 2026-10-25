@@ -84,13 +84,14 @@ async function fits(p){const size=await p.evaluate(()=>({content:document.docume
 let guest,vip,admin,reader,editor,newArticle,homeReader;
 try{
   guest=await context();page=await open(guest,'/');
-  await check('the homepage welcome panel is replaced by exactly the three newest public articles',async()=>{
+  await check('the homepage welcome panel is replaced by exactly the four newest public articles',async()=>{
     await page.locator('#ncn-articles a').first().waitFor();assert.equal(await page.locator('#ncn-welcome-panel').count(),0);assert.equal(await page.locator('details #ncn-articles').count(),0);
-    assert.equal(await page.locator('#ncn-home').evaluate(node=>node.firstElementChild.id),'ncn-home-latest');assert.equal(await page.locator('#ncn-articles a').count(),3);
+    assert.equal(await page.locator('#ncn-home').evaluate(node=>node.firstElementChild.id),'ncn-home-latest');assert.equal(await page.locator('#ncn-articles a').count(),4);
     assert.deepEqual(await page.locator('#ncn-articles a').evaluateAll(nodes=>nodes.map(x=>x.getAttribute('href'))),[
       '/2024/06/copilot-plus-cua-windows-11-bi-be-khoa-chay-muot-ma-tren-cac-may-doi-cu.html',
       '/2024/06/microsoft-tien-gan-den-giai-doan-loai-bo-nhung-thanh-phan-quen-thuoc-tren-windows.html',
-      '/2024/06/leica-lux-ra-mat-tren-iphone-gia-1-trieu-8-cho-nguoi-dung-tan-huong-may-anh-cua-nha-giau.html'
+      '/2024/06/leica-lux-ra-mat-tren-iphone-gia-1-trieu-8-cho-nguoi-dung-tan-huong-may-anh-cua-nha-giau.html',
+      '/2024/04/giai-tri-nhung-tinh-huong-do-khoc-do-cuoi-khong-noi-thanh-loi.html'
     ]);
     assert.equal(await page.evaluate(()=>window.NCN_LIBRARY_SNAPSHOT),true);await fits(page);await page.screenshot({path:out+'/home-latest-desktop.jpg',type:'jpeg',quality:80});
   });
@@ -133,12 +134,12 @@ try{
     assert.match(await reader.locator('#postBody').innerText(),/đầy đủ dấu/);assert.equal(await reader.evaluate(()=>window.ATTACKED),undefined);assert.equal(await reader.locator('#postBody script,a[href^="javascript:"]').count(),0);
     assert.equal(await reader.locator('link[rel=canonical]').getAttribute('href'),'https://nguyencongnghe.com'+newArticle);await fits(reader);
     await reader.goto(origin+'/thu-vien/?q=Hướng+dẫn+thử+nghiệm+Admin');await reader.locator('#ncn-library-results a').waitFor();assert.equal(await reader.locator('#ncn-library-results a').count(),1);
-    await homeReader.locator('#ncn-articles a[href="'+newArticle+'"]').waitFor();assert.equal(await homeReader.locator('#ncn-articles a').count(),3);assert.equal(await homeReader.locator('#ncn-articles a').first().getAttribute('href'),newArticle);
+    await homeReader.locator('#ncn-articles a[href="'+newArticle+'"]').waitFor();assert.equal(await homeReader.locator('#ncn-articles a').count(),4);assert.equal(await homeReader.locator('#ncn-articles a').first().getAttribute('href'),newArticle);
   });
   await check('hiding removes the library entry while retaining its direct public page',async()=>{
     await editor.locator('#nl-visibility').click();await saved(editor,/Đã ẩn khỏi Thư viện/);
     await reader.reload();await reader.locator('#ncn-library-results .ncn-empty').waitFor();assert.equal((await reader.goto(origin+newArticle)).status(),200);
-    await homeReader.locator('#ncn-articles a[href="'+newArticle+'"]').waitFor({state:'detached'});assert.equal(await homeReader.locator('#ncn-articles a').count(),3);
+    await homeReader.locator('#ncn-articles a[href="'+newArticle+'"]').waitFor({state:'detached'});assert.equal(await homeReader.locator('#ncn-articles a').count(),4);
     await editor.locator('#nl-visibility').click();await saved(editor,/Đã hiện bài/);
     await homeReader.locator('#ncn-articles a[href="'+newArticle+'"]').waitFor();
   });
@@ -169,10 +170,10 @@ try{
     await editor.setViewportSize({width:390,height:844});await editor.evaluate(()=>window.NCN_APPEARANCE.set('dark',true));await fits(editor);await editor.screenshot({path:out+'/library-admin-phone-dark.jpg',type:'jpeg',quality:80});
     const hub=await open(admin,'/admin/');await hub.setViewportSize({width:390,height:844});await hub.locator('.na-module').first().waitFor();await fits(hub);await hub.screenshot({path:out+'/admin-hub-phone.jpg',type:'jpeg',quality:80});await hub.close();
   });
-  await check('the three homepage article cards remain visible and compact on a dark phone screen',async()=>{
+  await check('the four homepage article cards remain visible and compact on a dark phone screen',async()=>{
     const home=await open(guest,'/');await home.setViewportSize({width:390,height:844});await home.evaluate(()=>window.NCN_APPEARANCE.set('dark',true));await home.locator('#ncn-articles a').first().waitFor();await fits(home);
-    assert.equal(await home.locator('#ncn-articles a').count(),3);assert.equal(await home.locator('details #ncn-articles').count(),0);
-    const cards=await home.locator('#ncn-articles').boundingBox();assert.ok(cards.height<600,JSON.stringify(cards));await home.screenshot({path:out+'/home-latest-phone-dark.jpg',type:'jpeg',quality:80});await home.close();
+    assert.equal(await home.locator('#ncn-articles a').count(),4);assert.equal(await home.locator('details #ncn-articles').count(),0);
+    const cards=await home.locator('#ncn-articles').boundingBox();assert.ok(cards.height<650,JSON.stringify(cards));await home.screenshot({path:out+'/home-latest-phone-dark.jpg',type:'jpeg',quality:80});await home.close();
   });
   await check('logout immediately removes private forms and the verified Admin navigation',async()=>{
     await editor.evaluate(()=>window.NCNAccount.signOut());await editor.locator('#ncn-admin-access').waitFor();assert.equal(await editor.locator('#nl-form').count(),0);assert.equal(await editor.locator('#ncn-admin-navigation').count(),0);

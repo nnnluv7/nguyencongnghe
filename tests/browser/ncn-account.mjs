@@ -150,7 +150,15 @@ try{
     await premium.waitForFunction(()=>!document.querySelector('[data-pay-plan=vip30]').disabled);assert.equal(await premium.locator('#pay-checkout').isVisible(),false);
   });
   await check('existing VIP accounts retain identity and entitlement after shared login',async()=>{
-    await login(home);await home.reload();await home.waitForFunction(()=>window.NCNAccount?.state.ready&&NCNAccount.state.user?.vip);assert.equal(await home.evaluate(()=>NCNAccount.state.user.id),existing.id);
+    await home.evaluate(()=>{
+      const original=Storage.prototype.setItem;window.loginCookiePublications=[];
+      Storage.prototype.setItem=function(key,value){if(key==='gotrue.user')window.loginCookiePublications.push(/(?:^|;\s*)nf_jwt=/.test(document.cookie));return original.call(this,key,value);};
+      window.restoreSessionStorageWriter=()=>{Storage.prototype.setItem=original;};
+    });
+    await login(home);
+    const publications=await home.evaluate(()=>{window.restoreSessionStorageWriter();return window.loginCookiePublications;});
+    assert.ok(publications.length>0);assert.ok(publications.every(Boolean),'A session cookie must exist before cross-tab login publication');
+    await home.reload();await home.waitForFunction(()=>window.NCNAccount?.state.ready&&NCNAccount.state.user?.vip);assert.equal(await home.evaluate(()=>NCNAccount.state.user.id),existing.id);
     await event.reload();await event.locator('[data-private-fixture=ncn-event]').waitFor();assert.equal(await event.evaluate(()=>NCN_VIP.user.id),existing.id);
   });
   await check('full navigation keeps profile text while one shared session request is pending',async()=>{

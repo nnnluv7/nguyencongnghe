@@ -39,7 +39,7 @@ write is the publish point; stale writes cannot overwrite a newer article.
 Public catalogue responses contain only published metadata and never body keys,
 draft bodies or creator information.
 
-The homepage replaces the welcome panel with the three newest published Library
+The homepage replaces the welcome panel with the four newest published Library
 articles, ordered by publication date. Drafts, hidden/trash entries and tool
 shortcuts are excluded; a newly published article automatically joins this feed.
 The cards retain Liquid Glass styling and stack compactly on phones.

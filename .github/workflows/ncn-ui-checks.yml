@@ -2,6 +2,7 @@ name: NCN UI browser
 on:
   pull_request:
     paths:
+      - 'public/assets/ncn-identity-client.js'
       - 'public/assets/ncn-theme/**'
       - 'public/assets/catalog.js'
       - 'public/**/*.html'
@@ -19,6 +20,7 @@ on:
   push:
     branches: [main]
     paths:
+      - 'public/assets/ncn-identity-client.js'
       - 'public/assets/ncn-theme/**'
       - 'public/assets/catalog.js'
       - 'public/**/*.html'

@@ -43,3 +43,28 @@ html[data-ncn-theme=dark] #ncn-announcement-pause{background:#ffffff12;border-co
   body.ncn-scroll-ready :is(#ncn-announcement,#ncn-topbar,#ncn-menu-open,#ncn-game-topbar,#ncn-game-menu){transition:none!important}
  }
 }
+
+/* Live date/time occupies the free space beside the toolbar brand. */
+.ncn-toolbar-clock{display:flex;align-items:center;flex:none;gap:8px;padding:5px 11px;border:1px solid var(--ncn-rim,var(--ncn-ui-rim));border-radius:15px;background:var(--ncn-glass-soft,var(--ncn-ui-glass-soft));color:var(--ncn-ink,var(--ncn-ui-ink));font-family:var(--body-font,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif);font-variant-numeric:tabular-nums;white-space:nowrap;line-height:1.4;box-shadow:inset 0 1px 0 var(--ncn-highlight,var(--ncn-ui-highlight))}
+.ncn-toolbar-clock>svg{width:19px;height:19px;color:var(--ncn-accent,var(--ncn-ui-accent));flex:none}
+.ncn-toolbar-clock>div{display:flex;flex-direction:column}
+.ncn-toolbar-clock time{display:block;font-size:12px;font-weight:750;letter-spacing:.4px}
+.ncn-toolbar-clock [data-clock-date]{display:block;font-size:9px;color:var(--ncn-muted)}
+.ncn-toolbar-clock [data-clock-short-date]{display:none}
+#ncn-game-topbar>.ncn-toolbar-clock{margin-right:auto}
+@media(max-width:640px){
+  #ncn-topbar .ncn-header-brand strong{display:none}
+  #ncn-topbar .ncn-topbar-left{gap:7px;flex:none}
+  .ncn-toolbar-clock{gap:0;padding:0;border:0;background:none;box-shadow:none;border-radius:0}
+  .ncn-toolbar-clock>svg,.ncn-toolbar-clock [data-clock-date]{display:none}
+  .ncn-toolbar-clock [data-clock-short-date]{display:block;font-size:8px;color:var(--ncn-muted)}
+  .ncn-toolbar-clock time{font-size:11px;letter-spacing:0}
+}
+@media(max-width:360px){
+  #ncn-topbar{gap:5px;padding-left:8px;padding-right:8px}
+  #ncn-topbar .ncn-topbar-left{padding-left:50px;gap:4px}
+  #ncn-topbar .ncn-brand-image{width:31px;height:31px;padding:2px}
+  #ncn-topbar .ncn-brand-image img{width:25px;height:25px}
+  #ncn-topbar .ncn-toolbar-clock time{font-size:10px}
+}
+@media print{.ncn-toolbar-clock{display:none!important}}

@@ -1,4 +1,5 @@
 /* The same scroll behavior is used by the portal, print editors and the game. */
+import {installToolbarClock} from './clock.js?v=20261025-toolbar-1';
 export function createScrollDirection({down=20,up=10}={}){
   let direction=0,distance=0,hidden=false;
   return {
@@ -23,6 +24,7 @@ export function installScrollUI({doc=document,win=window}={}){
   const selector='#ncn-announcement,#ncn-topbar,#ncn-menu-open,#ncn-game-topbar,#ncn-game-menu';
   const chrome=[...doc.querySelectorAll(selector)];
   if(!chrome.length)return;
+  const clock=installToolbarClock({doc,win});
   const direction=createScrollDirection(),listeners=[],positions=new WeakMap();
   let previous=Math.max(0,win.scrollY||0),frame=0,destroyed=false,keyboardFocus=false,touchY=null,width=win.innerWidth;
   const listen=(node,event,handler,options)=>{node?.addEventListener(event,handler,options);listeners.push(()=>node?.removeEventListener(event,handler,options));};
@@ -106,7 +108,7 @@ export function installScrollUI({doc=document,win=window}={}){
   scanFrames();
   const frameObserver=win.MutationObserver?new win.MutationObserver(scanFrames):null;
   frameObserver?.observe(body,{childList:true,subtree:true});
-  const api={show,destroy(){destroyed=true;listeners.forEach(remove=>remove());observer?.disconnect();frameObserver?.disconnect();resize?.disconnect();win.cancelAnimationFrame(frame);body.classList.remove('ncn-chrome-hidden','ncn-scroll-ready');root.style.removeProperty('--ncn-chrome-space');root.style.removeProperty('--ncn-chrome-hide-distance');controllers.delete(doc);}};
+  const api={show,destroy(){destroyed=true;clock?.destroy();listeners.forEach(remove=>remove());observer?.disconnect();frameObserver?.disconnect();resize?.disconnect();win.cancelAnimationFrame(frame);body.classList.remove('ncn-chrome-hidden','ncn-scroll-ready');root.style.removeProperty('--ncn-chrome-space');root.style.removeProperty('--ncn-chrome-hide-distance');controllers.delete(doc);}};
   controllers.set(doc,api);return api;
 }
 if(typeof document!=='undefined'){
