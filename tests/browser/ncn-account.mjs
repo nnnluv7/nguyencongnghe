@@ -1,3 +1,5 @@
+const seedLibraryForFixture=JSON.parse(await readFile('netlify/lib/ncn-library/seed.json','utf8'));
+import {publicCatalog} from '../../netlify/lib/ncn-library-api.mjs';
 import {chromium} from 'playwright';
 import {readFile,stat,mkdir} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
@@ -55,6 +57,7 @@ async function fixtureContext(){
     }
     if(url.pathname.startsWith('/.netlify/functions/')){
       const tool=url.pathname.split('/').at(-1),action=url.searchParams.get('route');functionCalls.push({tool,action});
+      if(tool==='ncn-library'&&action==='list')return reply({items:publicCatalog(seedLibraryForFixture)});
       if(tool==='ncn-announcements')return reply({items:[]});
       if(tool==='ncn-visitors')return reply({total:1,online:1});
       if(tool==='ncn-billing'){

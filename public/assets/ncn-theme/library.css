@@ -1,4 +1,6 @@
 /* Library surfaces match File kho. All print artwork keeps its existing styles. */
+.ncn-library-admin-link{display:inline-flex;align-items:center;color:var(--ncn-accent);font:650 12px/1.5 var(--body-font);margin:0 0 18px;text-decoration:none;padding:9px 14px;border:1px solid var(--ncn-border);border-radius:13px;background:var(--ncn-glass-card)}
+.ncn-library-admin-link[hidden]{display:none!important}
 @media screen {
  body.ncn-library-page .item-post-wrap{width:100%!important;max-width:1120px!important;margin:0 auto!important}
  body.ncn-library-page :is(.item-post-wrap,.post-inner-area){padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important}
