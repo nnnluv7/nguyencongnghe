@@ -6,4 +6,7 @@ import {currentPublicState} from '../lib/ncn-public-state.mjs';
 import {injectCatalog} from '../lib/ncn-library-page.mjs';
 
 const pages=JSON.parse(readFileSync(join(process.cwd(),'netlify/lib/ncn-shell/pages.json'),'utf8'));
-export default req=>createSitePageHandler({pages,html:page=>readFile(join(process.cwd(),'public',page),'utf8'),state:()=>currentPublicState(),inject:injectCatalog})(req);
+// The literal suffix keeps Netlify's dependency trace inside the HTML allowlist.
+// A bare dynamic path makes it inspect unrelated browser JavaScript under public.
+const html=page=>readFile(join(process.cwd(),'public',`${page.slice(0,-5)}.html`),'utf8');
+export default req=>createSitePageHandler({pages,html,state:()=>currentPublicState(),inject:injectCatalog})(req);

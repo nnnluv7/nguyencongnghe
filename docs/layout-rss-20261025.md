@@ -19,3 +19,5 @@ Tệp `netlify/lib/ncn-news/genk-seed.json` là bản khởi tạo từ RSS th�
 ## Kiểm chứng
 
 `tests/ncn-public-render.test.mjs` kiểm tra feed, dữ liệu lỗi, cạnh tranh cập nhật, tìm kiếm ban đầu và cách ly route. `tests/browser/ncn-layout.mjs` trì hoãn module để đo bố cục trước/sau khởi tạo; kiểm tra desktop/mobile, cỡ chữ, căn ô tìm kiếm, nguồn GenK, phân trang, hover/reduced motion và cả 114 trang. Bộ kiểm tra chạy với kho/dữ liệu mô phỏng riêng, không tạo tài khoản hoặc đăng/xoá dữ liệu trên production.
+
+Netlify từng dừng ở `Functions bundling` với lỗi `Cannot mix BigInt and other types` trong `@vercel/nft`. Có thể tái hiện bằng `zipFunction` của `@netlify/zip-it-and-ship-it` trên `ncn-site-page`; kiểm tra esbuild đơn thuần không bắt được lỗi này. Giữ hậu tố `.html` dạng literal trong lệnh đọc trang giúp tracer chỉ lấy HTML, thay vì lần theo JavaScript trình duyệt không liên quan trong `public/`. Danh sách trang được phép và các tệp HTML được đóng gói vẫn giữ nguyên. `tests/netlify-pack.mjs` tạo ZIP thực cho toàn bộ Functions theo cấu hình trong `netlify.toml`, gồm dependency ngoài bundle và tệp tài nguyên; workflow kiểm tra bước này trước khi kiểm tra giao diện.
