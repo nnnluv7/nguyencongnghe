@@ -1,0 +1,24 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {createBoard,findPath,findMatch,remaining,removePair,reshuffle,collapse,seededRandom,validBoard,readSave,VERSION,vietnamDate} from '../public/pikachu/core.js';
+const board=rows=>({rows:rows.length,cols:rows[0].length,cells:rows.flat()}),counts=b=>b.cells.filter(Boolean).sort((a,b)=>a-b);
+// Independent state-space search verifies the path solver against all 3×3
+// obstacle layouts, including the empty frame and exactly two direction changes.
+function reachable(b,a,z){const rows=b.rows+2,cols=b.cols+2,start=[Math.floor(a/b.cols)+1,a%b.cols+1],end=[Math.floor(z/b.cols)+1,z%b.cols+1],queue=[[...start,-1,0]],seen=new Map(),steps=[[1,0],[-1,0],[0,1],[0,-1]];while(queue.length){const [r,c,dir,turns]=queue.shift();if(r===end[0]&&c===end[1])return true;for(let d=0;d<4;d++){const nr=r+steps[d][0],nc=c+steps[d][1],t=turns+(dir>=0&&dir!==d);if(t>2||nr<0||nc<0||nr>=rows||nc>=cols)continue;const inside=nr>0&&nc>0&&nr<=b.rows&&nc<=b.cols,i=(nr-1)*b.cols+nc-1;if(inside&&i!==a&&i!==z&&b.cells[i])continue;const key=nr+','+nc+','+d;if((seen.get(key)??3)<=t)continue;seen.set(key,t);queue.push([nr,nc,d,t]);}}return false;}
+test('straight, L-shaped, two-turn and outside-frame paths obey classic rules',()=>{
+ assert.equal(findPath(board([[1,1],[2,2]]),0,1).length,2);
+ assert.equal(findPath(board([[1,0],[0,1]]),0,3).length,3);
+ const edge=findPath(board([[1,2,1],[2,2,2]]),0,2);assert.equal(edge.length,4);assert.ok(edge.some(p=>p.r===-1));
+ assert.equal(findPath(board([[1,2,2],[2,1,2],[2,2,2]]),0,4),null);
+ assert.equal(findPath(board([[1,2],[2,1]]),0,1),null);
+ assert.equal(findPath(board([[1,1],[0,0]]),0,0),null);
+ assert.equal(findPath(board([[1,1],[0,0]]),0,8),null);
+});
+test('path solver agrees with an independent BFS for every 3×3 mask and endpoint pair',()=>{for(let a=0;a<9;a++)for(let z=a+1;z<9;z++)for(let mask=0;mask<128;mask++){let n=0;const cells=Array.from({length:9},(_,i)=>i===a||i===z?1:(mask>>n++&1)*2),b={rows:3,cols:3,cells};assert.equal(!!findPath(b,a,z),reachable(b,a,z),JSON.stringify({a,z,cells}));}});
+test('seeded boards are reproducible, balanced and have a legal opening',()=>{for(let seed=0;seed<50;seed++)for(const [rows,cols]of[[8,10],[10,8]]){const a=createBoard({rows,cols,rng:seededRandom(seed)}),b=createBoard({rows,cols,rng:seededRandom(seed)});assert.deepEqual(a,b);assert.equal(remaining(a),80);assert.equal(validBoard(a),true);assert.ok(findMatch(a));}assert.throws(()=>createBoard({rows:3,cols:3}));});
+test('each gravity compacts occupied cells in order and preserves the multiset',()=>{const b=board([[1,0,2],[0,3,0],[4,0,5]]);for(const gravity of ['down','up','left','right'])assert.deepEqual(counts(collapse(b,gravity)),counts(b));assert.deepEqual(collapse(b,'down').cells,[0,0,0,1,0,2,4,3,5]);assert.deepEqual(collapse(b,'left').cells,[1,2,0,3,0,0,4,5,0]);assert.deepEqual(collapse(b,'right').cells,[0,1,2,0,0,3,0,4,5]);assert.deepEqual(collapse(b,'up').cells,[1,3,2,4,0,5,0,0,0]);assert.deepEqual(collapse(b,'none'),b);});
+test('all five stages can be cleared with legal pairs and bounded automatic shuffles',()=>{for(const gravity of['none','down','left','up','right'])for(let seed=0;seed<8;seed++){const rng=seededRandom(seed+gravity);let b=createBoard({rng}),removed=0;while(remaining(b)){let pair=findMatch(b);if(!pair){const old=counts(b);b=reshuffle(b,rng);assert.deepEqual(counts(b),old);pair=findMatch(b);}assert.ok(pair);const before=remaining(b);b=removePair(b,pair.first,pair.second,gravity);assert.equal(remaining(b),before-2);assert.ok(validBoard(b));removed++;}assert.equal(removed,40);}});
+test('reshuffling preserves holes and counts, even with an adversarial constant RNG',()=>{const b=board([[1,2,3,4],[2,3,4,1],[0,0,0,0]]),s=reshuffle(b,()=>0);assert.deepEqual(counts(s),counts(b));assert.deepEqual(s.cells.slice(8),[0,0,0,0]);assert.ok(findMatch(s));});
+test('invalid pairs never mutate the board',()=>{const b=board([[1,2],[2,1]]),before=structuredClone(b);assert.equal(removePair(b,0,1),null);assert.deepEqual(b,before);});
+test('saved runs reject malformed and out-of-range values without trusting browser input',()=>{const s={version:VERSION,board:createBoard({rng:seededRandom('save')}),mode:'classic',date:'2026-10-26',level:2,time:230.5,score:1400,hints:2,shuffles:1};assert.deepEqual(readSave(JSON.stringify(s)),s);for(const change of[{version:2},{mode:'other'},{level:8},{score:-1},{score:Infinity},{time:0},{time:400},{hints:4},{shuffles:-1},{board:{rows:3,cols:3,cells:[1]}},{board:{...s.board,cells:s.board.cells.map(()=>0)}},{date:'<script>'}])assert.equal(readSave({...s,...change}),null);assert.equal(readSave('{broken'),null);});
+test('daily challenge changes at Vietnam midnight',()=>{assert.equal(vietnamDate(new Date('2026-10-25T16:59:59Z')),'2026-10-25');assert.equal(vietnamDate(new Date('2026-10-25T17:00:00Z')),'2026-10-26');});

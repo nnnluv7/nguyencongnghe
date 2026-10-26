@@ -11,8 +11,9 @@ export function quizProfile(user,hint=null){
   return {id:user.id,email:user.email,username:String(user.name||(sameEmail&&hint?.username)||user.email)};
 }
 
-export function mountAccount({doc=document,win=window,identity=identityClient,fetcher=fetch,storage=win.localStorage,sessionStorage,timers=win,clock=Date.now}={}){
+export function mountAccount({doc=document,win=window,identity=identityClient,fetcher=fetch,storage,sessionStorage,timers=win,clock=Date.now}={}){
   if(accounts.has(doc))return accounts.get(doc);
+  if(storage===undefined)try{storage=win.localStorage;}catch{}
   if(sessionStorage===undefined)try{sessionStorage=win.sessionStorage;}catch{}
   const $=id=>doc.getElementById(id),listeners=[];
   const state={user:null,profile:readDisplayProfile(sessionStorage,doc.cookie,clock()),ready:false,busy:false,resetPending:false,settings:null,redirect:null,error:null,checkedAt:0,signingOut:false};

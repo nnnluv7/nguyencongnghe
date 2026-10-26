@@ -1,5 +1,6 @@
 // Keep the existing static first paint and the hydrated tool catalogue in sync.
 import {readFile,writeFile,readdir} from 'node:fs/promises';
+import {orderTools} from '../public/assets/ncn-theme/menu.js';
 const read=path=>readFile(path,'utf8'),config=JSON.parse(await read('public/assets/ncn-theme/config.json'));
 async function pages(dir){const all=[];for(const item of await readdir(dir,{withFileTypes:true})){const path=dir+'/'+item.name;if(item.isDirectory())all.push(...await pages(path));else if(item.name.endsWith('.html'))all.push(path);}return all;}
 const games=config.tools.filter(t=>t.group==='arcade');if(!games.length)throw Error('Register arcade games in the shared configuration first.');
@@ -34,6 +35,13 @@ for(const path of [...await pages('public'),'netlify/lib/ncn-library/article-she
    if(!html.includes('data-ncn-pin="'+tool.id+'"'))html=html.replace(card,card+next);
   }
   html=html.replace(/\d+ \/ \d+ công cụ · Chọn ngôi sao để ghim lối tắt\./,config.tools.length+' / '+config.tools.length+' công cụ · Chọn ngôi sao để ghim lối tắt.');
+  // Cloned cards must follow the hydrated catalogue's order. A new, taller
+  // arcade card in a different row otherwise shifts the homepage on hydration.
+  html=html.replace(/(<div id="ncn-tool-grid"[^>]*>)((?:\s*<article\b[\s\S]*?<\/article>)+\s*)(<\/div>)/,(_,open,content,close)=>{
+   const cards=new Map([...content.matchAll(/<article\b[\s\S]*?<\/article>/g)].map(([card])=>[card.match(/data-ncn-pin="([^"]+)"/)?.[1],card]));
+   if(config.tools.some(tool=>!cards.has(tool.id)))throw Error('Missing initial tool card in '+path);
+   return open+orderTools(config.tools).map(tool=>cards.get(tool.id)).join('')+close;
+  });
  }
  if(html!==before){await writeFile(path,html);count++;}
 }
