@@ -18,3 +18,89 @@ html[data-ncn-theme=dark] .ncn-pikachu-page{--pk-text:#dfebd9;--pk-muted:#9aaf9e
 @media(max-width:520px){.pk-app:not([data-state=playing]) .pk-play-area{min-height:500px}}
 @media(max-width:400px){.pk-badge{display:none}}
 .pk-reduced .pk-hero,.pk-reduced .pk-tile{animation:none!important}.pk-reduced *{transition:none!important}.pk-reduced .pk-path-glow{filter:none;opacity:.25}@media(prefers-reduced-motion:reduce){.pk-app *,.pk-dialog *{animation:none!important;transition:none!important}.pk-path-glow{filter:none;opacity:.25}}
+
+/* Fullscreen is a fixed game layout, not a scrolling copy of the portal. */
+html.pk-fullscreen-active,body.pk-immersive-open{overflow:hidden;overscroll-behavior:none}
+.pk-app.pk-immersive{position:fixed;inset:0;z-index:100000;width:100%;height:100dvh;max-width:none;margin:0;padding:max(7px,env(safe-area-inset-top)) max(7px,env(safe-area-inset-right)) max(7px,env(safe-area-inset-bottom)) max(7px,env(safe-area-inset-left));display:grid;grid-template-rows:auto minmax(0,1fr);gap:7px;overflow:hidden;background:#edf2e7;box-sizing:border-box}
+html[data-ncn-theme=dark] .pk-app.pk-immersive{background:#132b24}
+.pk-immersive>.pk-footnote,.pk-immersive>.pk-features,.pk-immersive>.pk-more,.pk-immersive>.pk-storage-note,.pk-immersive>noscript{display:none!important}
+.pk-immersive .pk-heading{margin:0;gap:8px;min-width:0;min-height:35px;align-items:center}
+.pk-immersive .pk-heading>div:first-child{min-width:0}
+.pk-immersive .pk-breadcrumb,.pk-immersive .pk-subtitle{display:none}
+.pk-immersive .pk-title{gap:8px}.pk-immersive .pk-title h1{font-size:24px;line-height:1}
+.pk-immersive .pk-badge{font-size:7px;padding:5px 7px}
+.pk-immersive .pk-toolbar{gap:5px}.pk-immersive .pk-tool{min-width:35px;width:35px;height:35px;border-radius:11px;font-size:19px!important}
+.pk-immersive .pk-surface{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto;gap:7px;min-width:0;min-height:0;width:100%;height:100%;max-width:none;margin:0;padding:7px;border-radius:18px;overflow:hidden}
+.pk-app.pk-immersive .pk-play-area{display:grid;grid-template-rows:25px minmax(0,1fr) 23px;min-height:0!important;min-width:0;border-radius:12px}
+.pk-immersive .pk-board-top{padding:4px 9px;min-height:0;gap:8px;min-width:0;font-size:8px;line-height:1.2}
+.pk-immersive .pk-board-top>span:first-child{min-width:0;max-width:52%;font-size:8px;letter-spacing:.04em;white-space:nowrap}
+.pk-immersive #pk-mode-label{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.pk-immersive #pk-gravity{flex:1;min-width:0;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:8px}
+.pk-immersive .pk-board-holder{min-height:0;min-width:0;padding:0;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.pk-app.pk-immersive .pk-board{flex:none;max-width:none;max-height:100%;min-width:0;gap:3px;align-self:center}
+.pk-immersive .pk-tile{border-radius:5px;border-bottom-width:2px;padding:1px}
+.pk-immersive .pk-board-bottom{padding:4px 9px;min-height:0;min-width:0;line-height:1.2}
+.pk-immersive .pk-board-bottom>span:first-child{font-size:9px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pk-immersive .pk-key-hint{display:none}
+.pk-immersive .pk-sidebar{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:auto 34px;gap:5px;padding:0;min-height:0;min-width:0}
+.pk-immersive .pk-score-card{grid-column:1;grid-row:1;min-width:0;padding:7px 8px;border-radius:10px}
+.pk-immersive .pk-score-card>strong{font-size:25px;line-height:1;margin:4px 0 0}
+.pk-immersive .pk-label{font-size:7px;letter-spacing:.06em;line-height:1.3}
+.pk-immersive .pk-best,.pk-immersive .pk-side-note,.pk-immersive #pk-level-name{display:none}
+.pk-immersive .pk-round{grid-column:2;grid-row:1;min-width:0;padding:5px 5px 0}
+.pk-immersive .pk-level b{font-size:17px;line-height:1}.pk-immersive .pk-level small{font-size:8px}
+.pk-immersive .pk-time-row{font-size:8px;gap:4px;margin-top:4px;white-space:nowrap}.pk-immersive .pk-time-row strong{font-size:15px;line-height:1}
+.pk-immersive #pk-timer{height:3px;margin-top:5px}
+.pk-immersive .pk-combo-card{grid-column:3;grid-row:1;min-width:0;padding:6px 8px;border-radius:10px}
+.pk-immersive .pk-combo-card strong{font-size:21px;line-height:1}.pk-immersive .pk-combo-card .pk-label{font-size:6px}
+.pk-immersive .pk-combo-card p{font-size:8px;line-height:1.3;margin:4px 0 6px}.pk-immersive .pk-combo-track{height:2px}
+.pk-immersive .pk-assists{grid-column:1/3;grid-row:2;grid-template-columns:1fr 1fr;gap:5px;min-width:0}
+.pk-immersive .pk-assists button{display:flex;flex-wrap:nowrap;justify-content:center;text-align:center;min-width:0;min-height:0;height:34px;padding:5px 7px;gap:7px;border-radius:9px}
+.pk-immersive .pk-assists button>span:nth-child(2){font-size:10px;flex:none}.pk-immersive .pk-assists small{display:none}
+.pk-immersive .pk-assist-icon{font-size:18px;width:auto}.pk-immersive .pk-assists b{font-size:9px;padding:2px 5px}
+.pk-immersive .pk-new{grid-column:3;grid-row:2;min-width:0;margin:0;padding:5px;font-size:10px;min-height:34px;border:1px solid var(--pk-edge);border-radius:9px;background:var(--pk-glass)}
+.pk-immersive .pk-overlay{padding:24px 7%;overflow:auto}
+.pk-immersive .pk-welcome-copy{width:66%;max-width:390px}
+.pk-immersive .pk-welcome-copy h2{font-size:clamp(30px,5vw,53px);margin-bottom:16px}
+.pk-immersive .pk-welcome-copy>p{font-size:11px;margin-bottom:18px}
+.pk-immersive .pk-hero{width:45%;right:-2%;opacity:1;max-height:95%}
+.pk-immersive .pk-primary{min-height:42px;padding:11px 14px;font-size:12px}
+.pk-immersive .pk-subtle{padding:10px;font-size:11px}
+.pk-immersive .pk-overlay-result strong{font-size:29px}
+.pk-awake-status{flex-shrink:0;font-size:8px;letter-spacing:0;white-space:nowrap;color:#d6e9a6}
+.pk-awake-status[data-state=unavailable],.pk-awake-status[data-state=interrupted]{color:#e9d6a4}
+@media(orientation:landscape){
+ .pk-immersive .pk-surface{grid-template-columns:minmax(0,1fr) 158px;grid-template-rows:minmax(0,1fr)}
+ .pk-immersive .pk-sidebar{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto auto minmax(28px,1fr);gap:6px;align-content:start}
+ .pk-immersive .pk-score-card{grid-column:1;grid-row:1;padding:9px 10px}
+ .pk-immersive .pk-round{grid-column:1;grid-row:2;padding:3px 6px}
+ .pk-immersive .pk-combo-card{grid-column:1;grid-row:3}
+ .pk-immersive .pk-assists{grid-column:1;grid-row:4;grid-template-columns:1fr}
+ .pk-immersive .pk-new{grid-column:1;grid-row:5;min-height:28px;max-height:34px}
+}
+@media(orientation:portrait){
+ .pk-immersive .pk-welcome-copy{width:100%;max-width:340px}
+ .pk-immersive .pk-hero{width:50%;right:-11%;top:34%;opacity:.22}
+ .pk-immersive .pk-welcome-copy h2{font-size:clamp(30px,9vw,51px)}
+}
+@media(max-height:500px) and (orientation:landscape){
+ .pk-immersive .pk-heading{min-height:30px}.pk-immersive .pk-tool{width:30px;min-width:30px;height:30px;font-size:17px!important}.pk-immersive .pk-title h1{font-size:21px}
+ .pk-immersive .pk-overlay{padding:12px 6%}.pk-immersive .pk-kicker{font-size:7px!important;margin-bottom:6px!important}
+ .pk-immersive .pk-welcome-copy h2{font-size:25px;line-height:1.08;margin-bottom:8px}
+ .pk-immersive .pk-welcome-copy>p{font-size:10px;line-height:1.5;margin-bottom:9px}
+ .pk-immersive .pk-mode-options{margin-bottom:9px}.pk-immersive .pk-mode-options button{padding:5px 8px;min-height:28px;font-size:9px}
+ .pk-immersive .pk-mode-options>p,.pk-immersive .pk-free-note{display:none}
+ .pk-immersive .pk-primary{min-height:33px;padding:8px 11px;font-size:10px}.pk-immersive .pk-subtle{padding:7px;margin-top:6px;font-size:10px;min-height:29px}
+ .pk-immersive .pk-overlay-result{margin:0 0 8px}.pk-immersive .pk-overlay-result small{font-size:6px}.pk-immersive .pk-overlay-result strong{font-size:23px}
+ .pk-immersive .pk-hero{height:95%;width:auto;max-width:45%;right:1%;top:50%;opacity:1}
+ .pk-immersive .pk-surface{grid-template-columns:minmax(0,1fr) 136px}
+ .pk-immersive .pk-sidebar{gap:4px}.pk-immersive .pk-score-card{padding:6px 9px}.pk-immersive .pk-score-card>strong{font-size:22px}
+ .pk-immersive .pk-assists button{height:30px}.pk-immersive .pk-new{font-size:9px;min-height:28px}
+}
+@media(max-width:350px){.pk-immersive .pk-title h1{font-size:21px}.pk-immersive .pk-toolbar{gap:4px}.pk-immersive .pk-tool{width:31px;min-width:31px;height:33px}.pk-immersive .pk-time-row{font-size:7px}.pk-immersive .pk-combo-card{padding:6px}.pk-immersive .pk-combo-card p{font-size:7px}.pk-immersive .pk-awake-status{font-size:7px}}
+@media(max-height:650px) and (orientation:portrait){
+ .pk-immersive .pk-overlay{padding:16px 6%}.pk-immersive .pk-kicker{font-size:7px!important;margin-bottom:10px!important}
+ .pk-immersive .pk-welcome-copy h2{font-size:30px;line-height:1.08;margin-bottom:12px}.pk-immersive .pk-welcome-copy>p{font-size:10px;line-height:1.5;margin-bottom:12px}
+ .pk-immersive .pk-mode-options{margin-bottom:12px}.pk-immersive .pk-mode-options button{padding:6px 9px;min-height:32px;font-size:9px}
+ .pk-immersive .pk-mode-options>p,.pk-immersive .pk-free-note{display:none}.pk-immersive .pk-primary{min-height:38px;padding:9px 12px}.pk-immersive .pk-subtle{min-height:32px;padding:8px;margin-top:6px}
+}

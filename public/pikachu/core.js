@@ -1,7 +1,15 @@
 // Pure Onet rules. The one-cell empty frame is part of the playing field.
 export const VERSION=1;
 export const SPECIES=['Pikachu','Bulbasaur','Charmander','Squirtle','Jigglypuff','Meowth','Psyduck','Eevee','Snorlax','Gengar','Oddish','Vulpix','Slowpoke','Poliwag','Mew','Togepi','Chikorita','Cyndaquil','Totodile','Pichu'];
-export const LEVELS=[{name:'Ngày đầu gặp lại',gravity:'none'},{name:'Rơi về tuổi thơ',gravity:'down'},{name:'Nghiêng một chút',gravity:'left'},{name:'Ngược dòng ký ức',gravity:'up'},{name:'Một lần nữa thôi',gravity:'right'}];
+export const GRAVITY_LABELS={none:'Giữ nguyên vị trí',down:'Ô dồn xuống ↓',left:'Ô dồn sang trái ←',up:'Ô dồn lên trên ↑',right:'Ô dồn sang phải →','horizontal-in':'Dồn vào giữa → ←','horizontal-out':'Tách sang hai bên ← →','vertical-in':'Dồn giữa theo cột ↓ ↑','vertical-out':'Tách lên và xuống ↑ ↓','zigzag-rows':'Hàng chẵn lẻ đổi hướng ⇄','zigzag-columns':'Cột chẵn lẻ đổi hướng ⇅',cycle:'Đổi hướng sau mỗi cặp ↻'};
+export const LEVELS=[
+ {name:'Ngày đầu gặp lại',gravity:'none'},{name:'Rơi về tuổi thơ',gravity:'down'},{name:'Nghiêng một chút',gravity:'left'},{name:'Ngược dòng ký ức',gravity:'up'},{name:'Một lần nữa thôi',gravity:'right'},
+ {name:'Hẹn nhau ở giữa',gravity:'horizontal-in'},{name:'Hai phía sân trường',gravity:'horizontal-out'},{name:'Những hàng ghế nhỏ',gravity:'zigzag-rows'},{name:'Chạm vào khoảng giữa',gravity:'vertical-in'},{name:'Chiếc chong chóng',gravity:'cycle'},
+ {name:'Hè về bên cửa sổ',gravity:'down'},{name:'Cánh diều ngược gió',gravity:'up'},{name:'Hai đầu con phố',gravity:'vertical-out'},{name:'Lối đi zíc zắc',gravity:'zigzag-columns'},{name:'Hội bạn tụ họp',gravity:'horizontal-in'},
+ {name:'Tiệm game đầu ngõ',gravity:'right'},{name:'Đổi chỗ cho nhau',gravity:'zigzag-rows'},{name:'Tách đôi bí mật',gravity:'horizontal-out'},{name:'Chuyến tàu ký ức',gravity:'vertical-in'},{name:'Bốn mùa xoay vòng',gravity:'cycle'},
+ {name:'Những người bạn cũ',gravity:'left'},{name:'Dòng sông hai ngả',gravity:'vertical-out'},{name:'Trò chơi ô ăn quan',gravity:'zigzag-columns'},{name:'Gom đầy một mùa hè',gravity:'horizontal-in'},{name:'Đường về hai phía',gravity:'horizontal-out'},
+ {name:'Đi tìm mảnh ghép',gravity:'zigzag-rows'},{name:'Gặp nhau giữa trời',gravity:'vertical-in'},{name:'Bậc thang cầu vồng',gravity:'zigzag-columns'},{name:'Bầu trời rộng mở',gravity:'vertical-out'},{name:'Tuổi thơ không khép lại',gravity:'cycle'}
+];
 export const vietnamDate=(date=new Date())=>new Date(+date+7*3600000).toISOString().slice(0,10);
 export function seededRandom(seed){let n=2166136261;for(const c of String(seed)){n^=c.charCodeAt(0);n=Math.imul(n,16777619);}return ()=>{n+=0x6D2B79F5;let t=n;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return ((t^(t>>>14))>>>0)/4294967296;};}
 export function shuffled(values,rng=Math.random){const a=values.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
@@ -32,10 +40,17 @@ export function reshuffle(board,rng=Math.random){
 export function createBoard({rows=8,cols=10,rng=Math.random}={}){if(!Number.isInteger(rows)||!Number.isInteger(cols)||rows<2||cols<2||rows*cols>160||rows*cols%2)throw Error('Invalid board size');const cells=[];for(let i=0;i<rows*cols/2;i++){const type=i%SPECIES.length+1;cells.push(type,type);}return reshuffle({rows,cols,cells},rng);}
 export function collapse(board,direction='none'){
  const out={...board,cells:board.cells.slice()}, {rows,cols}=board;
- if(!['down','up','left','right'].includes(direction))return out;
- const vertical=direction==='down'||direction==='up',reverse=direction==='down'||direction==='right';
- for(let line=0;line<(vertical?cols:rows);line++){const indices=Array.from({length:vertical?rows:cols},(_,i)=>vertical?i*cols+line:line*cols+i),values=indices.map(i=>board.cells[i]).filter(Boolean),empty=Array(indices.length-values.length).fill(0),next=reverse?[...empty,...values]:[...values,...empty];indices.forEach((i,k)=>out.cells[i]=next[k]);}return out;
+ if(direction==='cycle')direction=['down','left','up','right'][Math.floor((cellsLength(board)-remaining(board))/2)%4];
+ if(!Object.hasOwn(GRAVITY_LABELS,direction)||direction==='none')return out;
+ const vertical=['down','up','vertical-in','vertical-out','zigzag-columns'].includes(direction);
+ function pack(indices,toEnd){const values=indices.map(i=>board.cells[i]).filter(Boolean),empty=Array(indices.length-values.length).fill(0),next=toEnd?[...empty,...values]:[...values,...empty];indices.forEach((i,k)=>out.cells[i]=next[k]);}
+ for(let line=0;line<(vertical?cols:rows);line++){
+  const indices=Array.from({length:vertical?rows:cols},(_,i)=>vertical?i*cols+line:line*cols+i);
+  if(direction.endsWith('-in')||direction.endsWith('-out')){const middle=Math.floor(indices.length/2),inward=direction.endsWith('-in');pack(indices.slice(0,middle),inward);pack(indices.slice(middle),!inward);}
+  else pack(indices,direction==='down'||direction==='right'||direction.startsWith('zigzag-')&&line%2===1);
+ }return out;
 }
+const cellsLength=board=>board.rows*board.cols;
 export function removePair(board,a,b,gravity='none'){if(!findPath(board,a,b))return null;const next={...board,cells:board.cells.slice()};next.cells[a]=next.cells[b]=0;return collapse(next,gravity);}
 export function validBoard(board){if(!board||!Number.isInteger(board.rows)||!Number.isInteger(board.cols)||board.rows<2||board.rows>12||board.cols<2||board.cols>12||board.rows*board.cols>160||!Array.isArray(board.cells)||board.cells.length!==board.rows*board.cols)return false;const counts=new Map();for(const v of board.cells){if(!Number.isInteger(v)||v<0||v>SPECIES.length)return false;if(v)counts.set(v,(counts.get(v)||0)+1);}return [...counts.values()].every(n=>n%2===0);}
 export function readSave(value){
