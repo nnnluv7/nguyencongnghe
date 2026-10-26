@@ -57,7 +57,7 @@ async function seededRows(f,game='snake',mode='arena',count=137){for(let i=0;i<c
 try{
  active=await fixture();page=active.page;
  await check('NCN Arcade hub links the five real games and fits 320px through desktop',async()=>{
-  await open('/arcade/');assert.equal(await page.locator('.ncn-arcade-card').count(),5);assert.equal(await page.locator('.ncn-arcade-links a').count(),5);
+  await open('/arcade/');assert.equal(await page.locator('.ncn-arcade-card').count(),5);assert.equal(await page.locator('.ncn-arcade-links a').count(),5);await page.locator('[data-rank-expand]').click();assert.equal(await page.locator('.ncn-score-more').isVisible(),false);await page.locator('[data-close-rank]').click();
   for(const width of [1440,820,390,320]){await page.setViewportSize({width,height:1000});assert.equal(await page.locator('.ncn-arcade-card').count(),5);const size=await page.evaluate(()=>({w:innerWidth,scroll:document.documentElement.scrollWidth}));assert.ok(size.scroll<=size.w+1,JSON.stringify(size));}
   await page.setViewportSize({width:1440,height:1050});await page.screenshot({path:out+'/hub-desktop.jpg',fullPage:true});
  });
