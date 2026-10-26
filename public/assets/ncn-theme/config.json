@@ -231,6 +231,17 @@
       "tone": "amber",
       "access": "public",
       "image": "/pikachu/cover.svg"
+    },
+    {
+      "id": "xep-hinh",
+      "title": "Khối Sắc 3D",
+      "description": "Xếp hình rơi với khối nổi 3D, 100 màn qua 10 thế giới màu. Có giữ khối, bóng rơi, combo và tự lưu tiến độ.",
+      "href": "/xep-hinh/",
+      "group": "arcade",
+      "icon": "box",
+      "tone": "violet",
+      "access": "public",
+      "image": "/xep-hinh/cover.svg"
     }
   ],
   "adminContact": {

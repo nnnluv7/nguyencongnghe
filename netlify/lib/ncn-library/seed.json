@@ -1170,5 +1170,20 @@
     "isPage": true,
     "managedPage": false,
     "sourcePath": ""
+  },
+  {
+    "id": "legacy-0952c07358c67940",
+    "kind": "legacy",
+    "title": "Khối Sắc 3D · Xếp hình 100 màn",
+    "href": "/xep-hinh/",
+    "image": "/xep-hinh/cover.svg",
+    "labels": [
+      "Giải trí"
+    ],
+    "datetime": "2026-10-26T17:54:06+07:00",
+    "summary": "Game xếp hình nhiều màu với khối nổi 3D. 100 màn qua 10 thế giới, giữ khối, bóng vị trí rơi, hiệu ứng xóa hàng và combo. Chơi miễn phí bằng phím hoặc cảm ứng, tự lưu tiến độ.",
+    "isPage": true,
+    "managedPage": false,
+    "sourcePath": ""
   }
 ]
