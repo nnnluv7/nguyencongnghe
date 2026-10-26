@@ -109,3 +109,7 @@
 [functions."ncn-scores"]
   node_bundler = "esbuild"
   external_node_modules = ["@netlify/identity", "@netlify/blobs", "sharp"]
+
+[functions."ncn-profile"]
+  node_bundler = "esbuild"
+  external_node_modules = ["@netlify/identity", "@netlify/blobs", "sharp"]

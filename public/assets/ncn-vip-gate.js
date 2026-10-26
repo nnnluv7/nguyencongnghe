@@ -1,5 +1,5 @@
 import * as identity from './ncn-identity-client.js';
-import {getAccount} from './ncn-account.js?v=20261024-account-2';
+import {getAccount} from './ncn-account.js?v=20261026-profile-1';
 
 // Cached profile text never opens this gate. The private app response is verified
 // by the server on every page; shared account refreshes handle later role changes.

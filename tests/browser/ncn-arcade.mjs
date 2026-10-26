@@ -31,8 +31,10 @@ async function fixture({signed=false,storageBlocked=false}={}){
   if(url.pathname==='/.netlify/functions/ncn-scores'){
    const action=url.searchParams.get('route');calls.push({action,body:request.postData(),store});
    if(action==='score'&&f.failScore)return json({error:'Fixture offline'},503);
-   if(action==='start'&&f.delayStart)await f.delayStart;
    const req=new Request(request.url(),{method:request.method(),headers,...(request.method()==='POST'?{body:request.postData()}:{})}),response=await handler(req);
+   // Hold the response after the server has created the run. The client must
+   // accept input while waiting, with both clocks measuring the same play time.
+   if(action==='start'&&f.delayStart){f.startSeen?.();await f.delayStart;}
    return route.fulfill({status:response.status,headers:Object.fromEntries(response.headers),body:Buffer.from(await response.arrayBuffer())});
   }
   if(url.pathname.startsWith('/.netlify/identity/')){
@@ -101,7 +103,7 @@ try{
   await open('/ca-lon-nuot-ca-be/');await page.locator('#ff-start').click();await page.locator('#ncn-player-name').fill('Bạn Không Lưu Máy');await page.locator('.ncn-arcade-profile [type=submit]').click();await wait('#ff-stage[data-state=playing]');await page.keyboard.down('ArrowRight');await tick(3000);await page.keyboard.up('ArrowRight');await page.keyboard.press('p');await page.locator('#ff-end').click();await page.waitForFunction(()=>document.querySelector('.ncn-score-save').textContent.includes('✓'));assert.equal([...active.store.entries.keys()].filter(x=>x.startsWith('best/')).length,1);
  });
  await check('a slow run-creation request does not swallow the first control input or an early score',async()=>{
-  let release;active.delayStart=new Promise(resolve=>release=resolve);await open('/ca-lon-nuot-ca-be/');await page.locator('#ff-start').click();await wait('#ff-stage[data-state=playing]');await page.keyboard.down('ArrowRight');await tick(2500);await page.keyboard.up('ArrowRight');assert.ok(Number((await page.locator('#ff-score').innerText()).replace(/\D/g,''))>0);await page.keyboard.press('p');release();active.delayStart=null;await page.locator('#ff-end').click();await page.waitForFunction(()=>document.querySelector('.ncn-score-save').textContent.includes('✓'));
+  let release,started;const requested=new Promise(resolve=>started=resolve);active.startSeen=started;active.delayStart=new Promise(resolve=>release=resolve);await open('/ca-lon-nuot-ca-be/');await page.locator('#ff-start').click();await wait('#ff-stage[data-state=playing]');await requested;await page.keyboard.down('ArrowRight');await tick(2500);await page.keyboard.up('ArrowRight');assert.ok(Number((await page.locator('#ff-score').innerText()).replace(/\D/g,''))>0);await page.keyboard.press('p');release();active.delayStart=null;active.startSeen=null;await page.locator('#ff-end').click();await page.waitForFunction(()=>document.querySelector('.ncn-score-save').textContent.includes('✓'));
  });
  assert.deepEqual(errors,[]);console.log('PASS no uncaught browser errors; all writes stayed inside the synthetic fixture');
 }finally{await writeFile(out+'/results.json',JSON.stringify({results,errors},null,2));await browser.close();}

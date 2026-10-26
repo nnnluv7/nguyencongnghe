@@ -1,5 +1,5 @@
 import {articleCardHTML,libraryLabelName,libraryLabels,latestArticles,featuredArticles} from './catalogue.js?v=20261025-sync-1';
-import '../ncn-account.js?v=20261024-account-2';
+import '../ncn-account.js?v=20261026-profile-1';
 import {installAppearance} from './appearance.js?v=20261017-mobile-dark-1';
 // A metrics request must never delay or prevent the actual interface.
 if(typeof window!=='undefined')import('./visitor-counter.js?v=20261016-easy-2').catch(()=>{});
@@ -86,7 +86,7 @@ export function createTheme({doc=document,win=window,config,catalog=win.CG_CATAL
   doc.body.classList.add('ncn-modern');
   // These are the original nodes: login handlers, ADMIN labels and quick tools keep their identity.
   const auth=$('auth-header-desktop'),account=$('ncn-account-host');
-  if(auth&&account) account.replaceChildren(auth);
+  if(auth&&account&&!account.contains(auth)) account.append(auth);
   const sidebar=$('sidebar-container'),sidebarHost=$('ncn-page-tools-host');
   if(sidebar&&sidebarHost) sidebarHost.append(sidebar);
   const actions=$('ncn-page-actions'),center=$('center-container');

@@ -11,7 +11,8 @@ export function sessionSubject(cookie,now=Date.now()){
 }
 export function displayProfile(user){
   if(!user||typeof user.id!=='string'||typeof user.email!=='string')return null;
-  return {id:user.id.slice(0,200),email:user.email.slice(0,254),name:String(user.name||user.email).slice(0,200)};
+  const avatar=typeof user.avatar==='string'&&user.avatar.length<2048&&/^https:\/\//.test(user.avatar)?user.avatar:null;
+  return {id:user.id.slice(0,200),email:user.email.slice(0,254),name:String(user.name||user.email).slice(0,200),...(avatar?{avatar}:{})};
 }
 export function readDisplayProfile(storage,cookie,now=Date.now()){
   try{
