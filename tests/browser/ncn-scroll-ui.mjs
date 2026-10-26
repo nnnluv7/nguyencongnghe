@@ -233,9 +233,20 @@ try{
     await page.keyboard.press('Escape');
     await noOverflow();
   });
-  await check('flight pauses for shared navigation, search and login without stealing panel focus',async()=>{
+  await check(production?'flight asks guests for the shared Arcade profile without publishing test scores':'flight pauses for shared navigation, search and login without stealing panel focus',async()=>{
     await fresh(1280,900);await page.clock.install();await open('/flappy-bird/');
     await page.locator('#startButton').click();
+    if(production){
+      // Do not create a production guest or publish CI scores. Actual gameplay
+      // and account transitions use the isolated fixture above and Arcade suite.
+      const dialog=page.locator('.ncn-arcade-profile[open]');await dialog.waitFor();
+      assert.equal(await dialog.locator('#ncn-player-name').inputValue(),'');
+      assert.equal(await dialog.locator('.ncn-avatar-picker button').count(),8);
+      assert.equal(await dialog.locator('input[type=file]').count(),1);
+      assert.equal(await dialog.locator('[data-profile-login]').isVisible(),true);
+      await shot('flight-guest-profile');await dialog.locator('[data-profile-close]').click();
+      assert.equal(await page.locator('#welcomeScreen').isVisible(),true);await page.clock.resume();return;
+    }
     await page.locator('#ncn-menu-open').click();
     assert.equal(await page.locator('body.ncn-menu-open').count(),1);
     assert.equal(await page.locator('#pauseScreen').isVisible(),true);
