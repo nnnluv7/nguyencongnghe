@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="330 40 300 280">
+ <defs><radialGradient id="bg"><stop stop-color="#16483c"/><stop offset="1" stop-color="#061a21"/></radialGradient><linearGradient id="snake" x1="0" x2="1"><stop stop-color="#259a85"/><stop offset="1" stop-color="#8bffcf"/></linearGradient><pattern id="grid" width="36" height="36" patternUnits="userSpaceOnUse"><path d="M36 0H0V36" fill="none" stroke="#92ecc3" stroke-opacity=".07"/></pattern></defs>
+ <path fill="url(#bg)" d="M0 0h640v360H0z"/><path fill="url(#grid)" d="M0 0h640v360H0z"/>
+ <g fill="none" stroke="#88f9c4" stroke-opacity=".08"><circle cx="475" cy="181" r="110"/><circle cx="475" cy="181" r="150"/></g>
+ <path d="M428 239c-90-80 72-160 116-100s-25 115-78 76 15-94 43-51-45 43-31 8" fill="none" stroke="#031b22" stroke-width="31" stroke-linecap="round"/>
+ <path d="M428 239c-90-80 72-160 116-100s-25 115-78 76 15-94 43-51-45 43-31 8" fill="none" stroke="url(#snake)" stroke-width="23" stroke-linecap="round"/>
+ <circle cx="478" cy="171" r="14" fill="#8bffcf"/><g fill="#f0fff6"><circle cx="472" cy="167" r="4"/><circle cx="483" cy="167" r="4"/></g><g fill="#0b3b3b"><circle cx="472" cy="165" r="2"/><circle cx="483" cy="165" r="2"/></g>
+ <g fill="#8bffcf"><circle cx="390" cy="94" r="4"/><circle cx="554" cy="264" r="4"/><circle cx="597" cy="181" r="3"/><circle cx="432" cy="291" r="3"/></g><g fill="#ffe1a1"><circle cx="365" cy="221" r="4"/><circle cx="586" cy="99" r="3"/></g>
+ <text x="44" y="84" fill="#91baa9" font-family="Arial,sans-serif" font-size="12" font-weight="700" letter-spacing="3">NCN ARCADE</text><text x="42" y="163" fill="#effff6" font-family="Arial,sans-serif" font-size="58" font-weight="800" letter-spacing="-2">Rắn Lướt</text><text x="45" y="201" fill="#75efc7" font-family="Arial,sans-serif" font-size="16">Đấu trường năng lượng</text><text x="45" y="283" fill="#9bbbab" font-family="Arial,sans-serif" font-size="12">COMBO · LƯỚT PHA · THỬ THÁCH 3 PHÚT</text><text x="45" y="310" fill="#619885" font-family="Arial,sans-serif" font-size="11">nguyencongnghe.com / ran-luot</text>
+</svg>

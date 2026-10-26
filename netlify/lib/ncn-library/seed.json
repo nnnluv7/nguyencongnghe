@@ -1185,5 +1185,20 @@
     "isPage": true,
     "managedPage": false,
     "sourcePath": ""
+  },
+  {
+    "id": "legacy-5bd12a445c593de8",
+    "kind": "legacy",
+    "title": "NCN Arcade · 5 game, một bảng điểm",
+    "href": "/arcade/",
+    "image": "/xep-hinh/cover.svg",
+    "labels": [
+      "Giải trí"
+    ],
+    "datetime": "2026-10-26T20:00:00+07:00",
+    "summary": "Rắn Lướt, Flappy Bird, Pikachu, Cá lớn nuốt cá bé và Khối Sắc 3D. Một hồ sơ dùng chung, bảng điểm công khai và thử thách bạn bè.",
+    "isPage": true,
+    "managedPage": false,
+    "sourcePath": ""
   }
 ]

@@ -23,7 +23,6 @@ jobs:
       - run: node --test tests/ncn-online.test.mjs tests/online-wire.mjs
       - run: npx playwright install --with-deps chromium
       - run: node tests/browser/ncn-snake.mjs
-      - run: node tests/browser/ncn-snake-online.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:

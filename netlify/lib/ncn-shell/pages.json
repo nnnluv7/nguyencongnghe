@@ -262,5 +262,8 @@
   "/search/label/Tắt xem thêm": "search/label/Tắt xem thêm/index.html",
   "/search/label/Tắt đầu bài/index.html": "search/label/Tắt đầu bài/index.html",
   "/search/label/Tắt đầu bài/": "search/label/Tắt đầu bài/index.html",
-  "/search/label/Tắt đầu bài": "search/label/Tắt đầu bài/index.html"
+  "/search/label/Tắt đầu bài": "search/label/Tắt đầu bài/index.html",
+  "/arcade/index.html": "arcade/index.html",
+  "/arcade/": "arcade/index.html",
+  "/arcade": "arcade/index.html"
 }

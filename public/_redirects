@@ -435,3 +435,7 @@
 /search/label/T%E1%BA%AFt%20%C4%91%E1%BA%A7u%20b%C3%A0i/  /.netlify/functions/ncn-site-page?page=search%2Flabel%2FTa%CC%86%CC%81t%20%C4%91a%CC%82%CC%80u%20ba%CC%80i%2Findex.html  200!
 /search/label/T%E1%BA%AFt%20%C4%91%E1%BA%A7u%20b%C3%A0i  /.netlify/functions/ncn-site-page?page=search%2Flabel%2FTa%CC%86%CC%81t%20%C4%91a%CC%82%CC%80u%20ba%CC%80i%2Findex.html  200!
 # END NCN PUBLIC SHELL
+
+/arcade/index.html  /.netlify/functions/ncn-site-page?page=arcade%2Findex.html  200!
+/arcade/  /.netlify/functions/ncn-site-page?page=arcade%2Findex.html  200!
+/arcade  /.netlify/functions/ncn-site-page?page=arcade%2Findex.html  200!

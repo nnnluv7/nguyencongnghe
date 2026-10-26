@@ -1,3 +1,4 @@
+import {arcadeEngineFixture} from '../fixtures/arcade-store.mjs';
 import {chromium} from 'playwright';
 import {readFile,mkdir,writeFile,stat} from 'node:fs/promises';
 import {createServer} from 'node:http';
@@ -7,7 +8,7 @@ import {createBoard,seededRandom,VERSION} from '../../public/pikachu/core.js';
 const root=resolve('public'),out=resolve('artifacts/pikachu'),results=[],errors=[],contexts=[];
 await mkdir(out,{recursive:true});
 const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript','.css':'text/css','.json':'application/json','.svg':'image/svg+xml','.png':'image/png','.woff2':'font/woff2'};
-const server=createServer(async(req,res)=>{try{const u=new URL(req.url,'http://localhost'),json=value=>{res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify(value));};if(u.pathname.startsWith('/.netlify/identity/'))return json({disable_signup:false,external:{email:true}});if(u.pathname.startsWith('/.netlify/functions/'))return json(u.pathname.endsWith('ncn-billing')?{user:null}:u.pathname.endsWith('ncn-visitors')?{total:1,online:1}:{items:[]});let path=resolve(root,'.'+decodeURIComponent(u.pathname));if(!path.startsWith(root+sep))throw Error();if((await stat(path)).isDirectory())path+='/index.html';res.writeHead(200,{'Content-Type':mime[extname(path)]||'application/octet-stream'});res.end(await readFile(path));}catch{res.writeHead(404);res.end('Not found');}});
+const server=createServer(async(req,res)=>{try{const u=new URL(req.url,'http://localhost'),json=value=>{res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify(value));};if(u.pathname.endsWith('/.netlify/functions/ncn-scores'))return json(arcadeEngineFixture(u));if(u.pathname.startsWith('/.netlify/identity/'))return json({disable_signup:false,external:{email:true}});if(u.pathname.startsWith('/.netlify/functions/'))return json(u.pathname.endsWith('ncn-billing')?{user:null}:u.pathname.endsWith('ncn-visitors')?{total:1,online:1}:{items:[]});let path=resolve(root,'.'+decodeURIComponent(u.pathname));if(!path.startsWith(root+sep))throw Error();if((await stat(path)).isDirectory())path+='/index.html';res.writeHead(200,{'Content-Type':mime[extname(path)]||'application/octet-stream'});res.end(await readFile(path));}catch{res.writeHead(404);res.end('Not found');}});
 await new Promise(done=>server.listen(0,'127.0.0.1',done));const base='http://127.0.0.1:'+server.address().port,browser=await chromium.launch();let page;
 async function context({fallback=false,denied=false,delayed=false,unsupported=false,viewport={width:350,height:768}}={}){
  const ctx=await browser.newContext({viewport,reducedMotion:'reduce'});contexts.push(ctx);const p=await ctx.newPage();p.on('pageerror',e=>errors.push(e.message));

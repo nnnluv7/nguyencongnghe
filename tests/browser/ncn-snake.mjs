@@ -1,3 +1,4 @@
+import {arcadeEngineFixture} from '../fixtures/arcade-store.mjs';
 import {chromium} from 'playwright';
 import {readFile,mkdir,writeFile,stat} from 'node:fs/promises';
 import {createServer} from 'node:http';
@@ -14,7 +15,7 @@ const server=createServer(async(req,res)=>{
  try{
   requests.push({url:req.url,method:req.method});const u=new URL(req.url,'http://localhost');
   const json=data=>{res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify(data));};
-  if(u.pathname.startsWith('/.netlify/identity/'))return json({disable_signup:false,external:{email:true}});
+  if(u.pathname.endsWith('/.netlify/functions/ncn-scores'))return json(arcadeEngineFixture(u));if(u.pathname.startsWith('/.netlify/identity/'))return json({disable_signup:false,external:{email:true}});
   if(u.pathname.startsWith('/.netlify/functions/'))return json(u.pathname.endsWith('ncn-library')?{items:catalog}:u.pathname.endsWith('ncn-billing')?{user:null}:u.pathname.endsWith('ncn-announcements')?{items:[{id:'test',text:'Chào mừng đến với NCN Arcade'}]}:{total:1,online:1});
   let path=resolve(root,'.'+decodeURIComponent(u.pathname));if(path!==root&&!path.startsWith(root+sep))throw Error('Invalid path');if((await stat(path)).isDirectory())path+='/index.html';
   let body=await readFile(path);if(path.endsWith('.html'))body=renderPublicHTML(body.toString(),catalog,{notices:[{id:'test',text:'Chào mừng đến với NCN Arcade'}]});res.writeHead(200,{'Content-Type':types[extname(path)]||'application/octet-stream'});res.end(body);
@@ -56,8 +57,8 @@ try{
  await check('daily challenge links validate and deterministic games have the three-minute clock',async()=>{
   await page.goto(base+'/ran-luot/?challenge=2026-10-24');await page.clock.runFor(100);assert.match(await page.locator('#rl-daily-date').innerText(),/2026-10-24/);await page.locator('#rl-daily').click();await page.clock.runFor(300);assert.match(await page.locator('#rl-run-info').innerText(),/Thử thách 24\/10 · Còn 02:59/);await page.keyboard.press('p');await page.locator('#rl-home-paused').click();
  });
- await check('a run ends on collision, saves a real record, safely renders nicknames and supports replay',async()=>{
-  await page.locator('#rl-name').fill('<img src=x>');await page.locator('#rl-start').click();await page.clock.runFor(16000);assert.equal(await state(),'over');assert.equal(await page.locator('#rl-leaders img').count(),0);assert.ok(Number(await page.locator('#rl-final-score').innerText())>=0);assert.match(await page.locator('#rl-xp-note').innerText(),/XP/);
+ await check('a run ends on collision, saves a real record, uses the shared player profile and supports replay',async()=>{
+  await page.locator('#rl-start').click();await page.clock.runFor(16000);assert.equal(await state(),'over');assert.equal(await page.locator('#rl-leaders img').count(),0);assert.ok(Number(await page.locator('#rl-final-score').innerText())>=0);assert.match(await page.locator('#rl-xp-note').innerText(),/XP/);
   const record=await page.locator('#rl-best').innerText();await screenshot('result-desktop');await page.locator('#rl-retry').click();assert.equal(await state(),'playing');await page.keyboard.press('p');await page.locator('#rl-home-paused').click();await page.reload();await page.clock.runFor(100);assert.equal(await page.locator('#rl-best').innerText(),record);
  });
  await check('home and global search both open the game with the complete initial card count',async()=>{
@@ -74,5 +75,5 @@ try{
   await page.evaluate(()=>window.dispatchEvent(new Event('blur')));assert.equal(await state(),'paused');await page.clock.runFor(5000);assert.equal(await state(),'paused');
  });
  await touch.close();
- await check('no browser errors or game/auth writes; only the existing visitor heartbeat uses POST',async()=>{assert.deepEqual(errors,[]);const writes=requests.filter(r=>r.method!=='GET');assert.ok(writes.every(r=>r.method==='POST'&&r.url==='/.netlify/functions/ncn-visitors'),JSON.stringify(writes));});
+ await check('no browser errors or external writes; only the visitor and isolated score APIs use POST',async()=>{assert.deepEqual(errors,[]);const writes=requests.filter(r=>r.method!=='GET');assert.ok(writes.every(r=>r.method==='POST'&&(r.url==='/.netlify/functions/ncn-visitors'||r.url.startsWith('/.netlify/functions/ncn-scores?'))),JSON.stringify(writes));});
 }finally{await writeFile(out+'/results.json',JSON.stringify(results,null,2));await context.close();await browser.close();await new Promise(done=>server.close(done));}

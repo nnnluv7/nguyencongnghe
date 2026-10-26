@@ -1,3 +1,4 @@
+import {arcadeEngineFixture} from '../fixtures/arcade-store.mjs';
 import {chromium} from 'playwright';
 import {readFile,mkdir,writeFile,stat} from 'node:fs/promises';
 import {createServer} from 'node:http';
@@ -14,7 +15,7 @@ const server=createServer(async(req,res)=>{
   try{
     requests.push({path:req.url,method:req.method});const url=new URL(req.url,'http://localhost');
     const json=value=>{res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify(value));};
-    if(url.pathname.startsWith('/.netlify/identity/'))return json({disable_signup:false,external:{email:true}});
+    if(url.pathname.endsWith('/.netlify/functions/ncn-scores'))return json(arcadeEngineFixture(url));if(url.pathname.startsWith('/.netlify/identity/'))return json({disable_signup:false,external:{email:true}});
     if(url.pathname.startsWith('/.netlify/functions/'))return json(url.pathname.endsWith('ncn-library')?{items:catalog}:url.pathname.endsWith('ncn-billing')?{user:null}:url.pathname.endsWith('ncn-announcements')?{items:notices}:url.pathname.endsWith('ncn-stories')?{items:[],serverNow:new Date().toISOString()}:{total:1,online:1});
     let path=resolve(root,'.'+decodeURIComponent(url.pathname));if(path!==root&&!path.startsWith(root+sep))throw Error('Outside public');if((await stat(path)).isDirectory())path+='/index.html';
     let body=await readFile(path);if(path.endsWith('.html'))body=renderPublicHTML(body.toString(),catalog,{notices});res.writeHead(200,{'Content-Type':types[extname(path)]||'application/octet-stream'});res.end(body);
@@ -112,7 +113,7 @@ try{
     }finally{await wheelContext.close();}
   });
   await check('no browser exceptions or game/account writes reach an external service',async()=>{
-    assert.deepEqual(errors,[]);assert.ok(requests.filter(x=>x.method!=='GET').every(x=>x.method==='POST'&&x.path==='/.netlify/functions/ncn-visitors'),JSON.stringify(requests.filter(x=>x.method!=='GET')));
+    assert.deepEqual(errors,[]);assert.ok(requests.filter(x=>x.method!=='GET').every(x=>x.method==='POST'&&(x.path==='/.netlify/functions/ncn-visitors'||x.path.startsWith('/.netlify/functions/ncn-scores?'))),JSON.stringify(requests.filter(x=>x.method!=='GET')));
   });
 }finally{await writeFile(out+'/results.json',JSON.stringify({scope:'Isolated HTTP fixtures; external requests blocked',results},null,2));await desktop.close();await browser.close();await new Promise(done=>server.close(done));}
 console.log('Ocean browser scenarios: '+results.length+' passed.');

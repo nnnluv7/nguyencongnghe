@@ -1,0 +1,28 @@
+name: NCN Arcade Shared Scores
+on:
+  push:
+    branches: [main]
+    paths: ['public/assets/ncn-arcade/**', 'public/arcade/**', 'public/ran-luot/**', 'public/flappy-bird/**', 'public/pikachu/**', 'public/xep-hinh/**', 'public/ca-lon-nuot-ca-be/**', 'netlify/lib/ncn-scores*', 'netlify/lib/ncn-score-photos.mjs', 'netlify/functions/ncn-scores.mjs', 'tests/ncn-scores.test.mjs', 'tests/fixtures/arcade-store.mjs', 'tests/browser/ncn-arcade.mjs', '.github/workflows/ncn-arcade.yml']
+  pull_request:
+    paths: ['public/assets/ncn-arcade/**', 'public/arcade/**', 'public/ran-luot/**', 'public/flappy-bird/**', 'public/pikachu/**', 'public/xep-hinh/**', 'public/ca-lon-nuot-ca-be/**', 'netlify/lib/ncn-scores*', 'netlify/lib/ncn-score-photos.mjs', 'netlify/functions/ncn-scores.mjs', 'tests/ncn-scores.test.mjs', 'tests/fixtures/arcade-store.mjs', 'tests/browser/ncn-arcade.mjs', '.github/workflows/ncn-arcade.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  scores:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --package-lock=false playwright@1.56.1
+      - run: node --test tests/ncn-scores.test.mjs tests/ncn-site.test.mjs
+      - run: npx playwright install --with-deps chromium
+      - run: node tests/browser/ncn-arcade.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ncn-arcade-scores
+          path: artifacts/arcade/

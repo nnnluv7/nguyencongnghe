@@ -1,3 +1,4 @@
+import {mountScores} from '../assets/ncn-arcade/arcade.js?v=20261026-arcade-1';
 import {installScrollUI} from '../assets/ncn-theme/scroll-ui.js?v=20261024-compact-1';
 const scrollUI = installScrollUI();
 (function () {
@@ -119,7 +120,8 @@ const scrollUI = installScrollUI();
     document.querySelectorAll('[data-mode]').forEach(b => { const selected = b.dataset.mode === value; b.classList.toggle('selected', selected); b.setAttribute('aria-pressed', String(selected)); });
     $('modeDescription').textContent = descriptions[mode]; updateRecords();
   }
-  function start(isDaily = false, keepDate = false) {
+  async function start(isDaily = false, keepDate = false) {
+    if(!await scores.begin({mode:isDaily?'daily':mode,date:keepDate?challengeDate:sharedDate()||localDate()}))return;
     daily = isDaily;
     if (daily && !keepDate) challengeDate = sharedDate() || localDate();
     audioUnlock(); held = false; flapKeys.clear(); pointerId = null; accumulator = 0;
@@ -143,7 +145,7 @@ const scrollUI = installScrollUI();
   }
   function pause({focus = true} = {}) {
     if (engine.status !== 'playing') return;
-    engine.pause(); held = false; flapKeys.clear(); accumulator = 0;
+    engine.pause(); scores.checkpoint(engine.score,0,{force:true}); held = false; flapKeys.clear(); accumulator = 0;
     $('pauseScreen').hidden = false; $('dashButton').hidden = true; scrollUI?.show();
     if (focus && !externalPanel()) $('resumeButton').focus({ preventScroll: true });
   }
@@ -165,6 +167,7 @@ const scrollUI = installScrollUI();
     else $('startButton').focus({ preventScroll: true });
   }
   function presentResult() {
+    scores.finish(bestThisRun);
     overPresented = true;
     const text = deaths[engine.reason] || deaths.wall;
     $('deathTitle').textContent = text[0]; $('deathText').textContent = text[1]; $('resultTip').textContent = text[2];
@@ -374,6 +377,7 @@ const scrollUI = installScrollUI();
     if (visualTime > messageUntil) $('runMessage').classList.remove('show');
     render(dt); requestAnimationFrame(frame);
   }
+  const scores=mountScores({game:'flight',host:shell,anchor:document.querySelector('.underbar'),pause:()=>pause({focus:false})});
   $('startButton').addEventListener('click', () => start(false));
   $('dailyButton').addEventListener('click', () => start(true));
   $('retryButton').addEventListener('click', () => { if (engine.status === 'over' && overPresented) start(daily, true); });

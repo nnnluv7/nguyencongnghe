@@ -1,3 +1,4 @@
+import {arcadeEngineFixture} from '../fixtures/arcade-store.mjs';
 const seedLibraryForFixture=JSON.parse(await readFile('netlify/lib/ncn-library/seed.json','utf8'));
 import {publicCatalog} from '../../netlify/lib/ncn-library-api.mjs';
 import {chromium} from 'playwright';
@@ -13,7 +14,7 @@ const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=u
 const server=createServer(async(req,res)=>{
   try{
     const url=new URL(req.url,'http://127.0.0.1');
-    if(url.pathname.startsWith('/.netlify/identity/')){res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify({disable_signup:false,external:{email:true}}));return;}
+    if(url.pathname.endsWith('/.netlify/functions/ncn-scores')){res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify(arcadeEngineFixture(url)));return;}if(url.pathname.startsWith('/.netlify/identity/')){res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify({disable_signup:false,external:{email:true}}));return;}
     if(url.pathname.startsWith('/.netlify/functions/')){
       if(url.pathname.endsWith('ncn-stories')){res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify({items:[]}));return;}
       if(url.pathname.endsWith('ncn-library')&&url.searchParams.get('route')==='list'){res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify({items:publicCatalog(seedLibraryForFixture)}));return;}

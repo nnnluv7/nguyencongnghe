@@ -105,3 +105,7 @@
 [functions."ncn-arcade"]
   node_bundler = "esbuild"
   external_node_modules = ["@netlify/identity", "@netlify/blobs"]
+
+[functions."ncn-scores"]
+  node_bundler = "esbuild"
+  external_node_modules = ["@netlify/identity", "@netlify/blobs", "sharp"]

@@ -192,6 +192,17 @@
       "featured": true
     },
     {
+      "id": "ncn-arcade",
+      "title": "NCN Arcade · 5 game",
+      "description": "Một khu giải trí, một hồ sơ chung. Chơi 5 game và so sánh kỷ lục trên bảng điểm cộng đồng.",
+      "href": "/arcade/",
+      "group": "arcade",
+      "icon": "spark",
+      "tone": "teal",
+      "access": "public",
+      "featured": true
+    },
+    {
       "id": "flappy-bird",
       "title": "Bay Đi Đừng Cáu",
       "description": "Game arcade bay, né chướng ngại, nhặt sao và lập kỷ lục.",

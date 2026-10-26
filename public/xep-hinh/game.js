@@ -1,3 +1,4 @@
+import {mountScores} from '../assets/ncn-arcade/arcade.js?v=20261026-arcade-1';
 import {COLS,ROWS,WORLDS,levelSpec,createGame,move,rotate,softDrop,hardDrop,hold,lock,fits,advance,readSave,readProgress} from './core.js?v=20261026-1';
 import {createRenderer,shapeNames} from './render.js?v=20261026-1';
 import {installFullscreen} from './fullscreen.js?v=20261026-1';
@@ -24,7 +25,7 @@ function persist(force=false){
  const now=performance.now();if(!force&&now-lastSaved<400)return;lastSaved=now;
  saved=readSave(game);write(saveKey,saved);
 }
-function record(){if(game.score>progress.best)progress.best=game.score;write(progressKey,progress);}
+function record(){scores.checkpoint(game.score,game.level,{force:state==='paused'});if(game.score>progress.best)progress.best=game.score;write(progressKey,progress);}
 function update(){
  const spec=levelSpec(game.level);$('app').style.setProperty('--xh-accent',spec.color);$('app').style.setProperty('--xh-sky',spec.sky);$('app').dataset.world=spec.world;
  $('world-name').textContent=spec.name.toLocaleUpperCase('vi-VN');document.querySelector('.xh-world-number').textContent=String(spec.world+1).padStart(2,'0')+' / 10';$('level').textContent=String(game.level).padStart(2,'0');$('score').textContent=format(game.score);$('best').textContent=format(Math.max(progress.best,game.score));$('lines').textContent=game.stageLines;$('goal').textContent=spec.goal;$('stage-title').textContent=spec.title;$('progress').max=spec.goal;$('progress').value=Math.min(spec.goal,game.stageLines);
@@ -52,11 +53,11 @@ function overlay(kind){
 }
 function resetClocks(){lastFrame=performance.now();gravityTime=groundTime=lockResets=0;}
 function enterRun(next){game=next;selected=game.level;resetClocks();setView('playing');persist(true);$('board').focus({preventScroll:true});say('Xóa '+levelSpec(game.level).goal+' hàng để mở màn tiếp theo. Chúc bạn chơi vui!');}
-function begin(level){enterRun(createGame({level,seed:1+Math.floor(Math.random()*4294967294)}));}
+async function begin(level){if(!await scores.begin({mode:'classic'}))return;enterRun(createGame({level,seed:1+Math.floor(Math.random()*4294967294)}));}
 function pause(){if(state!=='playing')return;setView('paused');persist(true);record();}
 function resume(){if(state!=='paused')return;resetClocks();setView('playing');$('board').focus({preventScroll:true});}
 function home(){if(state==='playing')pause();if(state==='paused')persist(true);selected=Math.min(100,progress.unlocked);game=createGame({level:selected,seed:117});setView('ready');}
-function restore(){if(!saved)return;const next=saved.status==='cleared'?advance(saved):structuredClone(saved);if(next)enterRun(next);}
+async function restore(){if(!saved||!await scores.begin({mode:'classic',restore:true}))return;const next=saved.status==='cleared'?advance(saved):structuredClone(saved);if(next)enterRun(next);}
 function requestStart(level){
  if(level>progress.unlocked||level<1)return;
  if(saved?.status==='playing'){resumeOnCancel=state==='playing';pause();pendingLevel=level;$('confirm-copy').textContent='Ván đang lưu sẽ được thay bằng màn '+level+'. Các màn và sao đã mở vẫn được giữ.';$('confirm').showModal();}
@@ -64,6 +65,7 @@ function requestStart(level){
 }
 function handleEvent(event){
  if(!event)return;
+ if(['cleared','won','lost'].includes(game.status))scores.finish(game.score,game.level);
  renderer.effect(event,reduced);if(event.count){say((['','MỘT HÀNG SÁNG!','GHÉP ĐÔI!','BỘ BA RỰC RỠ!','BÙNG SẮC MÀU!'][event.count])+' +'+format(event.earned)+' điểm'+(game.combo>0?' · Chuỗi '+(game.combo+1):''));if(!reduced){$('flash').classList.remove('is-active');void $('flash').offsetWidth;$('flash').classList.add('is-active');}sound(true);}else sound();
  if(['cleared','won'].includes(game.status)){
   progress.unlocked=Math.max(progress.unlocked,Math.min(100,game.level+1));progress.stars[game.level]=Math.max(progress.stars[game.level]||0,event.stars);record();setView(game.status);
@@ -95,6 +97,7 @@ function renderMap(){
  for(let i=1;i<=10;i++){const n=mapWorld*10+i,button=document.createElement('button'),stars=progress.stars[n]||0;button.type='button';button.disabled=n>progress.unlocked;button.dataset.level=n;button.setAttribute('aria-label','Màn '+n+(n>progress.unlocked?' · Chưa mở':stars?' · '+stars+' sao':' · Đã mở'));button.setAttribute('aria-current',String(n===selected));button.innerHTML='<strong>'+String(n).padStart(2,'0')+'</strong><small>'+(n>progress.unlocked?'KHÓA':'★'.repeat(stars)+'☆'.repeat(3-stars))+'</small>';fragment.append(button);}$('map-grid').replaceChildren(fragment);
 }
 for(const [i,world]of WORLDS.entries()){const option=document.createElement('option');option.value=i;option.textContent=String(i+1).padStart(2,'0')+' · '+world.name;$('world-select').append(option);}
+const scores=mountScores({game:'blocks',host:$('app'),anchor:document.querySelector('.xh-features'),pause});
 $('world-select').addEventListener('change',()=>{mapWorld=Number($('world-select').value);renderMap();});
 $('map-grid').addEventListener('click',event=>{const b=event.target.closest('button[data-level]');if(!b||b.disabled)return;$('map').close();selected=Number(b.dataset.level);requestStart(selected);});
 for(const button of document.querySelectorAll('[data-close]'))button.addEventListener('click',()=>document.getElementById(button.dataset.close).close());

@@ -1,3 +1,4 @@
+import {mountScores} from '../assets/ncn-arcade/arcade.js?v=20261026-arcade-1';
 import {Ocean,LEVELS,clamp,cleanRecord,awardRecord} from './core.js?v=20261026-mobile-3d-1';
 import {OceanPainter} from './draw.js?v=20261026-mobile-3d-1';
 import {installScrollUI} from '../assets/ncn-theme/scroll-ui.js?v=20261024-compact-1';
@@ -67,18 +68,18 @@ function event(e){
   if(e.type==='won'||e.type==='over')finish();
 }
 function finish(){
-  if(settled)return;settled=true;clearInput();siteChrome?.show();const wasBest=record.best,won=ocean.status==='won';record=awardRecord(record,ocean);save();updateSettings();
+  if(settled)return;settled=true;scores.finish(ocean.score,ocean.level+1);clearInput();siteChrome?.show();const wasBest=record.best,won=ocean.status==='won';record=awardRecord(record,ocean);save();updateSettings();
   text('ff-result-kicker',won?'CHÀO VUA ĐẠI DƯƠNG':'MỘT CHUYẾN ĐI ĐÁNG NHỚ');text('ff-result-title',won?'Từ cá bé, thành huyền thoại.':'Lớn hơn một chút rồi.');
   text('ff-final-score',format(ocean.score));text('ff-record-note',ocean.score>wasBest?'✦ Kỷ lục mới trên máy này!':'Vùng '+(ocean.level+1)+' · '+LEVELS[ocean.level].name);
   text('ff-final-fish',ocean.eaten);text('ff-final-time',clock(ocean.elapsed));text('ff-final-combo','×'+ocean.bestCombo);
   text('ff-result-tip',won?'Cả đại dương từng lớn hơn bạn. Giờ thì thử phá kỷ lục nhé.':'Chỉ ăn cá có vòng xanh. Lướt nước giúp thoát hiểm, nhưng không xuyên được cá lớn.');hud();syncState();$('ff-retry').focus({preventScroll:true});
 }
-function start(){
-  if(externalPanel())return;audio.unlock();clearInput();heading={x:1,y:0};inputMode=touchMode?'touch':'keyboard';settled=false;accumulator=0;ocean.start();painter.reset();lastFrame=performance.now();$('ff-toast').classList.remove('show');hud();syncState();
+async function start(){
+  if(externalPanel())return;if(!await scores.begin({mode:'classic'}))return;audio.unlock();clearInput();heading={x:1,y:0};inputMode=touchMode?'touch':'keyboard';settled=false;accumulator=0;ocean.start();painter.reset();lastFrame=performance.now();$('ff-toast').classList.remove('show');hud();syncState();
   resize();canvas.focus({preventScroll:true});stage.scrollIntoView({block:'start',behavior:record.reduced||touchMode?'instant':'smooth'});toast(touchMode?'Kéo joystick bên trái để lái · Thả tay cá vẫn bơi · Bảo vệ 8 giây.':'Bạn được bảo vệ 8 giây. Bơi về phía cá nhỏ để bắt đầu.',4200);
 }
 function pause(reason='manual'){
-  if(!ocean.pause())return;clearInput();siteChrome?.show();audio.suspend();text('ff-pause-note',reason==='tab'?'Ván chơi đã nghỉ cùng bạn. Cá, combo và thời gian đều được giữ lại.':'Cá, combo và thời gian đều đã tạm dừng.');hud();syncState();
+  if(!ocean.pause())return;scores.checkpoint(ocean.score,ocean.level+1,{force:true});clearInput();siteChrome?.show();audio.suspend();text('ff-pause-note',reason==='tab'?'Ván chơi đã nghỉ cùng bạn. Cá, combo và thời gian đều được giữ lại.':'Cá, combo và thời gian đều đã tạm dừng.');hud();syncState();
 }
 function resume(){if(externalPanel()||document.hidden)return;if(ocean.resume()){clearInput();accumulator=0;lastFrame=performance.now();audio.unlock();syncState();canvas.focus({preventScroll:true});}}
 function dash(){if(ocean.dash())hud();}
@@ -132,6 +133,7 @@ function release(e){if(stickId===e.pointerId){stickId=null;$('ff-stick').classLi
 for(const type of ['pointerup','pointercancel','lostpointercapture']){canvas.addEventListener(type,release);$('ff-stick').addEventListener(type,release);}
 canvas.addEventListener('pointerleave',e=>{if(e.pointerType==='mouse')mouse=null;});
 $('ff-dash').addEventListener('pointerdown',e=>{e.preventDefault();audio.unlock();dash();});$('ff-dash').addEventListener('click',e=>{if(e.detail===0)dash();});
+const scores=mountScores({game:'ocean',host:stage,anchor:document.querySelector('.ff-features'),pause:()=>pause('panel')});
 $('ff-start').addEventListener('click',start);$('ff-retry').addEventListener('click',start);$('ff-pause').addEventListener('click',()=>pause());$('ff-resume').addEventListener('click',resume);
 $('ff-end').addEventListener('click',()=>{if(ocean.status==='paused'){ocean.resume();ocean.finish(false);}});
 $('ff-result-home').addEventListener('click',()=>{clearInput();ocean.reset(20261025);ocean.status='ready';painter.reset();sceneTime=0;syncState();$('ff-start').focus({preventScroll:true});});
