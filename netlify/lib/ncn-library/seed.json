@@ -1136,7 +1136,7 @@
       "Giải trí"
     ],
     "datetime": "2026-10-25T20:30:00+07:00",
-    "summary": "Chơi với AI hoặc đấu online cùng bạn bè, gom combo cuồng nhiệt, dùng lướt pha và so tài trên bảng xếp hạng công khai. Có phòng riêng và link mời.",
+    "summary": "Chơi đơn cùng 10 đối thủ AI, gom combo cuồng nhiệt và lướt pha. So sánh kỷ lục trên bảng NCN Arcade bằng hồ sơ dùng chung với 4 game còn lại.",
     "isPage": true,
     "managedPage": false,
     "sourcePath": ""
@@ -1197,6 +1197,21 @@
     ],
     "datetime": "2026-10-26T20:00:00+07:00",
     "summary": "Rắn Lướt, Flappy Bird, Pikachu, Cá lớn nuốt cá bé và Khối Sắc 3D. Một hồ sơ dùng chung, bảng điểm công khai và thử thách bạn bè.",
+    "isPage": true,
+    "managedPage": false,
+    "sourcePath": ""
+  },
+  {
+    "id": "legacy-e2181a25a3c397f3",
+    "kind": "legacy",
+    "title": "Bay Đi Đừng Cáu · Flappy Bird NCN",
+    "href": "/flappy-bird/",
+    "image": "/flappy-bird/icon.svg",
+    "labels": [
+      "Giải trí"
+    ],
+    "datetime": "2026-10-26T20:00:00+07:00",
+    "summary": "Bay né đại bàng, khe đá và bom rơi, nhặt sao và lập kỷ lục. Chơi miễn phí bằng bàn phím hoặc cảm ứng; hồ sơ và bảng điểm dùng chung NCN Arcade.",
     "isPage": true,
     "managedPage": false,
     "sourcePath": ""

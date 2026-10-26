@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
+import {readFileSync} from 'node:fs';
 import sharp from 'sharp';
 import {createScoresHandler,cleanName} from '../netlify/lib/ncn-scores-api.mjs';
 import {scorePhoto} from '../netlify/lib/ncn-score-photos.mjs';
@@ -15,6 +16,10 @@ async function scored(f,{game='snake',mode='arena',score=500,level=0,cookie='' }
 
 test('five games share one catalogue; modes and Vietnamese daily dates remain separate',()=>{
  assert.equal(Object.keys(GAMES).length,5);assert.equal(vietnamDate(new Date('2026-10-26T18:00:00Z')),'2026-10-27');assert.equal(gameBoard('snake','daily','2026-02-30'),null);assert.equal(gameBoard('snake','classic'),null);assert.equal(gameBoard('snake','constructor'),null);assert.equal(gameBoard('__proto__','arena'),null);assert.equal(gameBoard('flight','easy'),'easy');
+});
+test('the hub and five games are discoverable once in both static and hydrated Library catalogues',()=>{
+ const staticRows=JSON.parse(readFileSync('public/assets/catalog.js','utf8').replace(/^window.CG_CATALOG\s*=\s*/,'').trim().replace(/;$/,'')),seed=JSON.parse(readFileSync('netlify/lib/ncn-library/seed.json','utf8'));
+ for(const href of ['/arcade/',...Object.values(GAMES).map(x=>x.path)]){assert.equal(staticRows.filter(x=>x.link===href).length,1,href);assert.equal(seed.filter(x=>x.href===href).length,1,href);}
 });
 test('guests can read an empty public board without creating a profile or cookie',async()=>{const f=fixture(),r=await call(f,'board&game=snake&mode=arena');assert.equal(r.status,200);assert.deepEqual(r.value.items,[]);assert.equal(f.store.entries.size,0);assert.equal(r.response.headers.has('set-cookie'),false);assert.equal((await call(f,'start',{game:'snake',mode:'arena'})).status,401);});
 test('a remembered HttpOnly guest profile supplies all five games without a website account',async()=>{
