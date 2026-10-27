@@ -14,15 +14,15 @@ async function call(f,route,data,cookie='',extra={}){const response=await f.hand
 async function guest(f,name='Cá Nhỏ'){const r=await call(f,'profile',{name,avatar:'preset:🐱'});assert.equal(r.status,200);return r;}
 async function scored(f,{game='snake',mode='arena',score=500,level=0,cookie='' }={}){const start=await call(f,'start',{game,mode},cookie);assert.equal(start.status,200,JSON.stringify(start.value));f.now+=20000;const result=await call(f,'score',{runId:start.value.runId,score,level},cookie);assert.equal(result.status,200,JSON.stringify(result.value));return {start,result};}
 
-test('five games share one catalogue; modes and Vietnamese daily dates remain separate',()=>{
- assert.equal(Object.keys(GAMES).length,5);assert.equal(vietnamDate(new Date('2026-10-26T18:00:00Z')),'2026-10-27');assert.equal(gameBoard('snake','daily','2026-02-30'),null);assert.equal(gameBoard('snake','classic'),null);assert.equal(gameBoard('snake','constructor'),null);assert.equal(gameBoard('__proto__','arena'),null);assert.equal(gameBoard('flight','easy'),'easy');
+test('six games share one catalogue; modes and Vietnamese daily dates remain separate',()=>{
+ assert.equal(Object.keys(GAMES).length,6);assert.equal(vietnamDate(new Date('2026-10-26T18:00:00Z')),'2026-10-27');assert.equal(gameBoard('snake','daily','2026-02-30'),null);assert.equal(gameBoard('snake','classic'),null);assert.equal(gameBoard('snake','constructor'),null);assert.equal(gameBoard('__proto__','arena'),null);assert.equal(gameBoard('flight','easy'),'easy');
 });
-test('the hub and five games are discoverable once in both static and hydrated Library catalogues',()=>{
+test('the hub and six games are discoverable once in both static and hydrated Library catalogues',()=>{
  const staticRows=JSON.parse(readFileSync('public/assets/catalog.js','utf8').replace(/^window.CG_CATALOG\s*=\s*/,'').trim().replace(/;$/,'')),seed=JSON.parse(readFileSync('netlify/lib/ncn-library/seed.json','utf8'));
  for(const href of ['/arcade/',...Object.values(GAMES).map(x=>x.path)]){assert.equal(staticRows.filter(x=>x.link===href).length,1,href);assert.equal(seed.filter(x=>x.href===href).length,1,href);}
 });
 test('guests can read an empty public board without creating a profile or cookie',async()=>{const f=fixture(),r=await call(f,'board&game=snake&mode=arena');assert.equal(r.status,200);assert.deepEqual(r.value.items,[]);assert.equal(f.store.entries.size,0);assert.equal(r.response.headers.has('set-cookie'),false);assert.equal((await call(f,'start',{game:'snake',mode:'arena'})).status,401);});
-test('a remembered HttpOnly guest profile supplies all five games without a website account',async()=>{
+test('a remembered HttpOnly guest profile supplies all six games without a website account',async()=>{
  const f=fixture(),g=await guest(f);for(const flag of ['HttpOnly','Secure','SameSite=Lax','Path=/','Max-Age=31536000'])assert.ok(g.response.headers.get('set-cookie').includes(flag));
  assert.equal((await call(f,'profile',undefined,g.cookie)).value.profile.name,'Cá Nhỏ');
  for(const [game,spec]of Object.entries(GAMES))await scored(f,{game,mode:Object.keys(spec.modes)[0],cookie:g.cookie});
@@ -48,6 +48,12 @@ test('best score is idempotent, cannot go backwards, and concurrent improvements
  const board=(await call(f,'board&game=snake&mode=arena',undefined,g.cookie)).value;assert.equal(board.total,1);assert.equal(board.items[0].score,1000);assert.deepEqual(board.you,{rank:1,score:1000});
 });
 test('normal, relaxed and daily scores never mix, and daily boards use separate dates',async()=>{const f=fixture(),g=await guest(f);for(const mode of ['classic','relax','daily'])await scored(f,{game:'pikachu',mode,score:500,cookie:g.cookie});for(const mode of ['classic','relax','daily'])assert.equal((await call(f,'board&game=pikachu&mode='+mode)).value.total,1);assert.equal((await call(f,'board&game=pikachu&mode=daily&date=2026-10-27')).value.total,0);});
+test('Bubble Shooter accepts earned scores in its three modes and keeps daily results separate',async()=>{
+ const f=fixture();f.user=member;
+ for(const mode of ['journey','relax','daily'])await scored(f,{game:'bubble',mode,score:650,level:1});
+ for(const mode of ['journey','relax','daily']){const board=await call(f,'board&game=bubble&mode='+mode);assert.equal(board.status,200);assert.equal(board.value.total,1);assert.equal(board.value.items[0].score,650);assert.equal(board.value.items[0].member,true);}
+ assert.equal((await call(f,'board&game=bubble&mode=daily&date=2026-10-27')).value.total,0);assert.equal((await call(f,'start',{game:'bubble',mode:'classic'})).status,400);
+});
 test('impossible values, instantaneous huge scores and expired runs do not enter a board',async()=>{const f=fixture(),g=await guest(f),r=await call(f,'start',{game:'flight',mode:'normal'},g.cookie);for(const score of [-1,Infinity,1.5,1000000000])assert.equal((await call(f,'score',{runId:r.value.runId,score,level:0},g.cookie)).status,400);assert.equal((await call(f,'score',{runId:r.value.runId,score:50000,level:0},g.cookie)).status,400);f.now+=31*86400000;assert.equal((await call(f,'score',{runId:r.value.runId,score:50,level:0},g.cookie)).status,410);});
 test('pagination starts with ten and continues past 1000 players without an overall cutoff',async()=>{
  const f=fixture();for(let i=0;i<1207;i++){const id=createHash('sha256').update('player-'+i).digest('hex'),score=5000-i,key='rank/snake/arena/'+String(999999999-score).padStart(9,'0')+'/'+at+'/'+id;await f.store.setJSON(key,{id,name:'Bạn '+i,avatar:'preset:🐱',member:false,score,level:0,at});}

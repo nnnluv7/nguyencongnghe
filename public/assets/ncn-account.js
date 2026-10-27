@@ -1,3 +1,4 @@
+import {ARCADE_COUNT} from './ncn-arcade/catalog.js?v=20261027-bubble-1';
 import * as identityClient from './ncn-identity-client.js';
 import {readDisplayProfile,saveDisplayProfile,displayProfile} from './ncn-account-session.js?v=20261026-profile-1';
 import {mountMemberPanel,paintAvatar,profileUpdate} from './ncn-member-profile.js?v=20261026-profile-1';
@@ -60,7 +61,7 @@ export function mountAccount({doc=document,win=window,identity=identityClient,fe
     for(const [key,form] of Object.entries(forms))form.hidden=key!==name;
     const managing=['profile','vip'].includes(name);
     dialog.querySelector('.ncn-account-tabs').hidden=name==='reset'||managing;
-    dialog.querySelector('.ncn-account-intro').textContent=managing?'Hồ sơ và VIP dùng chung trên website và cả 5 game NCN Arcade.':'Một tài khoản dùng chung toàn website, Event và Giờ Vàng VIP.';
+    dialog.querySelector('.ncn-account-intro').textContent=managing?`Hồ sơ và VIP dùng chung trên website và cả ${ARCADE_COUNT} game NCN Arcade.`:'Một tài khoản dùng chung toàn website, Event và Giờ Vàng VIP.';
     dialog.querySelector('.ncn-account-social').hidden=managing||!state.settings?.providers?.facebook||state.resetPending;
     dialog.querySelectorAll('[data-account-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.accountMode===name)));
     member.render(state.user,{tab:name,busy:state.busy,serverOffset:state.serverOffset});

@@ -87,8 +87,8 @@ try{
   await page.locator('#ncn-member-name').fill('Tên dùng chung');await page.locator('[data-member-form] [type=submit]').click();await page.locator('#ncn-account-message').filter({hasText:'Đã cập nhật'}).waitFor();assert.deepEqual(updates.at(-1),{data:{full_name:'Tên dùng chung'}});assert.equal(member.metadata.avatar_url,avatar);
   await page.locator('[data-account-close]').click();await page.reload();await page.waitForFunction(()=>NCNAccount.state.user?.name==='Tên dùng chung');await manage();assert.equal(await page.locator('#ncn-member-name').inputValue(),'Tên dùng chung');assert.equal(await page.locator('.ncn-member-avatar img').getAttribute('src'),avatar);
  });
- await check('all five games automatically use the updated member profile and open the same account management',async()=>{
-  for(const path of ['/ran-luot/','/flappy-bird/','/pikachu/','/ca-lon-nuot-ca-be/','/xep-hinh/']){
+ await check('all six games automatically use the updated member profile and open the same account management',async()=>{
+  for(const path of ['/ran-luot/','/flappy-bird/','/pikachu/','/ca-lon-nuot-ca-be/','/xep-hinh/','/ban-bong/']){
    await open(path);await page.locator('.ncn-score-player strong').filter({hasText:'Tên dùng chung'}).waitFor();assert.equal(await page.locator('.ncn-score-player img').getAttribute('src'),avatar);assert.equal(await page.locator('.ncn-arcade-profile[open]').count(),0);
    await page.locator('.ncn-score-player button').click();await page.locator('[data-member-form]').waitFor();assert.equal(await page.locator('#ncn-member-name').inputValue(),'Tên dùng chung');assert.equal(await page.locator('#ncn-account-dialog').count(),1);await page.locator('[data-account-close]').click();
   }

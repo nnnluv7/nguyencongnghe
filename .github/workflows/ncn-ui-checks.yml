@@ -57,7 +57,7 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Check shared accounts with isolated Identity and payment fixtures
         run: node tests/browser/ncn-account.mjs
-      - name: Check member profiles, avatars, VIP and all five Arcade games
+      - name: Check member profiles, avatars, VIP and all six Arcade games
         run: node tests/browser/ncn-profile.mjs
       - name: Check print layouts, scrolling and compact calculators
         run: node tests/browser/ncn-scroll-ui.mjs

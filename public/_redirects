@@ -439,3 +439,8 @@
 /arcade/index.html  /.netlify/functions/ncn-site-page?page=arcade%2Findex.html  200!
 /arcade/  /.netlify/functions/ncn-site-page?page=arcade%2Findex.html  200!
 /arcade  /.netlify/functions/ncn-site-page?page=arcade%2Findex.html  200!
+
+# NCN Bubble Shooter public shell
+/ban-bong  /.netlify/functions/ncn-site-page?page=ban-bong%2Findex.html  200!
+/ban-bong/  /.netlify/functions/ncn-site-page?page=ban-bong%2Findex.html  200!
+/ban-bong/index.html  /.netlify/functions/ncn-site-page?page=ban-bong%2Findex.html  200!

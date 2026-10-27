@@ -1,4 +1,4 @@
-import {mountScores} from '../assets/ncn-arcade/arcade.js?v=20261026-arcade-1';
+import {mountScores} from '../assets/ncn-arcade/arcade.js?v=20261027-bubble-1';
 import {COLS,ROWS,WORLDS,levelSpec,createGame,move,rotate,softDrop,hardDrop,hold,lock,fits,advance,readSave,readProgress} from './core.js?v=20261026-1';
 import {createRenderer,shapeNames} from './render.js?v=20261026-1';
 import {installFullscreen} from './fullscreen.js?v=20261026-1';

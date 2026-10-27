@@ -265,5 +265,8 @@
   "/search/label/Tắt đầu bài": "search/label/Tắt đầu bài/index.html",
   "/arcade/index.html": "arcade/index.html",
   "/arcade/": "arcade/index.html",
-  "/arcade": "arcade/index.html"
+  "/arcade": "arcade/index.html",
+  "/ban-bong/index.html": "ban-bong/index.html",
+  "/ban-bong/": "ban-bong/index.html",
+  "/ban-bong": "ban-bong/index.html"
 }

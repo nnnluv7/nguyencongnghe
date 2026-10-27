@@ -34,6 +34,9 @@ jobs:
           node --check public/assets/ncn-account.js
           node --check public/assets/ncn-account-session.js
           node --check public/assets/ncn-member-profile.js
+          node --check public/ban-bong/core.js
+          node --check public/ban-bong/game.js
+          node --check public/ban-bong/render.js
           node --check netlify/lib/ncn-profile-api.mjs
           node --check netlify/functions/ncn-profile.mjs
           node --check public/assets/ncn-vip-gate.js

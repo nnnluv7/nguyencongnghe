@@ -1656,7 +1656,7 @@ window.CG_CATALOG = [
     "date": ""
   },
   {
-    "title": "NCN Arcade · 5 game, một bảng điểm",
+    "title": "NCN Arcade · 6 game, một bảng điểm",
     "link": "/arcade/",
     "thumbnail": {
       "src": "/arcade/cover.svg",
@@ -1668,7 +1668,7 @@ window.CG_CATALOG = [
       "Giải trí"
     ],
     "datetime": "2026-10-26T20:00:00+07:00",
-    "summary": "Rắn Lướt, Flappy Bird, Pikachu, Cá lớn nuốt cá bé và Khối Sắc 3D. Một hồ sơ dùng chung, bảng điểm công khai và thử thách bạn bè.",
+    "summary": "Rắn Lướt, Flappy Bird, Pikachu, Cá lớn nuốt cá bé Khối Sắc 3D và Bắn Bóng. Một hồ sơ dùng chung, bảng điểm công khai và thử thách bạn bè.",
     "isPage": true,
     "author": "NCN",
     "date": ""
@@ -1690,5 +1690,24 @@ window.CG_CATALOG = [
     "isPage": true,
     "author": "NCN",
     "date": ""
+  },
+  {
+    "title": "Bắn Bóng Tuổi Thơ · 60 màn sắc màu",
+    "link": "/ban-bong/",
+    "thumbnail": {
+      "src": "/ban-bong/cover.svg",
+      "type": "image",
+      "width": 640,
+      "height": 360
+    },
+    "labels": [
+      "Giải trí"
+    ],
+    "datetime": "2026-10-27T08:00:00+07:00",
+    "summary": "Ghép 3 bóng cùng màu, bật tường và rơi dây chuyền. 60 màn, 6 miền sắc màu, Thư giãn và thử thách Hôm nay.",
+    "isPage": true,
+    "author": "NCN",
+    "date": "2026-10-27",
+    "image": "/ban-bong/cover.svg"
   }
 ];

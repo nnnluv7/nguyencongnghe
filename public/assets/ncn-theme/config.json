@@ -193,8 +193,8 @@
     },
     {
       "id": "ncn-arcade",
-      "title": "NCN Arcade · 5 game",
-      "description": "Một khu giải trí, một hồ sơ chung. Chơi 5 game và so sánh kỷ lục trên bảng điểm cộng đồng.",
+      "title": "NCN Arcade · 6 game",
+      "description": "Một khu giải trí, một hồ sơ chung. Chơi 6 game và so sánh kỷ lục trên bảng điểm cộng đồng.",
       "href": "/arcade/",
       "group": "arcade",
       "icon": "spark",
@@ -253,6 +253,17 @@
       "tone": "violet",
       "access": "public",
       "image": "/xep-hinh/cover.svg"
+    },
+    {
+      "id": "ban-bong",
+      "title": "Bắn Bóng Tuổi Thơ",
+      "description": "Ghép 3 bóng cùng màu, bật tường và rơi dây chuyền. 60 màn, 6 miền sắc màu, Thư giãn và thử thách Hôm nay.",
+      "href": "/ban-bong/",
+      "group": "arcade",
+      "icon": "spark",
+      "tone": "coral",
+      "access": "public",
+      "image": "/ban-bong/cover.svg"
     }
   ],
   "adminContact": {

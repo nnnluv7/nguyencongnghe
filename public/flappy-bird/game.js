@@ -1,4 +1,4 @@
-import {mountScores} from '../assets/ncn-arcade/arcade.js?v=20261026-arcade-1';
+import {mountScores} from '../assets/ncn-arcade/arcade.js?v=20261027-bubble-1';
 import {installScrollUI} from '../assets/ncn-theme/scroll-ui.js?v=20261024-compact-1';
 const scrollUI = installScrollUI();
 (function () {

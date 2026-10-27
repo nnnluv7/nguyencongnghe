@@ -1,8 +1,8 @@
-# NCN Arcade · 5 games, shared player profiles and public scores
+# NCN Arcade · 6 games, shared player profiles and public scores
 
-`/arcade/` links Snake, Flight, Pikachu, Ocean and Color Blocks. Each game has
+`/arcade/` links Snake, Flight, Pikachu, Ocean, Color Blocks and Bubble Shooter. Each game has
 the same glass navigation, player card and leaderboard, and links directly to
-the other four games. The existing NCN account/theme/menu implementation is
+the other five games. The existing NCN account/theme/menu implementation is
 retained. Each game's controls, local progress and record keys are retained.
 
 ## Identity and avatars
@@ -12,7 +12,7 @@ retained. Each game's controls, local progress and record keys are retained.
   otherwise an animal portrait is selected automatically. No extra setup step.
 - Guests choose a display name and an original SVG portrait, or upload an image.
   A random 256-bit `__Host-ncn_arcade` cookie (Secure, HttpOnly, SameSite=Lax,
-  Path=/, one year) identifies the guest on this browser across all five games.
+  Path=/, one year) identifies the guest on this browser across all six games.
   Cookie reset/new device means a new guest; NCN accounts work across devices.
 - Uploaded photos are cropped to 128px in the browser, decoded with a pixel
   limit, re-encoded to 96px WebP on the server and served by content hash.
@@ -30,7 +30,7 @@ required. Nonproduction writes are refused; all automated QA uses memory stores.
 
 The server issues an opaque run ID bound to the verified member or guest,
 game, mode and daily date. Issuance runs in parallel with the first game input.
-Results update on end, pause and meaningful stage/checkpoint events. Pikachu
+Results update on end, pause and meaningful stage/checkpoint events. Pikachu, Bubble Shooter
 and Blocks retain the run ID separately from their existing save formats.
 Old local saves can still be played; starting a new run enrolls it in ranking.
 Failed submissions remain queued for reconnection/manual retry, with an
@@ -71,7 +71,7 @@ tests may still run; the retired multiplayer browser suite is no longer CI.
   identity/ownership/origin, retries/concurrency, separated modes, and pagination
   through 1,207 players without duplicates or a total cutoff.
 - `node tests/browser/ncn-arcade.mjs`: actual handler on intercepted synthetic
-  HTTPS, real guest-cookie/profile/photo flow, actual earned scores in all five
+  HTTPS, real guest-cookie/profile/photo flow, actual earned scores in all six
   games, member setup skip, expanded board, retry, storage denial, fullscreen
   dialog placement and delayed run issuance without lost input.
 - Existing game, account, site/layout and actual Netlify archive checks remain
