@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createHash} from 'node:crypto';
+import {createHash,randomBytes} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import sharp from 'sharp';
 import {createScoresHandler,cleanName} from '../netlify/lib/ncn-scores-api.mjs';
@@ -31,10 +31,20 @@ test('a remembered HttpOnly guest profile supplies all six games without a websi
 test('a verified NCN account uses its existing name and photo without profile setup',async()=>{const f=fixture();f.user=member;const r=await call(f,'profile');assert.equal(r.value.needsProfile,false);assert.equal(r.value.profile.name,member.name);assert.equal(r.value.profile.avatar,member.avatar);assert.equal(r.value.profile.member,true);assert.equal(JSON.stringify(r.value).includes(member.email),false);await scored(f);});
 test('member identity and display name cannot be replaced by browser claims; emails stay private',async()=>{const f=fixture();f.user={...member,name:member.email};const r=await call(f,'profile',{name:'Forged Admin',id:'someone-else',avatar:'javascript:alert(1)'});assert.equal(r.value.profile.name,'Thành viên NCN');assert.equal(r.value.profile.member,true);await scored(f);const b=await call(f,'board&game=snake&mode=arena');assert.equal(JSON.stringify(b.value).includes(member.email),false);assert.equal(JSON.stringify(b.value).includes(member.id),false);assert.equal(b.value.items[0].you,true);});
 test('guest name validation handles controls and forbids email fallbacks',async()=>{assert.equal(cleanName('  Bé\u202e Cá\u0000  '),'Bé Cá');assert.equal(Array.from(cleanName('ố'.repeat(40))).length,30);const f=fixture();for(const name of ['','   ','name@example.test'])assert.equal((await call(f,'profile',{name,avatar:'preset:🐱'})).status,400);});
-test('avatar uploads are decoded and re-encoded as 96px WebP; SVG, bad images and oversized bodies are rejected',async()=>{
- const f=fixture(),bytes=await sharp({create:{width:128,height:160,channels:3,background:'#88aa99'}}).png().toBuffer(),g=await call(f,'profile',{name:'Bạn Có Ảnh',avatar:'data:image/png;base64,'+bytes.toString('base64')});assert.equal(g.status,200);const photo=await call(f,g.value.profile.avatar.split('?route=')[1]);assert.equal(photo.status,200);const meta=await sharp(Buffer.from(photo.value)).metadata();assert.equal(meta.width,96);assert.equal(meta.height,96);assert.equal(meta.format,'webp');assert.match(photo.response.headers.get('cache-control'),/immutable/);
+test('guest portraits keep 768px detail, strip metadata and retain immutable public URLs',async()=>{
+ const f=fixture(),bytes=await sharp({create:{width:768,height:900,channels:3,background:'#88aa99'}}).withMetadata().png().toBuffer(),g=await call(f,'profile',{name:'Bạn Có Ảnh',avatar:'data:image/png;base64,'+bytes.toString('base64')});assert.equal(g.status,200);const photo=await call(f,g.value.profile.avatar.split('?route=')[1]);assert.equal(photo.status,200);const meta=await sharp(Buffer.from(photo.value)).metadata();assert.equal(meta.width,768);assert.equal(meta.height,768);assert.equal(meta.format,'webp');assert.equal(meta.exif,undefined);assert.equal(meta.icc,undefined);assert.match(photo.response.headers.get('cache-control'),/immutable/);
+});
+test('small guest sources and legacy 96px photos are kept at their actual resolution',async()=>{
+ const f=fixture(),bytes=await sharp({create:{width:96,height:96,channels:3,background:'#88aa99'}}).png().toBuffer(),g=await call(f,'profile',{name:'Ảnh Cũ',avatar:'data:image/png;base64,'+bytes.toString('base64')});assert.equal(g.status,200);const photo=await call(f,g.value.profile.avatar.split('?route=')[1]),meta=await sharp(Buffer.from(photo.value)).metadata();assert.equal(meta.width,96);assert.equal(meta.height,96);
+ const same=await call(f,'profile',{name:'Ảnh Cũ Đổi Tên',avatar:g.value.profile.avatar},g.cookie);assert.equal(same.status,200);assert.equal(same.value.profile.avatar,g.value.profile.avatar);
+});
+test('detailed 768px guest photos above the old request limit upload, while invalid and oversized input is still rejected',async()=>{
+ const f=fixture(),bytes=await sharp(randomBytes(768*768*3),{raw:{width:768,height:768,channels:3}}).jpeg({quality:90}).toBuffer(),data={name:'Ảnh Nhiều Chi Tiết',avatar:'data:image/jpeg;base64,'+bytes.toString('base64')},length=Buffer.byteLength(JSON.stringify(data));assert.ok(length>240000&&length<1200000,length);
+ const g=await call(f,'profile',data);assert.equal(g.status,200);const photo=await call(f,g.value.profile.avatar.split('?route=')[1]);assert.equal((await sharp(Buffer.from(photo.value)).metadata()).width,768);
  for(const avatar of ['data:image/svg+xml;base64,PHN2Zz4=','data:image/jpeg;base64,YmFk','https://arbitrary.example.test/a.png'])assert.equal((await call(f,'profile',{name:'Bé',avatar})).status,400);
- assert.equal((await call(f,'profile',{name:'a'.repeat(240001),avatar:'preset:🐱'})).status,413);
+ const huge=await sharp({create:{width:1100,height:1100,channels:3,background:'#fff'}}).png().toBuffer();assert.equal((await call(f,'profile',{name:'Quá Lớn',avatar:'data:image/png;base64,'+huge.toString('base64')})).status,400);
+ assert.equal((await call(f,'profile',{name:'a'.repeat(1200001),avatar:'preset:🐱'})).status,413);
+ assert.equal((await call(f,'profile',{name:'Ảnh',avatar:'preset:🐱'},'',{'Content-Length':'1200001'})).status,413);
 });
 test('mutation routes reject cross-origin requests and previews never publish a score',async()=>{const f=fixture();assert.equal((await call(f,'profile',{name:'Bé',avatar:'preset:🐱'},'',{Origin:'https://outside.test'})).status,403);assert.equal(f.store.entries.size,0);f.production=false;assert.equal((await call(f,'profile',{name:'Bé',avatar:'preset:🐱'})).status,503);assert.equal(f.store.entries.size,0);});
 test('a server-issued run binds score to its owner and original game/mode',async()=>{

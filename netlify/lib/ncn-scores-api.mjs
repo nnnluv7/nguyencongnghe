@@ -12,10 +12,10 @@ export function cleanName(value,fallback=''){
  const name=typeof value==='string'?value.normalize('NFC').replace(/[\u0000-\u001f\u007f-\u009f\u202a-\u202e\u2066-\u2069]/g,'').replace(/\s+/g,' ').trim():'';
  return name&&!name.includes('@')?Array.from(name).slice(0,30).join(''):fallback;
 }
-async function body(req){
+async function body(req,limit=240000){
  if(!(req.headers.get('content-type')||'').startsWith('application/json'))fail(415,'Dữ liệu cần ở dạng JSON.');
- if(Number(req.headers.get('content-length')||0)>240000)fail(413,'Ảnh quá lớn. Vui lòng chọn ảnh khác.');
- const raw=await req.text();if(Buffer.byteLength(raw)>240000)fail(413,'Ảnh quá lớn. Vui lòng chọn ảnh khác.');
+ if(Number(req.headers.get('content-length')||0)>limit)fail(413,'Ảnh quá lớn. Vui lòng chọn ảnh khác.');
+ const raw=await req.text();if(Buffer.byteLength(raw)>limit)fail(413,'Ảnh quá lớn. Vui lòng chọn ảnh khác.');
  let value;try{value=JSON.parse(raw);}catch{fail(400,'Dữ liệu không hợp lệ.');}if(!value||typeof value!=='object'||Array.isArray(value))fail(400,'Dữ liệu không hợp lệ.');return value;
 }
 async function change(store,key,fn){
@@ -54,7 +54,7 @@ export function createScoresHandler(deps){return async req=>{
   }
   if(route==='profile'){
    if(req.method==='GET')return json({profile:publicProfile(profile),needsProfile:!profile});
-   const data=await body(req);if(user)return json({profile:publicProfile(profile)});
+   const data=await body(req,1200000);if(user)return json({profile:publicProfile(profile)});
    const name=cleanName(data.name);if(!name)fail(400,'Nhập tên hiển thị (tối đa 30 ký tự, không dùng email).');
    const secret=token||randomBytes(32).toString('base64url'),guestId=hash('guest:'+secret);
    let avatar=data.avatar;

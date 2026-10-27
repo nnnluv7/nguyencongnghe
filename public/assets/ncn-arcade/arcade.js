@@ -25,27 +25,45 @@ export function mountScores({game='snake',host=document.body,anchor,pause=()=>{}
  const dialog=document.createElement('dialog');dialog.className='ncn-arcade-dialog ncn-arcade-profile';dialog.setAttribute('aria-labelledby','ncn-profile-title');
  dialog.innerHTML=`<header><div><span class="ncn-score-eyebrow">MỘT HỒ SƠ · ${ARCADE_COUNT} TRÒ CHƠI</span><h2 id="ncn-profile-title">Xin chào, người chơi!</h2></div><button type="button" data-profile-close aria-label="Đóng hồ sơ người chơi">×</button></header><p>Chọn tên và ảnh đại diện một lần để lưu điểm cho cả NCN Arcade.</p><form><label for="ncn-player-name">Tên trên bảng điểm</label><input id="ncn-player-name" name="name" type="text" maxlength="30" autocomplete="nickname" placeholder="Ví dụ: Cá Nhỏ Vui Vẻ" required><label>Ảnh đại diện</label><div class="ncn-avatar-picker" role="group" aria-label="Chọn ảnh đại diện"></div><div class="ncn-profile-preview"></div><input class="ncn-avatar-upload" aria-label="Tải ảnh đại diện của bạn" type="file" accept="image/jpeg,image/png,image/webp"><p class="ncn-profile-note">Tên và ảnh của bạn sẽ hiện công khai trên bảng điểm. Khách được nhớ trên trình duyệt này; tài khoản NCN dùng được trên các thiết bị.</p><p class="ncn-score-status" role="status"></p><div class="ncn-profile-actions"><button type="submit">Lưu hồ sơ &amp; chơi</button><button type="button" data-profile-login>Đăng nhập NCN</button></div></form>`;
  const portrait=document.createElement('dialog');portrait.id='ncn-avatar-viewer';portrait.className='ncn-arcade-dialog ncn-avatar-viewer';portrait.setAttribute('aria-labelledby','ncn-avatar-title');
- portrait.innerHTML='<header><div><span class="ncn-score-eyebrow">ẢNH ĐẠI DIỆN</span><h2 id="ncn-avatar-title"></h2></div><button type="button" data-avatar-close aria-label="Đóng ảnh đại diện" autofocus>×</button></header><div class="ncn-avatar-image"></div><p class="ncn-avatar-caption"></p>';
+ portrait.innerHTML='<header><div><span class="ncn-score-eyebrow">ẢNH ĐẠI DIỆN</span><h2 id="ncn-avatar-title"></h2></div><button type="button" data-avatar-close aria-label="Đóng ảnh đại diện" autofocus>×</button></header><div class="ncn-avatar-image"></div><p class="ncn-avatar-caption"></p><p class="ncn-avatar-quality" role="status" hidden></p><button type="button" data-avatar-upgrade hidden>Cập nhật ảnh rõ hơn</button>';
  host.append(expanded,dialog,portrait);
  const q=(s,root=section)=>root.querySelector(s),list=q('.ncn-score-list'),fullList=q('.ncn-score-list',expanded),more=q('.ncn-score-more',expanded),status=q('.ncn-score-status'),saveNote=q('.ncn-score-save'),form=q('form',dialog),profileStatus=q('.ncn-score-status',dialog);
  let profile=null,boardGame=game,boardMode=Object.keys(GAMES[game].modes)[0],boardDate=vietnamDate(),items=[],cursor=null,total=0,own=null,loadEpoch=0,loading=false,run=null,starting=false,profileResolve=null,choice='preset:'+AVATARS[0],profileEpoch=0,profilePending=null,saveChain=Promise.resolve(),lastCheckpoint=0,lastScore=-1,localRunKey='ncn:arcade:run:'+game,memoryQueue=[];
  const tabs=q('.ncn-score-tabs'),select=q('select'),playLink=q('.ncn-score-play');
- let portraitTrigger=null;
+ let portraitTrigger=null,portraitOwner=null;
  function openPortrait(entry,trigger){
-  pause();portraitTrigger=trigger;
+  pause();portraitTrigger=trigger;portraitOwner=entry.id;portrait.returnValue='';
   const name=entry.name||'Người chơi NCN',image=avatarNode(entry.avatar),photo=image.querySelector('img');
+  const frame=q('.ncn-avatar-image',portrait),quality=q('.ncn-avatar-quality',portrait),upgrade=q('[data-avatar-upgrade]',portrait);
+  frame.style.removeProperty('--ncn-avatar-max');quality.hidden=true;upgrade.hidden=true;
   q('#ncn-avatar-title',portrait).textContent=name;
   q('.ncn-avatar-caption',portrait).textContent=entry.member?'Thành viên NCN':'Người chơi NCN Arcade';
-  if(photo){photo.alt='Ảnh đại diện của '+name;photo.loading='eager';photo.addEventListener('error',()=>{q('.ncn-avatar-caption',portrait).textContent='Ảnh chưa tải được. Thử mở lại sau nhé.';},{once:true});}
-  q('.ncn-avatar-image',portrait).replaceChildren(image);
+  frame.replaceChildren(image);
+  if(photo){
+   photo.alt='Ảnh đại diện của '+name;photo.loading='eager';
+   const loaded=()=>{
+    if(frame.firstElementChild!==image)return;
+    const size=Math.min(photo.naturalWidth,photo.naturalHeight);
+    if(size>0&&size<384){
+     frame.style.setProperty('--ncn-avatar-max',size*2+'px');
+     if(!entry.member){quality.textContent='Ảnh này đang ở chất lượng thấp. Người chơi có thể chọn lại ảnh gốc trong “Sửa hồ sơ” để xem rõ hơn.';quality.hidden=false;upgrade.hidden=profile?.id!==entry.id||profile?.member;}
+    }
+   };
+   photo.addEventListener('load',loaded,{once:true});if(photo.complete&&photo.naturalWidth)loaded();
+   photo.addEventListener('error',()=>{if(frame.firstElementChild===image)q('.ncn-avatar-caption',portrait).textContent='Ảnh chưa tải được. Thử mở lại sau nhé.';},{once:true});
+  }
   if(!portrait.open)portrait.showModal();
  }
  q('[data-avatar-close]',portrait).addEventListener('click',()=>portrait.close());
+ q('[data-avatar-upgrade]',portrait).addEventListener('click',()=>portrait.close('upgrade'));
  portrait.addEventListener('click',event=>{if(event.target!==portrait)return;const box=portrait.getBoundingClientRect();if(event.clientX<box.left||event.clientX>box.right||event.clientY<box.top||event.clientY>box.bottom)portrait.close();});
  portrait.addEventListener('close',()=>{
   q('.ncn-avatar-image',portrait).replaceChildren();
+  if(portrait.returnValue==='upgrade'&&profile?.id===portraitOwner&&!profile.member){
+   portraitTrigger=null;portraitOwner=null;if(expanded.open)expanded.close();showProfile();profileStatus.textContent='Chọn lại ảnh gốc rõ nét rồi bấm Lưu hồ sơ. Điểm và tên người chơi được giữ nguyên.';return;
+  }
   const target=portraitTrigger?.isConnected&&!portraitTrigger.closest('dialog:not([open])')?portraitTrigger:expanded.open?q('[data-close-rank]',expanded):q('[data-rank-expand]');
-  target?.focus({preventScroll:true});portraitTrigger=null;
+  target?.focus({preventScroll:true});portraitTrigger=null;portraitOwner=null;
  });
  function player(){
   const box=q('.ncn-score-player');box.replaceChildren(avatarNode(profile?.avatar));const copy=document.createElement('span'),name=document.createElement('strong'),note=document.createElement('small');name.textContent=profile?.name||'Bạn sẽ lên bảng với tên nào?';note.textContent=profile?(profile.member?`Tài khoản NCN · Dùng chung ${ARCADE_COUNT} game`:`Hồ sơ khách · Dùng chung ${ARCADE_COUNT} game`):'Thêm tên và ảnh khi bắt đầu chơi';copy.append(name,note);const b=document.createElement('button');b.type='button';b.textContent=profile?.member?'Tài khoản NCN':profile?'Sửa hồ sơ':'Thêm hồ sơ';b.addEventListener('click',()=>{pause();if(profile?.member)window.NCNAccount?.open('profile');else showProfile();});box.append(copy,b);
@@ -104,7 +122,7 @@ export function mountScores({game='snake',host=document.body,anchor,pause=()=>{}
  q('[data-profile-login]',dialog).addEventListener('click',()=>{dialog.close();window.NCNAccount?.open('login');});
  q('input[type=file]',dialog).addEventListener('change',async event=>{
   const file=event.target.files?.[0];if(!file)return;if(file.size>12*1024*1024){profileStatus.textContent='Chọn ảnh dưới 12 MB nhé.';return;}
-  let bitmap;try{bitmap=await createImageBitmap(file);const canvas=document.createElement('canvas');canvas.width=canvas.height=128;const ctx=canvas.getContext('2d'),side=Math.min(bitmap.width,bitmap.height);ctx.fillStyle='#dceada';ctx.fillRect(0,0,128,128);ctx.drawImage(bitmap,(bitmap.width-side)/2,(bitmap.height-side)/2,side,side,0,0,128,128);choice=canvas.toDataURL('image/jpeg',.85);preview();profileStatus.textContent='Đã chọn ảnh. Lưu hồ sơ để dùng ảnh này.';}catch{profileStatus.textContent='Ảnh chưa đọc được. Chọn JPG, PNG hoặc WebP nhé.';}finally{bitmap?.close();event.target.value='';}
+  let bitmap;try{bitmap=await createImageBitmap(file);const canvas=document.createElement('canvas'),side=Math.min(bitmap.width,bitmap.height),size=Math.min(768,side);canvas.width=canvas.height=size;const ctx=canvas.getContext('2d');ctx.imageSmoothingQuality='high';ctx.fillStyle='#dceada';ctx.fillRect(0,0,size,size);ctx.drawImage(bitmap,(bitmap.width-side)/2,(bitmap.height-side)/2,side,side,0,0,size,size);choice=canvas.toDataURL('image/jpeg',.92);preview();profileStatus.textContent=size<384?'Đã chọn ảnh. Ảnh gốc hơi nhỏ; chọn ảnh lớn hơn nếu muốn xem rõ khi phóng to.':'Đã chọn ảnh rõ nét. Lưu hồ sơ để dùng ảnh này.';}catch{profileStatus.textContent='Ảnh chưa đọc được. Chọn JPG, PNG hoặc WebP nhé.';}finally{bitmap?.close();event.target.value='';}
  });
  form.addEventListener('submit',async event=>{
   event.preventDefault();const submit=q('[type=submit]',dialog);submit.disabled=true;profileStatus.textContent='Đang lưu hồ sơ…';const epoch=profileEpoch;
