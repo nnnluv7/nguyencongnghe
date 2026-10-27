@@ -14,7 +14,7 @@ export function createProfileHandler(deps){return async req=>{
   if(req.headers.get('origin')!==url.origin)fail(403,'Yêu cầu phải gửi từ chính website.');
   const user=await deps.verify(req);if(!user)fail(401,'Đăng nhập tài khoản NCN đã xác nhận email để thêm ảnh đại diện.');
   if(!(req.headers.get('content-type')||'').startsWith('application/json'))fail(415,'Dữ liệu cần ở dạng JSON.');
-  if(Number(req.headers.get('content-length')||0)>240000)fail(413,'Ảnh quá lớn. Chọn ảnh khác nhé.');const raw=await req.text();if(Buffer.byteLength(raw)>240000)fail(413,'Ảnh quá lớn. Chọn ảnh khác nhé.');
+  if(Number(req.headers.get('content-length')||0)>1200000)fail(413,'Ảnh quá lớn. Chọn ảnh khác nhé.');const raw=await req.text();if(Buffer.byteLength(raw)>1200000)fail(413,'Ảnh quá lớn. Chọn ảnh khác nhé.');
   let data;try{data=JSON.parse(raw);}catch{fail(400,'Dữ liệu không hợp lệ.');}
   const match=typeof data?.image==='string'&&data.image.match(/^data:image\/(?:jpeg|png|webp);base64,([A-Za-z0-9+/=]+)$/);if(!match)fail(400,'Chọn ảnh JPG, PNG hoặc WebP.');
   let bytes;try{bytes=await deps.photo(Buffer.from(match[1],'base64'));}catch{fail(400,'Ảnh chưa đọc được. Chọn ảnh khác nhé.');}

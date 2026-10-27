@@ -3,6 +3,7 @@ import {readFile,stat,mkdir,writeFile} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
 import assert from 'node:assert/strict';
 import sharp from 'sharp';
+import {createHash} from 'node:crypto';
 import {createProfileHandler} from '../../netlify/lib/ncn-profile-api.mjs';
 import {createScoresHandler} from '../../netlify/lib/ncn-scores-api.mjs';
 import {scorePhoto} from '../../netlify/lib/ncn-score-photos.mjs';
@@ -23,7 +24,7 @@ const raw=user=>({id:user.id,email:user.email,confirmed_at:'2026-09-01T12:00:00Z
 function session(user){const jwt=Buffer.from('{"alg":"fixture"}').toString('base64url')+'.'+Buffer.from(JSON.stringify({sub:user.id,email:user.email,exp:Math.floor(Date.now()/1000)+3600})).toString('base64url')+'.fixture';tokens.set(jwt,user);return {access_token:jwt,refresh_token:'refresh-'+user.id,token_type:'bearer',expires_in:3600,user:raw(user)};}
 const authenticated=req=>tokens.get(decodeURIComponent((req.headers.get('cookie')||'').match(/(?:^|;\s*)nf_jwt=([^;]+)/)?.[1]||''));
 const verify=req=>verifyIdentity(req,{url:origin+'/.netlify/identity'},async()=>{const user=authenticated(req);return user?Response.json(raw(user)):new Response('',{status:401});},{includeAvatar:true,includeJoined:true});
-const profileHandler=createProfileHandler({production:()=>true,verify,store:()=>photos,photo:bytes=>scorePhoto(bytes,192)});
+const profileHandler=createProfileHandler({production:()=>true,verify,store:()=>photos,photo:scorePhoto});
 const scoreHandler=createScoresHandler({production:()=>true,verify,store:()=>scores,now:()=>now,photo:scorePhoto});
 const browser=await chromium.launch(),context=await browser.newContext({viewport:{width:1280,height:1000}});
 await mkdir(out,{recursive:true});
@@ -58,7 +59,7 @@ async function open(path='/arcade/'){await page.goto(origin+path);await page.wai
 async function check(name,fn){try{await fn();results.push({name,ok:true});console.log('PASS '+name);}catch(error){results.push({name,ok:false,error:error.message});console.log(await page.locator('#ncn-account-message').textContent().catch(()=>''));await page.screenshot({path:out+'/failure.jpg',fullPage:true}).catch(()=>{});throw error;}}
 async function manage(tab='profile'){if(await page.locator('#ncn-account-dialog[open]').count())await page.locator('[data-account-close]').click();await page.evaluate(()=>scrollTo(0,0));await page.locator('.ncn-account-menu>summary').click();await page.locator('#auth-header-desktop [data-ncn-account-open='+tab+']').click();await page.locator('.ncn-member-panel').waitFor();}
 async function login(){const form=page.locator('[data-account-form=login]');await form.locator('[name=email]').fill(member.email);await form.locator('[name=password]').fill(member.password);await form.locator('[type=submit]').click();await page.waitForFunction(()=>!!NCNAccount.state.user&&!NCNAccount.state.busy);}
-const photo=await sharp({create:{width:420,height:280,channels:3,background:'#3187bc'}}).png().toBuffer();
+const photo=await sharp({create:{width:1024,height:900,channels:3,background:'#3187bc'}}).png().toBuffer();
 let avatar;
 try{
  await check('anonymous menu survives theme mounting and redirects account management to the shared login',async()=>{
@@ -77,6 +78,7 @@ try{
   assert.equal(photos.entries.size,0,'Choosing a photo alone must not upload it');await page.locator('[data-member-form] [type=submit]').click();await page.locator('#ncn-account-message').filter({hasText:'Đã cập nhật'}).waitFor();
   assert.equal(updates.length,1);assert.deepEqual(Object.keys(updates[0]),['data']);assert.deepEqual(Object.keys(updates[0].data).sort(),['avatar_url','full_name']);assert.equal(member.metadata.keep,'preserved');
   avatar=member.metadata.avatar_url;assert.match(avatar,/ncn-profile\?route=avatar&id=[a-f0-9]{64}$/);assert.equal(photos.entries.size,1);assert.equal(await page.locator('[data-account-avatar] img').getAttribute('src'),avatar);assert.equal(await page.evaluate(()=>NCNAccount.state.user.vip),true);assert.equal(await page.evaluate(()=>NCNAccount.state.user.admin),false);
+  const saved=[...photos.entries.values()][0].data,dimensions=await sharp(saved).metadata();assert.equal(dimensions.width,768);assert.equal(dimensions.height,768);
   assert.equal((await ledger.get(memberKey(member.id))).expiresAt,'2026-11-25T12:00:00Z');await page.screenshot({path:out+'/profile-desktop.jpg',fullPage:true});await page.locator('#ncn-account-dialog').screenshot({path:out+'/profile-panel.png'});
  });
  await check('profile and VIP fit narrow phone screens and dark mode without horizontal overflow',async()=>{
@@ -95,6 +97,15 @@ try{
  });
  await check('a changed avatar alone publishes account changes and refreshes Arcade on the current page',async()=>{
   await manage();const second=await sharp({create:{width:300,height:360,channels:3,background:'#c184a7'}}).png().toBuffer();await page.locator('#ncn-member-photo').setInputFiles({name:'new.png',mimeType:'image/png',buffer:second});await page.locator('#ncn-account-message').filter({hasText:'Đã chọn ảnh'}).waitFor();await page.locator('[data-member-form] [type=submit]').click();await page.locator('#ncn-account-message').filter({hasText:'Đã cập nhật'}).waitFor();const previous=avatar;avatar=member.metadata.avatar_url;assert.notEqual(avatar,previous);await page.locator('[data-account-close]').click();await page.waitForFunction(a=>document.querySelector('.ncn-score-player img')?.src===a,avatar);
+ });
+ await check('a member upgrades a legacy 192px portrait through account management while points, identity and VIP stay intact',async()=>{
+  if(await page.locator('#ncn-account-dialog[open]').count())await page.locator('[data-account-close]').click();
+  const oldBytes=await sharp(photo).resize(192,192,{fit:'cover'}).webp().toBuffer(),hash=createHash('sha256').update(oldBytes).digest('hex'),oldAvatar=origin+'/.netlify/functions/ncn-profile?route=avatar&id='+hash;await photos.set('avatar/'+hash,oldBytes);member.metadata.avatar_url=oldAvatar;
+  const cookie=(await context.cookies()).find(x=>x.name==='nf_jwt'),call=async(route,data)=>{const response=await scoreHandler(new Request(origin+'/.netlify/functions/ncn-scores?route='+route,{method:'POST',headers:{Origin:origin,Cookie:'nf_jwt='+cookie.value,'Content-Type':'application/json'},body:JSON.stringify(data)}));assert.equal(response.status,200);return response.json();};
+  const started=await call('start',{game:'bubble',mode:'journey'});now+=20000;await call('score',{runId:started.runId,score:500,level:1});const bestKey='best/'+started.owner+'/bubble/journey',best=await scores.get(bestKey),paid=await ledger.get(memberKey(member.id));
+  await open('/ban-bong/');await page.locator('#ncn-scoreboard .ncn-score-row.is-you .ncn-score-avatar-button').click();await page.locator('.ncn-avatar-quality').filter({hasText:'Quản lý tài khoản'}).waitFor();await page.locator('[data-avatar-upgrade]').click();await page.locator('[data-member-form]').waitFor();assert.equal(await page.locator('.ncn-arcade-profile[open]').count(),0);assert.equal(await page.locator('#ncn-member-name').inputValue(),'Tên dùng chung');
+  await page.locator('#ncn-member-photo').setInputFiles({name:'original.png',mimeType:'image/png',buffer:photo});await page.locator('#ncn-account-message').filter({hasText:'Đã chọn ảnh'}).waitFor();await page.locator('[data-member-form] [type=submit]').click();await page.locator('#ncn-account-message').filter({hasText:'Đã cập nhật'}).waitFor();avatar=member.metadata.avatar_url;assert.notEqual(avatar,oldAvatar);assert.deepEqual(await scores.get(bestKey),best);assert.deepEqual(await ledger.get(memberKey(member.id)),paid);assert.equal(member.metadata.keep,'preserved');assert.deepEqual(Object.keys(updates.at(-1).data).sort(),['avatar_url','full_name']);
+  await page.waitForFunction(value=>document.querySelector('#ncn-scoreboard .ncn-score-row.is-you img')?.src===value,avatar);const row=await scores.get(best.key);assert.equal(row.id,started.owner);assert.equal(row.score,500);assert.equal(row.avatar,avatar);await page.locator('[data-account-close]').click();await page.locator('#ncn-scoreboard .ncn-score-row.is-you .ncn-score-avatar-button').click();await page.waitForFunction(()=>document.querySelector('.ncn-avatar-image img')?.naturalWidth===768);assert.equal(await page.locator('.ncn-avatar-quality').isVisible(),false);await page.screenshot({path:out+'/member-avatar-hd.jpg'});await page.locator('[data-avatar-close]').click();
  });
  await check('invalid files and a failed upload leave the saved profile intact and allow retry',async()=>{
   await manage();await page.locator('#ncn-member-photo').setInputFiles({name:'bad.svg',mimeType:'image/svg+xml',buffer:Buffer.from('<svg/>')});await page.locator('#ncn-account-message').filter({hasText:'Chọn ảnh JPG'}).waitFor();

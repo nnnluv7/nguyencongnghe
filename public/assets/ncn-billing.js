@@ -1,5 +1,5 @@
 import * as identityClient from './ncn-identity-client.js';
-import {getAccount} from './ncn-account.js?v=20261026-profile-1';
+import {getAccount} from './ncn-account.js?v=20261027-avatar-hd-1';
 
 const ENDPOINT='/.netlify/functions/ncn-billing';
 const money=value=>Number(value).toLocaleString('vi-VN')+'đ';

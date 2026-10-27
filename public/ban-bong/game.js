@@ -1,4 +1,4 @@
-import {mountScores} from '../assets/ncn-arcade/arcade.js?v=20261027-avatar-hd-1';
+import {mountScores} from '../assets/ncn-arcade/arcade.js?v=20261027-avatar-hd-2';
 import {vietnamDate} from '../assets/ncn-arcade/catalog.js?v=20261027-bubble-1';
 import {WIDTH,HEIGHT,LAUNCHER,MAX_ANGLE,MODES,WORLDS,maxLevels,levelSpec,createGame,shoot,swap,advance,readSave,readProgress,cells} from './core.js?v=20261027-bubble-1';
 import {createRenderer,COLORS,COLOR_NAMES} from './render.js?v=20261027-bubble-1';

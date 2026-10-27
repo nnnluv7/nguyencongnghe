@@ -46,21 +46,21 @@ export function mountScores({game='snake',host=document.body,anchor,pause=()=>{}
     const size=Math.min(photo.naturalWidth,photo.naturalHeight);
     if(size>0&&size<384){
      frame.style.setProperty('--ncn-avatar-max',size*2+'px');
-     if(!entry.member){quality.textContent='Ảnh này đang ở chất lượng thấp. Người chơi có thể chọn lại ảnh gốc trong “Sửa hồ sơ” để xem rõ hơn.';quality.hidden=false;upgrade.hidden=profile?.id!==entry.id||profile?.member;}
+     quality.textContent=entry.member?'Ảnh này đang ở chất lượng thấp. Người chơi có thể chọn lại ảnh gốc trong “Quản lý tài khoản” để xem rõ hơn.':'Ảnh này đang ở chất lượng thấp. Người chơi có thể chọn lại ảnh gốc trong “Sửa hồ sơ” để xem rõ hơn.';quality.hidden=false;upgrade.hidden=profile?.id!==entry.id;
     }
    };
    photo.addEventListener('load',loaded,{once:true});if(photo.complete&&photo.naturalWidth)loaded();
    photo.addEventListener('error',()=>{if(frame.firstElementChild===image)q('.ncn-avatar-caption',portrait).textContent='Ảnh chưa tải được. Thử mở lại sau nhé.';},{once:true});
   }
-  if(!portrait.open)portrait.showModal();
+  if(!portrait.open)portrait.showModal();portrait.scrollTop=0;
  }
  q('[data-avatar-close]',portrait).addEventListener('click',()=>portrait.close());
  q('[data-avatar-upgrade]',portrait).addEventListener('click',()=>portrait.close('upgrade'));
  portrait.addEventListener('click',event=>{if(event.target!==portrait)return;const box=portrait.getBoundingClientRect();if(event.clientX<box.left||event.clientX>box.right||event.clientY<box.top||event.clientY>box.bottom)portrait.close();});
  portrait.addEventListener('close',()=>{
   q('.ncn-avatar-image',portrait).replaceChildren();
-  if(portrait.returnValue==='upgrade'&&profile?.id===portraitOwner&&!profile.member){
-   portraitTrigger=null;portraitOwner=null;if(expanded.open)expanded.close();showProfile();profileStatus.textContent='Chọn lại ảnh gốc rõ nét rồi bấm Lưu hồ sơ. Điểm và tên người chơi được giữ nguyên.';return;
+  if(portrait.returnValue==='upgrade'&&profile?.id===portraitOwner){
+   portraitTrigger=null;portraitOwner=null;if(expanded.open)expanded.close();if(profile.member)window.NCNAccount?.open('profile');else{showProfile();profileStatus.textContent='Chọn lại ảnh gốc rõ nét rồi bấm Lưu hồ sơ. Điểm và tên người chơi được giữ nguyên.';}return;
   }
   const target=portraitTrigger?.isConnected&&!portraitTrigger.closest('dialog:not([open])')?portraitTrigger:expanded.open?q('[data-close-rank]',expanded):q('[data-rank-expand]');
   target?.focus({preventScroll:true});portraitTrigger=null;portraitOwner=null;

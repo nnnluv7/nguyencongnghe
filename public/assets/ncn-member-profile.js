@@ -37,7 +37,7 @@ export async function avatarPreview(file,win=globalThis){
   if(win.createImageBitmap)source=await win.createImageBitmap(file);
   else{source=new win.Image();objectURL=win.URL.createObjectURL(file);source.src=objectURL;await source.decode();}
   const side=Math.min(source.width,source.height);if(!side)throw Error('Empty image');
-  const canvas=win.document.createElement('canvas');canvas.width=canvas.height=256;const ctx=canvas.getContext('2d');ctx.fillStyle='#dce9ee';ctx.fillRect(0,0,256,256);ctx.drawImage(source,(source.width-side)/2,(source.height-side)/2,side,side,0,0,256,256);return canvas.toDataURL('image/jpeg',.87);
+  const canvas=win.document.createElement('canvas'),size=Math.min(768,side);canvas.width=canvas.height=size;const ctx=canvas.getContext('2d');ctx.imageSmoothingQuality='high';ctx.fillStyle='#dce9ee';ctx.fillRect(0,0,size,size);ctx.drawImage(source,(source.width-side)/2,(source.height-side)/2,side,side,0,0,size,size);return canvas.toDataURL('image/jpeg',.92);
  }catch(error){if(error.message==='Chọn ảnh dưới 12 MB nhé.')throw error;throw new Error('Ảnh chưa đọc được. Chọn ảnh khác nhé.');}
  finally{source?.close?.();if(objectURL)win.URL.revokeObjectURL(objectURL);}
 }

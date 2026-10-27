@@ -1,4 +1,4 @@
-import {mountScores} from '../assets/ncn-arcade/arcade.js?v=20261027-avatar-hd-1';
+import {mountScores} from '../assets/ncn-arcade/arcade.js?v=20261027-avatar-hd-2';
 import {Arena,SKINS,TAU,clamp,hash,vietnamDate,challengeDate,cleanProfile,awardProfile} from './core.js?v=20261025-snake-1';
 
 const $=id=>document.getElementById('rl-'+id),stage=$('stage'),canvas=$('canvas'),ctx=canvas.getContext('2d',{alpha:false}),radar=$('radar').getContext('2d');

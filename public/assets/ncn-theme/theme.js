@@ -1,5 +1,5 @@
 import {articleCardHTML,libraryLabelName,libraryLabels,latestArticles,featuredArticles} from './catalogue.js?v=20261025-sync-1';
-import '../ncn-account.js?v=20261026-profile-1';
+import '../ncn-account.js?v=20261027-avatar-hd-1';
 import {installAppearance} from './appearance.js?v=20261017-mobile-dark-1';
 // A metrics request must never delay or prevent the actual interface.
 if(typeof window!=='undefined')import('./visitor-counter.js?v=20261016-easy-2').catch(()=>{});

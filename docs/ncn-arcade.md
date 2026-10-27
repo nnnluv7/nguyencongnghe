@@ -14,13 +14,13 @@ retained. Each game's controls, local progress and record keys are retained.
   A random 256-bit `__Host-ncn_arcade` cookie (Secure, HttpOnly, SameSite=Lax,
   Path=/, one year) identifies the guest on this browser across all six games.
   Cookie reset/new device means a new guest; NCN accounts work across devices.
-- Uploaded guest photos are cropped to at most 768px in the browser at high
+- Uploaded member and guest photos are cropped to at most 768px in the browser at high
   quality, decoded with the existing one-megapixel limit, re-encoded to 768px
   WebP on the server and served by content hash. Small sources are never enlarged.
   Profile uploads accept at most 1.2 MB of JSON; score/start limits stay 240 KB.
-  Old 96px uploads remain valid and immutable. Their viewer avoids stretching
+  Old guest 96px and member 192px uploads remain valid and immutable. Their viewer avoids stretching
   past twice the source size, explains the quality limit and lets the owning
-  guest reopen their profile to upload the original once, keeping all scores.
+  player reopen the appropriate account or guest profile to upload the original once, keeping all scores.
   SVG uploads, arbitrary URLs, control characters and email display names are
   rejected. Raw Identity IDs, email, cookies and run secrets are never in rows.
 - Every public ranking avatar is a keyboard/touch button opening a larger

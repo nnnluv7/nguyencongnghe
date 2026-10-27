@@ -10,12 +10,13 @@ import {displayProfile} from '../public/assets/ncn-account-session.js';
 import {memoryStore} from './fixtures/arcade-store.mjs';
 import {createScoresHandler} from '../netlify/lib/ncn-scores-api.mjs';
 import {GAMES} from '../public/assets/ncn-arcade/catalog.js';
+import {randomBytes} from 'node:crypto';
 
 const origin='https://nguyencongnghe.com',now=Date.parse('2026-10-26T12:00:00Z');
 const user={id:'verified-member',email:'private@example.test',name:'Nguyễn Công Nghệ',vip:false,admin:false};
-function fixture(){const f={user,production:true,store:memoryStore()};f.handler=createProfileHandler({production:()=>f.production,verify:async()=>f.user,store:()=>f.store,photo:bytes=>scorePhoto(bytes,192)});return f;}
+function fixture(){const f={user,production:true,store:memoryStore()};f.handler=createProfileHandler({production:()=>f.production,verify:async()=>f.user,store:()=>f.store,photo:scorePhoto});return f;}
 const request=(route='upload',data,headers={})=>new Request(origin+'/.netlify/functions/ncn-profile?route='+route,{method:data===undefined?'GET':'POST',headers:{Origin:origin,...(data===undefined?{}:{'Content-Type':'application/json'}),...headers},...(data===undefined?{}:{body:typeof data==='string'?data:JSON.stringify(data)})});
-const image=async()=>({image:'data:image/png;base64,'+(await sharp({create:{width:320,height:260,channels:3,background:'#79acd4'}}).png().toBuffer()).toString('base64')});
+const image=async()=>({image:'data:image/png;base64,'+(await sharp({create:{width:900,height:768,channels:3,background:'#79acd4'}}).withMetadata().png().toBuffer()).toString('base64')});
 
 test('profile edits update display metadata only and preserve a photo on name-only saves',()=>{
  assert.deepEqual(profileUpdate('  Nguyễn\u202e Công\u0000   Nghệ  '),{data:{full_name:'Nguyễn Công Nghệ'}});
@@ -49,12 +50,18 @@ test('adding display fields preserves the existing paid ledger and manual VIP ru
  const result=await withPaidVip(member,store,now);assert.equal(result.vip,true);assert.equal(result.vipSource,'payment');assert.equal(result.avatar,member.avatar);assert.equal(result.createdAt,member.createdAt);assert.deepEqual(await store.get(memberKey(user.id)),record);
  assert.equal((await withPaidVip({...member,vip:true},store,now)).vipSource,'manual');
 });
-test('members upload a normalized immutable 192px WebP; public URLs contain no account identifiers',async()=>{
+test('members upload a detailed immutable 768px WebP; public URLs contain no account identifiers',async()=>{
  const f=fixture(),response=await f.handler(request('upload',{...await image(),owner:'someone-else',roles:['admin']}));assert.equal(response.status,200);
  const {avatar}=await response.json();assert.match(avatar,/^https:\/\/nguyencongnghe\.com\/\.netlify\/functions\/ncn-profile\?route=avatar&id=[a-f0-9]{64}$/);
  assert.equal(avatar.includes(user.id),false);assert.equal(avatar.includes(user.email),false);assert.equal(f.store.entries.size,1);
- const photo=await f.handler(new Request(avatar)),bytes=Buffer.from(await photo.arrayBuffer()),meta=await sharp(bytes).metadata();assert.equal(photo.status,200);assert.equal(meta.format,'webp');assert.equal(meta.width,192);assert.equal(meta.height,192);assert.equal(meta.exif,undefined);assert.equal(meta.icc,undefined);assert.match(photo.headers.get('cache-control'),/immutable/);
+ const photo=await f.handler(new Request(avatar)),bytes=Buffer.from(await photo.arrayBuffer()),meta=await sharp(bytes).metadata();assert.equal(photo.status,200);assert.equal(meta.format,'webp');assert.equal(meta.width,768);assert.equal(meta.height,768);assert.equal(meta.exif,undefined);assert.equal(meta.icc,undefined);assert.match(photo.headers.get('cache-control'),/immutable/);
  await f.handler(request('upload',await image()));assert.equal(f.store.entries.size,1);assert.deepEqual(f.user,user);
+});
+test('member photos above the old body limit upload without enlarging small sources or changing old immutable photos',async()=>{
+ const f=fixture(),bytes=await sharp(randomBytes(768*768*3),{raw:{width:768,height:768,channels:3}}).jpeg({quality:90}).toBuffer(),data={image:'data:image/jpeg;base64,'+bytes.toString('base64')};assert.ok(Buffer.byteLength(JSON.stringify(data))>240000);
+ const large=await f.handler(request('upload',data));assert.equal(large.status,200);const largeUrl=(await large.json()).avatar;assert.equal((await sharp(Buffer.from(await (await f.handler(new Request(largeUrl))).arrayBuffer())).metadata()).width,768);
+ const small=await sharp({create:{width:192,height:192,channels:3,background:'#79acd4'}}).png().toBuffer(),saved=await f.handler(request('upload',{image:'data:image/png;base64,'+small.toString('base64')}));assert.equal(saved.status,200);const smallUrl=(await saved.json()).avatar,old=Buffer.from(await (await f.handler(new Request(smallUrl))).arrayBuffer());assert.equal((await sharp(old).metadata()).width,192);
+ await f.handler(request('upload',await image()));assert.deepEqual(Buffer.from(await (await f.handler(new Request(smallUrl))).arrayBuffer()),old);
 });
 test('guests, cross-origin requests and preview deployments cannot write member photos',async()=>{
  const f=fixture(),data=await image();f.user=null;assert.equal((await f.handler(request('upload',data))).status,401);
@@ -63,7 +70,8 @@ test('guests, cross-origin requests and preview deployments cannot write member 
 });
 test('malformed, oversized and unsupported photos fail without storing data',async()=>{
  const f=fixture();for(const data of ['bad',{}, {image:'data:image/svg+xml;base64,PHN2Zz4='},{image:'data:image/jpeg;base64,YmFk'}])assert.equal((await f.handler(request('upload',data))).status,400);
- assert.equal((await f.handler(request('upload',{image:'a'.repeat(240001)}))).status,413);
+ assert.equal((await f.handler(request('upload',{image:'a'.repeat(1200001)}))).status,413);
+ assert.equal((await f.handler(request('upload',{}, {'Content-Length':'1200001'}))).status,413);
  assert.equal((await f.handler(request('upload',await image(),{'Content-Type':'text/plain'}))).status,415);
  const huge=await sharp({create:{width:1100,height:1100,channels:3,background:'#fff'}}).png().toBuffer();assert.equal((await f.handler(request('upload',{image:'data:image/png;base64,'+huge.toString('base64')}))).status,400);
  assert.equal(f.store.entries.size,0);assert.equal((await f.handler(request('avatar&id=bad'))).status,404);assert.equal((await f.handler(request('avatar&id='+'a'.repeat(64)))).status,404);

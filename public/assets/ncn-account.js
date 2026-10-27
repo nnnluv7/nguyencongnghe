@@ -1,7 +1,7 @@
 import {ARCADE_COUNT} from './ncn-arcade/catalog.js?v=20261027-bubble-1';
 import * as identityClient from './ncn-identity-client.js';
 import {readDisplayProfile,saveDisplayProfile,displayProfile} from './ncn-account-session.js?v=20261026-profile-1';
-import {mountMemberPanel,paintAvatar,profileUpdate} from './ncn-member-profile.js?v=20261026-profile-1';
+import {mountMemberPanel,paintAvatar,profileUpdate} from './ncn-member-profile.js?v=20261027-avatar-hd-1';
 
 const accounts=new WeakMap();
 const labels={login:'Đăng nhập',register:'Tạo tài khoản',recovery:'Quên mật khẩu',reset:'Đặt mật khẩu mới',profile:'Tài khoản NCN',vip:'Thông tin VIP'};
