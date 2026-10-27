@@ -1,5 +1,5 @@
 /* Compact Liquid Glass notice, independent of the portal/game content styles. */
-#ncn-announcement[hidden],[data-ncn-announcement-admin][hidden],#ncn-notice-editor[hidden],#ncn-notice-access[hidden]{display:none!important}
+#ncn-announcement[hidden],#ncn-notice-editor[hidden],#ncn-notice-access[hidden]{display:none!important}
 #ncn-announcement{box-sizing:border-box;position:fixed;z-index:1010;top:max(5px,env(safe-area-inset-top));left:max(12px,calc((100vw - 1392px)/2));right:max(12px,calc((100vw - 1392px)/2));height:38px;display:flex;align-items:center;gap:10px;padding:3px 5px 3px 4px;border:1px solid #ffffffc9;border-radius:999px;color:#174c9b;background:linear-gradient(110deg,#e8f4fff2,#eff2fff0);box-shadow:0 4px 20px #2864c71c,inset 0 1px 0 #fff;font:650 13px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;-webkit-backdrop-filter:blur(22px) saturate(160%);backdrop-filter:blur(22px) saturate(160%)}
 .ncn-announcement-bell{display:grid;place-items:center;flex:0 0 30px;height:30px;border-radius:50%;background:linear-gradient(140deg,#ffffffed,#b8d9ff70);border:1px solid #fff;box-shadow:inset 0 1px 1px #fff,0 2px 7px #2864c726}
 .ncn-announcement-bell svg{display:block;width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}

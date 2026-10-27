@@ -136,7 +136,6 @@ export function mountAccount({doc=document,win=window,identity=identityClient,fe
     fill(auth);fill($('auth-header-mobile'));
     doc.querySelectorAll('.ncn-account-dropdown>a[href="/premium/"]').forEach(el=>el.textContent='Đăng ký / gia hạn VIP ↗');
     doc.querySelectorAll('[data-account-mode=register],[data-ncn-account-open=register]').forEach(b=>b.hidden=!!state.settings?.disableSignup);
-    doc.querySelectorAll('[data-ncn-announcement-admin]').forEach(el=>el.hidden=!verified?.admin);
     renderAdminNavigation();
     member.render(state.user,{tab:state.mode,busy:state.busy,serverOffset:state.serverOffset});
     if(win.QuizSystem)win.QuizSystem.user=quizProfile(verified,hint);

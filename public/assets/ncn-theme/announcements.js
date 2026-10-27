@@ -1,5 +1,5 @@
 import './scroll-ui.js?v=20261024-compact-1';
-/* Shared public ticker. Only the server decides who can manage it. */
+/* Shared public ticker. Announcement management lives in the Admin console. */
 const endpoint='/.netlify/functions/ncn-announcements';
 export async function callAnnouncements(route,data){
   const response=await fetch(endpoint+'?route='+route,{credentials:'same-origin',cache:'no-store',signal:AbortSignal.timeout(12000),method:data?'POST':'GET',headers:data?{'Content-Type':'application/json'}:{},body:data?JSON.stringify(data):undefined});
@@ -52,8 +52,6 @@ export function installAnnouncements({doc=document,win=window,call=callAnnouncem
   win.addEventListener('resize',queueLayout);
   doc.fonts?.ready.then(queueLayout);
   const timer=win.setInterval(refresh,30000);refresh();
-  // Avoid extra Identity requests for visitors without an existing session cookie.
-  if(/(?:^|;\s*)nf_jwt=/.test(doc.cookie))call('me').then(result=>{doc.querySelectorAll('[data-ncn-announcement-admin]').forEach(link=>link.hidden=!result.admin);}).catch(()=>{});
   return {refresh,destroy(){destroyed=true;win.clearInterval(timer);win.cancelAnimationFrame(resizeFrame);win.removeEventListener('resize',queueLayout);doc.removeEventListener('visibilitychange',visible);win.removeEventListener('pageshow',visible);win.removeEventListener('ncn-announcements-changed',refresh);}};
 }
 if(typeof document!=='undefined')installAnnouncements();
