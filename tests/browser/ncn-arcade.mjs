@@ -31,10 +31,15 @@ async function fixture({signed=false,storageBlocked=false,touch=false}={}){
   if(url.pathname==='/.netlify/functions/ncn-scores'){
    const action=url.searchParams.get('route');calls.push({action,body:request.postData(),store});
    if(action==='score'&&f.failScore)return json({error:'Fixture offline'},503);
+   if(action==='profile'&&request.method()==='POST'&&f.failProfile)return json({error:'Lưu ảnh đang chậm. Thử lại nhé.'},503);
    const req=new Request(request.url(),{method:request.method(),headers,...(request.method()==='POST'?{body:request.postData()}:{})}),response=await handler(req);
    // Hold the response after the server has created the run. The client must
    // accept input while waiting, with both clocks measuring the same play time.
    if(action==='start'&&f.delayStart){f.startSeen?.();await f.delayStart;}
+   if(action==='profile'&&request.method()==='POST'){
+    if(f.profileHold){f.profileHold.started();await f.profileHold.wait;}
+    if(f.dropProfileOnce){f.dropProfileOnce=false;return route.abort('failed');}
+   }
    return route.fulfill({status:response.status,headers:Object.fromEntries(response.headers),body:Buffer.from(await response.arrayBuffer())});
   }
   if(url.pathname.startsWith('/.netlify/identity/')){
@@ -100,6 +105,19 @@ try{
   for(const [key,best]of bests){assert.deepEqual(await active.store.get(key),best);const row=await active.store.get(best.key);assert.equal(row.id,before.id);assert.equal(row.avatar,after.avatar);assert.equal(row.score,best.score);}
   assert.deepEqual(Buffer.from(await active.store.get('avatar/'+oldHash)),oldBytes);await page.locator('#ncn-scoreboard .ncn-score-avatar-button').click();await page.waitForFunction(()=>document.querySelector('.ncn-avatar-image img')?.naturalWidth===768);assert.equal(await page.locator('.ncn-avatar-quality').isVisible(),false);assert.equal(await page.locator('[data-avatar-upgrade]').isVisible(),false);
   await page.setViewportSize({width:390,height:844});await page.screenshot({path:out+'/avatar-hd-phone.jpg'});await page.locator('[data-avatar-close]').click();await page.setViewportSize({width:1440,height:1050});
+ });
+ await check('a photo save taking more than twelve seconds stays pending and a double submit sends only once',async()=>{
+  await page.locator('.ncn-score-player button').click();let release,started;const wait=new Promise(resolve=>release=resolve),seen=new Promise(resolve=>started=resolve);active.profileHold={wait,started};const posts=calls.filter(x=>x.store===active.store&&x.action==='profile'&&x.body).length;
+  await page.locator('.ncn-arcade-profile [type=submit]').click();await seen;await page.clock.fastForward(15000);assert.equal(await page.locator('.ncn-arcade-profile[open]').count(),1);assert.equal(await page.locator('.ncn-arcade-profile [type=submit]').isDisabled(),true);await page.locator('form', {has:page.locator('#ncn-player-name')}).evaluate(form=>form.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));assert.equal(calls.filter(x=>x.store===active.store&&x.action==='profile'&&x.body).length,posts+1);
+  release();active.profileHold=null;await page.locator('.ncn-arcade-profile').waitFor({state:'hidden'});assert.equal(await page.locator('.ncn-score-player strong').innerText(),'<img src=x> Bé Cá');
+ });
+ await check('a saved photo is recovered after its response is lost, without a second write or a new guest identity',async()=>{
+  const before=[...active.store.entries].find(([key])=>key.startsWith('profile/'))[1].data,posts=calls.filter(x=>x.store===active.store&&x.action==='profile'&&x.body).length;active.dropProfileOnce=true;await page.locator('.ncn-score-player button').click();await page.locator('.ncn-arcade-profile [type=submit]').click();await page.locator('.ncn-arcade-profile').waitFor({state:'hidden'});
+  assert.equal(calls.filter(x=>x.store===active.store&&x.action==='profile'&&x.body).length,posts+1);const after=[...active.store.entries].find(([key])=>key.startsWith('profile/'))[1].data;assert.equal(after.id,before.id);assert.equal(after.avatar,before.avatar);assert.notEqual(after.updateId,before.updateId);assert.equal([...active.store.entries.keys()].filter(key=>key.startsWith('profile/')).length,1);
+ });
+ await check('an unfinished save keeps the chosen photo and name through reconnection, then retries successfully',async()=>{
+  await page.locator('.ncn-score-player button').click();await page.locator('.ncn-avatar-upload').setInputFiles({name:'retry.png',mimeType:'image/png',buffer:photo});await page.locator('.ncn-arcade-profile [role=status]').filter({hasText:'Đã chọn ảnh'}).waitFor();const selected=await page.locator('.ncn-profile-preview img').getAttribute('src');active.failProfile=true;await page.locator('.ncn-arcade-profile [type=submit]').click();await page.locator('.ncn-arcade-profile [role=status]').filter({hasText:'Ảnh đã chọn vẫn được giữ lại'}).waitFor();assert.equal(await page.locator('.ncn-profile-preview img').getAttribute('src'),selected);assert.equal(await page.locator('#ncn-player-name').inputValue(),'<img src=x> Bé Cá');
+  await page.evaluate(()=>dispatchEvent(new Event('online')));await page.waitForFunction(()=>!document.querySelector('.ncn-arcade-profile [type=submit]').disabled);assert.equal(await page.locator('.ncn-arcade-profile[open]').count(),1);assert.equal(await page.locator('.ncn-profile-preview img').getAttribute('src'),selected);active.failProfile=false;await page.locator('.ncn-arcade-profile [type=submit]').click();await page.locator('.ncn-arcade-profile').waitFor({state:'hidden'});
  });
  await check('public top ten expands through every player, modes stay separate, and closing does not resume a paused game',async()=>{
   await seededRows(active);await open('/ran-luot/');await page.locator('[data-rank-refresh]').click();await page.waitForFunction(()=>document.querySelectorAll('#ncn-scoreboard .ncn-score-row').length===10);

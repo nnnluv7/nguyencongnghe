@@ -53,8 +53,13 @@ export function createScoresHandler(deps){return async req=>{
    if(!profile||profile.name!==name||profile.avatar!==avatar){profile={id,name,avatar,member:true};await store.setJSON('profile/'+id,profile);await refreshProfileEntries(store,profile);}
   }
   if(route==='profile'){
-   if(req.method==='GET')return json({profile:publicProfile(profile),needsProfile:!profile});
+   if(req.method==='GET'){
+    const confirm=url.searchParams.get('confirm');if(confirm&&profile?.updateId===confirm)await refreshProfileEntries(store,profile);
+    return json({profile:publicProfile(profile),needsProfile:!profile,...(profile?.updateId?{updateId:profile.updateId}:{})});
+   }
    const data=await body(req,1200000);if(user)return json({profile:publicProfile(profile)});
+   if(data.updateId!==undefined&&(typeof data.updateId!=='string'||!/^[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}$/i.test(data.updateId)))fail(400,'Lần lưu hồ sơ chưa hợp lệ. Mở lại hồ sơ rồi thử nhé.');
+   if(data.updateId&&profile?.updateId===data.updateId){await refreshProfileEntries(store,profile);return json({profile:publicProfile(profile),updateId:profile.updateId});}
    const name=cleanName(data.name);if(!name)fail(400,'Nhập tên hiển thị (tối đa 30 ký tự, không dùng email).');
    const secret=token||randomBytes(32).toString('base64url'),guestId=hash('guest:'+secret);
    let avatar=data.avatar;
@@ -66,8 +71,8 @@ export function createScoresHandler(deps){return async req=>{
     // Keeping a previous upload is allowed only for its original profile.
     if(!profile||avatar!==profile.avatar)fail(400,'Chọn một ảnh đại diện.');
    }
-   profile={id:guestId,name,avatar,member:false};await store.setJSON('profile/'+guestId,profile);await refreshProfileEntries(store,profile);
-   return json({profile:publicProfile(profile)},200,{'Set-Cookie':COOKIE+'='+secret+'; Path=/; Secure; HttpOnly; SameSite=Lax; Max-Age=31536000'});
+   profile={id:guestId,name,avatar,member:false,...(data.updateId?{updateId:data.updateId}:{})};await store.setJSON('profile/'+guestId,profile);await refreshProfileEntries(store,profile);
+   return json({profile:publicProfile(profile),...(profile.updateId?{updateId:profile.updateId}:{})},200,{'Set-Cookie':COOKIE+'='+secret+'; Path=/; Secure; HttpOnly; SameSite=Lax; Max-Age=31536000'});
   }
   if(route==='board'&&req.method==='GET'){
    const game=url.searchParams.get('game'),mode=url.searchParams.get('mode')||Object.keys(GAMES[game]?.modes||{})[0],board=gameBoard(game,mode,url.searchParams.get('date')||vietnamDate(new Date(now)));if(!board)fail(400,'Không tìm thấy bảng điểm.');

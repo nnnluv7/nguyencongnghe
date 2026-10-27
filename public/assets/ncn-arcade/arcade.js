@@ -1,13 +1,11 @@
 import {GAMES,AVATARS,GAME_ICONS,ARCADE_COUNT,vietnamDate} from './catalog.js?v=20261027-bubble-1';
+import {requestJSON} from '../ncn-profile-request.js?v=20261027-photo-save-1';
 
 const ENDPOINT='/.netlify/functions/ncn-scores',PROFILE_KEY='ncn:arcade:profile:v1',QUEUE_KEY='ncn:arcade:pending:v1';
 const read=key=>{try{return JSON.parse(localStorage.getItem(key)||'null');}catch{return null;}};
 const write=(key,value)=>{try{if(value===null)localStorage.removeItem(key);else localStorage.setItem(key,JSON.stringify(value));}catch{/* Storage denial must not block a game. */}};
 const number=n=>Math.floor(n||0).toLocaleString('vi-VN');
-async function api(route,data){
- const res=await fetch(ENDPOINT+'?route='+route,{method:data?'POST':'GET',credentials:'same-origin',cache:'no-store',headers:data?{'Content-Type':'application/json'}:{},...(data?{body:JSON.stringify(data)}:{}),signal:AbortSignal.timeout(12000)});
- const value=await res.json();if(!res.ok)throw Object.assign(new Error(value.error||'Chưa kết nối được bảng điểm.'),{status:res.status});return value;
-}
+const api=(route,data,options={})=>requestJSON(ENDPOINT+'?route='+route,{data,timeout:route==='profile'&&data?45000:12000,...options});
 function avatarNode(value){
  const span=document.createElement('span');span.className='ncn-score-avatar';
  if(typeof value==='string'&&(value.startsWith('/.netlify/functions/ncn-scores?route=avatar&id=')||/^https:\/\//.test(value))){const img=new Image();img.alt='';img.loading='lazy';img.referrerPolicy='no-referrer';img.src=value;img.addEventListener('error',()=>{span.replaceChildren(document.createTextNode('☺'));},{once:true});span.append(img);}else {const index=AVATARS.findIndex(x=>value==='preset:'+x),names=['cat','dog','panda','fox','frog','tiger','penguin','rabbit'];span.innerHTML='<svg viewBox="0 0 64 64" aria-hidden="true"><use href="/assets/ncn-arcade/avatars.svg#'+names[Math.max(0,index)]+'"></use></svg>';}return span;
@@ -30,7 +28,7 @@ export function mountScores({game='snake',host=document.body,anchor,pause=()=>{}
  const q=(s,root=section)=>root.querySelector(s),list=q('.ncn-score-list'),fullList=q('.ncn-score-list',expanded),more=q('.ncn-score-more',expanded),status=q('.ncn-score-status'),saveNote=q('.ncn-score-save'),form=q('form',dialog),profileStatus=q('.ncn-score-status',dialog);
  let profile=null,boardGame=game,boardMode=Object.keys(GAMES[game].modes)[0],boardDate=vietnamDate(),items=[],cursor=null,total=0,own=null,loadEpoch=0,loading=false,run=null,starting=false,profileResolve=null,choice='preset:'+AVATARS[0],profileEpoch=0,profilePending=null,saveChain=Promise.resolve(),lastCheckpoint=0,lastScore=-1,localRunKey='ncn:arcade:run:'+game,memoryQueue=[];
  const tabs=q('.ncn-score-tabs'),select=q('select'),playLink=q('.ncn-score-play');
- let portraitTrigger=null,portraitOwner=null;
+ let portraitTrigger=null,portraitOwner=null,profileSaving=false,profileAttempt=null;
  function openPortrait(entry,trigger){
   pause();portraitTrigger=trigger;portraitOwner=entry.id;portrait.returnValue='';
   const name=entry.name||'Người chơi NCN',image=avatarNode(entry.avatar),photo=image.querySelector('img');
@@ -115,7 +113,7 @@ export function mountScores({game='snake',host=document.body,anchor,pause=()=>{}
  function preview(){q('.ncn-profile-preview',dialog).replaceChildren(avatarNode(choice));if(choice.startsWith('data:')){const img=new Image();img.alt='Ảnh đã chọn';img.src=choice;q('.ncn-profile-preview',dialog).firstElementChild.replaceChildren(img);}for(const b of q('.ncn-avatar-picker',dialog).children)b.setAttribute('aria-pressed',String(b.dataset.avatar===choice));}
  for(const value of AVATARS){const b=document.createElement('button');b.type='button';b.append(avatarNode('preset:'+value));b.dataset.avatar='preset:'+value;b.setAttribute('aria-label','Chọn '+value);b.addEventListener('click',()=>{choice=b.dataset.avatar;preview();});q('.ncn-avatar-picker',dialog).append(b);}
  function showProfile(){
-  pause();form.elements.name.value=profile?.name||'';choice=profile?.avatar||'preset:'+AVATARS[0];profileStatus.textContent='';preview();if(!dialog.open)dialog.showModal();form.elements.name.focus({preventScroll:true});
+  pause();if(profileSaving){if(!dialog.open)dialog.showModal();return;}profileAttempt=null;form.elements.name.value=profile?.name||'';choice=profile?.avatar||'preset:'+AVATARS[0];profileStatus.textContent='';q('[type=submit]',dialog).textContent=profile?'Lưu hồ sơ':'Lưu hồ sơ & chơi';preview();if(!dialog.open)dialog.showModal();form.elements.name.focus({preventScroll:true});
  }
  function resolveProfile(value){const fn=profileResolve;profileResolve=null;fn?.(value);}
  q('[data-profile-close]',dialog).addEventListener('click',()=>dialog.close());dialog.addEventListener('close',()=>resolveProfile(null));
@@ -125,12 +123,29 @@ export function mountScores({game='snake',host=document.body,anchor,pause=()=>{}
   let bitmap;try{bitmap=await createImageBitmap(file);const canvas=document.createElement('canvas'),side=Math.min(bitmap.width,bitmap.height),size=Math.min(768,side);canvas.width=canvas.height=size;const ctx=canvas.getContext('2d');ctx.imageSmoothingQuality='high';ctx.fillStyle='#dceada';ctx.fillRect(0,0,size,size);ctx.drawImage(bitmap,(bitmap.width-side)/2,(bitmap.height-side)/2,side,side,0,0,size,size);choice=canvas.toDataURL('image/jpeg',.92);preview();profileStatus.textContent=size<384?'Đã chọn ảnh. Ảnh gốc hơi nhỏ; chọn ảnh lớn hơn nếu muốn xem rõ khi phóng to.':'Đã chọn ảnh rõ nét. Lưu hồ sơ để dùng ảnh này.';}catch{profileStatus.textContent='Ảnh chưa đọc được. Chọn JPG, PNG hoặc WebP nhé.';}finally{bitmap?.close();event.target.value='';}
  });
  form.addEventListener('submit',async event=>{
-  event.preventDefault();const submit=q('[type=submit]',dialog);submit.disabled=true;profileStatus.textContent='Đang lưu hồ sơ…';const epoch=profileEpoch;
-  try{const value=await api('profile',{name:form.elements.name.value,avatar:choice});if(epoch!==profileEpoch)return;profile=profileView(value.profile);player();resolveProfile(profile);dialog.close();flush();load();}catch(error){profileStatus.textContent=error.message;}finally{submit.disabled=false;}
+  event.preventDefault();if(profileSaving)return;profileSaving=true;
+  const submit=q('[type=submit]',dialog),owner=window.NCNAccount?.state.user?.id||null,guest=profile?.id||null,name=form.elements.name.value,avatar=choice;
+  if(!profileAttempt||profileAttempt.name!==name||profileAttempt.avatar!==avatar||profileAttempt.owner!==owner||profileAttempt.guest!==guest)profileAttempt={name,avatar,owner,guest,updateId:crypto.randomUUID()};
+  const {updateId}=profileAttempt,controls=[...form.querySelectorAll('input,button')];controls.forEach(el=>el.disabled=true);profileStatus.textContent='Đang lưu ảnh và hồ sơ…';
+  const slow=setTimeout(()=>{profileStatus.textContent='Ảnh đang được lưu. Kết nối hơi chậm, bạn chờ thêm một chút nhé.';},10000);
+  try{
+   let value;
+   try{value=await api('profile',{name,avatar,updateId});}
+   catch(error){
+    if(!error.retryable)throw error;
+    profileStatus.textContent='Đang kiểm tra xem ảnh đã lưu thành công chưa…';
+    try{const confirmed=await api('profile&confirm='+encodeURIComponent(updateId),undefined,{timeout:30000});if(confirmed.updateId===updateId)value=confirmed;}catch{/* Keep the selected photo available for a manual retry. */}
+    if(!value)throw error;
+   }
+   if(owner!==(window.NCNAccount?.state.user?.id||null)||guest&&value.profile?.id!==guest)throw new Error('Phiên tài khoản đã thay đổi. Mở lại hồ sơ để kiểm tra nhé.');
+   if(!value.profile)throw new Error('Chưa nhận được hồ sơ đã lưu. Vui lòng thử lại.');
+   profile=profileView(value.profile);profileAttempt=null;player();resolveProfile(profile);dialog.close();flush();load();
+  }catch(error){profileStatus.textContent=error.message+' Ảnh đã chọn vẫn được giữ lại. Bấm Lưu hồ sơ để thử lại.';}
+  finally{clearTimeout(slow);profileSaving=false;controls.forEach(el=>el.disabled=false);submit.textContent=profile?'Lưu hồ sơ':'Lưu hồ sơ & chơi';}
  });
  async function syncProfile(){
   const epoch=++profileEpoch;
-  try{const value=await api('profile');if(epoch!==profileEpoch)return;const before=profile;profile=profileView(value.profile||null);if(run&&before&&!before.member&&profile?.member&&run.owner===before.id){run.owner=profile.id;write(localRunKey,run);}player();if(profile&&dialog.open){resolveProfile(profile);dialog.close();}flush();}
+  try{const value=await api('profile');if(epoch!==profileEpoch)return;const before=profile;profile=profileView(value.profile||null);if(run&&before&&!before.member&&profile?.member&&run.owner===before.id){run.owner=profile.id;write(localRunKey,run);}player();if(profile&&dialog.open&&(profile.member||!before&&!profileSaving&&profileResolve)){resolveProfile(profile);dialog.close();}flush();}
   catch{if(epoch!==profileEpoch)return;profile=null;player();}
  }
  const ready=(async()=>{await window.NCNAccount?.ready;await syncProfile();filters();player();load();})();

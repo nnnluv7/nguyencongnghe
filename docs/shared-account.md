@@ -13,3 +13,7 @@ Photo selection previews a centered crop locally. Saving uploads at most a 768px
 Run `node --test tests/*.test.cjs tests/*.test.mjs` and `node tests/browser/ncn-account.mjs`. The browser suite uses a synthetic HTTPS origin and intercepted Identity, email and payment routes; it never creates real accounts or orders. `node tests/browser/ncn-scroll-ui.mjs` also verifies FIFO's full-width entry table, all 48 screen circles and its original print dimensions.
 
 `node tests/browser/ncn-profile.mjs` covers the actual avatar and score handlers with a synthetic Identity and paid ledger, profile editing, expiry, manual VIP, upload retry, phone/dark layouts and logout during upload. Its screenshots are fixtures, not production members.
+
+Photo uploads allow 45 seconds and retry one transient failure with the same
+image. Content-hash storage remains idempotent; display metadata is changed only
+once after a confirmed upload and an unchanged owner session.

@@ -2,6 +2,7 @@ import {ARCADE_COUNT} from './ncn-arcade/catalog.js?v=20261027-bubble-1';
 import * as identityClient from './ncn-identity-client.js';
 import {readDisplayProfile,saveDisplayProfile,displayProfile} from './ncn-account-session.js?v=20261026-profile-1';
 import {mountMemberPanel,paintAvatar,profileUpdate} from './ncn-member-profile.js?v=20261027-avatar-hd-1';
+import {requestJSON} from './ncn-profile-request.js?v=20261027-photo-save-1';
 
 const accounts=new WeakMap();
 const labels={login:'Đăng nhập',register:'Tạo tài khoản',recovery:'Quên mật khẩu',reset:'Đặt mật khẩu mới',profile:'Tài khoản NCN',vip:'Thông tin VIP'};
@@ -188,7 +189,13 @@ export function mountAccount({doc=document,win=window,identity=identityClient,fe
     profileUpdate(name);message('Đang lưu thông tin tài khoản…');
     const session=await identity.ensureSession();if(!session||session.id!==owner||state.user?.id!==owner)throw new Error('Phiên đăng nhập đã thay đổi. Mở lại tài khoản rồi thử nhé.');
     let avatar;
-    if(photo){const response=await fetcher('/.netlify/functions/ncn-profile?route=upload',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:photo}),signal:AbortSignal.timeout(15000)});const result=await response.json();if(!response.ok)throw new Error(result.error||'Chưa tải được ảnh đại diện.');avatar=result.avatar;}
+    if(photo){
+      for(let attempt=0;attempt<2;attempt++){
+        if(state.user?.id!==owner||state.signingOut)throw new Error('Tài khoản đã thay đổi. Mở lại hồ sơ để kiểm tra nhé.');
+        try{const result=await requestJSON('/.netlify/functions/ncn-profile?route=upload',{data:{image:photo},timeout:45000,fetcher});if(typeof result.avatar!=='string')throw new Error('Chưa nhận được ảnh đã lưu. Vui lòng thử lại.');avatar=result.avatar;break;}
+        catch(error){if(attempt||!error.retryable||error.status===429)throw error;message('Đường truyền chậm. Đang thử tải lại ảnh đã chọn…');}
+      }
+    }
     if(state.user?.id!==owner||state.signingOut)throw new Error('Tài khoản đã thay đổi. Ảnh chưa được gắn vào hồ sơ.');
     ++epoch;pending=null;
     await identity.updateUser(profileUpdate(name,avatar));

@@ -28,6 +28,11 @@ retained. Each game's controls, local progress and record keys are retained.
   and fullscreen games without requiring login or starting a run. Close with
   the close button, Escape or the backdrop; the list keeps its place and games
   remain paused. Existing public avatar URLs are reused; no extra upload is stored.
+- Profile saves have a 45-second photo deadline and a private update ID. If a
+  response is lost, the client confirms that exact update through the owning
+  cookie before reporting failure; update IDs never appear in public rows.
+  Duplicate submissions are blocked, a retry reuses the same update ID, and
+  reconnecting preserves an open photo draft.
 - Renaming a guest updates their stored best-score entries across the Arcade.
   A guest run can finish under the NCN account if its owner signs in during play.
   Signing out does not permit a guest to claim another account's run.

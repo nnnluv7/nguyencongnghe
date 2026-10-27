@@ -31,6 +31,7 @@ jobs:
           node --check public/assets/ncn-direct/editor.js
           node --check public/assets/ncn-direct/workspace.js
           node --check public/assets/ncn-cash/app.js
+          node --check public/assets/ncn-profile-request.js
           node --check public/assets/ncn-account.js
           node --check public/assets/ncn-account-session.js
           node --check public/assets/ncn-member-profile.js
