@@ -24,10 +24,29 @@ export function mountScores({game='snake',host=document.body,anchor,pause=()=>{}
  expanded.innerHTML='<header><div><span class="ncn-score-eyebrow">NCN ARCADE · BẢNG XẾP HẠNG</span><h2 id="ncn-expanded-title">Tất cả người chơi.</h2></div><button type="button" data-close-rank aria-label="Đóng bảng điểm">×</button></header><p class="ncn-score-status" role="status"></p><div class="ncn-score-scroll"><ol class="ncn-score-list" aria-label="Danh sách xếp hạng đầy đủ"></ol><div class="ncn-score-sentinel"></div><button type="button" class="ncn-score-more">Xem thêm 50 người chơi ↓</button></div>';
  const dialog=document.createElement('dialog');dialog.className='ncn-arcade-dialog ncn-arcade-profile';dialog.setAttribute('aria-labelledby','ncn-profile-title');
  dialog.innerHTML=`<header><div><span class="ncn-score-eyebrow">MỘT HỒ SƠ · ${ARCADE_COUNT} TRÒ CHƠI</span><h2 id="ncn-profile-title">Xin chào, người chơi!</h2></div><button type="button" data-profile-close aria-label="Đóng hồ sơ người chơi">×</button></header><p>Chọn tên và ảnh đại diện một lần để lưu điểm cho cả NCN Arcade.</p><form><label for="ncn-player-name">Tên trên bảng điểm</label><input id="ncn-player-name" name="name" type="text" maxlength="30" autocomplete="nickname" placeholder="Ví dụ: Cá Nhỏ Vui Vẻ" required><label>Ảnh đại diện</label><div class="ncn-avatar-picker" role="group" aria-label="Chọn ảnh đại diện"></div><div class="ncn-profile-preview"></div><input class="ncn-avatar-upload" aria-label="Tải ảnh đại diện của bạn" type="file" accept="image/jpeg,image/png,image/webp"><p class="ncn-profile-note">Tên và ảnh của bạn sẽ hiện công khai trên bảng điểm. Khách được nhớ trên trình duyệt này; tài khoản NCN dùng được trên các thiết bị.</p><p class="ncn-score-status" role="status"></p><div class="ncn-profile-actions"><button type="submit">Lưu hồ sơ &amp; chơi</button><button type="button" data-profile-login>Đăng nhập NCN</button></div></form>`;
- host.append(expanded,dialog);
+ const portrait=document.createElement('dialog');portrait.id='ncn-avatar-viewer';portrait.className='ncn-arcade-dialog ncn-avatar-viewer';portrait.setAttribute('aria-labelledby','ncn-avatar-title');
+ portrait.innerHTML='<header><div><span class="ncn-score-eyebrow">ẢNH ĐẠI DIỆN</span><h2 id="ncn-avatar-title"></h2></div><button type="button" data-avatar-close aria-label="Đóng ảnh đại diện" autofocus>×</button></header><div class="ncn-avatar-image"></div><p class="ncn-avatar-caption"></p>';
+ host.append(expanded,dialog,portrait);
  const q=(s,root=section)=>root.querySelector(s),list=q('.ncn-score-list'),fullList=q('.ncn-score-list',expanded),more=q('.ncn-score-more',expanded),status=q('.ncn-score-status'),saveNote=q('.ncn-score-save'),form=q('form',dialog),profileStatus=q('.ncn-score-status',dialog);
  let profile=null,boardGame=game,boardMode=Object.keys(GAMES[game].modes)[0],boardDate=vietnamDate(),items=[],cursor=null,total=0,own=null,loadEpoch=0,loading=false,run=null,starting=false,profileResolve=null,choice='preset:'+AVATARS[0],profileEpoch=0,profilePending=null,saveChain=Promise.resolve(),lastCheckpoint=0,lastScore=-1,localRunKey='ncn:arcade:run:'+game,memoryQueue=[];
  const tabs=q('.ncn-score-tabs'),select=q('select'),playLink=q('.ncn-score-play');
+ let portraitTrigger=null;
+ function openPortrait(entry,trigger){
+  pause();portraitTrigger=trigger;
+  const name=entry.name||'Người chơi NCN',image=avatarNode(entry.avatar),photo=image.querySelector('img');
+  q('#ncn-avatar-title',portrait).textContent=name;
+  q('.ncn-avatar-caption',portrait).textContent=entry.member?'Thành viên NCN':'Người chơi NCN Arcade';
+  if(photo){photo.alt='Ảnh đại diện của '+name;photo.loading='eager';photo.addEventListener('error',()=>{q('.ncn-avatar-caption',portrait).textContent='Ảnh chưa tải được. Thử mở lại sau nhé.';},{once:true});}
+  q('.ncn-avatar-image',portrait).replaceChildren(image);
+  if(!portrait.open)portrait.showModal();
+ }
+ q('[data-avatar-close]',portrait).addEventListener('click',()=>portrait.close());
+ portrait.addEventListener('click',event=>{if(event.target!==portrait)return;const box=portrait.getBoundingClientRect();if(event.clientX<box.left||event.clientX>box.right||event.clientY<box.top||event.clientY>box.bottom)portrait.close();});
+ portrait.addEventListener('close',()=>{
+  q('.ncn-avatar-image',portrait).replaceChildren();
+  const target=portraitTrigger?.isConnected&&!portraitTrigger.closest('dialog:not([open])')?portraitTrigger:expanded.open?q('[data-close-rank]',expanded):q('[data-rank-expand]');
+  target?.focus({preventScroll:true});portraitTrigger=null;
+ });
  function player(){
   const box=q('.ncn-score-player');box.replaceChildren(avatarNode(profile?.avatar));const copy=document.createElement('span'),name=document.createElement('strong'),note=document.createElement('small');name.textContent=profile?.name||'Bạn sẽ lên bảng với tên nào?';note.textContent=profile?(profile.member?`Tài khoản NCN · Dùng chung ${ARCADE_COUNT} game`:`Hồ sơ khách · Dùng chung ${ARCADE_COUNT} game`):'Thêm tên và ảnh khi bắt đầu chơi';copy.append(name,note);const b=document.createElement('button');b.type='button';b.textContent=profile?.member?'Tài khoản NCN':profile?'Sửa hồ sơ':'Thêm hồ sơ';b.addEventListener('click',()=>{pause();if(profile?.member)window.NCNAccount?.open('profile');else showProfile();});box.append(copy,b);
  }
@@ -37,7 +56,10 @@ export function mountScores({game='snake',host=document.body,anchor,pause=()=>{}
   li.dataset.player=entry.id;
   const rank=document.createElement('span');rank.className='ncn-score-rank';rank.textContent=number(entry.rank);rank.setAttribute('aria-label','Hạng '+entry.rank);
   const name=document.createElement('span');name.className='ncn-score-name';const strong=document.createElement('strong'),small=document.createElement('small');strong.textContent=entry.name+(entry.you?' · Bạn':'');small.textContent=(entry.member?'Thành viên NCN':'Người chơi')+(entry.level?' · Màn '+entry.level:'');name.append(strong,small);
-  const points=document.createElement('b');points.className='ncn-score-points'+(entry.score>=10000000?' is-long':'');points.textContent=number(entry.score);points.setAttribute('aria-label',number(entry.score)+' điểm');li.append(rank,avatarNode(entry.avatar),name,points);return li;
+  const avatar=document.createElement('button');avatar.type='button';avatar.className='ncn-score-avatar-button';avatar.setAttribute('aria-label','Xem ảnh đại diện của '+entry.name);avatar.setAttribute('aria-haspopup','dialog');avatar.setAttribute('aria-controls',portrait.id);avatar.title='Xem ảnh đại diện';avatar.append(avatarNode(entry.avatar));
+  // Native keyboard activation must not also reach a game's Space/Enter controls.
+  avatar.addEventListener('keydown',event=>{if(event.key===' '||event.key==='Enter')event.stopPropagation();});avatar.addEventListener('click',()=>openPortrait(entry,avatar));
+  const points=document.createElement('b');points.className='ncn-score-points'+(entry.score>=10000000?' is-long':'');points.textContent=number(entry.score);points.setAttribute('aria-label',number(entry.score)+' điểm');li.append(rank,avatar,name,points);return li;
  }
  function paint(){
   const scroll=q('.ncn-score-scroll',expanded),position=scroll.scrollTop;

@@ -1,4 +1,4 @@
-import {mountScores} from '../assets/ncn-arcade/arcade.js?v=20261027-bubble-1';
+import {mountScores} from '../assets/ncn-arcade/arcade.js?v=20261027-avatar-1';
 import {VERSION,SPECIES,LEVELS,GRAVITY_LABELS,createBoard,findPath,findMatch,removePair,remaining,reshuffle,readSave,seededRandom,vietnamDate} from './core.js?v=20261026-fullscreen-2';
 import {installFullscreen} from './fullscreen.js?v=20261026-fullscreen-2';
 

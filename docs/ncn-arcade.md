@@ -18,6 +18,11 @@ retained. Each game's controls, local progress and record keys are retained.
   limit, re-encoded to 96px WebP on the server and served by content hash.
   SVG uploads, arbitrary URLs, control characters and email display names are
   rejected. Raw Identity IDs, email, cookies and run secrets are never in rows.
+- Every public ranking avatar is a keyboard/touch button opening a larger
+  portrait with the player name. It works in Top 10, the full paginated list
+  and fullscreen games without requiring login or starting a run. Close with
+  the close button, Escape or the backdrop; the list keeps its place and games
+  remain paused. Existing public avatar URLs are reused; no extra upload is stored.
 - Renaming a guest updates their stored best-score entries across the Arcade.
   A guest run can finish under the NCN account if its owner signs in during play.
   Signing out does not permit a guest to claim another account's run.

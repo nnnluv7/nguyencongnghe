@@ -22,3 +22,14 @@ html[data-ncn-theme=dark] :is(.ncn-arcade-nav,.ncn-scoreboard,.ncn-arcade-dialog
 .ncn-arcade-dialog [hidden],.ncn-scoreboard[hidden],.ncn-scoreboard [hidden]{display:none!important}
 
 .ncn-arcade-card:nth-child(6){background:linear-gradient(135deg,#485d56,#254c4b)}
+
+.ncn-scoreboard .ncn-score-avatar-button,.ncn-arcade-dialog .ncn-score-avatar-button{display:grid;place-items:center;width:38px;min-width:0;height:38px;min-height:38px;padding:0;border:0;border-radius:13px;background:transparent;cursor:zoom-in;transition:transform .16s,box-shadow .16s}
+.ncn-scoreboard .ncn-score-avatar-button:hover,.ncn-arcade-dialog .ncn-score-avatar-button:hover{background:transparent;transform:scale(1.07);box-shadow:0 3px 14px #173e3426}
+.ncn-avatar-viewer{width:520px;overflow:auto}
+.ncn-avatar-viewer h2{overflow-wrap:anywhere}
+.ncn-avatar-image{width:min(100%,440px,calc(90dvh - 170px));aspect-ratio:1;margin:18px auto 0}
+.ncn-avatar-image>.ncn-score-avatar{width:100%;height:100%;border-radius:22px;font-size:clamp(64px,25vmin,220px)}
+.ncn-avatar-image img{object-fit:contain}
+.ncn-avatar-caption{font-size:12px;line-height:1.6;color:var(--arc-muted);text-align:center;margin:14px 0 0}
+@media(max-width:700px){.ncn-scoreboard .ncn-score-avatar-button,.ncn-arcade-dialog .ncn-score-avatar-button{width:34px;height:34px;min-height:34px;border-radius:11px}.ncn-avatar-image{margin-top:12px}}
+@media(prefers-reduced-motion:reduce){.ncn-score-avatar-button{transition:none!important}.ncn-score-avatar-button:hover{transform:none!important}}

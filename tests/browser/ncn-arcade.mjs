@@ -18,10 +18,10 @@ const jwt=Buffer.from('{"alg":"fixture"}').toString('base64url')+'.'+Buffer.from
 const photo=await sharp({create:{width:140,height:180,channels:3,background:'#75aa94'}}).png().toBuffer();
 const browser=await chromium.launch();let page,active;
 await mkdir(out,{recursive:true});
-async function fixture({signed=false,storageBlocked=false}={}){
+async function fixture({signed=false,storageBlocked=false,touch=false}={}){
  const store=memoryStore(),f={store,now:at,failScore:false,delayStart:null};
  const handler=createScoresHandler({production:()=>true,store:()=>store,now:()=>f.now,photo:scorePhoto,verify:async req=>(req.headers.get('cookie')||'').includes('nf_jwt='+jwt)?member:null});
- const context=await browser.newContext({viewport:{width:1440,height:1050}});f.context=context;
+ const context=await browser.newContext({viewport:{width:1440,height:1050},hasTouch:touch});f.context=context;
  if(signed)await context.addCookies([{name:'nf_jwt',value:jwt,url:origin}]);
  await context.addInitScript(({storageBlocked})=>{Math.random=()=>.31415926;if(storageBlocked){const read=Storage.prototype.getItem,write=Storage.prototype.setItem;Storage.prototype.getItem=function(key){if(key.startsWith('ncn:arcade:'))throw new DOMException('Blocked','SecurityError');return read.call(this,key);};Storage.prototype.setItem=function(key,value){if(key.startsWith('ncn:arcade:'))throw new DOMException('Blocked','QuotaExceededError');return write.call(this,key,value);};}},{storageBlocked});
  await context.route('**/*',async route=>{
@@ -77,11 +77,23 @@ try{
   await open('/ban-bong/');await page.locator('#bb-start').click();await wait('#bb-app[data-state=playing]');await page.locator('#bb-bomb').click();await page.locator('#bb-board').focus();await page.keyboard.press('Space');await tick(1200);await page.keyboard.press('p');await page.waitForFunction(()=>document.querySelector('.ncn-score-save').textContent.includes('✓'));
   const keys=[...active.store.entries.keys()].filter(x=>x.startsWith('best/'));assert.equal(keys.length,6);assert.equal(new Set(keys.map(x=>x.split('/')[1])).size,1);assert.equal(calls.some(x=>/ticket|room/.test(x.action)),false);
  });
+ await check('uploaded ranking portraits open by keyboard with a safe name and close without moving the page or writing data',async()=>{
+  await open('/pikachu/');const button=page.locator('#ncn-scoreboard .ncn-score-row.is-you .ncn-score-avatar-button'),writes=calls.filter(x=>x.body).length;
+  await button.focus();const scroll=await page.evaluate(()=>scrollY);await button.press('Enter');await wait('.ncn-avatar-viewer[open]');
+  assert.equal(await page.locator('#ncn-avatar-title').innerText(),'<img src=x> Bé Cá');assert.equal(await page.locator('.ncn-avatar-viewer h2 img').count(),0);
+  await page.waitForFunction(()=>document.querySelector('.ncn-avatar-image img')?.naturalWidth>0);const box=await page.locator('.ncn-avatar-image').boundingBox();assert.ok(box.width>=250,JSON.stringify(box));
+  await page.locator('.ncn-avatar-image img').click();assert.equal(await page.locator('.ncn-avatar-viewer[open]').count(),1);await page.keyboard.press('Tab');assert.equal(await page.locator('[data-avatar-close]').evaluate(el=>el===document.activeElement),true);
+  await page.screenshot({path:out+'/avatar-desktop.jpg'});await page.keyboard.press('Escape');await page.locator('.ncn-avatar-viewer').waitFor({state:'hidden'});assert.equal(await button.evaluate(el=>el===document.activeElement),true);assert.ok(Math.abs(await page.evaluate(()=>scrollY)-scroll)<2);
+  await button.press('Space');await wait('.ncn-avatar-viewer[open]');await page.locator('[data-avatar-close]').click();assert.equal(calls.filter(x=>x.body).length,writes);
+ });
  await check('public top ten expands through every player, modes stay separate, and closing does not resume a paused game',async()=>{
   await seededRows(active);await open('/ran-luot/');await page.locator('[data-rank-refresh]').click();await page.waitForFunction(()=>document.querySelectorAll('#ncn-scoreboard .ncn-score-row').length===10);
   assert.equal(await page.locator('#ncn-scoreboard .ncn-score-row').count(),10);await page.locator('[data-rank-expand]').click();await wait('.ncn-arcade-expanded[open]');
   for(let i=0;i<6;i++){const before=await page.locator('.ncn-arcade-expanded .ncn-score-row').count();if(before>=138)break;await page.locator('.ncn-score-scroll').evaluate(el=>el.scrollTop=el.scrollHeight);await tick(100);await page.waitForFunction(n=>document.querySelectorAll('.ncn-arcade-expanded .ncn-score-row').length>n,before,{polling:20});}
-  await page.waitForFunction(()=>document.querySelectorAll('.ncn-arcade-expanded .ncn-score-row').length===138);assert.equal(await page.locator('.ncn-score-more').isVisible(),false);for(const width of [390,320]){await page.setViewportSize({width,height:844});const box=await page.locator('.ncn-arcade-expanded').boundingBox();assert.ok(box.x>=0&&box.x+box.width<=width+1);const scroll=await page.locator('.ncn-score-scroll').evaluate(el=>({width:el.clientWidth,actual:el.scrollWidth}));assert.ok(scroll.actual<=scroll.width+1,JSON.stringify(scroll));}await page.screenshot({path:out+'/rank-phone.jpg'});await page.setViewportSize({width:1440,height:1050});await page.locator('[data-close-rank]').click();assert.equal(await page.locator('#ncn-scoreboard .ncn-score-row').count(),10);
+  await page.waitForFunction(()=>document.querySelectorAll('.ncn-arcade-expanded .ncn-score-row').length===138);assert.equal(await page.locator('.ncn-score-more').isVisible(),false);
+  const portrait=page.locator('.ncn-arcade-expanded .ncn-score-avatar-button').nth(100);await portrait.click();await wait('.ncn-avatar-viewer[open]');const position=await page.locator('.ncn-score-scroll').evaluate(el=>el.scrollTop);await page.keyboard.press('Escape');await page.locator('.ncn-avatar-viewer').waitFor({state:'hidden'});assert.equal(await page.locator('.ncn-arcade-expanded[open]').count(),1);assert.equal(await portrait.evaluate(el=>el===document.activeElement),true);assert.equal(await page.locator('.ncn-score-scroll').evaluate(el=>el.scrollTop),position);
+  await portrait.click();await wait('.ncn-avatar-viewer[open]');await page.mouse.click(3,3);await page.locator('.ncn-avatar-viewer').waitFor({state:'hidden'});assert.equal(await page.locator('.ncn-arcade-expanded[open]').count(),1);assert.equal(await page.locator('.ncn-arcade-expanded .ncn-score-row').count(),138);
+  for(const width of [390,320]){await page.setViewportSize({width,height:844});const box=await page.locator('.ncn-arcade-expanded').boundingBox();assert.ok(box.x>=0&&box.x+box.width<=width+1);const scroll=await page.locator('.ncn-score-scroll').evaluate(el=>({width:el.clientWidth,actual:el.scrollWidth}));assert.ok(scroll.actual<=scroll.width+1,JSON.stringify(scroll));}await page.screenshot({path:out+'/rank-phone.jpg'});await page.setViewportSize({width:1440,height:1050});await page.locator('[data-close-rank]').click();assert.equal(await page.locator('#ncn-scoreboard .ncn-score-row').count(),10);
   await page.locator('.ncn-score-tabs [data-game=flight]').click();await page.getByLabel('Chế độ xếp hạng').selectOption('hard');await page.waitForFunction(()=>document.querySelectorAll('#ncn-scoreboard .ncn-score-row').length===0);assert.match(await page.locator('.ncn-score-empty').first().innerText(),/Chưa có/);
  });
  await check('an interrupted score submission stays queued and retries successfully without a duplicate leaderboard entry',async()=>{
@@ -91,7 +103,8 @@ try{
   await page.locator('.ncn-score-player button').click();await page.locator('#ncn-player-name').fill('Bạn Đã Đổi Tên');await page.getByRole('button',{name:'Chọn 🦊',exact:true}).click();await page.locator('.ncn-arcade-profile [type=submit]').click();await page.locator('.ncn-arcade-profile[open]').waitFor({state:'hidden'});await open('/ca-lon-nuot-ca-be/');assert.match(await page.locator('.ncn-score-player').innerText(),/Bạn Đã Đổi Tên/);await page.locator('#ncn-scoreboard .ncn-score-row.is-you').waitFor();assert.match(await page.locator('#ncn-scoreboard .ncn-score-row.is-you').innerText(),/Bạn Đã Đổi Tên/);
  });
  await check('native/fullscreen fallback games keep the shared profile and leaderboard dialogs inside the game',async()=>{
-  await open('/xep-hinh/');await page.locator('#xh-fullscreen').click();await page.locator('#xh-app').waitFor();if(await page.locator('#xh-continue').isVisible())await page.locator('#xh-continue').click();else await page.locator('#xh-start').click();await wait('#xh-app[data-state=playing]');for(let i=0;i<15&&await page.locator('#xh-app').getAttribute('data-state')==='playing';i++)await page.keyboard.press('Space');await page.locator('.xh-result .ncn-game-rank-button').click();await wait('.ncn-arcade-expanded[open]');assert.equal(await page.locator('#xh-app>.ncn-arcade-expanded').count(),1);await page.keyboard.press('Escape');assert.equal(await page.locator('#xh-app').getAttribute('data-state'),'lost');
+  await open('/xep-hinh/');await page.locator('#xh-fullscreen').click();await page.locator('#xh-app').waitFor();if(await page.locator('#xh-continue').isVisible())await page.locator('#xh-continue').click();else await page.locator('#xh-start').click();await wait('#xh-app[data-state=playing]');for(let i=0;i<15&&await page.locator('#xh-app').getAttribute('data-state')==='playing';i++)await page.keyboard.press('Space');await page.locator('.xh-result .ncn-game-rank-button').click();await wait('.ncn-arcade-expanded[open]');assert.equal(await page.locator('#xh-app>.ncn-arcade-expanded').count(),1);
+  await page.locator('.ncn-arcade-expanded .ncn-score-avatar-button').first().click();await wait('#xh-app>.ncn-avatar-viewer[open]');await page.keyboard.press('Escape');await page.locator('.ncn-avatar-viewer').waitFor({state:'hidden'});assert.equal(await page.locator('.ncn-arcade-expanded[open]').count(),1);await page.keyboard.press('Escape');assert.equal(await page.locator('#xh-app').getAttribute('data-state'),'lost');
  });
  await active.context.close();active=await fixture({signed:true});page=active.page;
  await check('an existing NCN member uses the account name/photo and skips profile entry in every game',async()=>{
@@ -105,6 +118,26 @@ try{
  });
  await check('a slow run-creation request does not swallow the first control input or an early score',async()=>{
   let release,started;const requested=new Promise(resolve=>started=resolve);active.startSeen=started;active.delayStart=new Promise(resolve=>release=resolve);await open('/ca-lon-nuot-ca-be/');await page.locator('#ff-start').click();await wait('#ff-stage[data-state=playing]');await requested;await page.keyboard.down('ArrowRight');await tick(2500);await page.keyboard.up('ArrowRight');assert.ok(Number((await page.locator('#ff-score').innerText()).replace(/\D/g,''))>0);await page.keyboard.press('p');release();active.delayStart=null;active.startSeen=null;await page.locator('#ff-end').click();await page.waitForFunction(()=>document.querySelector('.ncn-score-save').textContent.includes('✓'));
+ });
+ await active.context.close();active=await fixture({touch:true});page=active.page;
+ await check('visitors can tap public member photos and guest presets in the hub and every game without creating a profile',async()=>{
+  const games=[['snake','arena','/ran-luot/'],['flight','normal','/flappy-bird/'],['pikachu','classic','/pikachu/'],['ocean','classic','/ca-lon-nuot-ca-be/'],['blocks','classic','/xep-hinh/'],['bubble','journey','/ban-bong/']];
+  for(const [game,mode]of games)await seededRows(active,game,mode,2);
+  for(const [key,record]of active.store.entries)if(key.startsWith('rank/')&&record.data.name==='Bạn 1')await active.store.setJSON(key,{...record.data,avatar:member.avatar});
+  const writes=calls.filter(x=>x.body).length;await page.setViewportSize({width:390,height:844});
+  for(const path of ['/arcade/',...games.map(x=>x[2])]){
+   await open(path);await page.locator('#ncn-scoreboard .ncn-score-avatar-button').first().tap();await wait('.ncn-avatar-viewer[open]');assert.equal(await page.locator('#ncn-avatar-title').innerText(),'Bạn 1');await page.waitForFunction(()=>document.querySelector('.ncn-avatar-image img')?.naturalWidth>0);await page.locator('[data-avatar-close]').tap();
+   await page.locator('#ncn-scoreboard .ncn-score-avatar-button').nth(1).tap();await wait('.ncn-avatar-viewer[open]');assert.equal(await page.locator('.ncn-avatar-image svg use').getAttribute('href'),'/assets/ncn-arcade/avatars.svg#panda');await page.locator('[data-avatar-close]').tap();
+  }
+  assert.equal(calls.filter(x=>x.body).length,writes);assert.equal((await active.context.cookies()).some(x=>x.name==='__Host-ncn_arcade'),false);assert.equal(await page.locator('.ncn-arcade-profile[open]').count(),0);
+ });
+ await check('the public portrait fits small phones, short landscape and dark mode, and a failed image remains closable',async()=>{
+  for(const [width,height]of [[320,640],[390,844],[844,390]]){
+   await page.setViewportSize({width,height});await page.locator('#ncn-scoreboard .ncn-score-avatar-button').first().tap();await wait('.ncn-avatar-viewer[open]');const size=await page.locator('.ncn-avatar-viewer').evaluate(el=>{const r=el.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,scroll:el.scrollWidth,client:el.clientWidth};});assert.ok(size.x>=0&&size.y>=0&&size.x+size.width<=width+1&&size.y+size.height<=height+1&&size.scroll<=size.client+1,JSON.stringify(size));await page.locator('[data-avatar-close]').tap();
+  }
+  await page.setViewportSize({width:390,height:844});await page.evaluate(()=>document.documentElement.dataset.ncnTheme='dark');await page.locator('#ncn-scoreboard .ncn-score-avatar-button').first().tap();await wait('.ncn-avatar-viewer[open]');await page.screenshot({path:out+'/avatar-dark-phone.jpg'});await page.locator('[data-avatar-close]').tap();
+  for(const [key,record]of active.store.entries)if(key.startsWith('rank/bubble/')&&record.data.name==='Bạn 1')await active.store.setJSON(key,{...record.data,avatar:origin+'/missing-avatar.webp'});
+  await page.locator('[data-rank-refresh]').click();await page.locator('#ncn-scoreboard .ncn-score-avatar-button').first().tap();await page.locator('.ncn-avatar-caption').filter({hasText:'Ảnh chưa tải được'}).waitFor();await page.locator('[data-avatar-close]').tap();assert.equal(await page.locator('.ncn-avatar-viewer[open]').count(),0);
  });
  assert.deepEqual(errors,[]);console.log('PASS no uncaught browser errors; all writes stayed inside the synthetic fixture');
 }finally{await writeFile(out+'/results.json',JSON.stringify({results,errors},null,2));await browser.close();}
