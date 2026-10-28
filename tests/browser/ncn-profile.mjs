@@ -13,7 +13,7 @@ import {memoryStore} from '../fixtures/arcade-store.mjs';
 
 // Synthetic HTTPS Identity, membership ledger and real photo/score handlers.
 // No production account, upload, payment, email or score is created.
-const origin='https://ncn-profile.test',root=resolve('public'),out=resolve('artifacts/profile');
+const origin='https://ncn-profile.test',root=resolve(process.env.NCN_BUILT_TEST?'dist':'public'),out=resolve('artifacts/profile'+(process.env.NCN_BUILT_TEST?'-built':''));
 const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.woff2':'font/woff2'};
 const at=Date.parse('2026-10-26T12:00:00Z'),results=[],errors=[],updates=[],tokens=new Map();
 const member={id:'fixture-member',email:'private@example.test',name:'Nguyễn Công Nghệ',password:'Example123!',roles:[],metadata:{full_name:'Nguyễn Công Nghệ',keep:'preserved',roles:['admin','vip']}};

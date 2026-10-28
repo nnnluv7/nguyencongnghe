@@ -1,4 +1,5 @@
 import {renderPublicHTML} from './ncn-public-render.mjs';
+import {publicPageHeaders} from './ncn-public-cache.mjs';
 
 export function createSitePageHandler(deps){return async req=>{
   const headers={'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','Netlify-CDN-Cache-Control':'no-store','X-Content-Type-Options':'nosniff'};
@@ -9,7 +10,9 @@ export function createSitePageHandler(deps){return async req=>{
   // always use their own handler and cannot be exposed through this endpoint.
   if(!page||!Object.values(deps.pages).includes(page))return new Response('Not found',{status:404,headers});
   try{
-    const [html,state]=await Promise.all([deps.html(page),deps.state().catch(()=>({catalog:[],notices:[],stories:[]}))]);
-    return new Response(req.method==='HEAD'?null:deps.inject(renderPublicHTML(html,state.catalog,state),state.catalog),{headers});
+    const start=performance.now();let degraded=false;
+    const [html,state]=await Promise.all([deps.html(page),deps.state().catch(()=>{degraded=true;return {catalog:[],notices:[],stories:[]};})]);
+    const body=deps.inject(renderPublicHTML(html,state.catalog,state),state.catalog);
+    return new Response(req.method==='HEAD'?null:body,{headers:{...(degraded?headers:publicPageHeaders()),'Server-Timing':'ncn;dur='+Math.round(performance.now()-start)}});
   }catch{return new Response('Trang đang kết nối lại. Vui lòng tải lại sau ít phút.',{status:503,headers});}
 };}

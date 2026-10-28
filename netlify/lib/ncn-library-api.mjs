@@ -100,8 +100,8 @@ export function createLibraryHandler(deps){return async req=>{
     if(!['GET','POST'].includes(method))libraryError(405,'Phương thức không hỗ trợ.');
     if(method==='POST'&&req.headers.get('origin')!==new URL(req.url).origin)libraryError(403,'Yêu cầu phải gửi từ chính website.');
     if(route==='list'&&method==='GET'){
-      const old=deps.production()?await readLibrary(deps.store()):null;
-      const items=publicCatalog(deps.seed,old?.data),news=await deps.news?.()||[];
+      const [old,news]=await Promise.all([deps.production()?readLibrary(deps.store()):null,deps.news?.()||[]]);
+      const items=publicCatalog(deps.seed,old?.data);
       const links=new Set(items.map(x=>x.link));return reply({items:[...items,...news.filter(x=>!links.has(x.link)&&links.add(x.link))]});
     }
     if(!deps.production())libraryError(503,'Quản trị chỉ hoạt động trên website chính thức.');

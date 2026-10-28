@@ -1,7 +1,7 @@
-# Xuất bản trực tiếp các tệp rời; chỉnh HTML/CSS/JS trên GitHub rồi commit.
+# Nguồn vẫn là các tệp rời; bản xuất bản gom và đặt dấu vân tay tài nguyên.
 [build]
-  command = "test -f public/index.html"
-  publish = "public"
+  command = "node scripts/build-public.mjs"
+  publish = "dist"
 
 [functions]
   directory = "netlify/functions"
@@ -81,7 +81,7 @@
 
 [functions."ncn-library-page"]
   node_bundler = "esbuild"
-  included_files = ["netlify/lib/ncn-library/**", "netlify/lib/ncn-news/**", "public/index.html", "public/thu-vien/index.html", "public/20*/*/*.html", "public/p/*.html"]
+  included_files = ["netlify/lib/ncn-library/**", "netlify/lib/ncn-news/**", "netlify/lib/ncn-shell/assets.generated.json", "public/index.html", "public/thu-vien/index.html", "public/20*/*/*.html", "public/p/*.html"]
   external_node_modules = ["@netlify/blobs"]
 # END NCN LIBRARY ADMIN
 

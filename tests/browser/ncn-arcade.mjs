@@ -11,7 +11,7 @@ import {findMatch} from '../../public/pikachu/core.js';
 
 // A wholly synthetic HTTPS site. Actual server handler + cookies + browser
 // game input, with no production Identity, score, upload, or email writes.
-const origin='https://ncn-arcade.test',root=resolve('public'),out=resolve('artifacts/arcade'),results=[],errors=[],calls=[];
+const origin='https://ncn-arcade.test',root=resolve(process.env.NCN_BUILT_TEST?'dist':'public'),out=resolve('artifacts/arcade'+(process.env.NCN_BUILT_TEST?'-built':'')),results=[],errors=[],calls=[];
 const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.woff2':'font/woff2'};
 const at=Date.parse('2026-10-26T12:00:00Z'),member={id:'fixture-member',email:'private@example.test',name:'Thành viên đã đăng nhập',avatar:'https://ncn-arcade.test/member-photo.webp',admin:false,vip:false};
 const jwt=Buffer.from('{"alg":"fixture"}').toString('base64url')+'.'+Buffer.from(JSON.stringify({sub:member.id,email:member.email,exp:Math.floor(at/1000)+36000})).toString('base64url')+'.fixture';

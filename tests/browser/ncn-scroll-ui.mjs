@@ -8,7 +8,7 @@ import {resolve,extname,sep} from 'node:path';
 import assert from 'node:assert/strict';
 
 const production=process.env.NCN_UI_BASE_URL==='https://nguyencongnghe.com';
-const root=resolve('public'),out=resolve('artifacts/scroll-ui'+(production?'/production':'/source'));
+const root=resolve(process.env.NCN_BUILT_TEST?'dist':'public'),out=resolve('artifacts/scroll-ui'+(production?'/production':process.env.NCN_BUILT_TEST?'/built':'/source'));
 await mkdir(out,{recursive:true});
 const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml','.woff2':'font/woff2'};
 const server=createServer(async(req,res)=>{

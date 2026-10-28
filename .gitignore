@@ -2,3 +2,5 @@ node_modules/
 artifacts/
 
 /node_modules
+dist/
+netlify/lib/ncn-shell/assets.generated.json

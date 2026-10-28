@@ -6,8 +6,10 @@ import {createLibraryPageHandler,injectCatalog} from '../../netlify/lib/ncn-libr
 import {createSitePageHandler} from '../../netlify/lib/ncn-site-page.mjs';
 import {publicCatalog} from '../../netlify/lib/ncn-library-api.mjs';
 import {mergeNews} from '../../netlify/lib/ncn-news.mjs';
+import {optimizePublicResponse} from '../../netlify/lib/ncn-public-assets.mjs';
 
-const origin='https://ncn-layout.test',root=resolve('public'),out=resolve('artifacts/layout');await mkdir(out,{recursive:true});
+const built=!!process.env.NCN_BUILT_TEST;
+const origin='https://ncn-layout.test',root=resolve(built?'dist':'public'),out=resolve('artifacts/layout'+(built?'-built':''));await mkdir(out,{recursive:true});
 const read=path=>readFile(path,'utf8'),seed=JSON.parse(await read('netlify/lib/ncn-library/seed.json')),news=JSON.parse(await read('netlify/lib/ncn-news/genk-seed.json')),pages=JSON.parse(await read('netlify/lib/ncn-shell/pages.json'));
 const catalog=mergeNews(publicCatalog(seed),news),now=Date.now(),photo={id:'story-'+'a'.repeat(40),authorKey:'fixture',name:'Thành viên thử nghiệm',caption:'Kiểm tra bố cục Story',createdAt:new Date(now).toISOString(),expiresAt:new Date(now+86400000).toISOString(),width:640,height:480};
 const state={catalog,notices:[{id:'fixture',text:'NCN · Thông báo kiểm tra giao diện đồng bộ'}],stories:[photo],now};
@@ -22,7 +24,7 @@ async function context(){
  await ctx.route('**/*',async route=>{
   const request=route.request(),url=new URL(request.url());
   if(url.origin!==origin){assert.equal(request.method(),'GET','No real external writes');return /\.(?:jpg|png|webp)(?:\?|$)/i.test(url.pathname)?route.fulfill({contentType:'image/png',body:logo}):route.abort();}
-  if(blocked&&/\/assets\/ncn-(?:theme\/(?:theme|catalogue)|account)/.test(url.pathname))await new Promise(resolve=>pending.push(resolve));
+  if(blocked&&(built?/\/assets\/ncn-built\/(?:shared\/|assets\/ncn-(?:theme\/|account))/:/\/assets\/ncn-(?:theme\/(?:theme|catalogue)|account)/).test(url.pathname))await new Promise(resolve=>pending.push(resolve));
   const json=value=>route.fulfill({contentType:'application/json',body:JSON.stringify(value)});
   if(url.pathname.startsWith('/.netlify/functions/')){
    if(url.pathname.endsWith('ncn-library'))return json({items:catalog});
@@ -33,8 +35,8 @@ async function context(){
   }
   if(url.pathname.startsWith('/.netlify/identity/'))return json({disable_signup:false,external:{email:true}});
   const req=new Request(request.url()),managed=seed.some(x=>x.managedPage&&x.href===url.pathname);
-  if(['/','/index.html','/thu-vien/','/thu-vien/index.html'].includes(url.pathname)||managed){const response=await library(req);return route.fulfill({status:response.status,headers:Object.fromEntries(response.headers),body:await response.text()});}
-  if(pages[url.pathname]||pages[decodeURIComponent(url.pathname)]){const response=await shell(req);return route.fulfill({status:response.status,headers:Object.fromEntries(response.headers),body:await response.text()});}
+  if(['/','/index.html','/thu-vien/','/thu-vien/index.html'].includes(url.pathname)||managed){const response=built?await optimizePublicResponse(await library(req)):await library(req);return route.fulfill({status:response.status,headers:Object.fromEntries(response.headers),body:await response.text()});}
+  if(pages[url.pathname]||pages[decodeURIComponent(url.pathname)]){const response=built?await optimizePublicResponse(await shell(req)):await shell(req);return route.fulfill({status:response.status,headers:Object.fromEntries(response.headers),body:await response.text()});}
   try{let path=resolve(root,'.'+decodeURIComponent(url.pathname));if(path!==root&&!path.startsWith(root+sep))throw Error('Outside root');if((await stat(path)).isDirectory())path=resolve(path,'index.html');return route.fulfill({contentType:mime[extname(path)]||'application/octet-stream',body:await readFile(path)});}catch{return route.fulfill({status:404,body:'Not found'});}
  });return ctx;
 }
@@ -87,7 +89,7 @@ try{
  async function htmlFiles(dir){const result=[];for(const item of await readdir(dir,{withFileTypes:true})){const path=dir+'/'+item.name;if(item.isDirectory())result.push(...await htmlFiles(path));else if(item.name.endsWith('.html'))result.push(path);}return result;}
  const files=(await htmlFiles('public')).sort();
  for(const [i,file] of files.entries())await check('shared layout '+(i+1)+'/'+files.length+': '+file.slice(7),async()=>{
-  page=await ctx.newPage();const response=await page.goto(origin+'/'+file.slice(7),{waitUntil:'domcontentloaded'});const initial=await response.text();assert.ok(initial.includes('window.NCN_NOTICE_SNAPSHOT'),file+' server notice snapshot');assert.ok(initial.includes('site.css?v=20261025-sync-1')||file.includes('flappy-bird'),file+' final stylesheet');await paint(page);
+  page=await ctx.newPage();const response=await page.goto(origin+'/'+file.slice(7),{waitUntil:'domcontentloaded'});const initial=await response.text();assert.ok(initial.includes('window.NCN_NOTICE_SNAPSHOT'),file+' server notice snapshot');assert.ok(initial.includes(built?'/assets/ncn-built/styles/':'site.css?v=20261025-sync-1')||file.includes('flappy-bird'),file+' final stylesheet');await paint(page);
   for(const width of [1280,390]){await page.setViewportSize({width,height:844});await paint(page);await fits(page);
    const input=page.locator('#ncn-global-query');if(await input.count()){await page.evaluate(()=>document.getElementById('ncn-search-dialog').showModal());await paint(page);const geo=await page.evaluate(()=>{const box=document.getElementById('ncn-search-dialog').getBoundingClientRect(),input=document.getElementById('ncn-global-query').getBoundingClientRect(),icon=document.querySelector('.ncn-search-dialog-head svg').getBoundingClientRect();return {left:box.left,right:box.right,w:innerWidth,delta:Math.abs(input.top+input.height/2-icon.top-icon.height/2)};});assert.ok(geo.left>=0&&geo.right<=geo.w&&geo.delta<2,JSON.stringify(geo));await page.evaluate(()=>document.getElementById('ncn-search-dialog').close());}
   }await page.close();

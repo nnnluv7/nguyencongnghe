@@ -21,6 +21,8 @@ jobs:
         run: npm install --no-save --package-lock=false playwright@1.56.1 esbuild@0.25.12 @netlify/zip-it-and-ship-it@16.5.1
       - name: Check RSS input, cache, public rendering and route isolation
         run: node --test tests/ncn-public-render.test.mjs tests/ncn-library-admin.test.mjs tests/ncn-site.test.mjs
+      - name: Build the public asset manifest used by the deployed page functions
+        run: node scripts/build-public.mjs
       - name: Bundle public page and feed functions
         run: npx esbuild netlify/functions/ncn-site-page.mjs netlify/functions/ncn-library.mjs netlify/functions/ncn-library-page.mjs netlify/functions/ncn-genk-sync.mjs --bundle --platform=node --format=esm --external:@netlify/blobs --external:@netlify/identity --outdir=/tmp/ncn-public-bundles
       - name: Package every actual Netlify Function with dependency tracing

@@ -1,6 +1,7 @@
 import {escapeHTML,renderMarkdown} from '../../public/assets/ncn-library/content.js';
 import {mergedLibrary,publicCatalog,readLibrary} from './ncn-library-api.mjs';
 import {renderPublicHTML} from './ncn-public-render.mjs';
+import {publicPageHeaders} from './ncn-public-cache.mjs';
 
 const headers={'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','Netlify-CDN-Cache-Control':'no-store','X-Content-Type-Options':'nosniff'};
 const json=value=>JSON.stringify(value).replace(/</g,'\\u003c').replace(/\u2028/g,'\\u2028').replace(/\u2029/g,'\\u2029');
@@ -35,8 +36,9 @@ export function createLibraryPageHandler(deps){return async req=>{
     const render=html=>injectCatalog(renderPublicHTML(html,catalog,{...initial,query:url.searchParams}),catalog);
     const internal=url.pathname==='/.netlify/functions/ncn-library-page';
     const originalRoute=deps.seed.find(x=>x.managedPage&&[x.href,x.href.replace(/\.html$/,''),x.href.replace(/\.html$/,'/')].includes(url.pathname));
-    if(['/','/index.html'].includes(url.pathname)||internal&&url.searchParams.get('view')==='home')return new Response(req.method==='HEAD'?null:render(await deps.homeShell()),{headers});
-    if(['/thu-vien','/thu-vien/','/thu-vien/index.html'].includes(url.pathname)||internal&&url.searchParams.get('view')==='index')return new Response(req.method==='HEAD'?null:render(await deps.indexShell()),{headers});
+    const listingHeaders=publicPageHeaders({seconds:15,stories:initial.stories,now:initial.now});
+    if(['/','/index.html'].includes(url.pathname)||internal&&url.searchParams.get('view')==='home')return new Response(req.method==='HEAD'?null:render(await deps.homeShell()),{headers:listingHeaders});
+    if(['/thu-vien','/thu-vien/','/thu-vien/index.html'].includes(url.pathname)||internal&&url.searchParams.get('view')==='index')return new Response(req.method==='HEAD'?null:render(await deps.indexShell()),{headers:listingHeaders});
     const legacy=originalRoute?.id||(internal?url.searchParams.get('legacy'):null),slug=url.pathname.match(/^\/bai-viet\/([^/]+)\/?$/)?.[1]||(internal?url.searchParams.get('slug'):null);
     const items=mergedLibrary(deps.seed,index),item=legacy?items.find(x=>x.id===legacy&&x.kind==='legacy'&&x.managedPage):items.find(x=>x.kind==='article'&&x.slug===slug);
     if(!item||item.status==='draft')return new Response(req.method==='HEAD'?null:await statusHTML(deps,catalog,404),{status:404,headers});

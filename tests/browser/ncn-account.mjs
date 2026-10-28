@@ -6,7 +6,7 @@ import {resolve,extname,sep} from 'node:path';
 import assert from 'node:assert/strict';
 
 // Entirely synthetic HTTPS origin: no Identity, email, billing or website writes.
-const origin='https://ncn-account.test',root=resolve('public');
+const origin='https://ncn-account.test',root=resolve(process.env.NCN_BUILT_TEST?'dist':'public');
 const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.png':'image/png','.svg':'image/svg+xml','.jpg':'image/jpeg','.woff2':'font/woff2'};
 const users=new Map(),tokens=new Map(),calls=[];
 let autoconfirm=true,disableSignup=false,orderUser=null,confirmedUser=null,createHold=null,sessionHold=null,profileFailure=false,assetHold=null,logoutHold=null;

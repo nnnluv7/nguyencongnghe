@@ -1,4 +1,9 @@
-# Revalidate static HTML and assets after updates. Netlify Functions keep their own headers.
+# Atomic deploys invalidate Netlify's static cache. Browsers revalidate source
+# URLs; content-hashed build assets can be reused across every page visit.
 /*
   Cache-Control: public, max-age=0, must-revalidate
-  Netlify-CDN-Cache-Control: public, max-age=0, must-revalidate
+  Netlify-CDN-Cache-Control: public, max-age=31536000, must-revalidate
+
+/assets/ncn-built/*
+  Cache-Control: public, max-age=31536000, immutable
+  Netlify-CDN-Cache-Control: public, max-age=31536000, immutable
