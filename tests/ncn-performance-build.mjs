@@ -16,6 +16,13 @@ for(const page of pages){
  }
 }
 for(const [source,target] of Object.entries(manifest.modules)){assert.ok(source.startsWith('/'));assert.ok((await stat(root+target)).isFile());for(const dep of manifest.dependencies[target]||[])assert.ok((await stat(root+dep)).isFile(),dep);}
+for(const [source,resource]of Object.entries(manifest.catalogues||{})){
+ const original=JSON.parse(await readFile('public'+source,'utf8')),optimized=JSON.parse(await readFile(root+resource.href,'utf8'));
+ for(const key of Object.keys(original).filter(x=>x!=='models'))assert.deepEqual(optimized[key],original[key],source+': full print data must stay intact');
+ for(let i=0;i<original.models.length;i++){
+  const {thumbnail:before,...model}=original.models[i],{thumbnail:after,...next}=optimized.models[i];assert.deepEqual(next,model);assert.ok((await stat(root+after)).size<(await stat('public'+before)).size||before.endsWith('.svg'),before+': preview should be smaller');
+ }
+}
 const themeSets=[];
 for(const path of ['/index.html','/thu-vien/index.html','/sticker/index.html','/arcade/index.html','/pikachu/index.html']){
  const html=await readFile(root+path,'utf8');themeSets.push(new Set([...html.matchAll(/href="(\/assets\/ncn-built\/styles\/[^"]+)"/g)].map(x=>x[1])));

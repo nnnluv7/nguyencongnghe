@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {optimizePublicHTML,stylesheetKey} from '../netlify/lib/ncn-public-assets.mjs';
+import {optimizePublicHTML,stylesheetKey,localAssetPath} from '../netlify/lib/ncn-public-assets.mjs';
 import {publicPageHeaders} from '../netlify/lib/ncn-public-cache.mjs';
 import {createLibraryPageHandler} from '../netlify/lib/ncn-library-page.mjs';
 import {createSitePageHandler} from '../netlify/lib/ncn-site-page.mjs';
@@ -25,10 +25,20 @@ test('unused legacy portal scripts are removed while editors retain their screen
   assert.equal(optimizePublicHTML(page,manifest).includes('screenshot.js'),false);
   const kept=optimizePublicHTML(html+script,manifest);assert.ok(kept.includes(script));
 });
-test('only the actual spreadsheet importers download the large Excel reader',()=>{
+test('only spreadsheet importers receive an on-demand resource without an eager Excel script',()=>{
   const script='<script src="/assets/vendor/125962e77eb283b9aa.js"></script>';
   assert.equal(optimizePublicHTML(html+script,manifest).includes('125962'),false);
-  for(const marker of ['<main id="ncn-sticker-app">','<main id="ncn-popup-app">','<main id="ncn-store-app">','<div id="vip-app">','<script src="/assets/inventory.js"></script>','<script src="/assets/print-import.js"></script>'])assert.ok(optimizePublicHTML(html+marker+script,manifest).includes('125962'));
+  for(const marker of ['<main id="ncn-sticker-app">','<main id="ncn-popup-app">','<main id="ncn-store-app">','<div id="vip-app">','<script src="/assets/inventory.js"></script>','<script src="/assets/print-import.js"></script>']){
+    const result=optimizePublicHTML(html+marker+script,manifest);assert.ok(result.includes('data-ncn-spreadsheet'));assert.equal(/<script[^>]*src="[^"]*125962/.test(result),false);
+  }
+});
+test('relative game resources use the canonical directory and foreign scripts are never rewritten as local assets',()=>{
+  const page='<head><link rel="canonical" href="https://nguyencongnghe.com/flappy-bird/"></head>';
+  assert.equal(localAssetPath('game.js?v=1',page),'/flappy-bird/game.js');assert.equal(localAssetPath('core.js',page),'/flappy-bird/core.js');assert.equal(localAssetPath('https://foreign.test/game.js',page),'');
+});
+test('modern tools discard the obsolete layout initializer but retain shared print guides and account callers',()=>{
+  const page=html+'<main id="ncn-sticker-app"><script src="/assets/js/78064fa8a2b422c03f.js"></script><script src="/assets/js/04eaf19c4b9f842a27.js"></script><script src="/assets/js/b638b6b6b0e4f4118c.js"></script>';
+  const result=optimizePublicHTML(page,manifest);assert.equal(result.includes('78064fa8a2b422c03f'),false);assert.ok(result.includes('04eaf19c4b9f842a27'));assert.ok(result.includes('b638b6b6b0e4f4118c'));
 });
 test('only public shells use a bounded CDN cache; failed, unlisted and managed article responses never do',async()=>{
   const page=createSitePageHandler({pages:{'/tool/':'tool.html'},html:async()=>html,state:async()=>({catalog:[]}),inject:x=>x});

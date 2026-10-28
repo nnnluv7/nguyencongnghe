@@ -25,6 +25,10 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - name: Compare cold and repeated frontend loads on the same simulated mobile connection
         run: node tests/browser/ncn-performance.mjs
+      - name: Verify on-demand Excel, actual private editor imports, font metrics and every primary tool route
+        run: |
+          node tests/browser/ncn-tool-resources.mjs
+          node tests/browser/ncn-tools-performance.mjs
       - name: Verify the actual compiled account, photos, VIP state, all six games and public layouts
         env:
           NCN_BUILT_TEST: '1'
@@ -40,6 +44,8 @@ jobs:
           name: ncn-built-performance
           path: |
             artifacts/performance/
+            artifacts/performance-tools/
+            artifacts/tool-resources/
             artifacts/profile-built/
             artifacts/arcade-built/
             artifacts/layout-built/

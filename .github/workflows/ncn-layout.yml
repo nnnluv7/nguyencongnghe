@@ -30,7 +30,7 @@ jobs:
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
       - name: Verify delayed first paint, source filters, hover and every public page
-        run: node tests/browser/ncn-layout.mjs
+        run: NCN_BUILT_TEST=1 node tests/browser/ncn-layout.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:

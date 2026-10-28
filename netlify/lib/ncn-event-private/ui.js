@@ -10,7 +10,9 @@
     function message(text,bad){var e=el('status');e.hidden=false;e.classList.toggle('ev-error',!!bad);e.textContent=text;}
     function guarded(fn){return function(e){if(e&&e.type==='submit')e.preventDefault();Promise.resolve().then(function(){return fn(e);}).catch(function(error){message(error.message||'Không thực hiện được thao tác.',true);});};}
     function cleanName(value){return String(value||'event-ncn').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[đĐ]/g,'d').replace(/[^\w.-]+/g,'-').slice(0,100);}
-    function exportExcel(rows,name){
+    function spreadsheet(){return window.XLSX?Promise.resolve(window.XLSX):import('/assets/ncn-tool-resources.js').then(function(module){return module.loadSpreadsheet();});}
+    async function exportExcel(rows,name){
+      await spreadsheet();
       if(!window.XLSX)throw new Error('Không tải được thư viện Excel. Tải lại trang.');
       var ws=XLSX.utils.aoa_to_sheet(rows),wb=XLSX.utils.book_new();
       ws['!cols']=[{wch:18},{wch:60},{wch:15},{wch:18},{wch:18}];
@@ -23,7 +25,7 @@
     async function readFile(file,mode){
       if(!file)throw new Error('Chọn file Excel trước.');
       if(file.size>30*1024*1024)throw new Error('File lớn hơn 30 MB. Chia nhỏ file rồi nhập lại.');
-      if(!window.XLSX)throw new Error('Không tải được thư viện Excel. Tải lại trang.');
+      await spreadsheet();
       var wb=XLSX.read(new Uint8Array(await reader(file)),{type:'array'}),best=null,lastError;
       wb.SheetNames.forEach(function(name){
         try{
@@ -185,11 +187,11 @@
         message('Đã thêm '+result.items.length+' mã từ ERP. '+result.missing.length+' mã chưa áp dụng.');
       }finally{el('list-file').value='';}
     }));
-    if(isAdmin)el('price-template').addEventListener('click',guarded(function(){exportExcel([['Mã sản phẩm','Tên sản phẩm','Giá gốc','Giá event']],'mau-bang-gia-event');}));
-    el('stock-template').addEventListener('click',guarded(function(){exportExcel([['Mã sản phẩm','Tên sản phẩm','Số lượng']],'mau-ton-kho-event');}));
-    if(isAdmin)el('export-prices').addEventListener('click',guarded(function(){if(!state.catalog.length)throw new Error('Chưa có bảng giá.');exportExcel(listRows(state.catalog),'bang-gia-event');}));
-    el('export-list').addEventListener('click',guarded(function(){if(!state.selected.length)throw new Error('Danh sách đang trống.');exportExcel(listRows(state.selected),el('name').value||'danh-sach-in-event');}));
-    el('export-missing').addEventListener('click',guarded(function(){exportExcel([['Mã sản phẩm','Tên sản phẩm','Số lượng','Lý do']].concat(state.missing.map(function(p){return [p.code,p.name,p.qty||'',p.reason];})),'event-chua-ap-dung');}));
+    if(isAdmin)el('price-template').addEventListener('click',guarded(function(){return exportExcel([['Mã sản phẩm','Tên sản phẩm','Giá gốc','Giá event']],'mau-bang-gia-event');}));
+    el('stock-template').addEventListener('click',guarded(function(){return exportExcel([['Mã sản phẩm','Tên sản phẩm','Số lượng']],'mau-ton-kho-event');}));
+    if(isAdmin)el('export-prices').addEventListener('click',guarded(function(){if(!state.catalog.length)throw new Error('Chưa có bảng giá.');return exportExcel(listRows(state.catalog),'bang-gia-event');}));
+    el('export-list').addEventListener('click',guarded(function(){if(!state.selected.length)throw new Error('Danh sách đang trống.');return exportExcel(listRows(state.selected),el('name').value||'danh-sach-in-event');}));
+    el('export-missing').addEventListener('click',guarded(function(){return exportExcel([['Mã sản phẩm','Tên sản phẩm','Số lượng','Lý do']].concat(state.missing.map(function(p){return [p.code,p.name,p.qty||'',p.reason];})),'event-chua-ap-dung');}));
     function settings(){return {catalogueId:publishedId,name:el('name').value||'Sticker Event NCN',store:el('store').value,title:el('title').value,period:el('period').value,width:Number(el('width').value),height:Number(el('height').value),cut:el('cut').checked,color:el('color').checked};}
     function applySettings(s){['name','store','title','period','width','height'].forEach(function(key){if(s[key]!=null)el(key).value=s[key];});el('cut').checked=!!s.cut;el('color').checked=!!s.color;el('size').value='custom';}
     el('size').addEventListener('change',function(){var v=el('size').value;if(v==='custom')return;var p=v.split('x');el('width').value=p[0];el('height').value=p[1];updateEstimate();});

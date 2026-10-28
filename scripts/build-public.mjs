@@ -3,7 +3,9 @@ import {readFile,writeFile,readdir,mkdir,cp,rm} from 'node:fs/promises';
 import {resolve,relative,dirname,join} from 'node:path';
 import {createHash} from 'node:crypto';
 import {pathToFileURL} from 'node:url';
-import {assetPath,stylesheetKey,optimizePublicHTML} from '../netlify/lib/ncn-public-assets.mjs';
+import sharp from 'sharp';
+import wawoff2 from 'wawoff2';
+import {assetPath,localAssetPath,stylesheetKey,optimizePublicHTML} from '../netlify/lib/ncn-public-assets.mjs';
 
 const root=resolve('public'),output=resolve('dist'),assets='/assets/ncn-built/';
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex').slice(0,16);
@@ -24,7 +26,7 @@ export async function buildPublic(){
   const entryPoints={};
   for(const [path,source] of sources)if(/^\s*(?:import(?:\s+|['"])|export\s+)/m.test(source))entryPoints[relative(root,path).slice(0,-3)]=path;
   for(const html of htmls)for(const match of html.matchAll(/<script\b[^>]*>/gi)){
-    const tag=match[0],src=assetPath(attr(tag,'src'));
+    const tag=match[0],src=localAssetPath(attr(tag,'src'),html);
     if(attr(tag,'type')==='module'&&src.startsWith('/')&&sources.has(root+src))entryPoints[src.slice(1,-3)]=root+src;
   }
   const result=await build({entryPoints,outdir:output+assets,bundle:true,splitting:true,format:'esm',platform:'browser',target:['es2020'],minify:true,metafile:true,entryNames:'[dir]/[name]-[hash]',chunkNames:'shared/[name]-[hash]',legalComments:'none',logLevel:'silent',plugins:[{
@@ -35,7 +37,28 @@ export async function buildPublic(){
       if(path!==args.path)return {path:resolve(dirname(args.importer),path)};
     });}
   }]});
-  const manifest={modules:{},imports:{},classic:{},styles:{},dependencies:{}};
+  const manifest={modules:{},imports:{},classic:{},styles:{},dependencies:{},catalogues:{},fonts:{}};
+  const generatedAsset=async(folder,bytes,ext)=>{const url=assets+folder+'/'+hash(bytes)+'.'+ext;await mkdir(dirname(output+url),{recursive:true});await writeFile(output+url,bytes);return url;};
+  manifest.logo=await generatedAsset('images',await sharp(root+'/assets/ncn-theme/logo.png').resize({width:512,height:512,fit:'inside',withoutEnlargement:true}).webp({quality:90}).toBuffer(),'webp');
+  manifest.icon=await generatedAsset('images',await sharp(root+'/assets/ncn-theme/logo.png').resize({width:192,height:192,fit:'inside',withoutEnlargement:true}).png({compressionLevel:9}).toBuffer(),'png');
+  // WOFF2 preserves every glyph and metric of the existing Inter fonts. The
+  // large original TTFs stay available to preserved print documents.
+  const fontCSS=await readFile(root+'/assets/vendor/e8a621bed82faf2b49.css','utf8');
+  const subsetIndex=JSON.parse(await readFile(root+'/assets/ncn-theme/font-subsets/manifest.json','utf8')),fontSubsets={};
+  for(const match of fontCSS.matchAll(/url\((\/assets\/[^)]+\.ttf)\)/g)){
+    const bytes=await readFile(root+match[1]),subset=subsetIndex.fonts[match[1]];
+    if(subset.sourceSHA256!==createHash('sha256').update(bytes).digest('hex'))throw Error('Regenerate the UI font subsets after updating Inter.');
+    manifest.fonts[match[1]]=await generatedAsset('fonts',Buffer.from(await wawoff2.compress(bytes)),'woff2');
+    fontSubsets[match[1]]=await generatedAsset('fonts',await readFile(root+subset.file),'woff2');
+  }
+  const thumbnails=new Map();
+  for(const [name,app] of [['ncn-sticker','ncn-sticker-app'],['ncn-popup','ncn-popup-app'],['ncn-store-tools','ncn-store-app']]){
+    const source='/assets/'+name+'/catalogue.json',data=JSON.parse(await readFile(root+source,'utf8'));
+    for(const model of data.models){const original=model.thumbnail;if(!thumbnails.has(original))thumbnails.set(original,await generatedAsset('thumbnails',await sharp(root+original).resize({width:480,height:448,fit:'inside',withoutEnlargement:true}).webp({quality:85}).toBuffer(),'webp'));model.thumbnail=thumbnails.get(original);}
+    // Only catalogue thumbnails change. Full-resolution print layouts, assets,
+    // checksums and font CSS keep their original values.
+    manifest.catalogues[source]={app,href:await generatedAsset('catalogues',Buffer.from(JSON.stringify(data)),'json')};
+  }
   const urlOf=path=>'/'+relative(output,resolve(path)).replaceAll('\\','/');
   for(const [path,info] of Object.entries(result.metafile.outputs)){
     const url=urlOf(path);manifest.dependencies[url]=info.imports.filter(x=>x.kind==='import-statement'&&!x.external).map(x=>urlOf(x.path));
@@ -53,7 +76,7 @@ export async function buildPublic(){
   }
   const classic=new Set();
   for(const html of htmls)for(const match of html.matchAll(/<script\b[^>]*>/gi)){
-    const tag=match[0],src=assetPath(attr(tag,'src'));if(attr(tag,'type')!=='module'&&src.startsWith('/'))classic.add(src);
+    const tag=match[0],src=localAssetPath(attr(tag,'src'),html);if(attr(tag,'type')!=='module'&&src.startsWith('/'))classic.add(src);
   }
   for(const src of classic){
     // Exact copies retain SRI and global bindings used by the existing editors.
@@ -73,7 +96,12 @@ export async function buildPublic(){
       let source='';
       for(const line of group.lines){
         const [src,media]=line.split('|');let css=await readFile(root+src,'utf8');
-        css=css.replace(/url\(\s*(['"]?)([^)'"\s]+)\1\s*\)/g,(all,quote,ref)=>{if(/^(?:[a-z]+:|\/|#)/i.test(ref))return all;const url=new URL(ref,'https://ncn.test'+src);return 'url("'+url.pathname+url.search+url.hash+'")';});
+        css=css.replace(/@font-face\s*\{([^}]+)\}/g,(whole,body)=>{
+          const path=body.match(/url\((\/assets\/[^)]+\.ttf)\)/)?.[1];if(!fontSubsets[path])return whole;
+          const face=(url,range)=>'@font-face{'+body.replace(/src\s*:[^;]+;/,'src:url("'+url+'") format("woff2");')+'unicode-range:'+range+';}';
+          return face(fontSubsets[path],subsetIndex.unicodeRange)+face(manifest.fonts[path],subsetIndex.fonts[path].fallbackRange);
+        });
+        css=css.replace(/url\(\s*(['"]?)([^)'"\s]+)\1\s*\)(\s*format\(['"]truetype['"]\))?/g,(all,quote,ref)=>{const url=new URL(ref,'https://ncn.test'+src);if(manifest.fonts[url.pathname])return 'url("'+manifest.fonts[url.pathname]+'") format("woff2")';if(/^(?:[a-z]+:|\/|#)/i.test(ref))return all;return 'url("'+url.pathname+url.search+url.hash+'")';});
         source+=media?'\n@media '+media+'{\n'+css+'\n}':'\n'+css;
       }
       const {code}=await transform(source,{loader:'css',minify:true,legalComments:'none',target:['chrome100','safari15']});

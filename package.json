@@ -1,6 +1,6 @@
 {
   "private": true,
-  "devDependencies": {"esbuild":"0.25.12"},
+  "devDependencies": {"esbuild":"0.25.12","wawoff2":"2.0.1"},
   "dependencies": {
     "@netlify/blobs": "11.1.4",
     "@netlify/identity": "2.0.0",

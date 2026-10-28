@@ -2,6 +2,7 @@ import {catalogueCard} from '../ncn-theme/cards.js?v=20261016-easy-2';
 import {defaultRow,normalize,normalizeRows,validateForPrint,paginate,renderDocument,parseCSV,importTable,sampleCSV,escapeHTML} from './core.js?v=20261015-direct-1';
 import {createDirectEditor} from '../ncn-direct/editor.js?v=20261024-selection-1';
 import {rowsForValidation} from '../ncn-direct/preview.js?v=20261015-direct-1';
+import {catalogueURL,loadSpreadsheet} from '../ncn-tool-resources.js';
 
 export function createStickerApp({app,data,doc=document,win=window,fetcher=fetch}) {
   const $=id=>doc.getElementById(id);
@@ -173,7 +174,7 @@ export function createStickerApp({app,data,doc=document,win=window,fetcher=fetch
       if(file.size>8*1024*1024)throw new Error('Tệp tối đa 8 MB.');
       let table;
       if(/\.(xlsx|xls)$/i.test(file.name)){
-        if(!win.XLSX)throw new Error('Chưa có trình đọc Excel. Anh lưu tệp thành CSV rồi nhập lại.');
+        status('Đang đọc tệp Excel…');await loadSpreadsheet({doc,win});
         const workbook=win.XLSX.read(await file.arrayBuffer(),{type:'array'});
         table=win.XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]],{header:1,defval:'',raw:false});
       }else {
@@ -203,7 +204,7 @@ export function createStickerApp({app,data,doc=document,win=window,fetcher=fetch
 
 if(typeof document!=='undefined'&&document.getElementById('ncn-sticker-app')) {
   const app=document.getElementById('ncn-sticker-app');
-  fetch('/assets/ncn-sticker/catalogue.json?v=20261025-print-text-1').then(response=>{
+  fetch(catalogueURL('/assets/ncn-sticker/catalogue.json?v=20261025-print-text-1')).then(response=>{
     if(!response.ok)throw new Error('Chưa tải được bộ mẫu sticker.');return response.json();
   }).then(data=>createStickerApp({app,data})).catch(error=>{
     const status=document.getElementById('st-status');status.hidden=false;status.classList.add('st-error');status.textContent=error.message+' Anh nhấn Ctrl+Shift+R để tải lại trang.';

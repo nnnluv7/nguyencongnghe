@@ -67,7 +67,7 @@ export function createTheme({doc=document,win=window,config,catalog=win.CG_CATAL
   const read=key=>{try{return win.localStorage.getItem(key);}catch{return null;}};
   const write=(key,value)=>{try{win.localStorage.setItem(key,value);}catch{/* Display works even when storage is blocked. */}};
   const cfg=(config&&typeof config==='object')?config:{};
-  const imageURL=value=>preview&&win.NCN_THEME_PREVIEW_ASSETS?.[value]||safeHref(value);
+  const imageURL=value=>preview&&win.NCN_THEME_PREVIEW_ASSETS?.[value]||(value==='/assets/ncn-theme/logo.png'?doc.querySelector('link[data-ncn-logo-asset]')?.getAttribute('href'):null)||safeHref(value);
   const previewLinks=root=>{if(preview)(root||doc).querySelectorAll('.ncn-ui a[href^="/"],a.ncn-search-result[href^="/"],a.ncn-search-all[href^="/"]').forEach(a=>{a.href='https://nguyencongnghe.com'+a.getAttribute('href');a.target='_blank';a.rel='noopener';});};
   const groups=(Array.isArray(cfg.groups)?cfg.groups:[]).filter(g=>g&&typeof g.id==='string'&&g.name);
   const tools=orderTools((Array.isArray(cfg.tools)?cfg.tools:[]).filter(t=>t&&/^[a-z0-9-]+$/i.test(t.id)&&t.title&&safeHref(t.href)).map(t=>({...t,href:safeHref(t.href)})));

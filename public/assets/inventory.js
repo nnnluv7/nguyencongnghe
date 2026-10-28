@@ -5,6 +5,7 @@
   let file=null, rows=[], index=0, loading=false;
   const code=new QRCode('qrcode');
   const notice=message=>window.CG?.toast(message)||window.alert(message);
+  const spreadsheet=()=>window.XLSX?Promise.resolve(window.XLSX):import('/assets/ncn-tool-resources.js').then(module=>module.loadSpreadsheet());
   function render(){
     if(!rows.length)return;
     const row=rows[index];
@@ -34,8 +35,9 @@
     if(!file){notice('Anh/chị chọn file Excel trước nhé.');return;}
     loading=true;
     const reader=new FileReader();
-    reader.onload=()=>{
+    reader.onload=async()=>{
       try{
+        await spreadsheet();
         const workbook=XLSX.read(reader.result,{type:'array'});
         const values=workbook.SheetNames.flatMap(name=>XLSX.utils.sheet_to_json(workbook.Sheets[name],{defval:'',raw:false}));
         loadRows(values);
@@ -48,6 +50,7 @@
   window.nextkk=()=>{if(!rows.length)return;index=Math.min(index+1,rows.length-1);render();};
   window.prevkk=()=>{if(!rows.length)return;index=Math.max(index-1,0);render();};
   window.ExportToExcel=(type='xlsx',filename,downloadOnly)=>{
+    if(!window.XLSX)return spreadsheet().then(()=>window.ExportToExcel(type,filename,downloadOnly)).catch(error=>notice(error.message));
     const worksheet=XLSX.utils.aoa_to_sheet([['masanpham','tensanpham','soluong'],['001234','Sản phẩm mẫu',1]]);
     worksheet.A2.t='s';
     const workbook=XLSX.utils.book_new();XLSX.utils.book_append_sheet(workbook,worksheet,'sheet1');

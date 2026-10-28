@@ -7,6 +7,7 @@
   const printButton = document.getElementById('button');
   let rows = [], page = 0;
   const notify = message => window.CG?.toast(message) || window.alert(message);
+  const spreadsheet=()=>window.XLSX?Promise.resolve(window.XLSX):import('/assets/ncn-tool-resources.js').then(module=>module.loadSpreadsheet());
   const valueOf = (row, field) => row?.[field] ?? '';
   function fill(root, sourceRows, offset) {
     groups.forEach((group, slot) => group.forEach(mapping => {
@@ -39,8 +40,9 @@
     if (!file) return;
     printButton.disabled=true;
     const reader = new FileReader();
-    reader.onload=()=>{
+    reader.onload=async()=>{
       try {
+        await spreadsheet();
         const workbook=XLSX.read(reader.result,{type:'array'});
         const sourceRows=workbook.SheetNames.flatMap(name=>XLSX.utils.sheet_to_json(workbook.Sheets[name],{defval:''}));
         const expected=new Set(groups.flat().map(mapping=>mapping.field));
@@ -75,6 +77,7 @@
     target.addEventListener('load',()=>{target.focus();target.print();},{once:true});
   });
   window.ExportToExcel = (type='xlsx',filename,downloadOnly) => {
+    if(!window.XLSX)return spreadsheet().then(()=>window.ExportToExcel(type,filename,downloadOnly)).catch(error=>notify(error.message));
     const workbook=XLSX.utils.table_to_book(document.getElementById('tbl_exporttable_to_xls'),{sheet:'sheet1'});
     if(downloadOnly) return XLSX.write(workbook,{bookType:type,bookSST:true,type:'base64'});
     return XLSX.writeFile(workbook,filename||'file-mau.'+type);
