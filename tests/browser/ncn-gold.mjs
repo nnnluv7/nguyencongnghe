@@ -19,7 +19,7 @@ async function fixture({save=null,signed=false,blocked=false,viewport={width:144
 const tick=async(ms=100)=>{active.now+=ms;await page.clock.runFor(ms);};
 const open=async()=>{await page.goto(origin+'/dao-vang/');await page.waitForFunction(()=>window.NCNAccount?.state.ready);await page.locator('#gm-start').waitFor();await tick();};
 const saved=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('ncn-gold-save-v1'))),state=()=>page.locator('#gm-app').getAttribute('data-state');
-const shot=async name=>page.screenshot({path:out+'/'+name+'.jpg',type:'jpeg',quality:85,fullPage:true});
+const shot=async name=>page.screenshot({path:out+'/'+name+'.jpg',type:'jpeg',quality:85,fullPage:!(await page.locator('#gm-app').evaluate(el=>el.classList.contains('gm-immersive')))});
 async function check(name,fn){try{await fn();results.push({name,ok:true});console.log('PASS '+name);}catch(error){results.push({name,ok:false,error:error.message});await shot('failure-'+results.length).catch(()=>{});console.error('STATE',await state().catch(()=>null),'TOAST',await page.locator('#gm-toast').innerText().catch(()=>''));throw error;}}
 async function quick(){await page.locator('#gm-quick').click();if(await page.locator('#gm-confirm').isVisible())await page.locator('#gm-confirm-yes').click();await page.locator('#gm-app[data-state=playing]').waitFor();}
 async function haul(){await tick(650);await page.locator('#gm-board').focus();await page.keyboard.press('Space');await tick(3000);}
