@@ -18,7 +18,13 @@ The shop offers carried dynamite and next-stage strength, luck, rock value and d
 
 - 22 deterministic engine tests: all 100 generated mines, collision ordering, swept diamond catches, weight and strength, cash accounting, deadlines, explosives, bags, shops, boost expiry, save restoration and completion bounds.
 - Actual score handler test for Gold classic/daily partitioning, shared identity and plausibility rejection.
-- Eleven browser scenarios in source and compiled output: 320px–desktop layout, actual gold haul, guest score submission in a synthetic fixture, precise carried-object restore, persisted shop purchase, deadline, daily win, page wheel/menu pause, phone portrait/landscape full screen, blocked storage/dark/reduced motion and runtime errors. All API writes stay inside the synthetic fixture.
+- Thirteen browser scenarios in source and compiled output: 320px–desktop layout, actual gold haul, guest score submission in a synthetic fixture, precise carried-object restore, persisted shop purchase, deadline, daily win, page wheel/menu pause, phone portrait/landscape full screen, blocked storage/dark/reduced motion and runtime errors. All API writes stay inside the synthetic fixture.
 - Existing shared Arcade/profile tests include Gold; layout audit includes all 122 public pages. Netlify packaging and production asset checks remain required.
 
 Mechanic reference: GameFools, “How to Play the Original Gold Miner Today,” https://www.gamefools.com/blog/post/how-to-play-the-original-gold-miner-today-and-why-it-is-still-one-of-the-best-casual-games . The implementation and art are new NCN work; third-party game assets are not bundled.
+
+## Fullscreen correction
+
+Opening full screen from the welcome state previously let the welcome selector override the mine aspect ratio. Its absolutely positioned canvas and overlay then contributed no intrinsic height; the mine collapsed to a 1px border in both native and fallback full screen. The immersive mine selector now has sufficient specificity to retain its aspect ratio, and a bounded welcome minimum height keeps the phone start controls visible. Normal-page geometry and game rules are unchanged.
+
+Regression coverage first reproduces the 1px failure on the old CSS, then verifies native fullscreen at 1440×900, 2048×1307 and 1280×720 before starting, while playing, paused and back at welcome with a saved run. Separate fallback checks cover desktop and 390×844, 320×640, 844×390 and 667×375 phones, alongside the existing playing tests. Both source and compiled output run the same coverage.

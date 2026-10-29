@@ -27,6 +27,25 @@ function carried(){const g=createGame({seed:123,date:'2026-10-29'});g.hook.angle
 try{
  await fixture();await open();
  await check('welcome, seven-game navigation and start controls fit 320px through desktop',async()=>{for(const width of [1440,1000,820,700,390,360,320]){await page.setViewportSize({width,height:900});await tick();const box=await page.evaluate(()=>{const r=id=>document.getElementById(id).getBoundingClientRect().toJSON();return{w:innerWidth,actual:document.documentElement.scrollWidth,field:r('gm-field'),title:r('gm-title'),start:r('gm-start'),quick:r('gm-quick')};});assert.ok(box.actual<=box.w+1,JSON.stringify(box));assert.ok(box.title.top>=box.field.top-1&&box.quick.bottom<=box.field.bottom+1,JSON.stringify(box));assert.equal(await page.locator('.ncn-arcade-links a').count(),7);if(width===1440)await shot('welcome-desktop');if(width===390)await shot('welcome-phone');}});
+ await check('native desktop full screen retains the mine and welcome before starting',async()=>{
+  for(const [width,height]of [[1440,900],[2048,1307],[1280,720]]){
+   await page.setViewportSize({width,height});await page.locator('#gm-fullscreen').click();await tick(150);
+   assert.equal(await page.evaluate(()=>document.fullscreenElement?.id),'gm-app','Use the browser fullscreen path, not only the CSS fallback');
+   const geo=await page.evaluate(()=>{const rect=id=>document.getElementById(id).getBoundingClientRect().toJSON();return{w:innerWidth,h:innerHeight,field:rect('gm-field'),board:rect('gm-board'),start:rect('gm-start'),quick:rect('gm-quick'),drop:rect('gm-drop')};});
+   assert.ok(geo.field.height>=300&&geo.board.height>=geo.field.height-2,JSON.stringify(geo));
+   assert.ok(geo.start.top>=geo.field.top&&geo.quick.bottom<=geo.field.bottom+1,JSON.stringify(geo));
+   assert.ok(geo.field.top>=0&&geo.drop.bottom<=geo.h+1,JSON.stringify(geo));
+   await shot('fullscreen-welcome-native-'+width);await page.locator('#gm-fullscreen').click();await tick(100);assert.equal(await page.evaluate(()=>document.fullscreenElement),null);
+  }
+  await page.locator('#gm-fullscreen').click();await tick(150);await quick();await tick(150);
+  assert.equal(await state(),'playing');assert.ok(await page.locator('#gm-field').evaluate(el=>el.getBoundingClientRect().height>=300));
+  await page.locator('#gm-pause').click();assert.equal(await state(),'paused');await shot('fullscreen-paused-native');
+  assert.ok(await page.locator('#gm-field').evaluate(el=>el.getBoundingClientRect().height>=300));
+  await page.locator('#gm-back').click();assert.equal(await state(),'ready');assert.equal(await page.locator('#gm-continue').isVisible(),true);
+  const restoredWelcome=await page.evaluate(()=>({field:document.getElementById('gm-field').getBoundingClientRect().toJSON(),quick:document.getElementById('gm-quick').getBoundingClientRect().toJSON()}));
+  assert.ok(restoredWelcome.quick.bottom<=restoredWelcome.field.bottom+1,JSON.stringify(restoredWelcome));
+  await shot('fullscreen-welcome-saved-native');await page.locator('#gm-fullscreen').click();await tick(100);
+ });
  await check('quick play really hauls gold, writes no profile or score and freezes while paused',async()=>{await page.setViewportSize({width:1440,height:1000});await quick();await haul();assert.equal(await page.locator('#gm-cash').innerText(),'250');await page.locator('#gm-pause').click();assert.equal(await state(),'paused');const before=await saved();await tick(5000);assert.deepEqual((await saved()).hook,before.hook);assert.equal((await saved()).time,before.time);assert.equal(active.calls.filter(c=>c.method==='POST').length,0);await shot('playing-desktop');});
  await fixture();await open();
  await check('a guest earns a real result under the shared NCN Arcade profile',async()=>{await page.locator('#gm-start').click();await page.locator('#ncn-player-name').fill('Bác Thợ Mỏ');await page.locator('.ncn-arcade-profile [type=submit]').click();await page.locator('#gm-app[data-state=playing]').waitFor();await haul();assert.equal(await page.locator('#gm-cash').innerText(),'250');await page.locator('#gm-pause').click();await page.waitForFunction(()=>document.querySelector('.ncn-score-save').textContent.includes('✓'));const scores=active.calls.filter(c=>c.route==='score').map(c=>JSON.parse(c.body));assert.equal(scores.at(-1).score,250);assert.equal([...active.store.entries.keys()].filter(k=>k.startsWith('best/')).length,1);});
@@ -45,6 +64,18 @@ try{
  await check('wheel over the mine scrolls the page, and the site menu safely pauses play',async()=>{await quick();await page.locator('#gm-board').hover();const before=await page.evaluate(()=>scrollY);await page.mouse.wheel(0,300);await tick(300);assert.ok(await page.evaluate(y=>scrollY>y+10,before));await page.mouse.wheel(0,-200);await tick(300);await page.locator('#ncn-menu-open').click();await tick();assert.equal(await state(),'paused');await page.locator('#ncn-menu-close').click();});
  await fixture({fallback:true,touch:true,viewport:{width:390,height:844}});await open();
  await check('phone full screen and landscape keep both mining controls within the viewport',async()=>{await quick();await page.locator('#gm-fullscreen').click();await tick();assert.equal(await page.locator('#gm-app').evaluate(el=>el.classList.contains('gm-immersive')),true);for(const [width,height]of [[390,844],[844,390],[667,375]]){await page.setViewportSize({width,height});await tick();const geo=await page.evaluate(()=>{const rect=id=>document.getElementById(id).getBoundingClientRect().toJSON();return{w:innerWidth,h:innerHeight,field:rect('gm-field'),drop:rect('gm-drop'),bomb:rect('gm-bomb'),full:rect('gm-fullscreen')};});for(const key of ['drop','bomb','full'])assert.ok(geo[key].left>=-1&&geo[key].right<=geo.w+1&&geo[key].top>=-1&&geo[key].bottom<=geo.h+1,JSON.stringify(geo));assert.ok(geo.field.height>150,JSON.stringify(geo));await shot('fullscreen-'+width);}await page.locator('#gm-fullscreen').click();await tick();assert.equal(await page.locator('#gm-app').evaluate(el=>el.classList.contains('gm-immersive')),false);});
+ await fixture({fallback:true,touch:true,viewport:{width:390,height:844}});await open();
+ await check('fallback full screen keeps welcome and mine usable on desktop and both phone orientations',async()=>{
+  for(const [width,height]of [[1440,900],[390,844],[320,640],[844,390],[667,375]]){
+   await page.setViewportSize({width,height});await page.locator('#gm-fullscreen').click();await tick(150);
+   const geo=await page.evaluate(()=>{const rect=id=>document.getElementById(id).getBoundingClientRect().toJSON();return{w:innerWidth,h:innerHeight,field:rect('gm-field'),board:rect('gm-board'),start:rect('gm-start'),quick:rect('gm-quick'),drop:rect('gm-drop')};});
+   assert.equal(await page.evaluate(()=>document.fullscreenElement),null,'Exercise the fallback separately');
+   assert.ok(geo.field.height>=150&&geo.board.height>=geo.field.height-2,JSON.stringify(geo));
+   assert.ok(geo.start.top>=geo.field.top&&geo.quick.bottom<=geo.field.bottom+1,JSON.stringify(geo));
+   assert.ok(geo.field.top>=0&&geo.drop.bottom<=geo.h+1,JSON.stringify(geo));
+   await shot('fullscreen-welcome-fallback-'+width);await page.locator('#gm-fullscreen').click();await tick(100);
+  }
+ });
  await fixture({blocked:true,dark:true,viewport:{width:390,height:844}});await open();
  await check('blocked storage, reduced motion and dark theme still permit real quick play',async()=>{await quick();await haul();assert.equal(await page.locator('#gm-cash').innerText(),'250');assert.match(await page.locator('#gm-storage-note').innerText(),/không cho lưu/);await page.locator('#gm-pause').click();await shot('dark-phone');});
  await check('all tested game states avoid uncaught JavaScript exceptions',async()=>assert.deepEqual(errors,[]));
