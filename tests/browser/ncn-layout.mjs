@@ -17,7 +17,7 @@ const common={production:()=>true,seed,store:()=>({getWithMetadata:async()=>null
 const library=createLibraryPageHandler({...common,homeShell:()=>read('public/index.html'),indexShell:()=>read('public/thu-vien/index.html'),articleShell:()=>read('netlify/lib/ncn-library/article-shell.html'),original:path=>read('public/'+path)});
 const shell=createSitePageHandler({pages,html:path=>read('public/'+path),state:async()=>state,inject:injectCatalog});
 const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml','.woff2':'font/woff2','.ttf':'font/ttf'};
-const browser=await chromium.launch(),results=[];let page,blocked=false,pending=[];
+const browser=await chromium.launch(),results=[],controlAudit=[];let page,blocked=false,pending=[];
 const logo=await readFile('public/assets/ncn-theme/logo.png');
 async function context(){
  const ctx=await browser.newContext({viewport:{width:1280,height:900}});
@@ -91,8 +91,20 @@ try{
  for(const [i,file] of files.entries())await check('shared layout '+(i+1)+'/'+files.length+': '+file.slice(7),async()=>{
   page=await ctx.newPage();const runtimeErrors=[];page.on('pageerror',error=>runtimeErrors.push(error.message));const response=await page.goto(origin+'/'+file.slice(7),{waitUntil:'domcontentloaded'});const initial=await response.text();assert.ok(initial.includes('window.NCN_NOTICE_SNAPSHOT'),file+' server notice snapshot');assert.ok(initial.includes(built?'/assets/ncn-built/styles/':'site.css?v=20261025-sync-1')||file.includes('flappy-bird'),file+' final stylesheet');await page.waitForFunction(()=>window.NCNAccount?.state.ready);await paint(page);
   for(const width of [1280,390]){await page.setViewportSize({width,height:844});await paint(page);await fits(page);
-   const framed=await page.locator('input,select,textarea').evaluateAll(els=>els.filter(el=>el.getClientRects().length&&getComputedStyle(el).boxShadow.includes('24, 44, 64')).map(el=>{const s=getComputedStyle(el);return {id:el.id||el.className,radius:parseFloat(s.borderTopLeftRadius),border:parseFloat(s.borderTopWidth)};}));for(const field of framed)assert.ok(field.radius>=6&&field.border>0,file+' shaded edge must follow an existing rounded field: '+JSON.stringify(field));
+   const controls=await page.locator('input,select,textarea,button,a,summary,label').evaluateAll(els=>{
+    const visible=els.filter(el=>el.getClientRects().length);
+    const read=el=>{const s=getComputedStyle(el);return {id:el.id||el.className,tag:el.tagName,radius:parseFloat(s.borderTopLeftRadius),border:parseFloat(s.borderTopWidth),shadow:s.boxShadow};};
+    const shaded=visible.filter(el=>getComputedStyle(el).boxShadow.includes('24, 44, 64')).map(read);
+    const unshaded=visible.filter(el=>{
+     const s=getComputedStyle(el),rgb=s.backgroundColor.match(/[\d.]+/g)?.map(Number);
+     return ['BUTTON','A','SUMMARY'].includes(el.tagName)&&parseFloat(s.borderTopWidth)>0&&parseFloat(s.borderTopLeftRadius)>=6&&s.backgroundImage==='none'&&rgb?.length===4&&rgb[3]>0&&rgb[3]<.98&&Math.min(...rgb.slice(0,3))>140&&!s.boxShadow.includes('24, 44, 64')&&!s.boxShadow.includes('40, 80, 109')&&!el.closest('[aria-pressed=true],[aria-selected=true],[aria-current=page],.selected,.active,.is-active,#printMe,.fifo-sheet,.pk-board,.rl-stage,.ff-stage,.pk-play-area,.pk-overlay,.bb-field,.bb-overlay,#gameShell,.xh-hold');
+    }).map(el=>({...read(el),html:el.outerHTML.slice(0,240),parent:el.parentElement?.className}));
+    return {shaded,unshaded};
+   });
+   for(const control of controls.shaded)assert.ok(control.radius>=6&&control.border>0,file+' shaded edge must follow an existing rounded control: '+JSON.stringify(control));
+   assert.deepEqual(controls.unshaded,[],file+' rounded glass actions must share the approved directional edge');
+   controlAudit.push({path:file.slice(7),width,...controls});
    const input=page.locator('#ncn-global-query');if(await input.count()){await page.evaluate(()=>document.getElementById('ncn-search-dialog').showModal());await paint(page);const geo=await page.evaluate(()=>{const box=document.getElementById('ncn-search-dialog').getBoundingClientRect(),input=document.getElementById('ncn-global-query').getBoundingClientRect(),icon=document.querySelector('.ncn-search-dialog-head svg').getBoundingClientRect();return {left:box.left,right:box.right,w:innerWidth,delta:Math.abs(input.top+input.height/2-icon.top-icon.height/2)};});assert.ok(geo.left>=0&&geo.right<=geo.w&&geo.delta<2,JSON.stringify(geo));await page.evaluate(()=>document.getElementById('ncn-search-dialog').close());}
   }if(built)assert.deepEqual(runtimeErrors,[],file+' runtime errors');await page.close();
  });
-}finally{blocked=false;pending.splice(0).forEach(resolve=>resolve());await writeFile(out+'/results.json',JSON.stringify(results,null,2));await ctx.close();await browser.close();}
+}finally{blocked=false;pending.splice(0).forEach(resolve=>resolve());await writeFile(out+'/results.json',JSON.stringify(results,null,2));await writeFile(out+'/control-audit.json',JSON.stringify(controlAudit,null,2));await ctx.close();await browser.close();}
