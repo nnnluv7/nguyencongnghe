@@ -1275,7 +1275,8 @@ body.ncn-modern .st-card-sizes button:focus-visible{outline: 3px solid #2563b8; 
   .pk-primary,.xh-primary,.bb-primary,
   #printMe *,.row-container *,.sheet *,.ncn-sheet *,.fifo-sheet *,
   .ncn-print-stage *,.ncn-direct-stage *,.pk-board *
- )):not(:focus-visible):not(:focus-within) {
+ )):not(:focus-visible):not(:focus-within),
+ body.ncn-modern #ncn-library-detail #postBody #menu-top a:not(.active-s):not(:focus-visible) {
   border-color:var(--ncn-control-rim);
   box-shadow:var(--ncn-control-shadow);
  }

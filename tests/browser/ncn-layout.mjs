@@ -102,6 +102,7 @@ try{
     return {shaded,unshaded};
    });
    for(const control of controls.shaded)assert.ok(control.radius>=6&&control.border>0,file+' shaded edge must follow an existing rounded control: '+JSON.stringify(control));
+   assert.deepEqual(controls.unshaded,[],file+' rounded glass actions must share the approved directional edge');
    controlAudit.push({path:file.slice(7),width,...controls});
    const input=page.locator('#ncn-global-query');if(await input.count()){await page.evaluate(()=>document.getElementById('ncn-search-dialog').showModal());await paint(page);const geo=await page.evaluate(()=>{const box=document.getElementById('ncn-search-dialog').getBoundingClientRect(),input=document.getElementById('ncn-global-query').getBoundingClientRect(),icon=document.querySelector('.ncn-search-dialog-head svg').getBoundingClientRect();return {left:box.left,right:box.right,w:innerWidth,delta:Math.abs(input.top+input.height/2-icon.top-icon.height/2)};});assert.ok(geo.left>=0&&geo.right<=geo.w&&geo.delta<2,JSON.stringify(geo));await page.evaluate(()=>document.getElementById('ncn-search-dialog').close());}
   }if(built)assert.deepEqual(runtimeErrors,[],file+' runtime errors');await page.close();
