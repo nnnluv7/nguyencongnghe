@@ -31,12 +31,12 @@ const server=createServer(async(req,res)=>{
 });
 await new Promise(done=>server.listen(0,'127.0.0.1',done));
 const base='http://127.0.0.1:'+server.address().port,browser=await chromium.launch();
-const context=async(width=1280)=>{const ctx=await browser.newContext({viewport:{width,height:900},reducedMotion:'reduce'});await ctx.route('**/*',route=>new URL(route.request().url()).origin===base?route.continue():route.abort());return ctx;};
+const context=async(width=1280,scale=1)=>{const ctx=await browser.newContext({viewport:{width,height:900},deviceScaleFactor:scale,reducedMotion:'reduce'});await ctx.route('**/*',route=>new URL(route.request().url()).origin===base?route.continue():route.abort());return ctx;};
 const open=async(ctx,path)=>{const p=await ctx.newPage();p.on('pageerror',e=>errors.push(e.message));await p.goto(base+path);await p.waitForFunction(()=>window.NCNAccount?.state.ready);await p.evaluate(()=>document.fonts.ready);return p;};
 const paint=p=>p.evaluate(()=>new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done))));
 const check=async(name,fn)=>{await fn();results.push({name,ok:true});console.log('PASS '+name);};
-const style=(p,selector)=>p.locator(selector).first().evaluate(el=>{const s=getComputedStyle(el);return {width:s.outlineWidth,color:s.borderTopColor,borderWidth:s.borderTopWidth,radius:s.borderTopLeftRadius,offset:s.outlineOffset,blur:s.backdropFilter,background:s.backgroundColor};});
-const routes=[['/','#ncn-topbar'],['/thu-vien/','#ncn-topbar'],['/2024/01/in-fifo.html','.fifo-card'],['/arcade/','.ncn-scoreboard'],['/2022/07/phieu-tu-van-tra-gop.html','#ncn-topbar']];
+const style=(p,selector)=>p.locator(selector).first().evaluate(el=>{const s=getComputedStyle(el);return {width:s.outlineWidth,outlineStyle:s.outlineStyle,color:s.borderTopColor,borderWidth:s.borderTopWidth,radius:s.borderTopLeftRadius,offset:s.outlineOffset,blur:s.backdropFilter,shadow:s.boxShadow,background:s.backgroundColor};});
+const routes=[['/','#ncn-topbar'],['/thu-vien/','#ncn-topbar'],['/2024/01/in-fifo.html','.fifo-card'],['/2024/02/kiem-quy.html','#ncn-topbar'],['/arcade/','.ncn-scoreboard'],['/2022/07/phieu-tu-van-tra-gop.html','#ncn-topbar']];
 try{
  await check('existing rounded borders stay subtle without a second frame in either theme or viewport',async()=>{
   for(const width of [1280,390]){const ctx=await context(width);
@@ -46,6 +46,13 @@ try{
     await p.close();
    }await ctx.close();
   }
+ });
+ await check('the photographed ERP field gains a fractional shaded edge, while cash table cells stay flat',async()=>{
+  const boxes=[];
+  for(const old of [true,false]){baseline=old;const ctx=await context(390,2),p=await open(ctx,'/2024/02/kiem-quy.html');await paint(p);const s=await style(p,'#cq-erp');boxes.push(await p.locator('#cq-erp').boundingBox());assert.equal(s.radius,'12px');assert.equal(s.outlineStyle,'none');
+   if(!old){assert.match(s.shadow,/0\.5px/);assert.match(s.shadow,/rgba\(24, 44, 64, 0\.18\)/);assert.equal((await style(p,'.cq-qty')).shadow,'none');assert.equal((await style(p,'.cq-qty')).borderWidth,'0px');}
+   await p.locator('.cq-simple-erp').screenshot({path:out+'/cash-ERP-'+(old?'before':'after')+'.png'});if(!old)await p.screenshot({path:out+'/cash-phone.jpg',fullPage:true,quality:85});await ctx.close();
+  }baseline=false;assert.deepEqual(boxes[1],boxes[0]);
  });
  await check('keyboard focus and selected states remain clear while text actions and inputs gain no extra frame',async()=>{
   const ctx=await context(),p=await open(ctx,'/2024/01/in-fifo.html');await p.keyboard.press('Tab');await p.locator('#fifo-scan').focus();const focused=await style(p,'#fifo-scan');assert.equal(focused.width,'3px');assert.equal(focused.offset,'3px');await p.locator('#fifo-scan').blur();await p.mouse.move(0,0);
@@ -60,7 +67,7 @@ try{
  });
  await check('the refinement preserves control and content geometry at both breakpoints',async()=>{
   for(const width of [1280,390])for(const [path] of routes){const boxes=[];
-   for(const old of [true,false]){baseline=old;const ctx=await context(width),p=await open(ctx,path);await paint(p);boxes.push(await p.locator('#ncn-topbar,main h1,#fifo-scan,#fifo-print,.fifo-card,.ncn-scoreboard,.ncn-top-search,.ncn-inline-search').evaluateAll(els=>els.map(el=>{const s=getComputedStyle(el);return {id:el.id||el.className,box:el.getBoundingClientRect().toJSON(),radius:s.borderRadius,shadow:s.boxShadow};})));await ctx.close();}
+   for(const old of [true,false]){baseline=old;const ctx=await context(width),p=await open(ctx,path);await paint(p);boxes.push(await p.locator('#ncn-topbar,main h1,#fifo-scan,#fifo-print,.fifo-card,.ncn-scoreboard,.ncn-top-search,.ncn-inline-search,#cq-erp,.cq-screen').evaluateAll(els=>els.map(el=>{const s=getComputedStyle(el);return {id:el.id||el.className,box:el.getBoundingClientRect().toJSON(),radius:s.borderRadius,...(el.matches('#ncn-topbar,.fifo-card,.ncn-scoreboard,.cq-screen')?{shadow:s.boxShadow}:{})};})));await ctx.close();}
    assert.deepEqual(boxes[1],boxes[0],path+' '+width+' layout changed');
   }baseline=false;
  });

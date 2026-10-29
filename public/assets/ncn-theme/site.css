@@ -1171,15 +1171,19 @@ body.ncn-modern .st-card-sizes button:focus-visible{outline: 3px solid #2563b8; 
 }
 
 /* NCN glass hairline, 20261029: preserve the original glass and rounded shapes.
-   Tint each existing border instead of painting a second outline over it. */
+   A fractional shadow reveals the shaded edge without drawing a full outline. */
 @media screen {
  html[data-ncn-theme] body.ncn-modern {
   --ncn-hairline:rgba(30,38,50,.14);
   --ncn-hairline-soft:rgba(30,38,50,.085);
+  --ncn-control-rim:rgba(255,255,255,.62);
+  --ncn-control-shadow:inset .5px .5px 0 rgba(255,255,255,.78),.5px .5px .5px rgba(24,44,64,.18),0 2px 5px rgba(40,80,109,.025);
  }
  html[data-ncn-theme=dark] body.ncn-modern {
   --ncn-hairline:rgba(225,239,250,.19);
   --ncn-hairline-soft:rgba(225,239,250,.12);
+  --ncn-control-rim:rgba(225,239,250,.12);
+  --ncn-control-shadow:inset .5px .5px 0 rgba(225,245,255,.16),-.5px -.5px .5px rgba(225,245,255,.18),.5px .5px .5px rgba(0,10,23,.34);
  }
  /* These components already own their border width, radius, highlight and shadow.
     Do not frame text actions, nested search inputs, summary rows or game tiles. */
@@ -1202,10 +1206,35 @@ body.ncn-modern .st-card-sizes button:focus-visible{outline: 3px solid #2563b8; 
   .ncn-icon-button,.ncn-account-menu>summary,.ncn-filter-row) {
   border-color:var(--ncn-hairline);
  }
+ /* Only already-rounded, framed controls participate. The native shadow follows
+    their real border radius, including inputs and selects, with no pseudo layer. */
+ body.ncn-modern :is(
+  .ncn-top-search,.ncn-inline-search,.ncn-library-search,.ncn-account-menu>summary,
+  .auth-input,.ncn-account-dialog input,.ncn-story-dialog input,
+  .ncn-arcade-dialog input,.ncn-scoreboard select,
+  #ncn-cash-app .cq-simple-erp input,
+  .ncn-legacy-print .ncn-print-sidebar :is(input,select,textarea),
+  .ncn-direct-editor .ncn-workspace-fields :is(input,select,textarea),
+  .fifo-page :is(input,select),.fifo-import-dialog :is(textarea,select),
+  :is(#ncn-sticker-app,#ncn-popup-app,#ncn-store-app) :is(.st-field input,.st-field select,.st-search input),
+  #postBody #ncn-insurance-app .containerz :is(input[type=text],select),
+  #ncn-event-app :is(.ev-field input,.ev-field select,.ev-search>input,.ev-table input),
+  #ncn-billing-app input,#ncn-admin-app :is(input,select,textarea),
+  #ncn-wheel-app .lw-duration input,#ncn-wheel-app .lw-input
+ ):not(:where(
+  [type=hidden],[type=checkbox],[type=radio],[type=file],[type=range],[type=color],
+  [aria-invalid=true],#ncn-global-query,.ncn-inline-search input,.ncn-library-search input,
+  .ncn-member-photo-label input,.ncn-fifo-input,.cq-qty,
+  #printMe *,.row-container *,.sheet *,.ncn-sheet *,.fifo-sheet *,
+  .ncn-print-stage *,.ncn-direct-stage *,.pk-board *
+ )):not(:focus):not(:focus-within) {
+  border-color:var(--ncn-control-rim);
+  box-shadow:var(--ncn-control-shadow);
+ }
 }
 @media screen and (prefers-reduced-transparency:reduce),screen and (prefers-contrast:more) {
- html[data-ncn-theme] body.ncn-modern {--ncn-hairline:#7b8894;--ncn-hairline-soft:#7b8894}
- html[data-ncn-theme=dark] body.ncn-modern {--ncn-hairline:#afc5d8;--ncn-hairline-soft:#afc5d8}
+ html[data-ncn-theme] body.ncn-modern {--ncn-hairline:#7b8894;--ncn-hairline-soft:#7b8894;--ncn-control-rim:#7b8894;--ncn-control-shadow:none}
+ html[data-ncn-theme=dark] body.ncn-modern {--ncn-hairline:#afc5d8;--ncn-hairline-soft:#afc5d8;--ncn-control-rim:#afc5d8;--ncn-control-shadow:none}
  body.ncn-modern :is(#ncn-topbar,#ncn-game-topbar,#ncn-sidebar,#ncn-page-tools,
   #ncn-search-dialog,#ncn-footer,.ncn-account-dropdown,.ncn-tool-card,
   .ncn-article-card,.ncn-glass-panel,.ncn-print-sidebar,.fifo-card,
@@ -1215,6 +1244,6 @@ body.ncn-modern .st-card-sizes button:focus-visible{outline: 3px solid #2563b8; 
  }
 }
 @media screen and (forced-colors:active) {
- html[data-ncn-theme] body.ncn-modern {--ncn-hairline:ButtonText;--ncn-hairline-soft:ButtonText}
+ html[data-ncn-theme] body.ncn-modern {--ncn-hairline:ButtonText;--ncn-hairline-soft:ButtonText;--ncn-control-rim:ButtonText;--ncn-control-shadow:none}
 }
 /* END NCN GLASS HAIRLINE 20261029 */
