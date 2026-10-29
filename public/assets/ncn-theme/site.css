@@ -1244,7 +1244,7 @@ body.ncn-modern .st-card-sizes button:focus-visible{outline: 3px solid #2563b8; 
  body.ncn-modern :is(
   .ncn-icon-button,.ncn-admin-links a,.ncn-button-glass,.ncn-filter-row button,
   #ncn-page-actions button,.ncn-account-dialog button,.ncn-pagination button,
-  .ncn-tool-actions button,.ncn-glass-action,
+  .ncn-tool-actions button,[data-ncn-glass-action],
   .ncn-account-tabs,.ncn-member-tabs,.ncn-member-photo-label,.ncn-member-photo-label>strong,
   .ncn-print-zoom button,.ncn-direct-controls button,.ncn-print-secondary,
   .fifo-page button,.fifo-import-dialog button,.fifo-file-label,

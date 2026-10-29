@@ -50,4 +50,5 @@ pixel-density-2 before/after captures of all five actual actions. The page-wide
 layout audit also inventories rounded controls and checks that each directional
 shadow belongs to an existing framed surface. Fixtures never write production data.
 Six existing rounded article-copy controls carry an explicit glass-action
-class so archived text-only copy controls do not receive an accidental frame.
+attribute so archived text-only copy controls do not receive an accidental frame.
+This retains their original classless native styling as well as their geometry.
