@@ -78,6 +78,11 @@ export async function buildPublic(){
   for(const html of htmls)for(const match of html.matchAll(/<script\b[^>]*>/gi)){
     const tag=match[0],src=localAssetPath(attr(tag,'src'),html);if(attr(tag,'type')!=='module'&&src.startsWith('/'))classic.add(src);
   }
+  // A fresh tool can declare its on-demand reader without executing it during
+  // source-page startup. Give that inert declaration the same immutable asset.
+  for(const html of htmls)for(const match of html.matchAll(/<link\b[^>]*\bdata-ncn-spreadsheet\b[^>]*>/gi)){
+    const src=localAssetPath(attr(match[0],'href'),html);if(src.startsWith('/'))classic.add(src);
+  }
   for(const src of classic){
     // Exact copies retain SRI and global bindings used by the existing editors.
     const bytes=await readFile(root+src),url=assets+'classic/'+src.split('/').pop().slice(0,-3)+'-'+hash(bytes)+'.js';

@@ -155,8 +155,8 @@ try{
     await page.waitForSelector('#printMe,.row-container',{state:'attached'});
     await page.waitForLoadState('load');
     if(path==='2024/01/in-fifo.html'){
-      await page.locator('#ff1').fill('25/10');await page.locator('#ver1').fill('256GB');await page.locator('#sl1').fill('48');
-      assert.equal(await page.locator('#printMe textarea').count(),48);
+      await page.waitForSelector('#ncn-fifo-app[data-ready=true]');await page.locator('#fifo-date').fill('2026-10-25');await page.locator('#fifo-color-0').fill('ĐEN 256GB');await page.locator('#fifo-only-filled').uncheck();
+      assert.equal(await page.locator('#printMe .is-printed').count(),48);
     }
     if(path==='2024/01/tao-ma-qrcode-chia-se-wifi-khong-can-nhap-mat-khau.html'){
       await page.locator('#tenwifi').fill('NCN QA');await page.locator('#loaiwifi').selectOption('2');await page.locator('#submitcode').click();

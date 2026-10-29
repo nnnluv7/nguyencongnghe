@@ -22,6 +22,9 @@ export function optimizePublicHTML(html,manifest=deployed){
   // The large spreadsheet reader belongs only to the actual Excel importers.
   // Article pages, games, calculators and account screens never call XLSX.
   html=html.replace(/<script\b[^>]*src=["']\/assets\/vendor\/125962e77eb283b9aa\.js[^"']*["'][^>]*><\/script>/gi,tag=>excel?'<link data-ncn-spreadsheet href="'+(manifest.classic['/assets/vendor/125962e77eb283b9aa.js']||'/assets/vendor/125962e77eb283b9aa.js')+'"'+(attr(tag,'integrity')?' integrity="'+attr(tag,'integrity')+'"':'')+'>':'');
+  html=html.replace(/<link\b[^>]*\bdata-ncn-spreadsheet\b[^>]*>/gi,tag=>{
+    const href=attr(tag,'href'),target=manifest.classic[localAssetPath(href,html)];return target?tag.replace(href,target):tag;
+  });
   // These Blogger, jQuery, barcode and spreadsheet libraries are not used by
   // either portal. Editors retain their original scripts and execution order.
   if(modern)html=html.replace(/<script\b[^>]*src=["']([^"']+)["'][^>]*><\/script>/gi,(tag,src)=>{

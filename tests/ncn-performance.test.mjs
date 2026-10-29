@@ -36,6 +36,11 @@ test('relative game resources use the canonical directory and foreign scripts ar
   const page='<head><link rel="canonical" href="https://nguyencongnghe.com/flappy-bird/"></head>';
   assert.equal(localAssetPath('game.js?v=1',page),'/flappy-bird/game.js');assert.equal(localAssetPath('core.js',page),'/flappy-bird/core.js');assert.equal(localAssetPath('https://foreign.test/game.js',page),'');
 });
+test('an inert spreadsheet declaration receives its immutable URL without creating an executable script',()=>{
+  const page=html+'<link data-ncn-spreadsheet href="/reader.js">',result=optimizePublicHTML(page,{...manifest,classic:{...manifest.classic,'/reader.js':'/assets/ncn-built/classic/reader-hash.js'}});
+  assert.ok(result.includes('<link data-ncn-spreadsheet href="/assets/ncn-built/classic/reader-hash.js">'));
+  assert.equal(/<script[^>]+reader-hash/.test(result),false);
+});
 test('modern tools discard the obsolete layout initializer but retain shared print guides and account callers',()=>{
   const page=html+'<main id="ncn-sticker-app"><script src="/assets/js/78064fa8a2b422c03f.js"></script><script src="/assets/js/04eaf19c4b9f842a27.js"></script><script src="/assets/js/b638b6b6b0e4f4118c.js"></script>';
   const result=optimizePublicHTML(page,manifest);assert.equal(result.includes('78064fa8a2b422c03f'),false);assert.ok(result.includes('04eaf19c4b9f842a27'));assert.ok(result.includes('b638b6b6b0e4f4118c'));

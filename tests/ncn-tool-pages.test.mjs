@@ -1,12 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {createHash} from 'node:crypto';
 import {GLASS_COLORS} from '../public/assets/ncn-wheel/app.js';
 
 const read=path=>readFileSync(new URL('../public/'+path,import.meta.url),'utf8');
 test('retained tool controls have their final screen styles before the body starts',()=>{
-  for(const path of ['ban-hang/index.html','2024/04/qrcode-generator-tao-ma-qrcode.html','2024/01/ban-kiem-ke-san-pham-theo-file-excel.html','2024/01/in-fifo.html','2025/05/tu-van.html','vong-quay-may-man/index.html']){
+  for(const path of ['ban-hang/index.html','2024/04/qrcode-generator-tao-ma-qrcode.html','2024/01/ban-kiem-ke-san-pham-theo-file-excel.html','2025/05/tu-van.html','vong-quay-may-man/index.html']){
     const html=read(path);assert.ok(html.indexOf('tool-pages.css?v=20261024-tools-2')<html.indexOf('</head>'),path);
     assert.match(html,/<body[^>]*ncn-refined-tool/);
   }
@@ -18,18 +17,15 @@ test('wheel initial SVG already uses the same glass gradients as its running ren
   assert.equal(/<path[^>]*fill="#[0-9a-f]+"/i.test(svg),false);
   assert.equal(html.includes('class="lw-list-actions"'),false);
 });
-test('FIFO retains the exact 48-label print artwork while its wrappers are rendered statically',()=>{
+test('FIFO has a dedicated prepaint style, 48 editable slots and no retired page scripts',()=>{
   const html=read('2024/01/in-fifo.html');
-  const start=html.indexOf('<div id="printMe">');let depth=0,end=start;
-  for(const tag of html.slice(start).matchAll(/<\/?div\b[^>]*>/g)){
-    depth+=tag[0].startsWith('</')?-1:1;
-    if(depth===0){end=start+tag.index+tag[0].length;break;}
-  }
-  const sheet=html.slice(start,end);
-  assert.equal((sheet.match(/<textarea/g)||[]).length,48);
-  assert.equal(createHash('sha256').update(sheet).digest('hex'),'2c474a9253357d03984e85569275fbc01dd74e708b52755322519fd9b784628f');
-  assert.equal((html.match(/class="ncn-mobile-table-scroll"/g)||[]).length,1);
-  assert.equal((html.match(/class="ncn-mobile-sheet-viewport"/g)||[]).length,1);
+  assert.ok(html.indexOf('/assets/ncn-fifo/style.css')<html.indexOf('</head>'));
+  for(const id of ['ncn-fifo-app','fifo-scan','fifo-preview-sheet','fifo-print-root','fifo-import-dialog'])assert.ok(html.includes('id="'+id+'"'),id);
+  assert.equal((html.match(/id="fifo-imei-\d+"/g)||[]).length,48);
+  assert.equal((html.match(/id="fifo-color-\d+"/g)||[]).length,48);
+  assert.equal(/<script[^>]+src="\/assets\/(?:js|vendor)\//.test(html),false);
+  assert.equal(/(?:post-share|huongdan|nhaplieu)/.test(html),false);
+  assert.match(html,/<link data-ncn-spreadsheet/);
 });
 test('modern form markup retains every existing calculation and stocktaking control',()=>{
   for(const [path,ids] of [

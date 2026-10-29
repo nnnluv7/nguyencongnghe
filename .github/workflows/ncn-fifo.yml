@@ -1,0 +1,32 @@
+name: NCN FIFO labels
+on:
+  push:
+    branches: [main]
+    paths: ['public/2024/01/in-fifo.html', 'public/assets/ncn-fifo/**', 'public/assets/ncn-tool-resources.js', 'netlify/lib/ncn-public-assets.mjs', 'scripts/build-public.mjs', 'tests/ncn-fifo.test.mjs', 'tests/browser/ncn-fifo.mjs', '.github/workflows/ncn-fifo.yml']
+  pull_request:
+    paths: ['public/2024/01/in-fifo.html', 'public/assets/ncn-fifo/**', 'public/assets/ncn-tool-resources.js', 'netlify/lib/ncn-public-assets.mjs', 'scripts/build-public.mjs', 'tests/ncn-fifo.test.mjs', 'tests/browser/ncn-fifo.mjs', '.github/workflows/ncn-fifo.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  fifo:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --package-lock=false playwright@1.56.1
+      - run: node --check public/assets/ncn-fifo/app.js && node --test tests/ncn-fifo.test.mjs
+      - run: node scripts/build-public.mjs
+      - run: npx playwright install --with-deps chromium
+      - run: node tests/browser/ncn-fifo.mjs
+        env:
+          NCN_BUILT_TEST: '1'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ncn-fifo-labels
+          path: artifacts/fifo/
+          retention-days: 14
