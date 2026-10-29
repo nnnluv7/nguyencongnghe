@@ -169,6 +169,15 @@
 /p/ban-hang.html  /ban-hang/  301
 /p/trang-tri.html  /trang-tri/  301
 
+/arcade/index.html  /.netlify/functions/ncn-site-page?page=arcade%2Findex.html  200!
+/arcade/  /.netlify/functions/ncn-site-page?page=arcade%2Findex.html  200!
+/arcade  /.netlify/functions/ncn-site-page?page=arcade%2Findex.html  200!
+
+# NCN Bubble Shooter public shell
+/ban-bong  /.netlify/functions/ncn-site-page?page=ban-bong%2Findex.html  200!
+/ban-bong/  /.netlify/functions/ncn-site-page?page=ban-bong%2Findex.html  200!
+/ban-bong/index.html  /.netlify/functions/ncn-site-page?page=ban-bong%2Findex.html  200!
+
 # BEGIN NCN PUBLIC SHELL
 /2020/10/kho-ver-52-all-tools-ho-tro-kho.html  /.netlify/functions/ncn-site-page?page=2020%2F10%2Fkho-ver-52-all-tools-ho-tro-kho.html  200!
 /2020/10/kho-ver-52-all-tools-ho-tro-kho  /.netlify/functions/ncn-site-page?page=2020%2F10%2Fkho-ver-52-all-tools-ho-tro-kho.html  200!
@@ -275,12 +284,21 @@
 /admin/thu-vien/index.html  /.netlify/functions/ncn-site-page?page=admin%2Fthu-vien%2Findex.html  200!
 /admin/thu-vien/  /.netlify/functions/ncn-site-page?page=admin%2Fthu-vien%2Findex.html  200!
 /admin/thu-vien  /.netlify/functions/ncn-site-page?page=admin%2Fthu-vien%2Findex.html  200!
+/arcade/index.html  /.netlify/functions/ncn-site-page?page=arcade%2Findex.html  200!
+/arcade/  /.netlify/functions/ncn-site-page?page=arcade%2Findex.html  200!
+/arcade  /.netlify/functions/ncn-site-page?page=arcade%2Findex.html  200!
+/ban-bong/index.html  /.netlify/functions/ncn-site-page?page=ban-bong%2Findex.html  200!
+/ban-bong/  /.netlify/functions/ncn-site-page?page=ban-bong%2Findex.html  200!
+/ban-bong  /.netlify/functions/ncn-site-page?page=ban-bong%2Findex.html  200!
 /ban-hang/index.html  /.netlify/functions/ncn-site-page?page=ban-hang%2Findex.html  200!
 /ban-hang/  /.netlify/functions/ncn-site-page?page=ban-hang%2Findex.html  200!
 /ban-hang  /.netlify/functions/ncn-site-page?page=ban-hang%2Findex.html  200!
 /ca-lon-nuot-ca-be/index.html  /.netlify/functions/ncn-site-page?page=ca-lon-nuot-ca-be%2Findex.html  200!
 /ca-lon-nuot-ca-be/  /.netlify/functions/ncn-site-page?page=ca-lon-nuot-ca-be%2Findex.html  200!
 /ca-lon-nuot-ca-be  /.netlify/functions/ncn-site-page?page=ca-lon-nuot-ca-be%2Findex.html  200!
+/dao-vang/index.html  /.netlify/functions/ncn-site-page?page=dao-vang%2Findex.html  200!
+/dao-vang/  /.netlify/functions/ncn-site-page?page=dao-vang%2Findex.html  200!
+/dao-vang  /.netlify/functions/ncn-site-page?page=dao-vang%2Findex.html  200!
 /flappy-bird/index.html  /.netlify/functions/ncn-site-page?page=flappy-bird%2Findex.html  200!
 /flappy-bird/  /.netlify/functions/ncn-site-page?page=flappy-bird%2Findex.html  200!
 /flappy-bird  /.netlify/functions/ncn-site-page?page=flappy-bird%2Findex.html  200!
@@ -435,12 +453,3 @@
 /search/label/T%E1%BA%AFt%20%C4%91%E1%BA%A7u%20b%C3%A0i/  /.netlify/functions/ncn-site-page?page=search%2Flabel%2FTa%CC%86%CC%81t%20%C4%91a%CC%82%CC%80u%20ba%CC%80i%2Findex.html  200!
 /search/label/T%E1%BA%AFt%20%C4%91%E1%BA%A7u%20b%C3%A0i  /.netlify/functions/ncn-site-page?page=search%2Flabel%2FTa%CC%86%CC%81t%20%C4%91a%CC%82%CC%80u%20ba%CC%80i%2Findex.html  200!
 # END NCN PUBLIC SHELL
-
-/arcade/index.html  /.netlify/functions/ncn-site-page?page=arcade%2Findex.html  200!
-/arcade/  /.netlify/functions/ncn-site-page?page=arcade%2Findex.html  200!
-/arcade  /.netlify/functions/ncn-site-page?page=arcade%2Findex.html  200!
-
-# NCN Bubble Shooter public shell
-/ban-bong  /.netlify/functions/ncn-site-page?page=ban-bong%2Findex.html  200!
-/ban-bong/  /.netlify/functions/ncn-site-page?page=ban-bong%2Findex.html  200!
-/ban-bong/index.html  /.netlify/functions/ncn-site-page?page=ban-bong%2Findex.html  200!

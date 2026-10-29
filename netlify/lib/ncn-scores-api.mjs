@@ -94,7 +94,7 @@ export function createScoresHandler(deps){return async req=>{
    const run=await store.get('run/'+data.runId,{type:'json'});if(!run||run.player!==id&&!(user&&token&&run.player===hash('guest:'+token)))fail(403,'Ván chơi không thuộc hồ sơ này.');if(now-run.at>30*86400000)fail(410,'Ván đã lưu quá lâu. Bắt đầu ván mới để lên bảng điểm nhé.');
    // Plausibility guard for client-side casual games, not an authoritative
    // anti-cheat claim: a server-issued run binds each result to this profile.
-   const seconds=Math.max(0,(now-run.at)/1000),rate={snake:2500,flight:500,pikachu:2000,ocean:2500,blocks:5000,bubble:5000}[run.game];
+   const seconds=Math.max(0,(now-run.at)/1000),rate={snake:2500,flight:500,pikachu:2000,ocean:2500,gold:2500,blocks:5000,bubble:5000}[run.game];
    if(data.score>1000+rate*seconds)fail(400,'Điểm tăng quá nhanh so với thời gian ván chơi.');
    const bestKey='best/'+id+'/'+run.game+'/'+run.board,old=await store.get(bestKey,{type:'json'});
    if(data.score===0||old&&old.score>=data.score)return json({saved:true,improved:false,best:old?.score||0});

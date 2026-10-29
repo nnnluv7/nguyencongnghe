@@ -193,8 +193,8 @@
     },
     {
       "id": "ncn-arcade",
-      "title": "NCN Arcade · 6 game",
-      "description": "Một khu giải trí, một hồ sơ chung. Chơi 6 game và so sánh kỷ lục trên bảng điểm cộng đồng.",
+      "title": "NCN Arcade · 7 game",
+      "description": "Một khu giải trí, một hồ sơ chung. Chơi 7 game và so sánh kỷ lục trên bảng điểm cộng đồng.",
       "href": "/arcade/",
       "group": "arcade",
       "icon": "spark",
@@ -264,6 +264,17 @@
       "tone": "coral",
       "access": "public",
       "image": "/ban-bong/cover.svg"
+    },
+    {
+      "id": "dao-vang",
+      "title": "Đào vàng tuổi thơ",
+      "description": "Canh móc lắc, kéo vàng, né đá và săn kim cương. 100 màn cổ điển, cửa hàng nâng cấp, thử thách Hôm nay và tự lưu ván.",
+      "href": "/dao-vang/",
+      "group": "arcade",
+      "icon": "spark",
+      "tone": "amber",
+      "access": "public",
+      "image": "/dao-vang/cover.png"
     }
   ],
   "adminContact": {

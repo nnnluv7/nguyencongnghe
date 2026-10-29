@@ -34,3 +34,7 @@ html[data-ncn-theme=dark] :is(.ncn-arcade-nav,.ncn-scoreboard,.ncn-arcade-dialog
 .ncn-avatar-quality{font-size:12px;line-height:1.7;color:var(--arc-muted);text-align:center;max-width:360px;margin:12px auto 0}.ncn-avatar-viewer [data-avatar-upgrade]{display:block;margin:14px auto 0}
 @media(max-width:700px){.ncn-scoreboard .ncn-score-avatar-button,.ncn-arcade-dialog .ncn-score-avatar-button{width:34px;height:34px;min-height:34px;border-radius:11px}.ncn-avatar-image{margin-top:12px}}
 @media(prefers-reduced-motion:reduce){.ncn-score-avatar-button{transition:none!important}.ncn-score-avatar-button:hover{transform:none!important}}
+
+/* Seventh game keeps the approved six-card layout above it. */
+.ncn-gold-card{grid-column:1/-1;background:linear-gradient(115deg,#f5e9c9,#d8b782)!important;min-height:240px}.ncn-gold-card img{object-position:right center;object-fit:contain;top:-6%;right:-2%;height:120%;width:66%;opacity:1}.ncn-gold-card:after{background:linear-gradient(90deg,#f5e8c7 0%,#f2deb2aa 48%,#f2deb200 88%)}.ncn-gold-card b{color:#6f4e26;border-color:#80613155}.ncn-gold-card>div{max-width:60%}.ncn-gold-card h2,.ncn-gold-card p,.ncn-gold-card small{color:#634523!important}.gm-result .ncn-game-rank-button{color:#76502b;border-color:#fff5d8;background:#fff1cb;box-shadow:var(--ncn-control-shadow);font-size:10px;min-height:30px;margin-bottom:10px}
+@media(max-width:550px){.ncn-gold-card{min-height:220px}.ncn-gold-card>div{max-width:77%}}

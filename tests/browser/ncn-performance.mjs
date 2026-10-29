@@ -12,6 +12,7 @@ import {optimizePublicHTML} from '../../netlify/lib/ncn-public-assets.mjs';
 // Reproducible local comparison of exactly the same public content. This is a
 // throttled frontend benchmark, not a claim about a visitor's real connection.
 const root=resolve('public'),dist=resolve('dist'),out=resolve('artifacts/performance');await mkdir(out,{recursive:true});
+const toolCount=JSON.parse(await readFile(root+'/assets/ncn-theme/config.json','utf8')).tools.length;
 const catalog=publicCatalog(JSON.parse(await readFile('netlify/lib/ncn-library/seed.json','utf8')));
 const html=injectCatalog(renderPublicHTML(await readFile(root+'/index.html','utf8'),catalog,{notices:[{text:'NCN · Kiểm tra tốc độ tải trang'}]}),catalog);
 const optimized=optimizePublicHTML(html),requests=[];
@@ -37,7 +38,7 @@ try{
   for(const navigation of ['cold','repeat']){
    await page.goto(base+'/'+version+'/'+(navigation==='repeat'?'?visit=2':''),{waitUntil:'load'});await page.waitForFunction(()=>window.NCNAccount?.state.ready);
    const metrics=await page.evaluate(()=>{const all=performance.getEntriesByType('resource'),scripts=all.filter(x=>x.initiatorType==='script'||/\.js(?:\?|$)/.test(x.name)),styles=all.filter(x=>/\.css(?:\?|$)/.test(x.name));return {fcp:performance.getEntriesByName('first-contentful-paint')[0]?.startTime,domContentLoaded:performance.getEntriesByType('navigation')[0].domContentLoadedEventEnd,scriptRequests:scripts.length,scriptBytes:scripts.reduce((n,x)=>n+x.encodedBodySize,0),scriptTransfer:scripts.reduce((n,x)=>n+x.transferSize,0),styleRequests:styles.length,styleBytes:styles.reduce((n,x)=>n+x.encodedBodySize,0),styleTransfer:styles.reduce((n,x)=>n+x.transferSize,0),blockingScripts:[...document.scripts].filter(x=>x.src&&x.type!=='module'&&!x.defer&&!x.async).length};});
-   assert.equal(await page.locator('#ncn-articles a').count(),4);assert.equal(await page.locator('#ncn-tool-grid article').count(),22);assert.equal(await page.locator('#ncn-account-dialog').count(),1);
+   assert.equal(await page.locator('#ncn-articles a').count(),4);assert.equal(await page.locator('#ncn-tool-grid article').count(),toolCount);assert.equal(await page.locator('#ncn-account-dialog').count(),1);
    if(version==='after'){assert.equal(metrics.blockingScripts,0);assert.equal(errors.length,0);}
    results.push({version,navigation,...metrics});console.log(JSON.stringify(results.at(-1)));
   }
