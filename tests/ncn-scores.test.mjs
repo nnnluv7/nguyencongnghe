@@ -14,15 +14,15 @@ async function call(f,route,data,cookie='',extra={}){const response=await f.hand
 async function guest(f,name='Cá Nhỏ'){const r=await call(f,'profile',{name,avatar:'preset:🐱'});assert.equal(r.status,200);return r;}
 async function scored(f,{game='snake',mode='arena',score=500,level=0,cookie='' }={}){const start=await call(f,'start',{game,mode},cookie);assert.equal(start.status,200,JSON.stringify(start.value));f.now+=20000;const result=await call(f,'score',{runId:start.value.runId,score,level},cookie);assert.equal(result.status,200,JSON.stringify(result.value));return {start,result};}
 
-test('seven games share one catalogue; modes and Vietnamese daily dates remain separate',()=>{
- assert.equal(Object.keys(GAMES).length,7);assert.equal(vietnamDate(new Date('2026-10-26T18:00:00Z')),'2026-10-27');assert.equal(gameBoard('snake','daily','2026-02-30'),null);assert.equal(gameBoard('snake','classic'),null);assert.equal(gameBoard('snake','constructor'),null);assert.equal(gameBoard('__proto__','arena'),null);assert.equal(gameBoard('flight','easy'),'easy');
+test('eight games share one catalogue; modes and Vietnamese daily dates remain separate',()=>{
+ assert.equal(Object.keys(GAMES).length,8);assert.equal(vietnamDate(new Date('2026-10-26T18:00:00Z')),'2026-10-27');assert.equal(gameBoard('snake','daily','2026-02-30'),null);assert.equal(gameBoard('snake','classic'),null);assert.equal(gameBoard('snake','constructor'),null);assert.equal(gameBoard('__proto__','arena'),null);assert.equal(gameBoard('flight','easy'),'easy');
 });
-test('the hub and seven games are discoverable once in both static and hydrated Library catalogues',()=>{
+test('the hub and eight games are discoverable once in both static and hydrated Library catalogues',()=>{
  const staticRows=JSON.parse(readFileSync('public/assets/catalog.js','utf8').replace(/^window.CG_CATALOG\s*=\s*/,'').trim().replace(/;$/,'')),seed=JSON.parse(readFileSync('netlify/lib/ncn-library/seed.json','utf8'));
  for(const href of ['/arcade/',...Object.values(GAMES).map(x=>x.path)]){assert.equal(staticRows.filter(x=>x.link===href).length,1,href);assert.equal(seed.filter(x=>x.href===href).length,1,href);}
 });
 test('guests can read an empty public board without creating a profile or cookie',async()=>{const f=fixture(),r=await call(f,'board&game=snake&mode=arena');assert.equal(r.status,200);assert.deepEqual(r.value.items,[]);assert.equal(f.store.entries.size,0);assert.equal(r.response.headers.has('set-cookie'),false);assert.equal((await call(f,'start',{game:'snake',mode:'arena'})).status,401);});
-test('a remembered HttpOnly guest profile supplies all seven games without a website account',async()=>{
+test('a remembered HttpOnly guest profile supplies all eight games without a website account',async()=>{
  const f=fixture(),g=await guest(f);for(const flag of ['HttpOnly','Secure','SameSite=Lax','Path=/','Max-Age=31536000'])assert.ok(g.response.headers.get('set-cookie').includes(flag));
  assert.equal((await call(f,'profile',undefined,g.cookie)).value.profile.name,'Cá Nhỏ');
  for(const [game,spec]of Object.entries(GAMES))await scored(f,{game,mode:Object.keys(spec.modes)[0],cookie:g.cookie});
@@ -88,3 +88,5 @@ test('Gold Miner uses the shared identity with separate classic and daily boards
  assert.equal((await call(f,'board&game=gold&mode=daily&date=2026-10-26')).value.total,1);assert.equal((await call(f,'board&game=gold&mode=daily&date=2026-10-27')).value.total,0);
  const invalid=await call(f,'start',{game:'gold',mode:'arena'},g.cookie);assert.equal(invalid.status,400);assert.equal((await call(f,'score',{runId:a.start.value.runId,score:10000000,level:2},g.cookie)).status,400);
 });
+
+test('NCN Blast shares the profile and keeps classic/daily scores and dates separate',async()=>{const f=fixture(),g=await guest(f,'Bạn Ghép Khối'),a=await scored(f,{game:'blast',mode:'classic',score:420,level:0,cookie:g.cookie});assert.equal((await call(f,'board&game=blast&mode=classic')).value.total,1);const d=await call(f,'start',{game:'blast',mode:'daily',date:'2026-10-26'},g.cookie);assert.equal(d.status,200);f.now+=20000;assert.equal((await call(f,'score',{runId:d.value.runId,score:900,level:0},g.cookie)).status,200);assert.equal((await call(f,'board&game=blast&mode=daily&date=2026-10-26')).value.total,1);assert.equal((await call(f,'board&game=blast&mode=daily&date=2026-10-27')).value.total,0);assert.equal((await call(f,'start',{game:'blast',mode:'arena'},g.cookie)).status,400);assert.equal((await call(f,'score',{runId:a.start.value.runId,score:10000000,level:0},g.cookie)).status,400);});

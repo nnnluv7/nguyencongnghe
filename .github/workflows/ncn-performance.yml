@@ -29,7 +29,7 @@ jobs:
         run: |
           node tests/browser/ncn-tool-resources.mjs
           node tests/browser/ncn-tools-performance.mjs
-      - name: Verify the actual compiled account, photos, VIP state, all seven games and public layouts
+      - name: Verify the actual compiled account, photos, VIP state, all eight games and public layouts
         env:
           NCN_BUILT_TEST: '1'
         run: |
@@ -37,6 +37,7 @@ jobs:
           node tests/browser/ncn-account.mjs
           node tests/browser/ncn-arcade.mjs
           node tests/browser/ncn-gold.mjs
+          node tests/browser/ncn-blast.mjs
           node tests/browser/ncn-layout.mjs
           node tests/browser/ncn-scroll-ui.mjs
       - name: Verify glass contrast, accessibility, unchanged geometry and print pixels
@@ -52,6 +53,7 @@ jobs:
             artifacts/profile-built/
             artifacts/arcade-built/
             artifacts/gold-built/
+            artifacts/blast-built/
             artifacts/layout-built/
             artifacts/scroll-ui/built/
             artifacts/glass/

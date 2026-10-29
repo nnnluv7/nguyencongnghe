@@ -193,8 +193,8 @@
     },
     {
       "id": "ncn-arcade",
-      "title": "NCN Arcade · 7 game",
-      "description": "Một khu giải trí, một hồ sơ chung. Chơi 7 game và so sánh kỷ lục trên bảng điểm cộng đồng.",
+      "title": "NCN Arcade · 8 game",
+      "description": "Một khu giải trí, một hồ sơ chung. Chơi 8 game và so sánh kỷ lục trên bảng điểm cộng đồng.",
       "href": "/arcade/",
       "group": "arcade",
       "icon": "spark",
@@ -275,6 +275,17 @@
       "tone": "amber",
       "access": "public",
       "image": "/dao-vang/cover.png"
+    },
+    {
+      "id": "ghep-khoi",
+      "title": "NCN Blast · Ghép khối",
+      "description": "Ghép khối kiểu Block Blast: kéo ba mảnh vào bàn 8 × 8, xóa hàng/cột và giữ combo. Cổ điển không giới hạn, thử thách Hôm nay, tự lưu và bảng điểm chung.",
+      "href": "/ghep-khoi/",
+      "group": "arcade",
+      "icon": "box",
+      "tone": "teal",
+      "access": "public",
+      "image": "/ghep-khoi/cover.png"
     }
   ],
   "adminContact": {

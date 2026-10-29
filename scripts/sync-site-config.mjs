@@ -8,6 +8,9 @@ const json=JSON.stringify(config).replace(/</g,'\\u003c');let count=0;
 for(const path of [...await pages('public'),'netlify/lib/ncn-library/article-shell.html']){
  let html=await read(path),before=html;
  html=html.replace(/(<script id="ncn-(?:initial|game)-config" type="application\/json">)[\s\S]*?(<\/script>)/g,(_,a,b)=>a+json+b);
+ // Refresh the retained hub copy too; adding a game must not first paint an old count.
+ const hub=games.find(game=>game.href==='/arcade/');
+ if(hub)html=html.replace(/NCN Arcade · \d+ game/g,()=>hub.title).replace(/Một khu giải trí, một hồ sơ chung\. Chơi \d+ game và so sánh kỷ lục trên bảng điểm cộng đồng\./g,()=>hub.description);
  // Existing static menus remain complete even before any module downloads.
  html=html.replace(/(<nav id="ncn-(?:navigation|game-nav)"[^>]*>)([\s\S]*?)(<\/nav>)/g,(_,open,content,close)=>{
   const template=content.match(/<a\b[^>]*href="\/thu-vien\/"[^>]*>[\s\S]*?<\/a>/)?.[0];
