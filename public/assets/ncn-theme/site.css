@@ -1169,3 +1169,109 @@ body.ncn-modern .st-card-sizes button:focus-visible{outline: 3px solid #2563b8; 
  @media(max-width:640px){body.ncn-modern .ncn-section-heading{align-items:flex-start;flex-wrap:wrap}body.ncn-modern .ncn-inline-search{flex-basis:100%;width:100%;align-self:auto}body.ncn-modern .ncn-inline-search input{font-size:16px}body.ncn-modern :is(#ncn-home-latest h1,#ncn-tools .ncn-section-heading h2){font-size:21px}.ncn-library-source-filter{margin-left:0}}
  @media(prefers-reduced-motion:reduce){body.ncn-modern :is(#ncn-home-latest,#ncn-library) :is(.ncn-article-card,.ncn-article-image){transition:none!important;transform:none!important}}
 }
+
+/* NCN glass contrast, 20261029: one paint-only contour across every app.
+   Screen-only rules never enter print artwork, game tiles or paper inputs. */
+@media screen {
+ html[data-ncn-theme] body.ncn-modern {
+  --ncn-rim:rgba(17,24,32,.23);
+  --ncn-border:rgba(32,48,64,.25);
+  --ncn-muted:#40586b;
+  --ncn-glass-edge:rgba(14,20,28,.24);
+  --ncn-glass-panel-edge:rgba(14,20,28,.18);
+  --ncn-glass-active-edge:rgba(14,20,28,.46);
+  --ncn-glass-focus:#0966b4;
+ }
+ html[data-ncn-theme=dark] body.ncn-modern {
+  --ncn-rim:rgba(215,234,249,.32);
+  --ncn-border:rgba(199,222,241,.30);
+  --ncn-muted:#c0d2df;
+  --ncn-glass-edge:rgba(221,238,252,.36);
+  --ncn-glass-panel-edge:rgba(221,238,252,.27);
+  --ncn-glass-active-edge:rgba(237,247,255,.66);
+  --ncn-glass-focus:#9dd6ff;
+ }
+ /* A dark outer hairline and each component's existing inner highlight give
+    separation without adding another blur surface or changing box sizes. */
+ body.ncn-modern :where(
+  #ncn-topbar,#ncn-game-topbar,#ncn-sidebar,#ncn-page-tools,#ncn-search-dialog,
+  #ncn-footer,#ncn-announcement,dialog,.ncn-account-dropdown,.ncn-account-dialog,
+  .ncn-inline-search,.ncn-library-search,.ncn-tool-card,.ncn-article-card,
+  .ncn-hero,.ncn-notice,.ncn-quick-card,.ncn-account-card,
+  .ncn-member-hero,.ncn-member-vip-card,.ncn-member-photo-label,
+  .ncn-glass-panel,.ncn-print-sidebar,.ncn-workspace-switch,.st-panel,.st-card,
+  .fifo-card,.ev-panel,.ev-results,.pay-panel,.pay-plan,.pay-reconcile,
+  .na-surface,.na-access,.na-module,.na-dialog,.nl-list-item,
+  .cq-screen,.cq-metric,.ncn-warehouse-guide,.ncn-story-dialog,
+  .ncn-arcade-nav,.ncn-arcade-card,.ncn-scoreboard,.ncn-arcade-dialog,
+  .rl-pause-panel,.rl-result-panel,.rl-feature,.rl-help,
+  .pk-surface,.pk-score-card,.pk-combo-card,.pk-dialog,
+  .xh-dialog,.xh-app:not([data-state=ready]) .xh-overlay,
+  .ff-panel,.ff-help,.ff-features article,.bb-side-card,.bb-dialog,.bb-features article
+ ):not(:focus-visible):not(:where(#printMe *,.row-container *,.sheet *,.ncn-sheet *,.fifo-sheet *,.pk-tile,.ncn-vip-source .ev-panel,.ncn-stock-import .ev-panel)) {
+  outline:1px solid var(--ncn-glass-panel-edge)!important;
+  outline-offset:-1px!important;
+ }
+ /* Native checkbox/range controls, text links, integrated search fields and
+    transparent print inputs keep their own affordances. */
+ body.ncn-modern :where(button,summary,input,select,textarea,
+  .ncn-admin-links a,.ncn-hero-actions a,.ncn-game-rank-button,.ncn-print-primary,
+  .ncn-print-secondary,.pay-btn,.na-button,.na-primary,.ev-button,.ncn-warehouse-guide
+ ):not(:where(
+  [type=hidden],[type=checkbox],[type=radio],[type=range],[type=color],[type=file],
+  .ncn-account-link,.ev-text-button,.cq-text-button,.na-text,.fifo-text-button,
+  #ncn-global-query,.ncn-inline-search input,.ncn-library-search input,
+  #printMe *, .row-container *, .sheet *, .ncn-sheet *, .fifo-sheet *,
+  .ncn-print-stage *, .ncn-direct-stage *, .pk-tile, .pk-board *,
+  .ncn-member-photo-label input
+ )):not(:focus-visible) {
+  outline:1px solid var(--ncn-glass-edge)!important;
+  outline-offset:-1px!important;
+ }
+ body.ncn-modern :where(button,summary,input,select,textarea,a):focus-visible:not(:where(
+  #printMe *,.row-container *,.sheet *,.ncn-sheet *,.fifo-sheet *,
+  .ncn-print-stage *,.ncn-direct-stage *,.pk-tile,.pk-board *
+ )) {
+  outline:3px solid var(--ncn-glass-focus)!important;
+  outline-offset:3px!important;
+ }
+ body.ncn-modern :where(button[aria-pressed=true],button[aria-expanded=true],
+  summary:active,button:active):not(:where(.pk-tile,.fifo-sheet *,#printMe *)) {
+  --ncn-glass-edge:var(--ncn-glass-active-edge);
+ }
+}
+@media screen and (hover:hover) and (pointer:fine) {
+ body.ncn-modern :where(button,summary,select):hover:not(:disabled):not(:where(.pk-tile,.fifo-sheet *,#printMe *)) {
+  --ncn-glass-edge:var(--ncn-glass-active-edge);
+ }
+}
+@media screen and (prefers-reduced-transparency:reduce),screen and (prefers-contrast:more) {
+ html[data-ncn-theme] body.ncn-modern {
+  --ncn-glass-edge:rgba(12,18,24,.65);--ncn-glass-panel-edge:rgba(12,18,24,.50);
+  --ncn-rim:#7b8894;--ncn-border:#7b8894;--ncn-muted:#273e50;
+  --ncn-glass:#f5faff;--ncn-glass-strong:#fff;--ncn-glass-soft:#f2f7fb;--ncn-glass-card:#fff;
+ }
+ html[data-ncn-theme=dark] body.ncn-modern {
+  --ncn-glass-edge:rgba(235,246,255,.75);--ncn-glass-panel-edge:rgba(235,246,255,.60);
+  --ncn-rim:#afc5d8;--ncn-border:#afc5d8;--ncn-muted:#d6e4ef;
+  --ncn-glass:#192e43;--ncn-glass-strong:#192e43;--ncn-glass-soft:#213a52;--ncn-glass-card:#192e43;
+ }
+ body.ncn-modern :where(#ncn-topbar,#ncn-game-topbar,#ncn-sidebar,#ncn-page-tools,
+  #ncn-search-dialog,#ncn-footer,#ncn-announcement,dialog,.ncn-account-dropdown,
+  .ncn-tool-card,.ncn-article-card,.ncn-glass-panel,.ncn-print-sidebar,.st-panel,
+  .fifo-card,.ev-panel,.pay-panel,.pay-plan,.na-surface,.na-access,.na-module,
+  .ncn-scoreboard,.ncn-arcade-nav,.ncn-member-hero,.ncn-member-vip-card) {
+  background-color:var(--ncn-glass-strong)!important;
+  background-image:none!important;
+  -webkit-backdrop-filter:none!important;backdrop-filter:none!important;
+ }
+}
+@media screen and (forced-colors:active) {
+ html[data-ncn-theme] body.ncn-modern {
+  --ncn-glass-edge:ButtonText;--ncn-glass-panel-edge:ButtonText;
+  --ncn-glass-active-edge:Highlight;--ncn-glass-focus:Highlight;
+  --ncn-rim:ButtonText;--ncn-border:ButtonText;
+  --ncn-ink:CanvasText;--ncn-muted:CanvasText;
+ }
+}
+/* END NCN GLASS CONTRAST 20261029 */

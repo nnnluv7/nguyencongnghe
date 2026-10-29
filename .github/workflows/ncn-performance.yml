@@ -38,6 +38,8 @@ jobs:
           node tests/browser/ncn-arcade.mjs
           node tests/browser/ncn-layout.mjs
           node tests/browser/ncn-scroll-ui.mjs
+      - name: Verify glass contrast, accessibility, unchanged geometry and print pixels
+        run: node tests/browser/ncn-glass.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -50,5 +52,6 @@ jobs:
             artifacts/arcade-built/
             artifacts/layout-built/
             artifacts/scroll-ui/built/
+            artifacts/glass/
             artifacts/netlify-pack/results.json
           retention-days: 14
