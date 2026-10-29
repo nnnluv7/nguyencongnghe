@@ -42,6 +42,18 @@ async function screenCheck(){const g=await geometry();assert.ok(g.board.height>1
 try{
  await fixture();await open();
  await check('eight-game navigation and complete welcome controls fit 320px through desktop',async()=>{for(const width of [1440,1000,820,700,390,360,320]){await page.setViewportSize({width,height:900});await tick();const g=await geometry();assert.ok(g.page<=g.w+1,JSON.stringify(g));assert.ok(g.start.top>=g.arena.top&&g.quick.bottom<=g.arena.bottom+1,JSON.stringify(g));assert.equal(await page.locator('.ncn-arcade-links a').count(),8);if(width>=1000)assert.ok(g.board.width>=600,'Desktop board should use the available page width: '+JSON.stringify(g));assert.equal(await cell(0).count(),1);assert.equal(await page.locator('#bn-board [role=gridcell]').count(),64);if(width===1440)await shot('welcome-desktop');if(width===390)await shot('welcome-phone');}});
+ await check('all 29 shapes fit their tray cards at desktop and both phone widths',async()=>{
+  for(const width of [1440,390,320]){
+   await page.setViewportSize({width,height:900});await tick();
+   const ids=await page.evaluate(async()=>Object.keys((await import('/ghep-khoi/core.js')).SHAPES));
+   for(let start=0;start<ids.length;start+=3){
+    const shapes=ids.slice(start,start+3);
+    const boxes=await page.evaluate(async ids=>{const {pieceSVG}=await import('/ghep-khoi/render.js'),{SHAPES}=await import('/ghep-khoi/core.js');return ids.map((id,i)=>{const art=document.querySelector('[data-bn-slot="'+i+'"] .bn-piece-art');art.innerHTML=pieceSVG({shape:id,color:SHAPES[id].color});return{id,art:art.getBoundingClientRect().toJSON(),svg:art.querySelector('svg').getBoundingClientRect().toJSON()};});},shapes);
+    for(const b of boxes)assert.ok(b.svg.left>=b.art.left-1&&b.svg.right<=b.art.right+1&&b.svg.top>=b.art.top-1&&b.svg.bottom<=b.art.bottom+1,'Tray art must fit without clipping or covering the footer: '+JSON.stringify({width,...b}));
+   }
+  }
+  await page.reload();await tick();
+ });
  await check('native fullscreen has a centered, complete board before play and after restoring a save',async()=>{for(const [width,height]of [[1440,900],[2048,1307],[1280,720]]){await page.setViewportSize({width,height});await page.locator('#bn-fullscreen').click();await page.waitForFunction(()=>document.fullscreenElement?.id==='bn-app');await tick(150);await screenCheck();if(width===2048)assert.ok((await geometry()).board.width>=900,'Large desktop fullscreen should not be capped at 650px');await shot('fullscreen-welcome-native-'+width);await page.locator('#bn-fullscreen').click();await page.waitForFunction(()=>!document.fullscreenElement);await tick();}await page.locator('#bn-fullscreen').click();await tick();await quick();await screenCheck();await page.locator('#bn-pause').click();await screenCheck();await page.locator('#bn-back').click();assert.equal(await state(),'ready');assert.equal(await page.locator('#bn-continue').isVisible(),true);await screenCheck();await shot('fullscreen-saved-welcome');await page.locator('#bn-fullscreen').click();await tick();});
  await fixture();await open();
  await check('tap selection clears a real row, earns 420, consumes each piece once and makes no score write in quick play',async()=>{await quick();await firstLine();const g=await saved();assert.equal(g.moves,2);assert.equal(g.lines,1);assert.equal(g.board.filter(Boolean).length,0);assert.deepEqual(g.hand.slice(0,2),[null,null]);await cell(3).click();assert.equal((await saved()).moves,2);await tapPlace(2,42);assert.equal((await saved()).moves,3);assert.equal((await saved()).deals,2);assert.ok((await saved()).hand.every(Boolean));assert.equal(active.calls.filter(c=>c.method==='POST').length,0);await shot('playing-desktop');});
