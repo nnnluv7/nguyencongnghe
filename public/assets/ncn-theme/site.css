@@ -1189,7 +1189,7 @@ body.ncn-modern .st-card-sizes button:focus-visible{outline: 3px solid #2563b8; 
     Do not frame text actions, nested search inputs, summary rows or game tiles. */
  body.ncn-modern :is(#ncn-topbar,#ncn-game-topbar,#ncn-sidebar,#ncn-page-tools,
   #ncn-search-dialog,#ncn-footer,.ncn-account-dropdown,.ncn-account-dialog,
-  .ncn-tool-card,.ncn-article-card,.ncn-member-hero,.ncn-member-vip-card,
+  .ncn-tool-card,.ncn-article-card,.ncn-member-hero,.ncn-member-vip-card,.ncn-story-add,
   .ncn-glass-panel,.ncn-print-sidebar,.ncn-workspace-switch,.st-panel,.st-card,
   .fifo-card,.ev-panel,.ev-results,.pay-panel,.pay-plan,.pay-reconcile,
   .na-surface,.na-access,.na-module,.na-dialog,.nl-list-item,
@@ -1206,8 +1206,8 @@ body.ncn-modern .st-card-sizes button:focus-visible{outline: 3px solid #2563b8; 
   .ncn-icon-button,.ncn-account-menu>summary,.ncn-filter-row) {
   border-color:var(--ncn-hairline);
  }
- /* Only already-rounded, framed controls participate. The native shadow follows
-    their real border radius, including inputs and selects, with no pseudo layer. */
+ /* Already-rounded fields and named glass actions use the same native shadow.
+    It follows each real border radius without a pseudo layer or extra outline. */
  body.ncn-modern :is(
   .ncn-top-search,.ncn-inline-search,.ncn-library-search,.ncn-account-menu>summary,
   .auth-input,.ncn-account-dialog input,.ncn-story-dialog input,
@@ -1220,7 +1220,8 @@ body.ncn-modern .st-card-sizes button:focus-visible{outline: 3px solid #2563b8; 
   #postBody #ncn-insurance-app .containerz :is(input[type=text],select),
   #ncn-event-app :is(.ev-field input,.ev-field select,.ev-search>input,.ev-table input),
   #ncn-billing-app input,#ncn-admin-app :is(input,select,textarea),
-  #ncn-wheel-app .lw-duration input,#ncn-wheel-app .lw-input
+  #ncn-wheel-app .lw-duration input,#ncn-wheel-app .lw-input,
+  #postBody #text-input,#ncn-notice-input
  ):not(:where(
   [type=hidden],[type=checkbox],[type=radio],[type=file],[type=range],[type=color],
   [aria-invalid=true],#ncn-global-query,.ncn-inline-search input,.ncn-library-search input,
@@ -1228,6 +1229,53 @@ body.ncn-modern .st-card-sizes button:focus-visible{outline: 3px solid #2563b8; 
   #printMe *,.row-container *,.sheet *,.ncn-sheet *,.fifo-sheet *,
   .ncn-print-stage *,.ncn-direct-stage *,.pk-board *
  )):not(:focus):not(:focus-within) {
+  border-color:var(--ncn-control-rim);
+  box-shadow:var(--ncn-control-shadow);
+ }
+ /* Account actions have a legacy important border. Keep its width and pill
+    radius; only the material changes. The blue sign-in action keeps its color. */
+ body.ncn-modern :is(#ncn-account-host,#auth-header-mobile) .auth-btn:not([data-ncn-account-open=login]):not(:focus-visible) {
+  border-color:var(--ncn-control-rim)!important;
+  box-shadow:var(--ncn-control-shadow);
+ }
+ /* Only controls that already have a rounded glass frame are listed. Accent
+    actions, selected states, text links, photos, paper and game tiles keep
+    their own materials and indicators. Native shadows retain every radius. */
+ body.ncn-modern :is(
+  .ncn-icon-button,.ncn-admin-links a,.ncn-button-glass,.ncn-filter-row button,
+  #ncn-page-actions button,.ncn-account-dialog button,.ncn-pagination button,
+  .ncn-tool-actions button,.ncn-glass-action,
+  .ncn-account-tabs,.ncn-member-tabs,.ncn-member-photo-label,.ncn-member-photo-label>strong,
+  .ncn-print-zoom button,.ncn-direct-controls button,.ncn-print-secondary,
+  .fifo-page button,.fifo-import-dialog button,.fifo-file-label,
+  :is(#ncn-sticker-app,#ncn-popup-app,#ncn-store-app) :is(.st-secondary,.st-tabs button,.st-row-list button,.st-card-sizes button),
+  #ncn-store-app[data-section=decor] .st-link,
+  #ncn-cash-app :is(.cq-secondary,.cq-text-button),
+  #vip-gate .ev-secondary,#ncn-event-app .ev-secondary,
+  #ncn-billing-app :is(.pay-light,.pay-auth-tabs button),
+  #ncn-admin-app .na-button,
+  #ncn-wheel-app :is(.lw-secondary,.lw-section-title>.lw-text-button),
+  #ncn-stories .ncn-story-rail-actions button,
+  .ncn-story-dialog button,.ncn-scoreboard button,.ncn-arcade-dialog button,
+  .ff-tool,.rl-tool,.pk-tool,.pk-assists button,.pk-dialog header button,.pk-confirm button,
+  .xh-toolbar button,.xh-controls button,.xh-dialog header>button,.xh-confirm>div>button,
+  .bb-toolbar button,.bb-controls button,.bb-dialog button,.bb-heading-link,.bb-stage-card>button,
+  .ff-help header button,.rl-help header button,
+  .ncn-game-tool-actions .icon-button,#ncn-announcement-pause,
+  .ncn-notice-manager button:not([type=submit])
+ ):not(:where(
+  [aria-pressed=true],[aria-selected=true],[aria-current=page],
+  .selected,.active,.is-active,
+  .ncn-account-primary,.ncn-account-link,.ncn-account-social *,
+  .ncn-account-tabs button,.ncn-member-tabs button,
+  .fifo-primary,.fifo-text-button,.fifo-label,.ncn-print-primary,.ncn-tool-primary,
+  .na-primary,.na-danger,.ncn-story-primary,.ncn-story-danger,
+  .ncn-story-frame *,.ncn-avatar-picker *,.ncn-avatar-image *,
+  .ncn-score-avatar-button,.ncn-game-rank-button,
+  .pk-primary,.xh-primary,.bb-primary,
+  #printMe *,.row-container *,.sheet *,.ncn-sheet *,.fifo-sheet *,
+  .ncn-print-stage *,.ncn-direct-stage *,.pk-board *
+ )):not(:focus-visible):not(:focus-within) {
   border-color:var(--ncn-control-rim);
   box-shadow:var(--ncn-control-shadow);
  }

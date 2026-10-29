@@ -20,12 +20,16 @@ const currentCSS=await compile(site),oldCSS=await compile(previous);
 const cssPath='/assets/ncn-built/styles/'+createHash('sha256').update(currentCSS).digest('hex').slice(0,16)+'.css';
 assert.equal(await readFile(root+cssPath,'utf8'),currentCSS,'Test the actual final common CSS bundle');
 const catalog=publicCatalog(JSON.parse(await readFile('netlify/lib/ncn-library/seed.json','utf8'))),errors=[],results=[];
+const admin={id:'glass-admin',email:'admin@example.test',name:'ADMIN thử giao diện',admin:true,vip:true,vipExpiresAt:'2026-12-31T12:00:00Z'};
+const adminRaw={id:admin.id,email:admin.email,confirmed_at:'2026-01-01T00:00:00Z',app_metadata:{roles:['admin']},user_metadata:{full_name:admin.name}};
+const adminToken=Buffer.from('{"alg":"fixture"}').toString('base64url')+'.'+Buffer.from(JSON.stringify({sub:admin.id,email:admin.email,exp:Math.floor(Date.now()/1000)+3600})).toString('base64url')+'.fixture';
 let baseline=false;
 const types={'.html':'text/html; charset=utf-8','.css':'text/css','.js':'text/javascript','.json':'application/json','.png':'image/png','.jpg':'image/jpeg','.webp':'image/webp','.svg':'image/svg+xml','.woff2':'font/woff2'};
 const server=createServer(async(req,res)=>{
  const url=new URL(req.url,'http://localhost'),json=value=>{res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify(value));};
- if(url.pathname.startsWith('/.netlify/identity/'))return json({disable_signup:false,external:{email:true}});
- if(url.pathname.startsWith('/.netlify/functions/'))return json(url.pathname.endsWith('ncn-library')?{items:catalog}:url.pathname.endsWith('ncn-announcements')?{items:[]}:url.pathname.endsWith('ncn-billing')?{user:null}:{items:[],online:1,total:1});
+ const authenticated=(req.headers.cookie||'').includes('nf_jwt=');
+ if(url.pathname.startsWith('/.netlify/identity/'))return json(url.pathname.endsWith('/user')&&authenticated?adminRaw:{disable_signup:false,external:{email:true}});
+ if(url.pathname.startsWith('/.netlify/functions/'))return json(url.pathname.endsWith('ncn-library')?{items:catalog}:url.pathname.endsWith('ncn-announcements')?{items:[]}:url.pathname.endsWith('ncn-billing')?{user:authenticated?admin:null}:{items:[],online:1,total:1});
  if(url.pathname===cssPath&&baseline){res.writeHead(200,{'Content-Type':'text/css'});return res.end(oldCSS);}
  try{let file=resolve(root,'.'+decodeURIComponent(url.pathname));if(file!==root&&!file.startsWith(root+sep))throw Error('Outside fixture');if((await stat(file)).isDirectory())file+='/index.html';let body=await readFile(file);if(file.endsWith('.html'))body=renderPublicHTML(body.toString(),catalog);res.writeHead(200,{'Content-Type':types[extname(file)]||'application/octet-stream'});res.end(body);}catch{res.writeHead(404);res.end('Not found');}
 });
@@ -46,6 +50,26 @@ try{
     await p.close();
    }await ctx.close();
   }
+ });
+ await check('all five photographed ADMIN actions share a radius-following edge in both themes and widths',async()=>{
+  for(const width of [1280,390])for(const theme of ['light','dark']){
+   const geometry=[];
+   for(const old of [true,false]){
+    baseline=old;const ctx=await context(width,2);await ctx.addCookies([{name:'nf_jwt',value:adminToken,url:base}]);
+    const p=await open(ctx,'/');assert.equal(await p.evaluate(()=>NCNAccount.state.user?.admin),true);
+    await p.evaluate(theme=>document.documentElement.dataset.ncnTheme=theme,theme);await p.locator('.ncn-account-menu>summary').click();await p.mouse.move(0,0);await paint(p);
+    const actions=p.locator('#ncn-account-host .auth-btn');assert.equal(await actions.count(),5);
+    assert.deepEqual(await actions.allTextContents(),['Quản lý tài khoản','Thông tin VIP','Lịch sử thi','Quản trị Admin','Đăng xuất']);
+    geometry.push(await actions.evaluateAll(els=>els.map(el=>{const s=getComputedStyle(el);return {text:el.textContent,box:el.getBoundingClientRect().toJSON(),radius:s.borderRadius,border:s.borderWidth};})));
+    if(!old){
+     for(const el of await actions.all()){const s=await el.evaluate(el=>{const s=getComputedStyle(el);return {shadow:s.boxShadow,radius:s.borderTopLeftRadius,width:s.outlineWidth};});assert.equal(s.radius,'999px');assert.equal(s.width,'0px');assert.match(s.shadow,/0\.5px/);assert.ok(s.shadow.includes(theme==='light'?'24, 44, 64':'0, 10, 23'),JSON.stringify(s));}
+     await p.keyboard.press('Tab');await actions.first().focus();assert.equal((await style(p,'#ncn-account-host .auth-btn')).width,'3px');await actions.first().blur();
+    }
+    await p.locator('#ncn-account-host').screenshot({path:out+'/account-actions-'+theme+'-'+width+'-'+(old?'before':'after')+'.png'});
+    await ctx.close();
+   }
+   assert.deepEqual(geometry[1],geometry[0],theme+' '+width+' account action geometry changed');
+  }baseline=false;
  });
  await check('the photographed ERP field gains a fractional shaded edge, while cash table cells stay flat',async()=>{
   const boxes=[];

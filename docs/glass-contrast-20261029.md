@@ -9,8 +9,11 @@ pale and the shaded edge is slightly darker, fading toward the opposite corner.
 The ERP field in Cash Check uses the same treatment as the other editors.
 
 Each component keeps its own border and radius. No additional resting outline
-is painted over it. Generic buttons, text actions, summary rows and nested
-search inputs receive no new frame. A native box shadow follows each control's
+is painted over it. Account actions and named glass buttons in the shared
+shell, print editors, Library, Admin and Arcade controls use the same
+directional edge as framed inputs. Account actions retain their pill shape;
+the blue sign-in action retains its accent material. Text actions, unframed
+summary rows and nested search inputs receive no new frame. A native box shadow follows each control's
 existing radius, without a pseudo element or border image. Existing focus,
 invalid-field and selected indicators
 remain in their original component styles. This follows the user's supplied
@@ -41,4 +44,10 @@ bundle with only this refinement removed. It checks desktop/phone themes,
 focus, accessibility preferences, unchanged geometry/radii/panel shadows, and
 identical FIFO/legacy print pixels. It also renders the supplied ERP-field case
 at phone width and double pixel density, and confirms that unframed cash table
-cells remain flat. Fixtures never write production data.
+cells remain flat. The photographed ADMIN account menu is rendered in a
+synthetic authenticated fixture at both widths and in both themes, with
+pixel-density-2 before/after captures of all five actual actions. The page-wide
+layout audit also inventories rounded controls and checks that each directional
+shadow belongs to an existing framed surface. Fixtures never write production data.
+Six existing rounded article-copy controls carry an explicit glass-action
+class so archived text-only copy controls do not receive an accidental frame.
