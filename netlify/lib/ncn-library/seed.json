@@ -1189,14 +1189,14 @@
   {
     "id": "legacy-5bd12a445c593de8",
     "kind": "legacy",
-    "title": "NCN Arcade · 6 game, một bảng điểm",
+    "title": "NCN Arcade · 7 game, một bảng điểm",
     "href": "/arcade/",
     "image": "/arcade/cover.svg",
     "labels": [
       "Giải trí"
     ],
     "datetime": "2026-10-26T20:00:00+07:00",
-    "summary": "Rắn Lướt, Flappy Bird, Pikachu, Cá lớn nuốt cá bé Khối Sắc 3D và Bắn Bóng. Một hồ sơ dùng chung, bảng điểm công khai và thử thách bạn bè.",
+    "summary": "7 game: Rắn Lướt, Flappy Bird, Pikachu, Cá lớn nuốt cá bé, Khối Sắc 3D, Bắn Bóng và Đào vàng. Một hồ sơ dùng chung, bảng điểm cộng đồng.",
     "isPage": true,
     "managedPage": false,
     "sourcePath": ""
@@ -1227,6 +1227,21 @@
     ],
     "datetime": "2026-10-27T08:00:00+07:00",
     "summary": "Ghép 3 bóng cùng màu, bật tường và rơi dây chuyền. 60 màn, 6 miền sắc màu, Thư giãn và thử thách Hôm nay.",
+    "isPage": true,
+    "managedPage": false,
+    "sourcePath": ""
+  },
+  {
+    "id": "legacy-9fd142db7334eae6",
+    "kind": "legacy",
+    "title": "Đào vàng tuổi thơ · NCN Arcade",
+    "href": "/dao-vang/",
+    "image": "/dao-vang/cover.png",
+    "labels": [
+      "Giải trí"
+    ],
+    "datetime": "2026-10-29T20:30:00+07:00",
+    "summary": "Canh móc lắc, kéo vàng, né đá và săn kim cương. 100 màn cổ điển, cửa hàng nâng cấp, thử thách Hôm nay và tự lưu ván.",
     "isPage": true,
     "managedPage": false,
     "sourcePath": ""

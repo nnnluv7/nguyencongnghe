@@ -79,7 +79,7 @@ test('malformed, oversized and unsupported photos fail without storing data',asy
 test('storage failures return a safe retry message without leaking server details',async()=>{
  const f=fixture();f.store.set=async()=>{throw Error('secret connection string');};const response=await f.handler(request('upload',await image()));assert.equal(response.status,503);assert.equal(JSON.stringify(await response.json()).includes('secret'),false);
 });
-test('editing a member profile refreshes existing best-score entries across all six games',async()=>{
+test('editing a member profile refreshes existing best-score entries across all seven games',async()=>{
  const store=memoryStore();let current={...user,avatar:origin+'/first.webp'},clock=now;const handler=createScoresHandler({production:()=>true,verify:async()=>current,store:()=>store,now:()=>clock,photo:scorePhoto});
  const call=async(route,data)=>{const response=await handler(new Request(origin+'/.netlify/functions/ncn-scores?route='+route,{method:data?'POST':'GET',headers:{Origin:origin,...(data?{'Content-Type':'application/json'}:{})},...(data?{body:JSON.stringify(data)}:{})}));assert.equal(response.status,200);return response.json();};
  for(const [game,spec] of Object.entries(GAMES)){const mode=Object.keys(spec.modes)[0],run=await call('start',{game,mode});clock+=20000;await call('score',{runId:run.runId,score:500,level:1});}

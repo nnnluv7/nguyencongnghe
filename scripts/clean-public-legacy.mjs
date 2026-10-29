@@ -26,7 +26,7 @@ for(const file of pages){
   const currentImage=[...html.matchAll(/<meta\b[^>]*>/gi)].map(m=>m[0]).find(t=>/(?:property|name)="og:image"/.test(t))?.match(/content="([^"]*)"/)?.[1];
   const url=path?SITE_ORIGIN+(path==='index.html'?'/':'/'+path.replace(/index\.html$/,'')):SITE_ORIGIN+'/thu-vien/';
   // Keep genuine article/game covers; replaced tool editors use NCN branding.
-  const image=item?.image||(/\/(?:arcade|flappy-bird|ran-luot|ca-lon-nuot-ca-be|pikachu|xep-hinh|ban-bong)\//.test(url)?currentImage:SOCIAL_IMAGE);
+  const image=item?.image||(/\/(?:arcade|flappy-bird|ran-luot|ca-lon-nuot-ca-be|pikachu|xep-hinh|ban-bong|dao-vang)\//.test(url)?currentImage:SOCIAL_IMAGE);
   html=normalizeSocialMetadata(html,{url,image,...(item?{title:item.title,description:item.summary}:{})});
   html=html.replace(/<link\b[^>]*rel="(?:dns-prefetch|preconnect)"[^>]*>\n?/gi,tag=>/blogger|blogspot|blogblog|fonts\.gstatic|cdnjs\.cloudflare/.test(tag)?'':tag).replace(/<noscript>\s*<\/noscript>\n?/g,'');
   saved+=Buffer.byteLength(before)-Buffer.byteLength(html);if(html!==before)await writeFile(file,html);

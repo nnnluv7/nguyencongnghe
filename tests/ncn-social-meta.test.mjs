@@ -39,7 +39,7 @@ test('managed articles publish their current title, canonical and cover before a
 
 test('all public sources have one absolute OG/Twitter set, correct route and no retired share image',async()=>{
   const pages=(await walk('public')).filter(p=>p.endsWith('.html'));
-  assert.equal(pages.length,121);
+  assert.equal(pages.length,122);
   for(const path of pages){
     const html=await readFile(path,'utf8'),url=new URL(path==='public/index.html'?'/':'/'+path.slice(7).replace(/index\.html$/,''),SITE_ORIGIN).href;
     for(const key of ['og:title','og:url','og:description','og:image','twitter:title','twitter:description','twitter:image'])assert.equal(values(html,key).length,1,path+' '+key);
