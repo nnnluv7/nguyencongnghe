@@ -1,1 +1,0 @@
-window.CG_IMPORT_MAP = [[{"id": "giam", "field": "giam", "number": true}, {"id": "giagoc", "field": "giagoc", "number": true}, {"id": "giagiam", "field": "giagiam", "number": true}, {"id": "note", "field": "ghichu", "number": false}, {"id": "ngayad", "field": "ngayapdung", "number": false}, {"id": "tensp", "field": "sanpham", "number": false}]];
