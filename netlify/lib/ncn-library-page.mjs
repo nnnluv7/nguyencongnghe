@@ -2,6 +2,7 @@ import {escapeHTML,renderMarkdown} from '../../public/assets/ncn-library/content
 import {mergedLibrary,publicCatalog,readLibrary} from './ncn-library-api.mjs';
 import {renderPublicHTML} from './ncn-public-render.mjs';
 import {publicPageHeaders} from './ncn-public-cache.mjs';
+import {normalizeSocialMetadata} from './ncn-social-meta.mjs';
 
 const headers={'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','Netlify-CDN-Cache-Control':'no-store','X-Content-Type-Options':'nosniff'};
 const json=value=>JSON.stringify(value).replace(/</g,'\\u003c').replace(/\u2028/g,'\\u2028').replace(/\u2029/g,'\\u2029');
@@ -11,10 +12,7 @@ export function injectCatalog(html,items){
 function dateLabel(value){try{return new Intl.DateTimeFormat('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',day:'2-digit',month:'2-digit',year:'numeric'}).format(new Date(value));}catch{return '';}}
 function metadata(html,item){
   html=html.replace(/<title>[\s\S]*?<\/title>/,'<title>'+escapeHTML(item.title)+' | NCN</title>');
-  html=html.replace(/(<meta\b[^>]*)(?:name|property)="(og:title|twitter:title|description|og:description|twitter:description)"([^>]*>)/g,(tag,pre,key,tail)=>tag.replace(/content="[^"]*"/,'content="'+escapeHTML(key.includes('title')?item.title:item.summary)+'"'));
-  html=html.replace(/<meta\b[^>]*(?:name|property)="(?:og:url|twitter:domain)"[^>]*>/g,tag=>tag.replace(/content="[^"]*"/,'content="'+escapeHTML('https://nguyencongnghe.com'+item.href)+'"'));
-  if(item.image)html=html.replace(/<meta\b[^>]*(?:name|property)="(?:og:image|twitter:image)"[^>]*>/g,tag=>tag.replace(/content="[^"]*"/,'content="'+escapeHTML(new URL(item.image,'https://nguyencongnghe.com').href)+'"'));
-  return html;
+  return normalizeSocialMetadata(html,{title:item.title,description:item.summary,image:item.image||'',url:'https://nguyencongnghe.com'+item.href,type:'article'});
 }
 export async function articleHTML(deps,item,body,catalog){
   let html=await deps.articleShell();
