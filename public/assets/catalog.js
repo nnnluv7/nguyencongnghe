@@ -1656,7 +1656,7 @@ window.CG_CATALOG = [
     "date": ""
   },
   {
-    "title": "NCN Arcade · 7 game, một bảng điểm",
+    "title": "NCN Arcade · 8 game, một bảng điểm",
     "link": "/arcade/",
     "thumbnail": {
       "src": "/arcade/cover.svg",
@@ -1668,7 +1668,7 @@ window.CG_CATALOG = [
       "Giải trí"
     ],
     "datetime": "2026-10-26T20:00:00+07:00",
-    "summary": "7 game: Rắn Lướt, Flappy Bird, Pikachu, Cá lớn nuốt cá bé, Khối Sắc 3D, Bắn Bóng và Đào vàng. Một hồ sơ dùng chung, bảng điểm cộng đồng.",
+    "summary": "8 game: Rắn Lướt, Flappy Bird, Pikachu, Cá lớn nuốt cá bé, Khối Sắc 3D, Bắn Bóng, Đào vàng và NCN Blast. Một hồ sơ dùng chung, bảng điểm cộng đồng.",
     "isPage": true,
     "author": "NCN",
     "date": ""
@@ -1728,5 +1728,24 @@ window.CG_CATALOG = [
     "author": "NCN",
     "date": "2026-10-29",
     "image": "/dao-vang/cover.png"
+  },
+  {
+    "title": "NCN Blast · Ghép khối 8 × 8",
+    "link": "/ghep-khoi/",
+    "thumbnail": {
+      "src": "/ghep-khoi/cover.png",
+      "type": "image",
+      "width": 1200,
+      "height": 630
+    },
+    "labels": [
+      "Giải trí"
+    ],
+    "datetime": "2026-10-29T22:00:00+07:00",
+    "summary": "Ghép khối kiểu Block Blast: kéo ba mảnh vào bàn 8 × 8, xóa hàng/cột và giữ combo. Cổ điển không giới hạn, thử thách Hôm nay, tự lưu và bảng điểm chung.",
+    "isPage": true,
+    "author": "NCN",
+    "date": "2026-10-29",
+    "image": "/ghep-khoi/cover.png"
   }
 ];

@@ -5,6 +5,7 @@ export const GAMES=Object.freeze({
  ocean:{name:'Cá lớn nuốt cá bé',path:'/ca-lon-nuot-ca-be/',icon:'◈',modes:{classic:'Đại dương'}},
  blocks:{name:'Khối Sắc 3D',path:'/xep-hinh/',icon:'▧',modes:{classic:'100 màn'}},
  gold:{name:'Đào vàng',path:'/dao-vang/',icon:'⛏',modes:{classic:'Cổ điển',daily:'Hôm nay'}},
+ blast:{name:'NCN Blast',path:'/ghep-khoi/',icon:'▦',modes:{classic:'Cổ điển',daily:'Hôm nay'}},
  bubble:{name:'Bắn Bóng',path:'/ban-bong/',icon:'◉',modes:{journey:'Hành trình',relax:'Thư giãn',daily:'Hôm nay'}}
 });
 export const ARCADE_COUNT=Object.keys(GAMES).length;
@@ -20,3 +21,5 @@ export function gameBoard(game,mode,date=vietnamDate()){
 export const GAME_ICONS={"snake":"<path d=\"M4 16c-5-9 12-16 15-7s-10 11-10 5 7-8 7-3-5 5-5 2\"/>","flight":"<path d=\"m3 13 7 1 5 7 1-9 5-7-9 2-5-5 1 8Z\"/>","pikachu":"<path d=\"m12 3 2.6 6.4L21 12l-6.4 2.6L12 21l-2.6-6.4L3 12l6.4-2.6Z\"/>","ocean":"<ellipse cx=\"14\" cy=\"12\" rx=\"7\" ry=\"6\"/><path d=\"m7 12-6-5v10Zm10-2h.01M11 6l3-3 2 3\"/>","bubble":"<circle cx=\"8\" cy=\"8\" r=\"4\"/><circle cx=\"17\" cy=\"9\" r=\"3\"/><circle cx=\"13\" cy=\"17\" r=\"4\"/>","blocks":"<path d=\"m12 2 9 5v10l-9 5-9-5V7Zm0 10v10M3 7l9 5 9-5M7 5l10 5\"/>"};
 
 GAME_ICONS.gold='<path d="m4 20 9-9M3 6c5-5 11-4 17 2L16 7 7 16l1-4-5-6Z"/>';
+
+GAME_ICONS.blast='<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="13" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="13" width="7" height="7" rx="1.5"/><path d="M16.5 12v9M12 16.5h9"/>';

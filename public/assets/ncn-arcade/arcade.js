@@ -104,7 +104,7 @@ export function mountScores({game='snake',host=document.body,anchor,pause=()=>{}
  function openRanks(){pause();if(!expanded.open)expanded.showModal();if(cursor)load(false);}
  q('[data-rank-expand]').addEventListener('click',openRanks);q('[data-close-rank]',expanded).addEventListener('click',()=>expanded.close());
  document.querySelector('.ncn-arcade-nav a[href="#ncn-scoreboard"]')?.addEventListener('click',event=>{event.preventDefault();openRanks();});
- const result=document.querySelector('.rl-result-actions,.ff-result-panel,.result-actions,.pk-overlay-result,.xh-result,.bb-result,.gm-result');
+ const result=document.querySelector('.rl-result-actions,.ff-result-panel,.result-actions,.pk-overlay-result,.xh-result,.bb-result,.gm-result,.bn-result');
  if(result){const button=document.createElement('button');button.type='button';button.className='ncn-game-rank-button';button.textContent='Bảng điểm NCN Arcade ↗';button.addEventListener('click',openRanks);result.append(button);}
  more.addEventListener('click',()=>load(!cursor));expanded.addEventListener('click',e=>{if(e.target===expanded)expanded.close();});
  function maybeMore(){if(!expanded.open||!cursor||loading)return;const scroll=q('.ncn-score-scroll',expanded);if(scroll.scrollHeight-scroll.scrollTop-scroll.clientHeight<200)load(false);}
