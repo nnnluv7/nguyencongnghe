@@ -1,13 +1,15 @@
-# Shared Liquid Glass contrast
+# Shared Liquid Glass hairlines
 
-The shared NCN theme gives navigation, cards, dialogs, buttons and editor fields
-a thin inset contour. Light mode uses charcoal; dark mode uses a pale edge. The
-existing inner highlights, brand colors, spacing, shadows and layout remain.
-Pressed controls and keyboard focus have stronger, distinct indicators.
+The shared NCN theme retains the original glass colors, white highlights,
+shadows, control styles, spacing and rounded shapes. Existing borders receive
+a subtle gray tint: 8.5% opacity on light panels, 14% on light search/navigation
+controls; dark mode uses 12% and 19% pale edges respectively.
 
-This adapts the user's requested dark hairline and the legibility improvements
-described on Apple's iOS 27 page: https://www.apple.com/os/ios/?os=app . It does
-not claim that Apple requires dark outlines on every component.
+Each component keeps its own border and radius. No additional resting outline
+is painted over it. Generic buttons, text actions, summary rows and nested
+search inputs receive no new frame. Existing focus and selected indicators
+remain in their original component styles. This follows the user's supplied
+search-field reference and preference for the earlier interface.
 
 The change is CSS only. No new requests, JavaScript, blur layers or animation
 are introduced. The shared compiled stylesheet is reused across all 121 pages.
@@ -31,5 +33,5 @@ Validation:
 
 The glass browser fixture compares the final compiled CSS against the same
 bundle with only this refinement removed. It checks desktop/phone themes,
-focus, accessibility preferences, unchanged control/content geometry and
+focus, accessibility preferences, unchanged geometry, radii and shadows, and
 identical FIFO/legacy print pixels. Fixtures never write production data.

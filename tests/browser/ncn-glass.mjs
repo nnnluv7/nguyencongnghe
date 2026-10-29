@@ -13,7 +13,7 @@ import {renderPublicHTML} from '../../netlify/lib/ncn-public-render.mjs';
 const root=resolve('dist'),out=resolve('artifacts/glass');
 await mkdir(out,{recursive:true});
 const site=await readFile('public/assets/ncn-theme/site.css','utf8'),notice=await readFile('public/assets/ncn-theme/announcements.css','utf8');
-const previous=site.replace(/\/\* NCN glass contrast, 20261029:[\s\S]*?\/\* END NCN GLASS CONTRAST 20261029 \*\//,'');
+const previous=site.replace(/\/\* NCN glass hairline, 20261029:[\s\S]*?\/\* END NCN GLASS HAIRLINE 20261029 \*\//,'');
 assert.notEqual(previous,site,'The comparison must actually omit the glass refinement');
 const compile=async css=>(await transform('\n'+css+'\n'+notice,{loader:'css',minify:true,legalComments:'none',target:['chrome100','safari15']})).code;
 const currentCSS=await compile(site),oldCSS=await compile(previous);
@@ -35,31 +35,32 @@ const context=async(width=1280)=>{const ctx=await browser.newContext({viewport:{
 const open=async(ctx,path)=>{const p=await ctx.newPage();p.on('pageerror',e=>errors.push(e.message));await p.goto(base+path);await p.waitForFunction(()=>window.NCNAccount?.state.ready);await p.evaluate(()=>document.fonts.ready);return p;};
 const paint=p=>p.evaluate(()=>new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done))));
 const check=async(name,fn)=>{await fn();results.push({name,ok:true});console.log('PASS '+name);};
-const style=(p,selector)=>p.locator(selector).first().evaluate(el=>{const s=getComputedStyle(el);return {width:s.outlineWidth,color:s.outlineColor,offset:s.outlineOffset,blur:s.backdropFilter,background:s.backgroundColor};});
-const routes=[['/','#ncn-topbar'],['/thu-vien/','#ncn-topbar'],['/2024/01/in-fifo.html','#fifo-print'],['/arcade/','.ncn-scoreboard'],['/2022/07/phieu-tu-van-tra-gop.html','#ncn-topbar']];
+const style=(p,selector)=>p.locator(selector).first().evaluate(el=>{const s=getComputedStyle(el);return {width:s.outlineWidth,color:s.borderTopColor,borderWidth:s.borderTopWidth,radius:s.borderTopLeftRadius,offset:s.outlineOffset,blur:s.backdropFilter,background:s.backgroundColor};});
+const routes=[['/','#ncn-topbar'],['/thu-vien/','#ncn-topbar'],['/2024/01/in-fifo.html','.fifo-card'],['/arcade/','.ncn-scoreboard'],['/2022/07/phieu-tu-van-tra-gop.html','#ncn-topbar']];
 try{
- await check('shared contours work on desktop and phone in light and dark themes',async()=>{
+ await check('existing rounded borders stay subtle without a second frame in either theme or viewport',async()=>{
   for(const width of [1280,390]){const ctx=await context(width);
    for(const [path,target] of routes){const p=await open(ctx,path);
-    for(const theme of ['light','dark']){await p.evaluate(theme=>document.documentElement.dataset.ncnTheme=theme,theme);await p.mouse.move(0,0);await paint(p);const s=await style(p,target);assert.equal(s.width,'1px',path+' '+theme);assert.equal(s.offset,'-1px');assert.ok(theme==='dark'?s.color.includes('221, 238, 252'):s.color.includes('14, 20, 28'),JSON.stringify(s));const size=await p.evaluate(()=>({viewport:innerWidth,actual:document.documentElement.scrollWidth}));assert.ok(size.actual<=size.viewport+1,JSON.stringify(size));}
+    for(const theme of ['light','dark']){await p.evaluate(theme=>document.documentElement.dataset.ncnTheme=theme,theme);await p.mouse.move(0,0);await paint(p);const s=await style(p,target);assert.equal(s.width,'0px',path+' '+theme+' must not have a second frame');assert.equal(s.borderWidth,'1px');assert.ok(parseFloat(s.radius)>=12,JSON.stringify(s));const alpha=Number(s.color.match(/,\s*([\d.]+)\)$/)?.[1]);assert.ok(alpha>0&&alpha<=.15,JSON.stringify(s));const size=await p.evaluate(()=>({viewport:innerWidth,actual:document.documentElement.scrollWidth}));assert.ok(size.actual<=size.viewport+1,JSON.stringify(size));}
     if(path==='/2024/01/in-fifo.html'){await p.screenshot({path:out+'/fifo-dark-'+width+'.jpg',fullPage:true,quality:80});await p.evaluate(()=>document.documentElement.dataset.ncnTheme='light');await p.screenshot({path:out+'/fifo-light-'+width+'.jpg',fullPage:true,quality:80});}
     await p.close();
    }await ctx.close();
   }
  });
- await check('keyboard focus is visible and pressed controls retain a stronger contour',async()=>{
+ await check('keyboard focus and selected states remain clear while text actions and inputs gain no extra frame',async()=>{
   const ctx=await context(),p=await open(ctx,'/2024/01/in-fifo.html');await p.keyboard.press('Tab');await p.locator('#fifo-scan').focus();const focused=await style(p,'#fifo-scan');assert.equal(focused.width,'3px');assert.equal(focused.offset,'3px');await p.locator('#fifo-scan').blur();await p.mouse.move(0,0);
-  const normal=await style(p,'#fifo-print');await p.locator('#fifo-print').evaluate(el=>el.setAttribute('aria-pressed','true'));assert.notEqual((await style(p,'#fifo-print')).color,normal.color);await ctx.close();
+  for(const selector of ['#fifo-scan','.fifo-alignment>summary','.fifo-text-button'])assert.equal((await style(p,selector)).width,'0px',selector);
+  const selected=await style(p,'#fifo-today');await p.locator('#fifo-date').fill('2026-01-01');assert.notEqual((await style(p,'#fifo-today')).background,selected.background);await p.locator('#fifo-today').click();assert.equal(await p.locator('#fifo-today').getAttribute('aria-pressed'),'true');await ctx.close();
  });
  await check('accessibility preferences increase contrast and remove translucent chrome',async()=>{
   const ctx=await context(),p=await open(ctx,'/');const normal=await style(p,'#ncn-topbar');
   await p.emulateMedia({contrast:'more'});const high=await style(p,'#ncn-topbar');assert.notEqual(high.color,normal.color);assert.equal(high.blur,'none');assert.match(high.background,/^rgb\(/,'High-contrast chrome must be opaque');
   await p.emulateMedia({contrast:'no-preference'});const cdp=await ctx.newCDPSession(p);await cdp.send('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-transparency',value:'reduce'}]});assert.equal((await style(p,'#ncn-topbar')).blur,'none');assert.equal((await style(p,'#ncn-topbar')).color,high.color);
-  await p.emulateMedia({forcedColors:'active'});assert.equal(await p.evaluate(()=>matchMedia('(forced-colors:active)').matches),true);assert.equal((await style(p,'#ncn-topbar')).width,'1px');await ctx.close();
+  await p.emulateMedia({forcedColors:'active'});assert.equal(await p.evaluate(()=>matchMedia('(forced-colors:active)').matches),true);assert.equal((await style(p,'#ncn-topbar')).borderWidth,'1px');await ctx.close();
  });
  await check('the refinement preserves control and content geometry at both breakpoints',async()=>{
   for(const width of [1280,390])for(const [path] of routes){const boxes=[];
-   for(const old of [true,false]){baseline=old;const ctx=await context(width),p=await open(ctx,path);await paint(p);boxes.push(await p.locator('#ncn-topbar,main h1,#fifo-scan,#fifo-print,.ncn-scoreboard').evaluateAll(els=>els.map(el=>({id:el.id||el.className,box:el.getBoundingClientRect().toJSON()}))));await ctx.close();}
+   for(const old of [true,false]){baseline=old;const ctx=await context(width),p=await open(ctx,path);await paint(p);boxes.push(await p.locator('#ncn-topbar,main h1,#fifo-scan,#fifo-print,.fifo-card,.ncn-scoreboard,.ncn-top-search,.ncn-inline-search').evaluateAll(els=>els.map(el=>{const s=getComputedStyle(el);return {id:el.id||el.className,box:el.getBoundingClientRect().toJSON(),radius:s.borderRadius,shadow:s.boxShadow};})));await ctx.close();}
    assert.deepEqual(boxes[1],boxes[0],path+' '+width+' layout changed');
   }baseline=false;
  });
