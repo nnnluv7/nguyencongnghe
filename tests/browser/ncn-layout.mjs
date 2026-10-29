@@ -98,7 +98,7 @@ try{
     const unshaded=visible.filter(el=>{
      const s=getComputedStyle(el),rgb=s.backgroundColor.match(/[\d.]+/g)?.map(Number);
      return ['BUTTON','A','SUMMARY'].includes(el.tagName)&&parseFloat(s.borderTopWidth)>0&&parseFloat(s.borderTopLeftRadius)>=6&&s.backgroundImage==='none'&&rgb?.length===4&&rgb[3]>0&&rgb[3]<.98&&Math.min(...rgb.slice(0,3))>140&&!s.boxShadow.includes('24, 44, 64')&&!s.boxShadow.includes('40, 80, 109')&&!el.closest('[aria-pressed=true],[aria-selected=true],[aria-current=page],.selected,.active,.is-active,#printMe,.fifo-sheet,.pk-board,.rl-stage,.ff-stage,.pk-play-area,.pk-overlay,.bb-field,.bb-overlay,#gameShell,.xh-hold');
-    }).map(read);
+    }).map(el=>({...read(el),html:el.outerHTML.slice(0,240),parent:el.parentElement?.className}));
     return {shaded,unshaded};
    });
    for(const control of controls.shaded)assert.ok(control.radius>=6&&control.border>0,file+' shaded edge must follow an existing rounded control: '+JSON.stringify(control));
