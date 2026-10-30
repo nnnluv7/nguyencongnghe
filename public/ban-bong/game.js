@@ -1,7 +1,7 @@
 import {mountScores} from '../assets/ncn-arcade/arcade.js?v=20261027-photo-save-1';
 import {vietnamDate} from '../assets/ncn-arcade/catalog.js?v=20261027-bubble-1';
-import {WIDTH,HEIGHT,LAUNCHER,MAX_ANGLE,MODES,WORLDS,maxLevels,levelSpec,createGame,shoot,swap,advance,readSave,readProgress,cells} from './core.js?v=20261027-bubble-1';
-import {createRenderer,COLORS,COLOR_NAMES} from './render.js?v=20261027-bubble-1';
+import {WIDTH,HEIGHT,LAUNCHER,MAX_ANGLE,MODES,WORLDS,maxLevels,levelSpec,createGame,shoot,tickGame,swap,advance,readSave,readProgress,cells} from './core.js?v=20261030-eggs-2';
+import {createRenderer,COLORS,COLOR_NAMES} from './render.js?v=20261030-eggs-2';
 import {installFullscreen} from '../xep-hinh/fullscreen.js?v=20261027-bubble-1';
 
 const $=id=>document.getElementById('bb-'+id),saveKey='ncn-bubble-save-v1',progressKey='ncn-bubble-progress-v1',prefsKey='ncn-bubble-prefs-v1';
@@ -12,41 +12,52 @@ function write(key,value){try{if(value===null)localStorage.removeItem(key);else 
 function storageNote(){$('storage-note').textContent=storageOK?'Tiến độ tự lưu trên trình duyệt này.':'Trình duyệt không cho lưu. Bạn vẫn có thể chơi bình thường.';}
 let saved=readSave(read(saveKey)),progress=readProgress(read(progressKey)),prefs=read(prefsKey)||{};
 if(saved?.mode==='daily'&&saved.date!==today())saved=null;
-if(saved&&saved.mode!=='daily')progress.modes[saved.mode].unlocked=Math.max(progress.modes[saved.mode].unlocked,Math.min(60,saved.level+(saved.status==='cleared'?1:0)));
+if(saved&&saved.mode!=='daily')progress.modes[saved.mode].unlocked=Math.max(progress.modes[saved.mode].unlocked,Math.min(maxLevels(saved.mode),saved.level+(saved.status==='cleared'?1:0)));
 let mode=saved?.mode||(Object.hasOwn(MODES,prefs.mode)?prefs.mode:'journey'),selected=mode==='daily'?1:progress.modes[mode].unlocked;
-let game=createGame({mode,level:selected,seed:147,date:today()}),state='ready',angle=0,power='normal',flight=null,gesture=null,previous=performance.now(),pendingNew=null,mapWorld=0,starting=false,audio=null;
+let game=createGame({mode,level:selected,seed:147,date:today()}),state='ready',angle=0,power='normal',flight=null,gesture=null,previous=performance.now(),pendingNew=null,mapWorld=0,starting=false,audio=null,lastTimeSave=0,lastClockText='',needsPaint=true;
 let reduced=typeof prefs.reduced==='boolean'?prefs.reduced:matchMedia('(prefers-reduced-motion: reduce)').matches,muted=prefs.sound!==true;
 const renderer=createRenderer($('board')),say=text=>$('toast').textContent=text;
 function savePrefs(){write(prefsKey,{mode,sound:!muted,reduced});}
-function applyPrefs(){$('app').classList.toggle('bb-reduced',reduced);$('reduced').checked=reduced;$('sound').setAttribute('aria-pressed',String(!muted));$('sound').setAttribute('aria-label',muted?'Bật âm thanh':'Tắt âm thanh');$('sound').textContent=muted?'♩':'♫';}
+function applyPrefs(){needsPaint=true;$('app').classList.toggle('bb-reduced',reduced);$('reduced').checked=reduced;$('sound').setAttribute('aria-pressed',String(!muted));$('sound').setAttribute('aria-label',muted?'Bật âm thanh':'Tắt âm thanh');$('sound').textContent=muted?'♩':'♫';}
 function sound(kind='shot'){
  if(muted)return;try{audio??=new(window.AudioContext||window.webkitAudioContext)();void audio.resume().catch(()=>{});const start=audio.currentTime,notes=kind==='clear'?[523,659,784,1047]:kind==='pop'?[659,784]:kind==='swap'?[392]:[260];
  for(const [i,hz]of notes.entries()){const o=audio.createOscillator(),v=audio.createGain();o.type='sine';o.frequency.setValueAtTime(hz,start+i*.055);o.frequency.exponentialRampToValueAtTime(hz*(kind==='shot' ? .6 : 1.08),start+i*.055+.12);v.gain.setValueAtTime(.001,start+i*.055);v.gain.linearRampToValueAtTime(.032,start+i*.055+.008);v.gain.exponentialRampToValueAtTime(.001,start+i*.055+.18);o.connect(v);v.connect(audio.destination);o.start(start+i*.055);o.stop(start+i*.055+.2);}}
  catch{}
 }
 function update(){
- const spec=levelSpec(game.level,game.mode,game.date),remaining=cells(game.board,game.phase).length;
+ needsPaint=true; const spec=levelSpec(game.level,game.mode,game.date),remaining=cells(game.board,game.phase).length;
  $('app').style.setProperty('--bb-accent',spec.color);$('world-name').textContent=mode==='daily'?'THỬ THÁCH HÔM NAY':spec.name.toLocaleUpperCase('vi-VN');$('stage-title').textContent=spec.title;$('world-note').textContent=mode==='daily'?'5 màn giống nhau cho mọi người. Bảng điểm đổi mới mỗi ngày.':spec.note;
  $('score').textContent=format(game.score);$('level').textContent=String(game.level).padStart(2,'0');$('total').textContent=maxLevels(mode);$('remaining').textContent=remaining;$('best').textContent=format(Math.max(game.score,progress.best));
  $('pressure-label').textContent=mode==='relax'?'KHÔNG HẠ HÀNG':'TRƯỚC KHI HẠ HÀNG';$('misses').replaceChildren();
  if(spec.missLimit){for(let i=0;i<spec.missLimit;i++){const dot=document.createElement('i');dot.classList.toggle('used',i<game.misses);dot.setAttribute('aria-hidden','true');$('misses').append(dot);}$('misses').setAttribute('aria-label',(spec.missLimit-game.misses)+' lượt trượt trước khi thêm hàng');}
- else{const infinity=document.createElement('b');infinity.textContent='∞';$('misses').append(infinity);$('misses').setAttribute('aria-label','Không thêm hàng bóng trong chế độ Thư giãn');}
+ else{const infinity=document.createElement('b');infinity.textContent='∞';$('misses').append(infinity);$('misses').setAttribute('aria-label','Không thêm hàng trứng trong chế độ Thư giãn');}
  $('pause').disabled=!['playing','paused'].includes(state);$('pause').textContent=state==='paused'?'▶':'Ⅱ';$('pause').setAttribute('aria-label',state==='paused'?'Tiếp tục chơi':'Tạm dừng');
  $('swap').disabled=state!=='playing'||!!flight;
- for(const kind of ['rainbow','bomb']){$(kind).disabled=state!=='playing'||!!flight||game.powers[kind]===0;$(kind).setAttribute('aria-pressed',String(power===kind));$(kind+'-count').textContent=game.powers[kind]?'Còn 1 bóng':'Đã sử dụng';}
+ for(const kind of ['rainbow','bomb']){$(kind).disabled=state!=='playing'||!!flight||game.powers[kind]===0;$(kind).setAttribute('aria-pressed',String(power===kind));$(kind+'-count').textContent=game.powers[kind]?'Còn 1 trứng':spec.powers[kind]?'Đã sử dụng':'Màn này không có';}
  for(const b of document.querySelectorAll('[data-bb-mode]'))b.setAttribute('aria-pressed',String(b.dataset.bbMode===mode));
- $('map-open').disabled=mode==='daily';$('map-open').firstChild.textContent=mode==='daily'?'Hôm nay · 5 màn chung ':'Bản đồ 60 màn ';
- $('board').tabIndex=state==='playing'?0:-1;$('board').setAttribute('aria-busy',String(!!flight));$('board').setAttribute('aria-label','Bàn bắn bóng, màn '+game.level+'. '+remaining+' bóng còn lại. Bóng đang cầm màu '+(COLOR_NAMES[game.current-1]||'')+'. Dùng mũi tên để ngắm, Space để bắn, X đổi bóng.');
+ $('map-open').disabled=mode==='daily';$('map-open').firstChild.textContent=mode==='daily'?'Hôm nay · 5 màn chung ':'Bản đồ 200 màn ';
+ lastClockText='';updateClock();
+ $('board').tabIndex=state==='playing'?0:-1;$('board').setAttribute('aria-busy',String(!!flight));$('board').setAttribute('aria-label','Bàn bắn trứng, màn '+game.level+'. '+remaining+' trứng còn lại. Trứng đang cầm màu '+(COLOR_NAMES[game.current-1]||'')+'. Dùng mũi tên để ngắm, Space để bắn, X đổi trứng.');
+}
+function updateClock(){
+ const interval=levelSpec(game.level,game.mode,game.date).riseEvery,left=interval?Math.max(0,Math.ceil(interval-game.pressureTime)):0,text=interval?left+'s':'∞';
+ if(lastClockText!==text){$('pressure-clock').textContent=text;$('pressure-clock').setAttribute('aria-label',interval?'Hạ hàng trứng sau '+left+' giây':'Không hạ hàng');lastClockText=text;}
+ $('pressure-fill').style.transform='scaleX('+(interval?Math.max(0,1-game.pressureTime/interval):1)+')';$('pressure-clock').classList.toggle('is-urgent',!!interval&&left<=6);
+}
+function timeStep(dt){
+ const event=tickGame(game,dt,{defer:!!flight});updateClock();if(!event)return;
+ if(event.lost){scores.finish(game.score,game.level);saved=null;write(saveKey,null);setView('lost');say('Hàng trứng đã chạm vạch tổ. Chơi lại và tìm đường cắt chùm nhé!');}
+ else{update();persist();say('Hàng trứng vừa hạ! Canh đồng hồ và cắt chùm để giữ tổ an toàn.');sound('swap');}
 }
 function persist(){if(!['playing','paused','cleared'].includes(state))return;saved=readSave(game);if(saved)write(saveKey,saved);}
 function record(){progress.best=Math.max(progress.best,game.score);write(progressKey,progress);}
 function overlay(){
  const last=game.level===maxLevels(mode),data={
- ready:['60 MÀN · 6 MIỀN SẮC MÀU','Bắn một viên.<br><em>Vui cả tuổi thơ.</em>','Ghép 3 bóng cùng màu. Bật tường thật khéo.<br>Một cú bắn hay, cả chùm ký ức rơi xuống.','Chơi màn '+String(selected).padStart(2,'0')],
- paused:['NGHỈ MỘT NHỊP','Bóng vẫn chờ.<br><em>Mình chơi tiếp nhé?</em>','Bàn bóng và điểm được giữ lại.<br>Thêm một cú bắn đẹp khi bạn sẵn sàng.','Tiếp tục chơi'],
- cleared:['MỘT CHÙM NIỀM VUI','Màn '+game.level+' hoàn thành.<br><em>Lấp lánh quá!</em>','Bạn đã dọn sạch bàn bóng.<br>'+(mode==='daily'?'Cùng chinh phục thử thách tiếp theo.':'Màn '+(game.level+1)+' đang chờ thêm một cú bắn hay.'),'Sang màn '+(game.level+1)],
- lost:['ĐỔI MỘT GÓC NGẮM','Một lần nữa.<br><em>Một cú bắn hay hơn.</em>','Bóng đã chạm vạch giới hạn.<br>Thử đổi bóng và nhắm vào chùm ở trên nhé.','Chơi lại màn '+game.level],
- won:[mode==='daily'?'5 MÀN · MỘT NGÀY RỰC RỠ':'60 MÀN · CẢ MỘT TRỜI KÝ ỨC',mode==='daily'?'Hôm nay<br><em>thật lấp lánh.</em>':'Đi hết hành trình.<br><em>Giữ lại niềm vui.</em>',mode==='daily'?'Bạn đã hoàn thành 5 màn hôm nay.<br>So điểm với bạn bè hoặc quay lại ngày mai.':'Bạn đã chinh phục cả 60 màn.<br>Các ngôi sao và kỷ lục đã được giữ lại.','Chơi lại '+(mode==='daily'?'thử thách hôm nay':'màn 60')]
+ ready:['200 MÀN · 20 MIỀN TIỀN SỬ','Bắn trứng.<br><em>Về tuổi thơ.</em>','Khủng long nhỏ, những quả trứng đầy màu sắc.<br>Ghép 3 cùng màu, cắt chùm trước khi hàng trứng hạ.','Chơi màn '+String(selected).padStart(2,'0')],
+ paused:['NGHỈ MỘT NHỊP','Trứng vẫn chờ.<br><em>Mình chơi tiếp nhé?</em>','Bàn trứng và điểm được giữ lại.<br>Thêm một cú bắn đẹp khi bạn sẵn sàng.','Tiếp tục chơi'],
+ cleared:['MỘT CHÙM NIỀM VUI','Màn '+game.level+' hoàn thành.<br><em>Lấp lánh quá!</em>','Bạn đã dọn sạch bàn trứng.<br>'+(mode==='daily'?'Cùng chinh phục thử thách tiếp theo.':'Màn '+(game.level+1)+' đang chờ thêm một cú bắn hay.'),'Sang màn '+(game.level+1)],
+ lost:['ĐỔI MỘT GÓC NGẮM','Một lần nữa.<br><em>Một cú bắn hay hơn.</em>','Trứng đã chạm vạch giới hạn.<br>Thử đổi trứng và nhắm vào chùm ở trên nhé.','Chơi lại màn '+game.level],
+ won:[mode==='daily'?'5 MÀN · MỘT NGÀY RỰC RỠ':'200 MÀN · TỔ RỒNG HUYỀN THOẠI',mode==='daily'?'Hôm nay<br><em>thật lấp lánh.</em>':'Đi hết hành trình.<br><em>Giữ lại niềm vui.</em>',mode==='daily'?'Bạn đã hoàn thành 5 màn hôm nay.<br>So điểm với bạn bè hoặc quay lại ngày mai.':'Bạn đã chinh phục cả 200 màn.<br>Các ngôi sao và kỷ lục đã được giữ lại.','Chơi lại '+(mode==='daily'?'thử thách hôm nay':'màn 200')]
  }[state];
  if(!data)return;const [kicker,title,copy,label]=data;$('overlay-kicker').textContent=state==='ready'&&mode==='daily'?'HÔM NAY · 5 MÀN CHUNG':kicker;$('overlay-title').innerHTML=title;$('overlay-copy').innerHTML=copy;$('start-label').textContent=label;
  $('mode-picker').hidden=state!=='ready';$('free-note').hidden=state!=='ready';$('levels').hidden=state==='paused'||mode==='daily';$('home').hidden=state==='ready';
@@ -67,11 +78,11 @@ function requestStart(nextMode=mode,nextLevel=selected){
 }
 function settle(){
  if(!flight)return;const event=flight.event;flight=null;renderer.effect(event,reduced);power='normal';
- if(event.popped.length){const count=event.popped.length+event.fallen.length,label=event.fallen.length>=5?'RƠI CẢ CHÙM!':game.combo>=3?'COMBO ×'+Math.min(5,game.combo):event.bounces?'BẬT TƯỜNG ĐẸP!':'BÙNG SẮC MÀU!';say(label+' '+count+' bóng · +'+format(event.earned)+' điểm');$('combo-toast').textContent=label;$('combo-toast').classList.remove('is-active');void $('combo-toast').offsetWidth;$('combo-toast').classList.add('is-active');sound(['cleared','won'].includes(game.status)?'clear':'pop');}
- else say(event.rowAdded?'Thêm một hàng bóng. Đổi góc bắn hoặc dùng bóng đặc biệt nhé!':mode==='relax'?'Đổi bóng hoặc thử bật tường để ghép một chùm cùng màu.':'Chưa đủ 3 bóng. Còn '+(levelSpec(game.level,mode,game.date).missLimit-game.misses)+' lượt trượt trước khi hạ hàng.');
+ if(event.popped.length){const count=event.popped.length+event.fallen.length,label=event.fallen.length>=5?'RƠI CẢ CHÙM!':game.combo>=3?'COMBO ×'+Math.min(5,game.combo):event.bounces?'BẬT TƯỜNG ĐẸP!':'BÙNG SẮC MÀU!';say(label+' '+count+' trứng · +'+format(event.earned)+' điểm');$('combo-toast').textContent=label;$('combo-toast').classList.remove('is-active');void $('combo-toast').offsetWidth;$('combo-toast').classList.add('is-active');sound(['cleared','won'].includes(game.status)?'clear':'pop');}
+ else say(event.rowAdded?'Thêm một hàng trứng. Đổi góc bắn hoặc dùng trứng đặc biệt nhé!':mode==='relax'?'Đổi trứng hoặc thử bật tường để ghép một chùm cùng màu.':'Chưa đủ 3 trứng. Còn '+(levelSpec(game.level,mode,game.date).missLimit-game.misses)+' lượt trượt trước khi hạ hàng.');
  record();
  if(['cleared','won'].includes(game.status)){
-  if(mode!=='daily'){const p=progress.modes[mode];p.unlocked=Math.max(p.unlocked,Math.min(60,game.level+1));p.stars[game.level]=Math.max(p.stars[game.level]||0,event.stars);write(progressKey,progress);}
+  if(mode!=='daily'){const p=progress.modes[mode];p.unlocked=Math.max(p.unlocked,Math.min(maxLevels(mode),game.level+1));p.stars[game.level]=Math.max(p.stars[game.level]||0,event.stars);write(progressKey,progress);}
   scores.finish(game.score,game.level);setView(game.status);if(game.status==='won'){saved=null;write(saveKey,null);}else persist();
  }else if(game.status==='lost'){scores.finish(game.score,game.level);saved=null;write(saveKey,null);setView('lost');}
  else{update();persist();scores.checkpoint(game.score,game.level);}
@@ -88,10 +99,10 @@ function fire(){
  if(state!=='playing'||flight||document.querySelector('dialog[open]'))return;
  const before=structuredClone(game),chosen=power,event=shoot(game,angle,chosen);if(!event)return;flight={before,event,power:chosen,elapsed:0,duration:reduced ? .06 : Math.min(.78,Math.max(.2,event.distance/1250))};sound();$('board').setAttribute('aria-busy','true');$('swap').disabled=$('rainbow').disabled=$('bomb').disabled=true;
 }
-function changeBall(){if(state!=='playing'||flight)return;if(swap(game)){power='normal';sound('swap');update();persist();say('Đã đổi bóng. Bóng đang cầm màu '+COLOR_NAMES[game.current-1]+'.');}}
-function special(kind){if(state!=='playing'||flight||!game.powers[kind])return;power=power===kind?'normal':kind;update();say(power==='rainbow'?'Bóng cầu vồng sẽ nhận màu bóng chạm vào.':power==='bomb'?'Bóng nổ sẽ dọn một vùng quanh điểm chạm.':'Đã trở lại bóng thường.');}
+function changeBall(){if(state!=='playing'||flight)return;if(swap(game)){power='normal';sound('swap');update();persist();say('Đã đổi trứng. Trứng đang cầm màu '+COLOR_NAMES[game.current-1]+'.');}}
+function special(kind){if(state!=='playing'||flight||!game.powers[kind])return;power=power===kind?'normal':kind;update();say(power==='rainbow'?'Trứng cầu vồng sẽ nhận màu trứng chạm vào.':power==='bomb'?'Trứng nổ sẽ dọn một vùng quanh điểm chạm.':'Đã trở lại trứng thường.');}
 function map(){pause();if(mode==='daily'){say('Thử thách hôm nay gồm 5 màn theo thứ tự, giống nhau cho mọi người.');return;}mapWorld=Math.floor((selected-1)/10);$('world-select').value=String(mapWorld);renderMap();$('map').showModal();}
-function renderMap(){const p=progress.modes[mode];$('unlocked').textContent='Đã mở '+p.unlocked+' / 60 màn · '+MODES[mode];$('total-stars').textContent=Object.values(p.stars).reduce((a,b)=>a+b,0)+' ★';$('map-note').textContent=WORLDS[mapWorld].note;const fragment=document.createDocumentFragment();for(let i=1;i<=10;i++){const level=mapWorld*10+i,b=document.createElement('button'),stars=p.stars[level]||0;b.type='button';b.dataset.level=level;b.disabled=level>p.unlocked;b.setAttribute('aria-label','Màn '+level+(b.disabled?' · Chưa mở':stars?' · '+stars+' sao':' · Đã mở'));b.setAttribute('aria-current',String(level===selected));const strong=document.createElement('strong'),small=document.createElement('small');strong.textContent=String(level).padStart(2,'0');small.textContent=b.disabled?'KHÓA':'★'.repeat(stars)+'☆'.repeat(3-stars);b.append(strong,small);fragment.append(b);}$('map-grid').replaceChildren(fragment);}
+function renderMap(){const p=progress.modes[mode];$('unlocked').textContent='Đã mở '+p.unlocked+' / '+maxLevels(mode)+' màn · '+MODES[mode];$('total-stars').textContent=Object.values(p.stars).reduce((a,b)=>a+b,0)+' ★';$('map-note').textContent=WORLDS[mapWorld].note;const fragment=document.createDocumentFragment();for(let i=1;i<=10;i++){const level=mapWorld*10+i,b=document.createElement('button'),stars=p.stars[level]||0;b.type='button';b.dataset.level=level;b.disabled=level>p.unlocked;b.setAttribute('aria-label','Màn '+level+(b.disabled?' · Chưa mở':stars?' · '+stars+' sao':' · Đã mở')+(level%10===0?' · Thử thách':''));b.setAttribute('aria-current',String(level===selected));const strong=document.createElement('strong'),small=document.createElement('small');strong.textContent=String(level).padStart(2,'0');small.textContent=b.disabled?'KHÓA':'★'.repeat(stars)+'☆'.repeat(3-stars);b.classList.toggle('bb-boss-stage',level%10===0);b.append(strong,small);fragment.append(b);}$('map-grid').replaceChildren(fragment);}
 for(const [i,world]of WORLDS.entries()){const option=document.createElement('option');option.value=i;option.textContent=String(i+1).padStart(2,'0')+' · '+world.name;$('world-select').append(option);}
 const scores=mountScores({game:'bubble',host:$('app'),anchor:$('features'),pause});
 $('start').addEventListener('click',()=>{if(state==='paused')resume();else if(state==='cleared'){const next=advance(game);if(next)enter(next);}else if(['won','lost'].includes(state))void begin(mode,state==='won'&&mode==='daily'?1:game.level);else requestStart();});
@@ -114,7 +125,7 @@ document.addEventListener('keydown',event=>{
 });
 document.addEventListener('visibilitychange',()=>{if(document.hidden)pause();});window.addEventListener('blur',pause);window.addEventListener('pagehide',()=>{pause();persist();});
 new MutationObserver(()=>{if(state==='playing'&&document.querySelector('dialog[open],#ncn-sidebar[aria-hidden="false"],.ncn-account-menu[open]'))pause();}).observe(document.body,{subtree:true,attributes:true,attributeFilter:['open','aria-hidden']});
-function draw(now){const dt=Math.min(.05,Math.max(0,(now-previous)/1000));previous=now;if(state==='playing'&&flight){flight.elapsed+=dt;if(flight.elapsed>=flight.duration)settle();}renderer.draw(game,{angle,flight,reduced,power,dt,aim:state==='playing'});requestAnimationFrame(draw);}
+function draw(now){const dt=Math.min(.05,Math.max(0,(now-previous)/1000));previous=now;if(state==='playing'){timeStep(dt);if(flight){flight.elapsed+=dt;if(flight.elapsed>=flight.duration)settle();}if(!flight&&state==='playing'&&now-lastTimeSave>2000){persist();lastTimeSave=now;}}if(!document.hidden&&(state==='playing'||needsPaint)){renderer.draw(game,{angle,flight,reduced,power,dt:state==='playing'?dt:0,aim:state==='playing'});needsPaint=false;}requestAnimationFrame(draw);}
 const resize=()=>{renderer.resize();renderer.draw(game,{angle,flight,reduced,power,aim:state==='playing'});};
 installFullscreen({app:$('app'),button:$('fullscreen'),status:$('awake-status'),resize,notify:say,immersiveClass:'bb-immersive',rootClass:'bb-fullscreen-open'});new ResizeObserver(resize).observe($('field'));window.addEventListener('resize',resize);
 applyPrefs();setView('ready');storageNote();resize();requestAnimationFrame(draw);

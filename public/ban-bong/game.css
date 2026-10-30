@@ -26,3 +26,20 @@
  @media(prefers-reduced-transparency:reduce){.bb-dialog{background:var(--ncn-surface,#edf4ed);backdrop-filter:none}}
 }
 @media print{.bb-app,.bb-features,.bb-heading-link,.bb-dialog{display:none!important}}
+
+/* Prehistoric edition: the shared NCN glass stays on the surrounding controls. */
+@media screen{
+ .bb-pressure-status{justify-content:space-between;gap:6px}.bb-pressure-status #bb-misses{display:flex;align-items:center;gap:4px;min-width:0}
+ #bb-pressure-clock{font-size:11px;font-weight:750;font-variant-numeric:tabular-nums;color:var(--bb-muted);white-space:nowrap}#bb-pressure-clock.is-urgent{color:#b25330}
+ .bb-pressure-track{display:block;height:2px;margin-top:2px;overflow:hidden;border-radius:3px;background:#72ac982b}
+ #bb-pressure-fill{display:block;width:100%;height:2px;margin:0;border:0;border-radius:3px;background:var(--bb-accent,#85e0bf);transform-origin:left center}
+ .bb-side-orbs i{border-radius:48% 48% 44% 44%/60% 60% 40% 40%}
+ .bb-map-grid .bb-boss-stage{background:linear-gradient(145deg,#f4dfb933,var(--bb-soft));border-color:#bca26a66}
+ .bb-immersive .bb-pressure-track{margin-top:0}.bb-immersive #bb-pressure-clock{font-size:9px}
+ @media(max-width:520px){.bb-pressure-status #bb-misses{gap:3px}#bb-pressure-clock{font-size:10px}.bb-overlay h2{font-size:clamp(29px,8.3vw,36px)}}
+}
+
+@media screen{
+ .bb-app[data-state=ready] .bb-overlay{background-color:#103a35;background-image:linear-gradient(180deg,#0c303400 0%,#0c303400 38%,#0c3034b8 59%,#0c3034fa 77%),url('./hero.svg?v=20261030-eggs-2');background-repeat:no-repeat;background-position:center,center top;background-size:100% 100%,100% auto}
+ @media(max-height:500px) and (orientation:landscape){.bb-immersive[data-state=ready] .bb-overlay{background-image:linear-gradient(90deg,#0c3034f5,#0c3034e8 56%,#0c30347a),url('./hero.svg?v=20261030-eggs-2');background-position:center,right top;background-size:100% 100%,80% auto}}
+}

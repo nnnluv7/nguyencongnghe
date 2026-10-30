@@ -1692,7 +1692,7 @@ window.CG_CATALOG = [
     "date": ""
   },
   {
-    "title": "Bắn Bóng Tuổi Thơ · 60 màn sắc màu",
+    "title": "Bắn Trứng Khủng Long · 200 màn",
     "link": "/ban-bong/",
     "thumbnail": {
       "src": "/ban-bong/cover.svg",
@@ -1704,7 +1704,7 @@ window.CG_CATALOG = [
       "Giải trí"
     ],
     "datetime": "2026-10-27T08:00:00+07:00",
-    "summary": "Ghép 3 bóng cùng màu, bật tường và rơi dây chuyền. 60 màn, 6 miền sắc màu, Thư giãn và thử thách Hôm nay.",
+    "summary": "Bắn bóng cổ điển với khủng long 3D bắn trứng. 200 màn, 20 miền tiền sử, trứng đá, hàng trứng hạ dần và chế độ Thư giãn.",
     "isPage": true,
     "author": "NCN",
     "date": "2026-10-27",

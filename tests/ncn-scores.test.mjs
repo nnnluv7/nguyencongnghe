@@ -72,6 +72,11 @@ test('Bubble Shooter accepts earned scores in its three modes and keeps daily re
  for(const mode of ['journey','relax','daily']){const board=await call(f,'board&game=bubble&mode='+mode);assert.equal(board.status,200);assert.equal(board.value.total,1);assert.equal(board.value.items[0].score,650);assert.equal(board.value.items[0].member,true);}
  assert.equal((await call(f,'board&game=bubble&mode=daily&date=2026-10-27')).value.total,0);assert.equal((await call(f,'start',{game:'bubble',mode:'classic'})).status,400);
 });
+test('the dinosaur campaign can publish stage 200 while other games retain their existing stage limits',async()=>{
+ const f=fixture();f.user=member;await scored(f,{game:'bubble',mode:'journey',score:850,level:200});assert.equal((await call(f,'board&game=bubble&mode=journey')).value.items[0].level,200);
+ f.now+=1000;const daily=await call(f,'start',{game:'bubble',mode:'daily'});assert.equal((await call(f,'score',{runId:daily.value.runId,score:100,level:6})).status,400);
+ f.now+=1000;const flight=await call(f,'start',{game:'flight',mode:'normal'});assert.equal((await call(f,'score',{runId:flight.value.runId,score:100,level:101})).status,400);
+});
 test('impossible values, instantaneous huge scores and expired runs do not enter a board',async()=>{const f=fixture(),g=await guest(f),r=await call(f,'start',{game:'flight',mode:'normal'},g.cookie);for(const score of [-1,Infinity,1.5,1000000000])assert.equal((await call(f,'score',{runId:r.value.runId,score,level:0},g.cookie)).status,400);assert.equal((await call(f,'score',{runId:r.value.runId,score:50000,level:0},g.cookie)).status,400);f.now+=31*86400000;assert.equal((await call(f,'score',{runId:r.value.runId,score:50,level:0},g.cookie)).status,410);});
 test('pagination starts with ten and continues past 1000 players without an overall cutoff',async()=>{
  const f=fixture();for(let i=0;i<1207;i++){const id=createHash('sha256').update('player-'+i).digest('hex'),score=5000-i,key='rank/snake/arena/'+String(999999999-score).padStart(9,'0')+'/'+at+'/'+id;await f.store.setJSON(key,{id,name:'Bạn '+i,avatar:'preset:🐱',member:false,score,level:0,at});}

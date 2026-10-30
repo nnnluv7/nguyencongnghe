@@ -5,35 +5,38 @@ import assert from 'node:assert/strict';
 import {createScoresHandler} from '../../netlify/lib/ncn-scores-api.mjs';
 import {scorePhoto} from '../../netlify/lib/ncn-score-photos.mjs';
 import {memoryStore} from '../fixtures/arcade-store.mjs';
-import {createGame,index,readProgress} from '../../public/ban-bong/core.js';
+import {createGame,index,levelSpec,readProgress} from '../../public/ban-bong/core.js';
 import {renderPublicHTML} from '../../netlify/lib/ncn-public-render.mjs';
 import {publicCatalog} from '../../netlify/lib/ncn-library-api.mjs';
 
 // All accounts, avatars, uploads and scores remain inside a synthetic HTTPS site.
-const origin='https://ncn-bubble.test',root=resolve('public'),out=resolve('artifacts/bubble'),at=Date.parse('2026-10-27T03:00:00Z'),errors=[],results=[],contexts=[];
+const built=!!process.env.NCN_BUILT_TEST;
+const origin='https://ncn-bubble.test',root=resolve(built?'dist':'public'),out=resolve('artifacts/bubble'+(built?'-built':'')),at=Date.parse('2026-10-27T03:00:00Z'),errors=[],results=[],contexts=[];
 const seed=JSON.parse(await readFile('netlify/lib/ncn-library/seed.json','utf8')),catalog=publicCatalog(seed);
 const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.woff2':'font/woff2'};
 const member={id:'bubble-fixture-member',email:'private@example.test',name:'Bạn NCN thử',avatar:origin+'/member.png',admin:false,vip:false,createdAt:'2026-10-01T00:00:00Z'};
 const jwtFor=now=>Buffer.from('{"alg":"fixture"}').toString('base64url')+'.'+Buffer.from(JSON.stringify({sub:member.id,email:member.email,exp:Math.floor(now/1000)+3*86400})).toString('base64url')+'.fixture';
-const browser=await chromium.launch();let active,page;
+const browser=await chromium.launch({args:['--use-angle=swiftshader','--enable-unsafe-swiftshader']});let active,page;
 await mkdir(out,{recursive:true});
 function clearSave(level=1,mode='journey'){
  const g=createGame({level,mode,seed:9,date:'2026-10-27'});g.board.fill(0);g.board[index(0,5)]=1;g.board[index(1,4)]=1;g.board[index(1,5)]=2;g.current=1;g.next=2;return g;
 }
-async function fixture({signed=false,save=null,progress=null,clock=true,fallback=false,denied=false,blocked=false,touch=false,viewport={width:1440,height:1000}}={}){
+async function fixture({signed=false,save=null,progress=null,clock=true,fallback=false,denied=false,blocked=false,touch=false,noWebGL=false,viewport={width:1440,height:1000}}={}){
+ if(active?.context)await active.context.close();
  const jwt=jwtFor(clock?at:Date.now());
  const f={store:memoryStore(),now:at,clock,calls:[]},ctx=await browser.newContext({viewport,hasTouch:touch,isMobile:touch,reducedMotion:'reduce'});f.context=ctx;contexts.push(ctx);
  if(signed)await ctx.addCookies([{name:'nf_jwt',value:jwt,url:origin}]);
  const handler=createScoresHandler({production:()=>true,store:()=>f.store,now:()=>f.now,photo:scorePhoto,verify:async req=>(req.headers.get('cookie')||'').includes('nf_jwt='+jwt)?member:null});
- await ctx.addInitScript(({save,progress,fallback,denied,blocked})=>{
+ await ctx.addInitScript(({save,progress,fallback,denied,blocked,noWebGL})=>{
   if(!localStorage.getItem('ncn-bubble-prefs-v1'))localStorage.setItem('ncn-bubble-prefs-v1',JSON.stringify({reduced:false,sound:false}));
   if(save&&!localStorage.getItem('ncn-bubble-save-v1'))localStorage.setItem('ncn-bubble-save-v1',JSON.stringify(save));
   if(progress&&!localStorage.getItem('ncn-bubble-progress-v1'))localStorage.setItem('ncn-bubble-progress-v1',JSON.stringify(progress));
+  if(noWebGL){const context=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(kind,...args){return /webgl/.test(kind)?null:context.call(this,kind,...args);};}
   if(fallback)Object.defineProperty(Element.prototype,'requestFullscreen',{configurable:true,value:undefined});
   window.__wakeFixture={requests:0,releases:0};class Sentinel extends EventTarget{released=false;async release(){if(!this.released){this.released=true;window.__wakeFixture.releases++;this.dispatchEvent(new Event('release'));}}}
   Object.defineProperty(navigator,'wakeLock',{configurable:true,value:{request(){window.__wakeFixture.requests++;return denied?Promise.reject(Error('Denied')):Promise.resolve(new Sentinel());}}});
   if(blocked)Object.defineProperty(window,'localStorage',{get(){throw new DOMException('Blocked','SecurityError');}});
- },{save,progress,fallback,denied,blocked});
+ },{save,progress,fallback,denied,blocked,noWebGL});
  await ctx.route('**/*',async route=>{
   const req=route.request(),url=new URL(req.url()),headers=await req.allHeaders();
   if(url.origin!==origin){assert.notEqual(req.method(),'POST','No external write permitted');return route.abort();}
@@ -75,19 +78,19 @@ try{
   await page.locator('#bb-bomb').click();await fire();const after=await saved();assert.equal(after.shots,1);assert.equal(after.powers.bomb,0);assert.ok(after.score>0);await page.keyboard.press('p');assert.equal(await state(),'paused');await page.waitForFunction(()=>document.querySelector('.ncn-score-save').textContent.includes('✓'));assert.equal([...active.store.entries.keys()].filter(x=>x.startsWith('best/')&&x.includes('/bubble/journey')).length,1);assert.equal((await active.context.cookies()).filter(x=>x.name==='__Host-ncn_arcade').length,1);await shot('guest-score');
  });
  await check('pause and reload preserve the exact board, queue, powers and score without asking for a guest profile again',async()=>{
-  const before=await saved();await tick(15000);assert.deepEqual(await saved(),before);await page.reload();await tick();await page.locator('#bb-continue').click();await page.locator('#bb-app[data-state=playing]').waitFor();await page.keyboard.press('p');assert.deepEqual(await saved(),before);assert.equal(await page.locator('.ncn-arcade-profile[open]').count(),0);
+  const before=await saved();await tick(15000);assert.deepEqual(await saved(),before);await page.reload();await tick();assert.deepEqual(await saved(),before);await page.locator('#bb-continue').click();await page.locator('#bb-app[data-state=playing]').waitFor();await page.keyboard.press('p');const restored=await saved();assert.deepEqual({...restored,pressureTime:before.pressureTime},before);assert.ok(restored.pressureTime>=before.pressureTime,'Only actual resumed play advances the clock');assert.equal(await page.locator('.ncn-arcade-profile[open]').count(),0);
  });
  await check('a real three-ball match drops its hanging ball, earns stars and unlocks the next stage',async()=>{
-  await fixture({signed:true,save:clearSave()});await open();await page.locator('#bb-continue').click();await fire();assert.equal(await state(),'cleared');assert.equal(await page.locator('#bb-remaining').innerText(),'0');assert.equal(await page.locator('#bb-result-stars').innerText(),'★★★');assert.match(await page.locator('#bb-toast').innerText(),/4 bóng/);const p=await page.evaluate(()=>JSON.parse(localStorage.getItem('ncn-bubble-progress-v1')));assert.equal(p.modes.journey.unlocked,2);assert.equal(p.modes.journey.stars[1],3);await shot('stage-cleared');await page.locator('#bb-start').click();assert.equal(await page.locator('#bb-level').innerText(),'02');assert.equal((await saved()).powers.bomb,1);assert.match(await page.locator('.ncn-score-player strong').innerText(),/Bạn NCN thử/);assert.equal(await page.locator('.ncn-score-player img').getAttribute('src'),member.avatar);
+  await fixture({signed:true,save:clearSave()});await open();await page.locator('#bb-continue').click();await fire();assert.equal(await state(),'cleared');assert.equal(await page.locator('#bb-remaining').innerText(),'0');assert.equal(await page.locator('#bb-result-stars').innerText(),'★★★');assert.match(await page.locator('#bb-toast').innerText(),/4 trứng/);const p=await page.evaluate(()=>JSON.parse(localStorage.getItem('ncn-bubble-progress-v1')));assert.equal(p.modes.journey.unlocked,2);assert.equal(p.modes.journey.stars[1],3);await shot('stage-cleared');await page.locator('#bb-start').click();assert.equal(await page.locator('#bb-level').innerText(),'02');assert.equal((await saved()).powers.bomb,1);assert.match(await page.locator('.ncn-score-player strong').innerText(),/Bạn NCN thử/);assert.equal(await page.locator('.ncn-score-player img').getAttribute('src'),member.avatar);
  });
- await check('the sixty-stage map keeps locked stages disabled and cancel preserves the active run',async()=>{
-  await page.locator('#bb-map-open').click();await page.locator('#bb-world-select').selectOption('5');assert.equal(await page.locator('#bb-map-grid [data-level="60"]').isEnabled(),false);await page.locator('#bb-world-select').selectOption('0');assert.equal(await page.locator('#bb-map-grid [data-level="2"]').isEnabled(),true);await page.locator('#bb-map-grid [data-level="1"]').click();await page.locator('#bb-confirm[open]').waitFor();const before=await saved();await page.locator('#bb-confirm-no').click();assert.deepEqual(await saved(),before);assert.equal(await state(),'paused');await page.locator('#bb-start').click();
+ await check('the two-hundred-stage map keeps locked stages disabled and cancel preserves the active run',async()=>{
+  await page.locator('#bb-map-open').click();await page.locator('#bb-world-select').selectOption('19');assert.equal(await page.locator('#bb-map-grid [data-level="200"]').isEnabled(),false);await page.locator('#bb-world-select').selectOption('0');assert.equal(await page.locator('#bb-map-grid [data-level="2"]').isEnabled(),true);await page.locator('#bb-map-grid [data-level="1"]').click();await page.locator('#bb-confirm[open]').waitFor();const before=await saved();await page.locator('#bb-confirm-no').click();assert.deepEqual(await saved(),before);assert.equal(await state(),'paused');await page.locator('#bb-start').click();
  });
  await check('rainbow shots inherit the hit colour and consume exactly one special',async()=>{
   const g=clearSave();g.board[index(1,5)]=1;g.board[index(0,0)]=3;g.current=3;g.next=1;await fixture({signed:true,save:g});await open();await page.locator('#bb-continue').click();await page.locator('#bb-rainbow').click();assert.equal(await page.locator('#bb-rainbow').getAttribute('aria-pressed'),'true');await fire();const next=await saved();assert.equal(next.powers.rainbow,0);assert.equal(next.board[index(0,5)],0);assert.equal(next.board[index(0,0)],3);assert.equal(next.shots,1);assert.equal(await page.locator('#bb-rainbow').isEnabled(),false);
  });
- await check('stage 60 and daily stage five finish their journeys and keep their scores and stars',async()=>{
-  for(const [level,mode]of [[60,'journey'],[5,'daily']]){const p=readProgress(null);p.modes.journey.unlocked=60;await fixture({signed:true,save:clearSave(level,mode),progress:p});await open();await page.locator('#bb-continue').click();await fire();assert.equal(await state(),'won');assert.equal(await saved(),null);const record=await page.evaluate(()=>JSON.parse(localStorage.getItem('ncn-bubble-progress-v1')));assert.ok(record.best>0);if(mode==='journey')assert.equal(record.modes.journey.stars[60],3);await shot('completed-'+mode);}
+ await check('stage 200 and daily stage five finish their journeys and keep their scores and stars',async()=>{
+  for(const [level,mode]of [[200,'journey'],[5,'daily']]){const p=readProgress(null);p.modes.journey.unlocked=200;await fixture({signed:true,save:clearSave(level,mode),progress:p});await open();await page.locator('#bb-continue').click();await fire();assert.equal(await state(),'won');assert.equal(await saved(),null);const record=await page.evaluate(()=>JSON.parse(localStorage.getItem('ncn-bubble-progress-v1')));assert.ok(record.best>0);if(mode==='journey')assert.equal(record.modes.journey.stars[200],3);await shot('completed-'+mode);}
  });
  await check('daily games share a reproducible board and an old daily save is not resumed on a new date',async()=>{
   await fixture({signed:true});await open();await page.locator('[data-bb-mode=daily]').click();await page.locator('#bb-start').click();await page.locator('#bb-app[data-state=playing]').waitFor();const first=await saved();assert.equal(first.mode,'daily');assert.equal(first.date,'2026-10-27');assert.equal(await page.locator('#bb-total').innerText(),'5');await page.keyboard.press('p');
@@ -112,8 +115,18 @@ try{
   await fixture({blocked:true});await open();await page.locator('#bb-start').click();await page.locator('#ncn-player-name').fill('Bạn Không Lưu Máy');await page.locator('.ncn-arcade-profile [type=submit]').click();await page.locator('#bb-app[data-state=playing]').waitFor();await page.locator('#bb-bomb').click();await fire();assert.equal(await state(),'playing');assert.match(await page.locator('#bb-storage-note').innerText(),/không cho lưu/);
   await fixture({save:{version:1,level:999,board:[1]}});await open();assert.equal(await page.locator('#bb-continue').isVisible(),false);
  });
- await check('hub, website search, static menu, Library and the shared scoreboard all discover the sixth game',async()=>{
-  await page.goto(origin+'/arcade/');await tick();assert.equal(await page.locator('.ncn-arcade-card').count(),8);assert.equal(await page.locator('.ncn-arcade-card[href="/ban-bong/"]').count(),1);await shot('six-game-hub');await page.goto(origin+'/');await page.waitForFunction(()=>document.body.classList.contains('ncn-scroll-ready'));await page.locator('[data-ncn-group=arcade]').click();assert.equal(await page.locator('#ncn-tool-grid a[href="/ban-bong/"]').count(),1);await page.locator('[data-ncn-search-open]').first().click();await page.locator('#ncn-global-query').fill('ban bong');await page.locator('#ncn-global-results a[href="/ban-bong/"]').waitFor();await page.locator('#ncn-search-close').click();await page.locator('#ncn-menu-open').click();assert.equal(await page.locator('#ncn-navigation a[href="/ban-bong/"]').count(),1);await page.locator('#ncn-menu-close').click();await page.goto(origin+'/thu-vien/?q=ban+bong');await tick();await page.locator('#ncn-library-results a[href="/ban-bong/"]').waitFor();assert.deepEqual(errors,[]);
+ await check('a real 3D mascot and all 200 stages are present; completed old progress opens stage 61',async()=>{
+  const progress={version:1,best:25000,modes:{journey:{unlocked:60,stars:{1:3,60:3}},relax:{unlocked:1,stars:{}}}};
+  await fixture({signed:true,progress});await open();assert.equal(await page.locator('#bb-board').getAttribute('data-dino-renderer'),'webgl');assert.equal(await page.locator('#bb-total').innerText(),'200');await page.locator('#bb-map-open').click();assert.equal(await page.locator('#bb-world-select option').count(),20);await page.locator('#bb-world-select').selectOption('6');assert.equal(await page.locator('#bb-map-grid [data-level="61"]').isEnabled(),true);await page.locator('#bb-world-select').selectOption('19');assert.equal(await page.locator('#bb-map-grid [data-level="200"]').isEnabled(),false);await page.locator('[data-bb-close="bb-map"]').click();await shot('dinosaur-200-stages');
+ });
+ await check('the active clock adds a real row and freezes during pause, help and app switching',async()=>{
+  const g=createGame({level:100,seed:42});g.pressureTime=levelSpec(100).riseEvery-.2;await fixture({signed:true,save:g});await open();await page.locator('#bb-continue').click();await tick(900);await page.keyboard.press('p');let s=await saved();assert.equal(s.rowsAdded,1);assert.equal(s.shots,0);assert.equal(s.phase,1);const before=structuredClone(s);await tick(15000);assert.deepEqual(await saved(),before);await page.locator('#bb-help-open').click();await tick(15000);assert.deepEqual(await saved(),before);await page.locator('[data-bb-close="bb-help"]').last().click();await shot('timed-row-pressure');
+ });
+ await check('a device without WebGL still draws the mascot and fires eggs without exceptions',async()=>{
+  await fixture({signed:true,noWebGL:true,viewport:{width:390,height:844}});await open();assert.equal(await page.locator('#bb-board').getAttribute('data-dino-renderer'),'canvas');await page.locator('#bb-start').click();await page.locator('#bb-app[data-state=playing]').waitFor();await fire();assert.equal((await saved()).shots,1);await page.keyboard.press('p');await shot('dinosaur-fallback-phone');
+ });
+ await check('hub, website search, static menu, Library and the shared scoreboard all discover the dinosaur game within the eight-game hub',async()=>{
+  await page.goto(origin+'/arcade/');await tick();assert.equal(await page.locator('.ncn-arcade-card').count(),8);assert.equal(await page.locator('.ncn-arcade-card[href="/ban-bong/"]').count(),1);await shot('six-game-hub');await page.goto(origin+'/');await page.waitForFunction(()=>document.body.classList.contains('ncn-scroll-ready'));await page.locator('[data-ncn-group=arcade]').click();assert.equal(await page.locator('#ncn-tool-grid a[href="/ban-bong/"]').count(),1);await page.evaluate(()=>scrollTo(0,0));await page.waitForFunction(()=>!document.body.classList.contains('ncn-chrome-hidden'));await page.locator('[data-ncn-search-open]').first().click();await page.locator('#ncn-global-query').fill('ban bong');await page.locator('#ncn-global-results a[href="/ban-bong/"]').waitFor();await page.locator('#ncn-search-close').click();await page.locator('#ncn-menu-open').click();assert.equal(await page.locator('#ncn-navigation a[href="/ban-bong/"]').count(),1);await page.locator('#ncn-menu-close').click();await page.goto(origin+'/thu-vien/?q=ban+bong');await tick();await page.locator('#ncn-library-results a[href="/ban-bong/"]').waitFor();assert.deepEqual(errors,[]);
  });
  console.log('Bubble Shooter: '+results.length+' scenarios passed, with no production writes.');
 }finally{await writeFile(out+'/results.json',JSON.stringify({results,errors},null,2));for(const ctx of contexts)await ctx.close();await browser.close();}
