@@ -1,18 +1,18 @@
-import {WORLD,FISH,LEVELS,clamp,randomSource} from './core.js?v=20261026-mobile-3d-1';
+import {WORLD,FISH,LEVELS,clamp,randomSource} from './core.js?v=20261030-classic-1';
 const TAU=Math.PI*2;
 export function cameraFocus(player,width,height,zoom,follow=false){
   if(follow||width<640)return {x:player.x,y:player.y};
-  const vw=width/zoom,vh=height/zoom;
-  return {x:vw>=WORLD.width?WORLD.width/2:clamp(player.x,vw/2,WORLD.width-vw/2),y:vh>=WORLD.height?WORLD.height/2:clamp(player.y,vh/2-25,WORLD.height-vh/2+20)};
+  return {x:WORLD.width/2,y:WORLD.height/2};
 }
 export const SKINS={coral:{color:'#ffc36c',shade:'#ed7852',fin:'#4cbcc4'},aqua:{color:'#80f0e1',shade:'#2aa7bb',fin:'#ffca73'},violet:{color:'#c6b7ff',shade:'#8d76d3',fin:'#ffb28d'}};
 function ellipse(c,x,y,rx,ry,color){c.beginPath();c.ellipse(x,y,rx,ry,0,0,TAU);c.fillStyle=color;c.fill();}
 function star(c,x,y,r,color){c.beginPath();for(let i=0;i<10;i++){const a=i*Math.PI/5-Math.PI/2,k=i%2?r*.43:r;c.lineTo(x+Math.cos(a)*k,y+Math.sin(a)*k);}c.closePath();c.fillStyle=color;c.fill();}
 export class OceanPainter{
-  constructor(canvas){this.canvas=canvas;this.c=canvas.getContext('2d',{alpha:false});this.width=1;this.height=1;this.zoom=1;this.camera={x:800,y:500};this.level=-1;this.floor=null;this.background=null;this.sprites=new Map();this.reduced=false;this.skin='coral';}
-  resize(){const r=this.canvas.getBoundingClientRect(),dpr=Math.min(2,window.devicePixelRatio||1);this.width=Math.max(1,r.width);this.height=Math.max(1,r.height);this.canvas.width=Math.round(r.width*dpr);this.canvas.height=Math.round(r.height*dpr);this.dpr=dpr;this.zoom=Math.max(this.width/(this.width<640?740:this.width<1000?920:1140),this.height/1100);this.background=null;}
-  reset(){this.camera={x:800,y:500};}
+  constructor(canvas){this.canvas=canvas;this.c=canvas.getContext('2d',{alpha:false});this.width=1;this.height=1;this.zoom=1;this.camera={x:WORLD.width/2,y:WORLD.height/2};this.level=-1;this.floor=null;this.background=null;this.sprites=new Map();this.reduced=false;this.skin='coral';}
+  resize(){const r=this.canvas.getBoundingClientRect(),dpr=Math.min(2,window.devicePixelRatio||1);this.width=Math.max(1,r.width);this.height=Math.max(1,r.height);this.canvas.width=Math.round(r.width*dpr);this.canvas.height=Math.round(r.height*dpr);this.dpr=dpr;this.zoom=this.follow||this.width<640?Math.max(this.width/720,this.height/1050):Math.min(this.width/WORLD.width,this.height/WORLD.height);this.background=null;}
+  reset(){this.camera={x:WORLD.width/2,y:WORLD.height/2};}
   point(x,y){return {x:(x-this.camera.x)*this.zoom+this.width/2,y:(y-this.camera.y)*this.zoom+this.height/2};}
+  worldPoint(x,y){return {targetX:(x-this.width/2)/this.zoom+this.camera.x,targetY:(y-this.height/2)/this.zoom+this.camera.y};}
   vector(x,y,p){const at=this.point(p.x,p.y),dx=(x-at.x)/this.zoom,dy=(y-at.y)/this.zoom,distance=Math.hypot(dx,dy);return {x:distance?dx/distance*Math.min(1,distance/65):0,y:distance?dy/distance*Math.min(1,distance/65):0};}
   makeScenery(level){
     const palette=LEVELS[level],doc=this.canvas.ownerDocument,rng=randomSource(774+level*234);this.level=level;this.background=null;
@@ -41,7 +41,7 @@ export class OceanPainter{
   paint(ocean,time,dt=1/60){
     const c=this.c,w=this.width,h=this.height,z=this.zoom,p=ocean.player,demo=ocean.status==='ready';if(!c)return;
     if(this.level!==ocean.level)this.makeScenery(ocean.level);
-    const palette=LEVELS[ocean.level],vh=h/z,focus=cameraFocus(p,w,h,z,this.follow),ease=1-Math.exp(-dt*6);
+    const palette=LEVELS[ocean.level],vh=h/z,focus=cameraFocus(p,w,h,z,this.follow),ease=1-Math.exp(-dt*14);
     this.camera.x+=(focus.x-this.camera.x)*ease;this.camera.y+=(focus.y-this.camera.y)*ease;
     c.setTransform(this.dpr,0,0,this.dpr,0,0);
     if(!this.background){const bg=c.createLinearGradient(0,0,w*.15,h);bg.addColorStop(0,palette.sky);bg.addColorStop(.4,palette.water);bg.addColorStop(1,palette.deep);this.background=bg;}
@@ -57,6 +57,7 @@ export class OceanPainter{
     // A foreground reef follows the camera gently, keeping the ocean grounded
     // on both wide monitors and portrait phones without adding collision walls.
     c.drawImage(this.floor,0,this.camera.y+vh/2-235,1600,270);
+    if(ocean.oyster)this.oyster(c,ocean.oyster);
     for(const j of ocean.jellies)this.jelly(c,j,time);
     for(const item of ocean.items)this.item(c,item,time);
     const hintIds=new Set(ocean.fish.filter(f=>ocean.edible(f)&&Math.hypot(f.x-p.x,f.y-p.y)<280).sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y)).slice(0,6).map(f=>f.id));
@@ -66,7 +67,7 @@ export class OceanPainter{
       c.save();c.translate(f.x,f.y+(demo?Math.sin(time+f.phase)*9:0));
       if(!demo&&(edible&&hintIds.has(f.id)||ocean.dangerous(f)&&distance<340)){c.strokeStyle=edible?'#b8ffbc85':'#ffb5b9a6';c.lineWidth=1.4/z;c.setLineDash(edible?[]:[3/z,4/z]);c.beginPath();c.ellipse(0,0,f.size*1.45+6,f.size*.95+6,0,0,TAU);c.stroke();c.setLineDash([]);}
       const angle=Math.atan2(Math.sin(f.angle),Math.abs(Math.cos(f.angle)))*.2*f.face;
-      this.fish(c,{...FISH[f.tier],face:f.face,angle,size:f.size},time+f.phase);c.restore();
+      this.fish(c,{...FISH[f.tier],...(f.kind==='golden'?{color:'#ffe991',shade:'#d99b24',fin:'#ffd25e',pattern:'pearls'}:{}),face:f.face,angle,size:f.size},time+f.phase);c.restore();
     }
     if(!demo){
       if(ocean.dashTime>0&&!this.reduced){c.strokeStyle='#d6fcff66';c.lineWidth=2;for(let i=0;i<5;i++){c.beginPath();c.moveTo(p.x-p.face*(p.size+15+i*12),p.y+(i-2)*9);c.lineTo(p.x-p.face*(p.size+38+i*12),p.y+(i-2)*9);c.stroke();}}
@@ -74,13 +75,15 @@ export class OceanPainter{
       if(ocean.shield>0||ocean.safe>0){const r=p.size*1.55+8;const g=c.createRadialGradient(-r*.25,-r*.3,r*.15,0,0,r);g.addColorStop(0,'#d4fbff13');g.addColorStop(.8,'#d4fbff08');g.addColorStop(1,'#d4fbff45');c.fillStyle=g;c.strokeStyle=ocean.shield>0?'#c1ffffb0':'#ecffff75';c.lineWidth=1.6/z;c.beginPath();c.arc(0,0,r,0,TAU);c.fill();c.stroke();}
       if(ocean.fever>0){c.strokeStyle='#ffe793';c.lineWidth=2/z;c.beginPath();c.ellipse(0,0,p.size*1.8,p.size*1.1,0,0,TAU);c.stroke();if(!this.reduced)for(let i=0;i<8;i++)star(c,Math.cos(time+i*TAU/8)*p.size*1.95,Math.sin(time+i*TAU/8)*p.size*1.3,3/z,'#fff2b4');}
       if(ocean.safe>0&&ocean.safe<2.7&&!this.reduced)c.globalAlpha=.68+Math.sin(time*8)*.2;
-      this.fish(c,{...SKINS[this.skin],...p,player:true,bite:ocean.bite*4},time);c.restore();
+      if(ocean.sucking){c.save();c.scale(p.face,1);c.strokeStyle='#d9fbff88';c.lineWidth=1.5/z;for(let i=0;i<5;i++){const a=(i-2)*.26,reach=70+(time*120+i*21)%110;c.beginPath();c.moveTo(p.size*.7,0);c.quadraticCurveTo(reach*.6,Math.sin(a)*reach*.7,reach,Math.sin(a)*reach);c.stroke();}c.restore();}
+      this.fish(c,{...ocean.character,...(this.skin!=='coral'&&ocean.character.body!=='orca'?SKINS[this.skin]:{}),...p,player:true,bite:ocean.bite*4},time);c.restore();
       // A steady marker keeps your fish recognizable in the denser shoals.
       c.save();c.textAlign='center';c.font='800 '+Math.round(9/z)+'px system-ui';c.fillStyle='#f6ffff';c.strokeStyle='#0a527499';c.lineWidth=2/z;c.strokeText('BẠN',p.x,p.y-p.size-19/z);c.fillText('BẠN',p.x,p.y-p.size-19/z);c.beginPath();c.moveTo(p.x-3/z,p.y-p.size-14/z);c.lineTo(p.x+3/z,p.y-p.size-14/z);c.lineTo(p.x,p.y-p.size-10/z);c.fill();c.restore();
     }
     for(const e of ocean.effects){c.globalAlpha=clamp(e.life/.6,0,1);ellipse(c,e.x,e.y,e.size,e.size,e.color);}c.globalAlpha=1;
     for(const e of ocean.labels){c.save();c.globalAlpha=Math.min(1,e.life*2);c.font='800 '+Math.round(17/z)+'px system-ui';c.textAlign='center';c.lineWidth=3/z;c.strokeStyle='#0a52747a';c.fillStyle=e.color;c.strokeText(e.text,e.x,e.y);c.fillText(e.text,e.x,e.y);c.restore();}
     c.restore();
+    if(!demo)for(const f of ocean.fish.filter(f=>f.warning>0)){const at=this.point(f.x,f.y),x=f.face>0?24:w-24,y=clamp(at.y,140,h-95);c.fillStyle='#f85562';c.beginPath();c.moveTo(x+(f.face>0?-11:11),y);c.lineTo(x+(f.face>0?9:-9),y-13);c.lineTo(x+(f.face>0?9:-9),y+13);c.closePath();c.fill();c.fillStyle='#fff';c.textAlign='center';c.font='900 15px system-ui';c.fillText('!',x,y+5);}
     if(demo){
       c.save();c.translate(w*.74,h*.44);const size=Math.min(w*.08,90);c.rotate(Math.sin(time*.6)*.04);this.fish(c,{...SKINS[this.skin],size,face:-1,angle:0,player:true},time);c.restore();
       c.save();c.translate(w*.83,h*.68);this.fish(c,{...FISH[0],size:Math.min(w*.023,23),face:-1,angle:0},time+1);c.restore();
@@ -91,7 +94,9 @@ export class OceanPainter{
     c.beginPath();
     if(f.shark){c.moveTo(-1.08,-.24);c.bezierCurveTo(-.68,-.77,.53,-.65,1.43,.035);c.bezierCurveTo(.83,.59,-.54,.64,-1.08,.25);}
     else if(f.body==='angel'){c.moveTo(-1,-.03);c.bezierCurveTo(-.6,-.65,-.23,-1.06,.36,-.61);c.bezierCurveTo(1.52,-.5,1.45,.48,.4,.68);c.bezierCurveTo(-.2,1.06,-.64,.62,-1,-.03);}
-    else if(f.body==='disc')c.ellipse(.03,0,1.04,.87,0,0,TAU);
+    else if(f.body==='puffer')c.ellipse(.03,0,1.05,.98,0,0,TAU);
+    else if(f.body==='orca')c.ellipse(.03,0,1.46,.68,0,0,TAU);
+    else if(f.body==='disc'||f.body==='lion')c.ellipse(.03,0,1.04,.87,0,0,TAU);
     else if(f.body==='long')c.ellipse(.03,0,1.28,.57,-.025,0,TAU);
     else c.ellipse(.02,0,1.16,.7,0,0,TAU);
     c.closePath();
@@ -99,6 +104,7 @@ export class OceanPainter{
   bodySprite(f){
     const key=[f.color,f.shade,f.fin,f.body,f.pattern,!!f.player,!!f.shark].join(':');if(this.sprites.has(key))return this.sprites.get(key);
     const art=this.canvas.ownerDocument.createElement('canvas');art.width=384;art.height=320;const c=art.getContext('2d');c.translate(170,157);c.scale(96,96);c.lineJoin='round';
+    if(f.body==='puffer'){c.fillStyle=f.shade;for(let i=0;i<16;i++){const a=i*TAU/16;c.beginPath();c.moveTo(Math.cos(a)*.91,Math.sin(a)*.85);c.lineTo(Math.cos(a+.07)*1.17,Math.sin(a+.07)*1.15);c.lineTo(Math.cos(a+.14)*.91,Math.sin(a+.14)*.85);c.fill();}}
     // Rear fins sit behind the lit body; their translucent ribs suggest volume.
     c.fillStyle=f.fin;c.strokeStyle=f.shade;c.lineWidth=.035;c.beginPath();c.moveTo(-.74,-.26);c.bezierCurveTo(-.7,-.78,-.42,f.shark?-1.38:-1.1,.07,-.89);c.quadraticCurveTo(.28,-.5,.57,-.39);c.closePath();c.fill();c.stroke();
     c.strokeStyle='#ffffff55';c.lineWidth=.018;for(let i=0;i<5;i++){c.beginPath();c.moveTo(-.52+i*.18,-.44);c.lineTo(-.43+i*.13,-.89+Math.abs(i-2)*.06);c.stroke();}
@@ -109,7 +115,9 @@ export class OceanPainter{
     const rim=c.createLinearGradient(0,-.8,0,.9);rim.addColorStop(0,'#ffffff30');rim.addColorStop(.36,'#ffffff00');rim.addColorStop(.76,'#092d4900');rim.addColorStop(1,'#092d4970');c.fillStyle=rim;c.fillRect(-1.5,-1.4,3,2.8);
     ellipse(c,.17,.38,.85,.27,'#fff3cd29');
     const pattern=f.pattern||(f.player?'clown':f.shark?'gills':'scales');
-    if(pattern==='clown'||pattern==='bands'){
+    if(pattern==='orca'){
+      ellipse(c,.18,.5,1.2,.27,'#edf8f5');ellipse(c,.75,-.28,.26,.17,'#f6ffff');
+    }else if(pattern==='clown'||pattern==='bands'){
       for(const x of [-.65,.05]){c.strokeStyle='#714f5880';c.lineWidth=.26;c.beginPath();c.moveTo(x-.08,-1);c.bezierCurveTo(x-.28,-.2,x+.24,.3,x+.02,1);c.stroke();c.strokeStyle=pattern==='clown'?'#fff9e9e6':'#66599f8a';c.lineWidth=.17;c.stroke();}
     }else if(pattern==='mask'||pattern==='tang'){
       c.fillStyle=pattern==='mask'?'#263852bb':'#234f9bba';c.beginPath();c.moveTo(.32,-.9);c.quadraticCurveTo(.56,.02,.38,.9);c.lineTo(.71,.85);c.quadraticCurveTo(.77,0,.64,-.9);c.closePath();c.fill();
@@ -142,7 +150,16 @@ export class OceanPainter{
     c.save();c.translate(item.x,item.y+Math.sin(time*2+item.phase)*7);c.fillStyle='#e8ffff13';c.strokeStyle='#d6ffff9a';c.lineWidth=1.2;c.beginPath();c.arc(0,0,24,0,TAU);c.fill();c.stroke();
     if(item.type==='shield'){c.fillStyle='#b4f8f5';c.beginPath();c.moveTo(0,-14);c.lineTo(12,-8);c.lineTo(10,6);c.quadraticCurveTo(4,14,0,16);c.quadraticCurveTo(-4,14,-10,6);c.lineTo(-12,-8);c.closePath();c.fill();c.strokeStyle='#1c91a4';c.lineWidth=2;c.beginPath();c.moveTo(-5,0);c.lineTo(-1,4);c.lineTo(6,-5);c.stroke();}
     else if(item.type==='heart'){c.fillStyle='#ffb2c7';c.beginPath();c.moveTo(0,12);c.bezierCurveTo(-23,-1,-12,-18,0,-7);c.bezierCurveTo(12,-18,23,-1,0,12);c.fill();}
+    else if(item.type==='freeze'){c.strokeStyle='#d4faff';c.lineWidth=3;for(let i=0;i<3;i++){const a=i*Math.PI/3;c.beginPath();c.moveTo(-Math.cos(a)*13,-Math.sin(a)*13);c.lineTo(Math.cos(a)*13,Math.sin(a)*13);c.stroke();}}
+    else if(item.type==='speed'){c.fillStyle='#fff0a3';c.beginPath();c.moveTo(2,-15);c.lineTo(-11,3);c.lineTo(-1,3);c.lineTo(-4,16);c.lineTo(12,-5);c.lineTo(3,-5);c.closePath();c.fill();}
     else{const g=c.createRadialGradient(-5,-6,1,0,0,14);g.addColorStop(0,'#ffffff');g.addColorStop(.45,'#fff7c7');g.addColorStop(1,'#d9b879');ellipse(c,0,0,13,13,g);star(c,17,-15,5,'#fff7c7');}
     c.restore();
   }
+  oyster(c,o){
+    c.save();c.translate(o.x,o.y);ellipse(c,0,10,43,13,'#073b5960');c.fillStyle='#b487ba';c.strokeStyle='#edcde4';c.lineWidth=2;
+    c.beginPath();c.ellipse(0,0,37,o.open?16:6,0,0,TAU);c.fill();c.stroke();
+    if(o.open){c.fillStyle='#563b67';c.beginPath();c.ellipse(0,-3,29,10,0,0,TAU);c.fill();c.fillStyle='#e6bce0';c.beginPath();c.moveTo(-35,-5);c.bezierCurveTo(-46,-58,39,-58,35,-5);c.quadraticCurveTo(0,-22,-35,-5);c.fill();c.stroke();c.strokeStyle='#ac77a9';for(let i=-2;i<=2;i++){c.beginPath();c.moveTo(i*5,-12);c.quadraticCurveTo(i*13,-25,i*12,-35+Math.abs(i)*3);c.stroke();}}
+    c.restore();
+  }
+  icon(canvas,tier){const c=canvas.getContext('2d');c.clearRect(0,0,canvas.width,canvas.height);c.save();c.translate(canvas.width*.53,canvas.height*.53);this.fish(c,{...FISH[tier],size:13,face:1,angle:0},0);c.restore();}
 }

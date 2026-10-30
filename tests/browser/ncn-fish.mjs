@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import {renderPublicHTML} from '../../netlify/lib/ncn-public-render.mjs';
 import {publicCatalog} from '../../netlify/lib/ncn-library-api.mjs';
 
-const root=resolve('public'),out=resolve('artifacts/fish'),seed=JSON.parse(await readFile('netlify/lib/ncn-library/seed.json','utf8')),catalog=publicCatalog(seed),results=[],errors=[],requests=[];
+const root=resolve(process.env.NCN_BUILT_TEST==='1'?'dist':'public'),out=resolve(process.env.NCN_BUILT_TEST==='1'?'artifacts/fish-built':'artifacts/fish'),seed=JSON.parse(await readFile('netlify/lib/ncn-library/seed.json','utf8')),catalog=publicCatalog(seed),results=[],errors=[],requests=[];
 await mkdir(out,{recursive:true});
 const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.png':'image/png','.jpg':'image/jpeg','.webp':'image/webp','.svg':'image/svg+xml','.woff2':'font/woff2'};
 const notices=[{id:'fixture',text:'NCN Arcade · Chào mừng về với đại dương tuổi thơ'}];
@@ -26,15 +26,26 @@ const browser=await chromium.launch();
 async function context(options={}){
   const ctx=await browser.newContext({viewport:{width:1440,height:1050},...options});
   await ctx.route('**/*',route=>new URL(route.request().url()).origin===base?route.continue():route.abort());
-  await ctx.addInitScript(()=>{Math.random=()=>.31415926;});return ctx;
+  await ctx.addInitScript(()=>{
+    Math.random=()=>.31415926;
+    // Observe the visible player marker and green prey rings drawn on Canvas.
+    // This exercises the real source or compiled game without exposing game state.
+    const proto=CanvasRenderingContext2D.prototype,transform=proto.setTransform,stroke=proto.stroke,fillText=proto.fillText;
+    proto.setTransform=function(...args){if(this.canvas.id==='ff-canvas')window.__ncnFishPrey=[];return transform.apply(this,args);};
+    proto.stroke=function(...args){if(this.canvas.id==='ff-canvas'&&String(this.strokeStyle).replace(/\s/g,'').startsWith('rgba(184,255,188,')){
+      const m=this.getTransform(),r=this.canvas.getBoundingClientRect(),d=this.canvas.width/r.width;window.__ncnFishPrey.push({x:m.e/d,y:m.f/d});
+    }return stroke.apply(this,args);};
+    proto.fillText=function(text,x,y,...args){if(text==='BẠN'&&this.canvas.id==='ff-canvas'){const m=this.getTransform(),r=this.canvas.getBoundingClientRect(),d=this.canvas.width/r.width;window.__ncnFishPlayer={x,y,sx:(m.a*x+m.c*y+m.e)/d,sy:(m.b*x+m.d*y+m.f)/d};}return fillText.call(this,text,x,y,...args);};
+  });return ctx;
 }
 const desktop=await context();let page=await desktop.newPage();page.on('pageerror',e=>errors.push(e.message));
 const check=async(name,fn)=>{try{await fn();results.push({name,ok:true});console.log('PASS '+name);}catch(error){results.push({name,ok:false,error:error.message});await page.screenshot({path:out+'/failure-'+results.length+'.jpg',fullPage:true}).catch(()=>{});throw error;}};
 const state=()=>page.locator('#ff-stage').getAttribute('data-state'),score=async()=>Number((await page.locator('#ff-score').innerText()).replace(/\D/g,''));
 const shot=name=>page.screenshot({path:out+'/'+name+'.jpg',type:'jpeg',quality:85});
 const tick=n=>page.clock.runFor(n);
+async function freezeClock(target,time='2026-10-30T09:00:00Z'){const at=new Date(time);await target.clock.install({time:at});await target.clock.pauseAt(new Date(at.getTime()+100));}
 try{
-  await page.clock.install({time:new Date('2026-10-25T15:30:00Z')});await page.goto(base+'/ca-lon-nuot-ca-be/');await tick(200);
+  await freezeClock(page,'2026-10-25T15:30:00Z');await page.goto(base+'/ca-lon-nuot-ca-be/');await tick(200);
   await check('ocean welcome and start control fit desktop, tablet and 320px phones',async()=>{
     for(const width of [1440,1280,820,640,390,360,320]){
       await page.setViewportSize({width,height:width<640?844:1050});await tick(150);
@@ -66,7 +77,7 @@ try{
     assert.equal(await page.locator('#ff-reduced').isChecked(),true);assert.equal(await page.locator('[data-skin=aqua]').getAttribute('aria-pressed'),'true');assert.equal(await page.locator('#ff-sound').getAttribute('aria-pressed'),'true');assert.equal(await page.locator('html').getAttribute('data-ncn-theme'),'dark');assert.equal(await state(),'ready');await page.locator('#ff-sound').click();
   });
   await check('ending a real run awards its record once, replay resets the run, and reload retains the record',async()=>{
-    await page.locator('#ff-start').click();await page.keyboard.down('ArrowRight');await tick(2300);await page.keyboard.up('ArrowRight');const earned=await score();assert.ok(earned>0);await page.keyboard.press('p');await page.locator('#ff-end').click();assert.equal(await state(),'over');assert.equal(Number((await page.locator('#ff-final-score').innerText()).replace(/\D/g,'')),earned);
+    await page.locator('#ff-start').click();await page.keyboard.down('ArrowRight');await tick(600);await page.keyboard.up('ArrowRight');await page.keyboard.press('p');const earned=await score();assert.ok(earned>0);await page.locator('#ff-end').click();assert.equal(await state(),'over');assert.equal(Number((await page.locator('#ff-final-score').innerText()).replace(/\D/g,'')),earned);
     const record=await page.locator('#ff-best').innerText();await shot('result-desktop');await page.locator('#ff-retry').click();assert.equal(await state(),'playing');assert.equal(await score(),0);await page.keyboard.press('p');await page.locator('#ff-end').click();assert.equal(await page.locator('#ff-best').innerText(),record);await page.reload();await tick(100);assert.equal(await page.locator('#ff-best').innerText(),record);
   });
   await check('home first paint, hydrated search and Library discover the same game exactly once',async()=>{
@@ -75,23 +86,64 @@ try{
     await page.goto(base+'/thu-vien/?q=c%C3%A1+l%E1%BB%9Bn+nu%E1%BB%91t');await tick(150);assert.equal(await page.locator('#ncn-library-results a[href="/ca-lon-nuot-ca-be/"]').count(),1);
     const nojs=await context({javaScriptEnabled:false}),staticPage=await nojs.newPage();await staticPage.goto(base+'/');assert.equal(await staticPage.locator('#ncn-tool-grid a[href="/ca-lon-nuot-ca-be/"]').count(),1);await nojs.close();
   });
-  await check('fixed phone joystick steers, coasts after release and supports a simultaneous second-finger dash',async()=>{
-    const mobile=await context({viewport:{width:390,height:844},hasTouch:true,isMobile:true});const previous=page;page=await mobile.newPage();page.on('pageerror',e=>errors.push(e.message));await page.clock.install({time:new Date('2026-10-26T12:00:00Z')});await page.goto(base+'/ca-lon-nuot-ca-be/');await tick(150);await page.locator('#ff-start').tap();await tick(150);
+  await check('phone joystick steers, stops on release and supports a simultaneous second-finger dash',async()=>{
+    const mobile=await context({viewport:{width:390,height:844},hasTouch:true,isMobile:true});const previous=page;page=await mobile.newPage();page.on('pageerror',e=>errors.push(e.message));await freezeClock(page,'2026-10-26T12:00:00Z');await page.goto(base+'/ca-lon-nuot-ca-be/');await tick(150);await page.locator('#ff-start').tap();await tick(150);
     assert.equal(await page.locator('#ff-stick').isVisible(),true);
     const box=await page.locator('#ff-stick').boundingBox();assert.ok(box.y>=0&&box.y+box.height<=844,'Joystick stays inside the visible phone screen: '+JSON.stringify(box));const x=Math.round(box.x+box.width/2),y=Math.round(box.y+box.height/2),cdp=await mobile.newCDPSession(page),finger=(x,y,id)=>({x,y,id,radiusX:7,radiusY:7,force:1});
-    await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[finger(x,y,1)]});await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[finger(x+36,y,1)]});await tick(1000);
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[finger(x,y,1)]});await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[finger(x+36,y,1)]});await tick(200);
     assert.equal(await page.locator('#ff-stick').evaluate(el=>el.classList.contains('is-held')),true);const knob=await page.locator('#ff-stick>span').evaluate(el=>{const m=new DOMMatrix(getComputedStyle(el).transform);return {x:m.m41,y:m.m42};});assert.ok(knob.x>28&&knob.x<=29.01&&Math.abs(knob.y)<2,JSON.stringify(knob));
-    await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});const firstScore=await score();await tick(2100);assert.ok(await score()>firstScore,'The fish continues swimming and eating after releasing the joystick');
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await tick(50);const stopped=await page.evaluate(()=>window.__ncnFishPlayer.x);await tick(1200);assert.equal(await page.evaluate(()=>window.__ncnFishPlayer.x),stopped,'Releasing the joystick must stop the fish');
     assert.equal(await page.locator('#ff-stick').isVisible(),true);assert.equal(await page.locator('#ff-stick').evaluate(el=>el.classList.contains('is-held')),false);assert.equal(await page.locator('#ff-stick>span').evaluate(el=>el.style.transform),'');await shot('playing-phone');
     const dashBox=await page.locator('#ff-dash').boundingBox(),bx=Math.round(dashBox.x+dashBox.width/2),by=Math.round(dashBox.y+dashBox.height/2);
     await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[finger(x+30,y,1)]});await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[finger(x+30,y,1),finger(bx,by,2)]});await tick(100);
     assert.equal(await page.locator('#ff-stick').evaluate(el=>el.classList.contains('is-held')),true);assert.ok(parseInt(await page.locator('#ff-energy-value').innerText())<85);
-    await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await page.locator('#ff-pause').tap();assert.equal(await state(),'paused');assert.equal(await page.locator('#ff-stick').isVisible(),false);const frozen=await page.locator('#ff-time').innerText();await tick(3000);assert.equal(await page.locator('#ff-time').innerText(),frozen);await shot('paused-phone');
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+    await page.reload();await tick(150);await page.locator('#ff-start').tap();await tick(100);
+    const sea=await page.locator('#ff-canvas').boundingBox(),tx=Math.round(sea.x+sea.width*.5),ty=Math.round(sea.y+sea.height*.53),beforeDrag=await page.evaluate(()=>window.__ncnFishPlayer.x);
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[finger(tx,ty,3)]});await tick(50);assert.equal(await page.evaluate(()=>window.__ncnFishPlayer.x),beforeDrag,'Touching elsewhere must not teleport the fish');
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[finger(tx+45,ty,3)]});await tick(350);assert.ok(await page.evaluate(()=>window.__ncnFishPlayer.x)>beforeDrag+20,'Dragging the sea must steer the fish');
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await tick(50);const dragStop=await page.evaluate(()=>window.__ncnFishPlayer.x);await tick(250);assert.equal(await page.evaluate(()=>window.__ncnFishPlayer.x),dragStop,'Releasing a direct drag must stop the fish');
+    await page.locator('#ff-pause').tap();assert.equal(await state(),'paused');assert.equal(await page.locator('#ff-stick').isVisible(),false);const frozen=await page.locator('#ff-time').innerText();await tick(3000);assert.equal(await page.locator('#ff-time').innerText(),frozen);await shot('paused-phone');
     await page.locator('#ff-resume').tap();assert.equal(await page.locator('#ff-stick').isVisible(),true);for(const [width,height]of[[320,568],[360,640],[390,844]]){await page.setViewportSize({width,height});await tick(150);await page.locator('#ff-stage').evaluate(el=>el.scrollIntoView({block:'start',behavior:'instant'}));await tick(100);for(const id of['ff-stick','ff-pause','ff-dash']){const r=await page.locator('#'+id).boundingBox();assert.ok(r.x>=0&&r.x+r.width<=width+1&&r.y>=0&&r.y+r.height<=height+1,JSON.stringify({id,r,width,height}));}}await mobile.close();page=previous;
+  });
+  await check('classic mouse play clears a stage, freezes at the result, saves progress and opens the next one',async()=>{
+    const classic=await context(),previous=page;page=await classic.newPage();page.on('pageerror',e=>errors.push(e.message));
+    try{
+      await freezeClock(page);await page.goto(base+'/ca-lon-nuot-ca-be/');await tick(150);await page.locator('#ff-start').click();await tick(150);
+      assert.equal(await page.locator('#ff-level').innerText(),'01 / 40');assert.equal(await page.locator('#ff-menu [role=listitem]').count(),3);assert.equal(await page.locator('#ff-menu .is-edible').count(),1);
+      const canvas=await page.locator('#ff-canvas').boundingBox();
+      for(let i=0;i<300&&await state()==='playing';i++){
+        const target=await page.evaluate(()=>{const p=window.__ncnFishPlayer;return (window.__ncnFishPrey||[]).filter(f=>f.x>20&&f.y>140&&f.x<innerWidth-20).sort((a,b)=>Math.hypot(a.x-p.sx,a.y-p.sy)-Math.hypot(b.x-p.sx,b.y-p.sy))[0];});
+        if(target)await page.mouse.move(canvas.x+target.x,canvas.y+target.y);await tick(150);
+      }
+      assert.equal(await state(),'cleared','Ordinary mouse steering should reach a stage clear');assert.equal(await page.locator('#ff-cleared').isVisible(),true);assert.equal(await page.locator('#ff-menu .is-edible').count(),3);
+      const frozen=await page.locator('#ff-time').innerText();await tick(5000);assert.equal(await page.locator('#ff-time').innerText(),frozen);
+      assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('ncn:fish:record:v1')).unlocked),2);await shot('classic-stage-clear');
+      await page.locator('#ff-next').click();await tick(100);assert.equal(await state(),'playing');assert.equal(await page.locator('#ff-level').innerText(),'02 / 40');assert.equal(await page.locator('#ff-menu .is-edible').count(),1);
+      await page.reload();await tick(150);assert.equal(await state(),'ready');assert.equal(await page.locator('#ff-stage-select').inputValue(),'2');assert.equal(await page.locator('#ff-stage-select option:not([disabled])').count(),2);assert.ok(Number((await page.locator('#ff-best').innerText()).replace(/\D/g,''))>0,'Clearing a stage must retain the best score across reload');
+    }finally{await classic.close();page=previous;}
+  });
+  await check('stage nine switches character, unlocks held suction and keeps an old saved record',async()=>{
+    const advanced=await context();await advanced.addInitScript(()=>localStorage.setItem('ncn:fish:record:v1',JSON.stringify({version:1,best:5000,skin:'aqua',unlocked:9})));
+    const previous=page;page=await advanced.newPage();page.on('pageerror',e=>errors.push(e.message));
+    try{
+      await freezeClock(page);await page.goto(base+'/ca-lon-nuot-ca-be/');await tick(150);assert.equal(await page.locator('#ff-stage-select').inputValue(),'9');assert.equal(await page.locator('#ff-best').innerText(),'5.000');await page.locator('#ff-start').click();await tick(150);
+      assert.equal(await page.locator('#ff-level').innerText(),'09 / 40');assert.equal(await page.locator('#ff-zone').innerText(),'Cá sư tử');assert.equal(await page.locator('#ff-suck').isEnabled(),true);
+      const at=await page.evaluate(()=>window.__ncnFishPlayer.x),area=await page.locator('#ff-canvas').boundingBox();await page.keyboard.down('e');await page.mouse.move(area.x+area.width*.72,area.y+area.height*.5);await tick(1000);assert.ok(await page.evaluate(()=>window.__ncnFishPlayer.x)>at+50,'Holding suction must not disable mouse steering');assert.ok(parseInt(await page.locator('#ff-energy-value').innerText())<85);assert.equal(await page.locator('#ff-suck').evaluate(n=>n.classList.contains('is-held')),true);await page.keyboard.up('e');await tick(200);assert.equal(await page.locator('#ff-suck').evaluate(n=>n.classList.contains('is-held')),false);await shot('classic-suction');
+      await page.keyboard.press('p');await page.locator('#ff-end').click();await page.locator('#ff-retry').click();await tick(100);assert.equal(await page.locator('#ff-level').innerText(),'09 / 40');assert.equal(await state(),'playing');
+    }finally{await advanced.close();page=previous;}
+  });
+  await check('full-screen fallback fills the viewport, keeps Canvas visible and exits by button or Escape',async()=>{
+    const full=await context();await full.addInitScript(()=>{Element.prototype.requestFullscreen=()=>Promise.reject(new Error('Native fullscreen unavailable in fixture'));});const previous=page;page=await full.newPage();page.on('pageerror',e=>errors.push(e.message));
+    try{
+      await freezeClock(page);await page.goto(base+'/ca-lon-nuot-ca-be/');await tick(150);await page.locator('#ff-start').click();await page.locator('#ff-fullscreen').click();await tick(150);
+      const box=await page.locator('#ff-stage').boundingBox();assert.equal(box.x,0);assert.equal(box.y,0);assert.equal(box.width,1440);assert.equal(box.height,1050);assert.equal(await page.locator('#ff-exit-fullscreen').isVisible(),true);assert.ok((await page.locator('#ff-canvas').boundingBox()).height>1000);await shot('classic-fullscreen');
+      await page.locator('#ff-exit-fullscreen').click();assert.equal(await page.locator('body').evaluate(n=>n.classList.contains('ncn-fish-theater')),false);await page.keyboard.press('f');await tick(150);await page.keyboard.press('Escape');assert.equal(await page.locator('#ff-exit-fullscreen').isVisible(),false);assert.equal(await page.locator('body').evaluate(n=>n.classList.contains('ncn-fish-theater')),false);
+    }finally{await full.close();page=previous;}
   });
   await check('storage denial never blocks play or turns a local record into authentication',async()=>{
     const blocked=await context();await blocked.addInitScript(()=>{const get=Storage.prototype.getItem,set=Storage.prototype.setItem;Storage.prototype.getItem=function(key){if(key==='ncn:fish:record:v1')throw new DOMException('blocked','SecurityError');return get.call(this,key);};Storage.prototype.setItem=function(key,value){if(key==='ncn:fish:record:v1')throw new DOMException('blocked','SecurityError');return set.call(this,key,value);};});
-    const previous=page;page=await blocked.newPage();page.on('pageerror',e=>errors.push(e.message));await page.clock.install();await page.goto(base+'/ca-lon-nuot-ca-be/');await tick(150);await page.locator('#ff-start').click();await page.keyboard.down('ArrowRight');await tick(2000);await page.keyboard.up('ArrowRight');await page.keyboard.press('p');await page.locator('#ff-end').click();assert.equal(await state(),'over');assert.match(await page.locator('#ff-storage-note').innerText(),/chưa lưu được/);await blocked.close();page=previous;
+    const previous=page;page=await blocked.newPage();page.on('pageerror',e=>errors.push(e.message));await freezeClock(page);await page.goto(base+'/ca-lon-nuot-ca-be/');await tick(150);await page.locator('#ff-start').click();await page.keyboard.down('ArrowRight');await tick(2000);await page.keyboard.up('ArrowRight');await page.keyboard.press('p');await page.locator('#ff-end').click();assert.equal(await state(),'over');assert.match(await page.locator('#ff-storage-note').innerText(),/chưa lưu được/);await blocked.close();page=previous;
   });
   await check('mouse wheel over the ocean scrolls the page in welcome, play, pause and result states',async()=>{
     const wheelContext=await context(),wheelPage=await wheelContext.newPage();wheelPage.on('pageerror',e=>errors.push(e.message));
