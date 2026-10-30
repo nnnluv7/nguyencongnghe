@@ -60,3 +60,15 @@ Browser fixtures use synthetic accounts and the real score handler, with no
 production writes. They cover guest/member play, stage 200 completion, stage 60
 migration, the timed fall/pause boundary, WebGL and fallback, touch gestures,
 fullscreen/wake lock, blocked storage and discovery through NCN's eight-game hub.
+
+## Embedded scrolling
+
+In normal page mode, vertical wheel and trackpad gestures over the game scroll
+the document directly, including the first gesture over a long overlay. Ctrl/Meta
+zoom and horizontal gestures retain browser behavior. Scrolling cancels a held
+aim gesture so releasing the mouse cannot accidentally fire an egg. A long saved-game welcome uses
+safe end alignment so its heading remains reachable on small screens.
+Fullscreen alone contains overlay overscroll and locks the surrounding page.
+The canvas retains its touch aim/drag controls. The browser regression checks
+normal wheel scrolling over the welcome, active canvas, pause and results,
+a short screen with Continue visible, and the fullscreen enter/exit boundary.

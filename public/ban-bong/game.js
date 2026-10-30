@@ -113,6 +113,15 @@ $('help-open').addEventListener('click',()=>{pause();$('help').showModal();});$(
 $('confirm-no').addEventListener('click',()=>{$('confirm').close();pendingNew=null;});$('confirm-yes').addEventListener('click',()=>{const next=pendingNew;pendingNew=null;$('confirm').close();if(next)void begin(next.mode,next.level);});$('confirm').addEventListener('cancel',()=>pendingNew=null);
 for(const b of document.querySelectorAll('[data-bb-mode]'))b.addEventListener('click',()=>{if(state!=='ready')return;mode=b.dataset.bbMode;selected=mode==='daily'?1:progress.modes[mode].unlocked;game=createGame({mode,level:selected,seed:147,date:today()});renderer.reset();setView('ready');savePrefs();});
 function aim(event){const r=$('board').getBoundingClientRect(),x=(event.clientX-r.left)/r.width*WIDTH,y=(event.clientY-r.top)/r.height*HEIGHT;angle=Math.max(-MAX_ANGLE,Math.min(MAX_ANGLE,Math.atan2(x-LAUNCHER.x,LAUNCHER.y-y)));}
+$('field').addEventListener('wheel',event=>{
+ if($('app').classList.contains('bb-immersive')||event.ctrlKey||event.metaKey||!event.cancelable||Math.abs(event.deltaY)<=Math.abs(event.deltaX))return;
+ const root=document.scrollingElement,dy=event.deltaY*(event.deltaMode===1?16:event.deltaMode===2?innerHeight:1);
+ if(!root||!dy||dy<0&&root.scrollTop<=0||dy>0&&root.scrollTop>=root.scrollHeight-root.clientHeight-1)return;
+ // Embedded play belongs to the document's wheel/trackpad scroll. Do not let
+ // a long welcome/result panel consume its first gesture or fire a held egg.
+ const pointer=gesture?.id;gesture=null;if(pointer!==undefined&&$('board').hasPointerCapture(pointer))$('board').releasePointerCapture(pointer);
+ event.preventDefault();window.scrollBy({top:dy,behavior:'instant'});
+},{passive:false});
 $('board').addEventListener('pointerdown',event=>{if(state!=='playing'||flight||event.button!==0||gesture)return;event.preventDefault();$('board').focus({preventScroll:true});gesture={id:event.pointerId};$('board').setPointerCapture?.(event.pointerId);aim(event);});
 $('board').addEventListener('pointermove',event=>{if(state!=='playing'||event.pointerType!=='mouse'&&gesture?.id!==event.pointerId)return;aim(event);});
 $('board').addEventListener('pointerup',event=>{if(gesture?.id!==event.pointerId)return;gesture=null;aim(event);fire();});for(const type of ['pointercancel','lostpointercapture'])$('board').addEventListener(type,()=>gesture=null);

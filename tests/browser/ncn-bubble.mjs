@@ -68,6 +68,18 @@ async function fullscreenFits(){
 }
 try{
  await fixture();await open();
+ await check('mouse wheels scroll the normal page over every game view and lock the page only in fullscreen',async()=>{
+  async function wheelPage(label){
+   await page.locator('#bb-field').scrollIntoViewIfNeeded();const box=await page.locator('#bb-field').boundingBox();await page.mouse.move(box.x+box.width/2,box.y+box.height/2);const before=await page.evaluate(()=>scrollY);
+   await page.mouse.wheel(0,240);await page.waitForFunction(y=>scrollY>y+80,before,{timeout:3000});const down=await page.evaluate(()=>scrollY);
+   const next=await page.locator('#bb-field').boundingBox();await page.mouse.move(next.x+next.width/2,Math.max(20,Math.min(850,next.y+next.height/2)));await page.mouse.wheel(0,-180);await page.waitForFunction(y=>scrollY<y-60,down,{timeout:3000});assert.ok(await page.evaluate(()=>scrollY)>0,label+' remains within the page');
+  }
+  await fixture({signed:true,save:clearSave(),viewport:{width:320,height:568}});await open();await wheelPage('short welcome with continue');
+  await fixture({signed:true,viewport:{width:1280,height:900}});await open();await wheelPage('welcome');await page.locator('#bb-start').click();await page.locator('#bb-app[data-state=playing]').waitFor();await wheelPage('playing');const held=await page.locator('#bb-board').boundingBox();await page.mouse.move(held.x+held.width/2,Math.max(80,held.y+held.height/2));await page.mouse.down();await page.mouse.wheel(0,120);await page.mouse.up();await tick(1100);assert.equal((await saved()).shots,0);await page.keyboard.press('p');await wheelPage('paused');
+  await page.locator('#bb-fullscreen').click();await fullscreenFits();const locked=await page.evaluate(()=>scrollY);const rect=await page.locator('#bb-field').boundingBox();await page.mouse.move(rect.x+rect.width/2,rect.y+rect.height/2);await page.mouse.wheel(0,240);await tick(300);assert.equal(await page.evaluate(()=>scrollY),locked);await page.locator('#bb-fullscreen').click();await page.waitForFunction(()=>!document.getElementById('bb-app').classList.contains('bb-immersive'));await wheelPage('exited fullscreen');
+  await fixture({signed:true,save:clearSave(),viewport:{width:1280,height:900}});await open();await page.locator('#bb-continue').click();await fire();assert.equal(await state(),'cleared');await wheelPage('result');
+  await fixture();await open();
+ });
  await check('the eight-game NCN welcome fits 320px through desktop with all essential buttons inside the game',async()=>{
   for(const width of [1440,1000,820,700,390,360,320]){await page.setViewportSize({width,height:900});await tick();const g=await page.evaluate(()=>{const rect=id=>document.getElementById(id).getBoundingClientRect().toJSON();return {width:innerWidth,scroll:document.documentElement.scrollWidth,field:rect('bb-field'),title:rect('bb-overlay-title'),start:rect('bb-start')};});assert.ok(g.scroll<=g.width+1,JSON.stringify(g));assert.ok(g.title.y>=g.field.y-1&&g.start.bottom<=g.field.bottom+1,JSON.stringify(g));assert.equal(await page.locator('.ncn-arcade-links a').count(),8);if(width===1440)await shot('welcome-desktop');if(width===390)await shot('welcome-phone');}
   await page.setViewportSize({width:1440,height:1000});await tick();
