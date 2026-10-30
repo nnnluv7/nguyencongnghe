@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {Ocean,LEVELS,CHARACTERS,WORLD,FISH,POPULATION,STAGE_COUNT,difficultyForStage,cleanRecord,awardRecord} from '../public/ca-lon-nuot-ca-be/core.js';
+import {Ocean,LEVELS,CHARACTERS,WORLD,FISH,POPULATION,STAGE_COUNT,difficultyForStage,renderPose,rememberPose,cleanRecord,awardRecord} from '../public/ca-lon-nuot-ca-be/core.js';
 import {cameraFocus} from '../public/ca-lon-nuot-ca-be/draw.js';
 const start=(seed=123,level=0)=>new Ocean().start(seed,level);
 const quiet=(level=0)=>{const o=start(123,level);o.fish=[];o.jellies=[];o.items=[];o.oyster=null;return o;};
@@ -143,4 +143,68 @@ test('replacement fish and schools enter from the edges rather than appearing ar
 test('a completed old 40-stage campaign continues at 41 without losing the record',()=>{
  const migrated=cleanRecord({version:2,best:12345,fish:321,wins:1,unlocked:40,skin:'violet',sound:true});assert.equal(migrated.version,3);assert.equal(migrated.unlocked,41);assert.equal(migrated.best,12345);assert.equal(migrated.fish,321);assert.equal(migrated.skin,'violet');assert.equal(migrated.sound,true);assert.deepEqual(cleanRecord(migrated),migrated);
  assert.equal(cleanRecord({version:2,unlocked:17,best:800}).unlocked,17);assert.equal(cleanRecord({version:2,unlocked:40,wins:0}).unlocked,40);
+});
+
+
+test('rendered swimming advances evenly at 60, 75, 90, 120 and 144 Hz without changing physics',()=>{
+ for(const hz of [60,75,90,120,144]){
+  const o=quiet();o.safe=100;let accumulator=0,previous,elapsed=0;
+  for(let i=0;i<hz;i++){
+   elapsed+=1/hz;accumulator+=1/hz;
+   while(accumulator+1e-9>=1/60){o.step(1/60,{x:1});accumulator=Math.max(0,accumulator-1/60);}
+   const pose=renderPose(o.player,accumulator*60),actual=o.player.x;
+   assert.ok(Math.abs(pose.x-(640+310*Math.max(0,elapsed-1/60)))<1e-7,'Continuous position at '+hz+' Hz');
+   if(i>3)assert.ok(Math.abs(pose.x-previous-310/hz)<1e-7,'No repeated or double-width movement frames at '+hz+' Hz');
+   assert.equal(o.player.x,actual,'Rendering cannot alter collision positions');previous=pose.x;
+  }
+  assert.ok(Math.abs(o.player.x-950)<1e-7,'The same one-second swim at every refresh rate');
+ }
+});
+test('interpolation takes the short turn and does not animate a hit or resume as a teleport trail',()=>{
+ const actor=rememberPose({x:10,y:20,angle:Math.PI-.04});actor.x=30;actor.angle=-Math.PI+.04;
+ const middle=renderPose(actor,.5);assert.equal(middle.x,20);assert.ok(Math.abs(Math.abs(middle.angle)-Math.PI)<1e-9);assert.equal(actor.x,30);
+ const o=quiet();o.player.x=100;o.player.y=200;rememberPose(o.player);o.safe=0;o.hit({});
+ for(const alpha of [0,.25,.5,.75,1])assert.deepEqual([renderPose(o.player,alpha).x,renderPose(o.player,alpha).y],[640,400]);
+ o.step(1/60,{x:1});o.pause();o.resume();assert.equal(renderPose(o.player,0).x,o.player.x);
+});
+const huntScene=(level=0)=>{const o=quiet(level);o.safe=0;o.nextArrival=o.nextSwarm=o.nextItem=o.nextShark=999;return o;};
+const hunter=o=>food(o,2,{x:o.player.x-160,y:o.player.y+60,speed:70});
+test('a nearby predator turns smoothly toward the player for a short chase then rests',()=>{
+ const o=huntScene(),f=hunter(o),startY=f.y,startAngle=f.angle;
+ o.step(1/60);assert.ok(f.chaseLeft>0);assert.ok(f.y<startY);assert.ok(Math.abs(f.angle-startAngle)<=2.4/60+1e-9);
+ assert.ok(Math.hypot(f.x-f.previousX,f.y-f.previousY)>f.speed/60);
+ for(let i=0;i<65;i++)o.step(1/60);
+ assert.equal(f.chaseLeft,0);assert.ok(f.chaseCooldown>5);assert.equal(o.lives,3);
+ for(let i=0;i<30;i++){o.player.x=f.x+160;o.player.y=f.y+40;o.step(1/60);assert.equal(f.chaseLeft,0,'No immediate re-acquisition during the rest');}
+});
+test('prey, neutral fish, distant fish and fish facing away never initiate a chase',()=>{
+ for(const kind of ['prey','neutral','far','behind']){
+  const o=huntScene(),f=hunter(o);
+  if(kind==='prey')f.size=10;if(kind==='neutral')f.size=o.player.size;if(kind==='far')f.x=100;if(kind==='behind')f.x=o.player.x+140;
+  o.step(1/60);assert.equal(f.chaseLeft,0,kind);
+ }
+});
+test('protection, shields and shark warnings prevent ambushes and freezing stops a pursuit',()=>{
+ for(const key of ['safe','shield','warning']){const o=huntScene(),f=hunter(o);if(key==='warning')f.warning=2;else o[key]=2;o.step(1/60);assert.equal(f.chaseLeft,0,key);}
+ const o=huntScene(8),f=hunter(o);o.step(1/60);o.freeze=3;const pose=[f.x,f.y,f.angle,f.chaseLeft,f.chaseCooldown];o.step(.05);assert.deepEqual([f.x,f.y,f.angle,f.chaseLeft,f.chaseCooldown],pose);
+ const small=food(o,0,{x:o.player.x+150,speed:0});const x=small.x;o.step(.05,{suck:true});assert.ok(small.x<x,'Suction still pulls frozen edible fish');o.grow(o.config.goal/3);o.step(.05);assert.equal(f.chaseLeft,0,'Growing or getting protection cancels a frozen pursuit too');
+});
+test('escaping, becoming large enough or gaining protection ends a pursuit without another bite',()=>{
+ for(const reason of ['escape','growth','safe','shield']){
+  const o=huntScene(),f=hunter(o);o.step(1/60);assert.ok(f.chaseLeft>0);
+  if(reason==='escape')o.player.x=1150;if(reason==='growth')o.player.size=100;if(reason==='safe')o.safe=2;if(reason==='shield')o.shield=2;
+  o.step(1/60);assert.equal(f.chaseLeft,0,reason);assert.ok(f.chaseCooldown>0,reason);
+ }
+});
+test('chase difficulty grows gently, concurrency is limited and pursuit remains escapable',()=>{
+ for(let level=0;level<200;level++){
+  const d=difficultyForStage(level);assert.ok(d.chaseDuration>=1&&d.chaseDuration<=2);assert.ok(d.chaseRadius>=195&&d.chaseRadius<=290);assert.ok(d.chaseCooldown>=4.5);assert.ok(d.chaseLimit>=1&&d.chaseLimit<=2);
+  if(level){const p=difficultyForStage(level-1);assert.ok(d.chaseDuration>=p.chaseDuration&&d.chaseRadius>=p.chaseRadius&&d.chaseCooldown<=p.chaseCooldown);}
+ }
+ for(const level of [0,199]){
+  const o=huntScene(level);for(let i=0;i<5;i++)food(o,2,{x:490,y:320+i*36,size:80,speed:200});
+  o.step(1/60);assert.equal(o.fish.filter(f=>f.chaseLeft>0).length,o.difficulty.chaseLimit);
+  for(const f of o.fish)assert.ok(Math.hypot(f.x-f.previousX,f.y-f.previousY)<=225/60+.1,'A chasing fish stays slower than normal player swimming');
+  o.pause();const frozen=JSON.stringify(o);o.step(1);assert.equal(JSON.stringify(o),frozen);
+ }
 });
