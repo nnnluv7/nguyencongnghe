@@ -1,4 +1,4 @@
-import {WORLD,FISH,LEVELS,clamp,randomSource} from './core.js?v=20261030-chill-200-1';
+import {WORLD,FISH,LEVELS,clamp,randomSource,renderPose} from './core.js?v=20261030-smooth-chase-1';
 const TAU=Math.PI*2;
 export function cameraFocus(player,width,height,zoom,follow=false){
   if(follow||width<640)return {x:player.x,y:player.y};
@@ -9,7 +9,7 @@ function ellipse(c,x,y,rx,ry,color){c.beginPath();c.ellipse(x,y,rx,ry,0,0,TAU);c
 function star(c,x,y,r,color){c.beginPath();for(let i=0;i<10;i++){const a=i*Math.PI/5-Math.PI/2,k=i%2?r*.43:r;c.lineTo(x+Math.cos(a)*k,y+Math.sin(a)*k);}c.closePath();c.fillStyle=color;c.fill();}
 export class OceanPainter{
   constructor(canvas){this.canvas=canvas;this.c=canvas.getContext('2d',{alpha:false});this.width=1;this.height=1;this.zoom=1;this.camera={x:WORLD.width/2,y:WORLD.height/2};this.level=-1;this.floor=null;this.background=null;this.sprites=new Map();this.reduced=false;this.skin='coral';}
-  resize(){const r=this.canvas.getBoundingClientRect(),dpr=Math.min(2,window.devicePixelRatio||1);this.width=Math.max(1,r.width);this.height=Math.max(1,r.height);this.canvas.width=Math.round(r.width*dpr);this.canvas.height=Math.round(r.height*dpr);this.dpr=dpr;this.zoom=this.follow||this.width<640?Math.max(this.width/720,this.height/1050):Math.min(this.width/WORLD.width,this.height/WORLD.height);this.background=null;}
+  resize(){const r=this.canvas.getBoundingClientRect(),dpr=Math.min(2,window.devicePixelRatio||1),width=Math.round(r.width*dpr),height=Math.round(r.height*dpr);this.width=Math.max(1,r.width);this.height=Math.max(1,r.height);if(this.canvas.width!==width||this.canvas.height!==height){this.canvas.width=width;this.canvas.height=height;this.background=null;}this.dpr=dpr;this.zoom=this.follow||this.width<640?Math.max(this.width/720,this.height/1050):Math.min(this.width/WORLD.width,this.height/WORLD.height);}
   reset(){this.camera={x:WORLD.width/2,y:WORLD.height/2};}
   point(x,y){return {x:(x-this.camera.x)*this.zoom+this.width/2,y:(y-this.camera.y)*this.zoom+this.height/2};}
   worldPoint(x,y){return {targetX:(x-this.width/2)/this.zoom+this.camera.x,targetY:(y-this.height/2)/this.zoom+this.camera.y};}
@@ -38,8 +38,8 @@ export class OceanPainter{
     c.save();c.translate(1160,220);star(c,0,0,23,'#eaa98e');c.restore();
     c.save();c.translate(420,224);c.fillStyle='#e1c3b9';c.beginPath();c.moveTo(0,0);c.bezierCurveTo(-52,-3,-40,-43,0,-20);c.bezierCurveTo(40,-43,52,-3,0,0);c.fill();c.strokeStyle='#a98089';c.lineWidth=1.3;for(let i=-3;i<=3;i++){c.beginPath();c.moveTo(0,0);c.lineTo(i*10,-22+Math.abs(i)*2);c.stroke();}c.restore();this.floor=floor;
   }
-  paint(ocean,time,dt=1/60){
-    const c=this.c,w=this.width,h=this.height,z=this.zoom,p=ocean.player,demo=ocean.status==='ready';if(!c)return;
+  paint(ocean,time,dt=1/60,alpha=1){
+    const c=this.c,w=this.width,h=this.height,z=this.zoom,p=renderPose(ocean.player,alpha),demo=ocean.status==='ready';if(!c)return;
     if(this.level!==ocean.level)this.makeScenery(ocean.level);
     const palette=LEVELS[ocean.level],vh=h/z,focus=cameraFocus(p,w,h,z,this.follow),ease=1-Math.exp(-dt*14);
     this.camera.x+=(focus.x-this.camera.x)*ease;this.camera.y+=(focus.y-this.camera.y)*ease;
@@ -62,12 +62,14 @@ export class OceanPainter{
     for(const item of ocean.items)this.item(c,item,time);
     const hintIds=new Set(ocean.fish.filter(f=>ocean.edible(f)&&Math.hypot(f.x-p.x,f.y-p.y)<280).sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y)).slice(0,3).map(f=>f.id));
     for(const f of [...ocean.fish].sort((a,b)=>a.size-b.size)){
-      const at=this.point(f.x,f.y);if(at.x<-230*z||at.x>w+230*z||at.y<-130*z||at.y>h+130*z)continue;
-      const edible=ocean.edible(f),distance=Math.hypot(f.x-p.x,f.y-p.y);
-      c.save();c.translate(f.x,f.y+(demo?Math.sin(time+f.phase)*9:0));
+      const pose=renderPose(f,alpha),at=this.point(pose.x,pose.y);if(at.x<-230*z||at.x>w+230*z||at.y<-130*z||at.y>h+130*z)continue;
+      const edible=ocean.edible(f),distance=Math.hypot(pose.x-p.x,pose.y-p.y);
+      c.save();c.translate(pose.x,pose.y+(demo?Math.sin(time+f.phase)*9:0));
       if(!demo&&(edible&&hintIds.has(f.id)||ocean.dangerous(f)&&distance<340)){c.strokeStyle=edible?'#b8ffbc85':'#ffb5b9a6';c.lineWidth=1.4/z;c.setLineDash(edible?[]:[3/z,4/z]);c.beginPath();c.ellipse(0,0,f.size*1.45+6,f.size*.95+6,0,0,TAU);c.stroke();c.setLineDash([]);}
-      const angle=Math.atan2(Math.sin(f.angle),Math.abs(Math.cos(f.angle)))*.2*f.face;
-      this.fish(c,{...FISH[f.tier],...(f.kind==='golden'?{color:'#ffe991',shade:'#d99b24',fin:'#ffd25e',pattern:'pearls'}:{}),face:f.face,angle,size:f.size},time+f.phase);c.restore();
+      if(!demo&&f.chaseLeft>0){c.fillStyle='#ffe3a1';c.font='900 '+Math.round(16/z)+'px system-ui';c.textAlign='center';c.fillText('!',0,-f.size-17/z);}
+      const face=Math.cos(pose.angle)<0?-1:1,angle=Math.atan2(Math.sin(pose.angle),Math.abs(Math.cos(pose.angle)))*.2*face;
+      c.scale(.55+.45*Math.abs(Math.cos(pose.angle)),1);
+      this.fish(c,{...FISH[f.tier],...(f.kind==='golden'?{color:'#ffe991',shade:'#d99b24',fin:'#ffd25e',pattern:'pearls'}:{}),face,angle,size:f.size},time+f.phase);c.restore();
     }
     if(!demo){
       if(ocean.dashTime>0&&!this.reduced){c.strokeStyle='#d6fcff66';c.lineWidth=2;for(let i=0;i<5;i++){c.beginPath();c.moveTo(p.x-p.face*(p.size+15+i*12),p.y+(i-2)*9);c.lineTo(p.x-p.face*(p.size+38+i*12),p.y+(i-2)*9);c.stroke();}}
@@ -80,8 +82,8 @@ export class OceanPainter{
       // A steady marker keeps your fish recognizable in the denser shoals.
       c.save();c.textAlign='center';c.font='800 '+Math.round(9/z)+'px system-ui';c.fillStyle='#f6ffff';c.strokeStyle='#0a527499';c.lineWidth=2/z;c.strokeText('BẠN',p.x,p.y-p.size-19/z);c.fillText('BẠN',p.x,p.y-p.size-19/z);c.beginPath();c.moveTo(p.x-3/z,p.y-p.size-14/z);c.lineTo(p.x+3/z,p.y-p.size-14/z);c.lineTo(p.x,p.y-p.size-10/z);c.fill();c.restore();
     }
-    for(const e of ocean.effects){c.globalAlpha=clamp(e.life/.6,0,1);ellipse(c,e.x,e.y,e.size,e.size,e.color);}c.globalAlpha=1;
-    for(const e of ocean.labels){c.save();c.globalAlpha=Math.min(1,e.life*2);c.font='800 '+Math.round(17/z)+'px system-ui';c.textAlign='center';c.lineWidth=3/z;c.strokeStyle='#0a52747a';c.fillStyle=e.color;c.strokeText(e.text,e.x,e.y);c.fillText(e.text,e.x,e.y);c.restore();}
+    for(const e of ocean.effects){const pose=renderPose(e,alpha);c.globalAlpha=clamp(e.life/.6,0,1);ellipse(c,pose.x,pose.y,e.size,e.size,e.color);}c.globalAlpha=1;
+    for(const e of ocean.labels){const pose=renderPose(e,alpha);c.save();c.globalAlpha=Math.min(1,e.life*2);c.font='800 '+Math.round(17/z)+'px system-ui';c.textAlign='center';c.lineWidth=3/z;c.strokeStyle='#0a52747a';c.fillStyle=e.color;c.strokeText(e.text,pose.x,pose.y);c.fillText(e.text,pose.x,pose.y);c.restore();}
     c.restore();
     if(!demo)for(const f of ocean.fish.filter(f=>f.warning>0)){const at=this.point(f.x,f.y),x=f.face>0?24:w-24,y=clamp(at.y,140,h-95);c.fillStyle='#f85562';c.beginPath();c.moveTo(x+(f.face>0?-11:11),y);c.lineTo(x+(f.face>0?9:-9),y-13);c.lineTo(x+(f.face>0?9:-9),y+13);c.closePath();c.fill();c.fillStyle='#fff';c.textAlign='center';c.font='900 15px system-ui';c.fillText('!',x,y+5);}
     if(demo){

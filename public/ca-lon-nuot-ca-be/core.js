@@ -4,7 +4,7 @@ export const STAGE_COUNT=200;
 export const POPULATION={target:12,max:22,nearbyPrey:3};
 export function difficultyForStage(index){
  const t=Math.min(1,Math.max(0,Number.isFinite(index)?index/(STAGE_COUNT-1):0));
- return {target:12+Math.floor(t*8),predators:1+Math.floor(t*4),fishSpeed:1+t*1.3,spawnGap:1.15-t*.45,protection:6-t*3.5,growthProtection:1.4-t*.6,itemGap:26+t*6,swarmGap:32-t*6,sharkGap:32-t*10,warning:1.8-t*.5,jellies:index>=160?3:index>=90?2:index>=20?1:0};
+ return {target:12+Math.floor(t*8),predators:1+Math.floor(t*4),fishSpeed:1+t*1.3,spawnGap:1.15-t*.45,protection:6-t*3.5,growthProtection:1.4-t*.6,itemGap:26+t*6,swarmGap:32-t*6,sharkGap:32-t*10,warning:1.8-t*.5,jellies:index>=160?3:index>=90?2:index>=20?1:0,chaseRadius:195+t*95,chaseDuration:1.05+t*.95,chaseCooldown:6.5-t*2,chaseBoost:1.6+t*.25,chaseLimit:index>=100?2:1};
 }
 const PALETTES=[
  {sky:'#70e1ee',water:'#199dd0',deep:'#086398',sand:'#e5d8a6'},
@@ -45,6 +45,14 @@ export const FISH=[
   {size:58,color:'#86b9ff',shade:'#3d65bb',fin:'#f4d46d',name:'Cá đuôi vàng',speed:83,body:'disc',pattern:'tang'}
 ];
 export const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
+// Physics stays at 60 Hz; drawing interpolates these poses at the display's rate.
+export function rememberPose(actor){actor.previousX=actor.x;actor.previousY=actor.y;actor.previousAngle=actor.angle||0;return actor;}
+export function renderPose(actor,alpha=1){
+ if(alpha>=1||!Number.isFinite(actor.previousX)||!Number.isFinite(actor.previousY))return actor;
+ const t=clamp(Number.isFinite(alpha)?alpha:1,0,1),angle=actor.angle||0,delta=Math.atan2(Math.sin(angle-actor.previousAngle),Math.cos(angle-actor.previousAngle));
+ return {...actor,x:actor.previousX+(actor.x-actor.previousX)*t,y:actor.previousY+(actor.y-actor.previousY)*t,angle:actor.previousAngle+delta*t};
+}
+function turnToward(fish,heading,dt){const delta=Math.atan2(Math.sin(heading-fish.angle),Math.cos(heading-fish.angle));fish.angle+=clamp(delta,-2.4*dt,2.4*dt);if(Math.abs(Math.cos(fish.angle))>.12)fish.face=Math.cos(fish.angle)>0?1:-1;}
 export function randomSource(seed=1){let n=seed>>>0;return ()=>{n+=0x6D2B79F5;let v=Math.imul(n^n>>>15,1|n);v^=v+Math.imul(v^v>>>7,61|v);return ((v^v>>>14)>>>0)/4294967296;};}
 const finite=(n,max)=>Number.isFinite(n)?clamp(Math.floor(n),0,max):0;
 export function cleanRecord(value={}){const unlocked=value?.version===2&&value.unlocked===40&&Number.isFinite(value.wins)&&value.wins>0?41:Math.max(1,finite(value?.unlocked,STAGE_COUNT));return {version:3,best:finite(value?.best,1e9),fish:finite(value?.fish,1e7),wins:finite(value?.wins,1e6),skin:['coral','aqua','violet'].includes(value?.skin)?value.skin:'coral',sound:value?.sound===true,reduced:value?.reduced===true,unlocked};}
@@ -65,7 +73,7 @@ export class Ocean{
  get character(){return CHARACTERS[this.config.chapter];}
  prepareLevel(level){
   this.level=level;this.status='playing';this.xp=0;this.growth=0;this.levelElapsed=0;this.stageHits=0;this.energy=100;this.safe=this.difficulty.protection;this.shield=0;this.bite=0;this.freeze=0;this.speedBoost=0;this.sucking=false;this.suctionExhausted=false;this.dashTime=0;this.dashCooldown=0;this.bossEaten=false;
-  this.chain=0;this.combo=1;this.fever=0;this.feverCooldown=0;this.lastMeal=-99;this.player={x:WORLD.width/2,y:WORLD.height/2,vx:0,vy:0,angle:0,face:1,size:this.config.sizes[0]};
+  this.chain=0;this.combo=1;this.fever=0;this.feverCooldown=0;this.lastMeal=-99;this.player=rememberPose({x:WORLD.width/2,y:WORLD.height/2,vx:0,vy:0,angle:0,face:1,size:this.config.sizes[0]});
   this.fish=[];this.items=[];this.jellies=[];this.effects=[];this.labels=[];this.nextSwarm=24;this.nextItem=18;this.nextArrival=1.2;this.nextShark=22;
   this.oyster=level>=4?{x:WORLD.width*.24,y:WORLD.height-115,open:true,nextPearl:9}:null;
   for(let i=0;i<this.difficulty.target-3;i++)this.addFish({initial:true});
@@ -87,7 +95,7 @@ export class Ocean{
   const species=FISH[tier],actualSize=size??(band>=0?this.config.bands[band]:species.size);dir=dir|| (this.rng()<.5?1:-1);
   x=x??(initial?65+this.rng()*(WORLD.width-130):dir===1?-100:WORLD.width+100);y=y??(145+this.rng()*(WORLD.height-280));
   if(initial&&this.dangerous({size:actualSize})&&Math.hypot(x-this.player.x,y-this.player.y)<390)x=x<this.player.x?-85:WORLD.width+85;
-  const item={id:++this.serial,tier,band,size:actualSize,kind,x,y,angle:dir===1?0:Math.PI,face:dir,speed:(kind==='boss'?88:kind==='shark'?76+60*this.level/(STAGE_COUNT-1):(36+Math.max(0,band)*9+this.config.chapter*2)*this.difficulty.fishSpeed)*(.9+this.rng()*.2),phase:this.rng()*Math.PI*2,warning:kind==='shark'||kind==='boss'?this.difficulty.warning:0};this.fish.push(item);return item;
+  const item=rememberPose({id:++this.serial,tier,band,size:actualSize,kind,x,y,angle:dir===1?0:Math.PI,face:dir,cruiseFace:dir,chaseLeft:0,chaseCooldown:0,speed:(kind==='boss'?88:kind==='shark'?76+60*this.level/(STAGE_COUNT-1):(36+Math.max(0,band)*9+this.config.chapter*2)*this.difficulty.fishSpeed)*(.9+this.rng()*.2),phase:this.rng()*Math.PI*2,warning:kind==='shark'||kind==='boss'?this.difficulty.warning:0});this.fish.push(item);return item;
  }
  ensurePrey(){
   if(this.fish.length>=this.difficulty.target)return false;
@@ -95,10 +103,10 @@ export class Ocean{
   return this.addFish(food<POPULATION.nearbyPrey?{tier:this.pickPrey()}:{});
  }
  pause(){if(this.status!=='playing')return false;this.status='paused';this.sucking=false;return true;}
- resume(){if(this.status!=='paused')return false;this.status='playing';return true;}
+ resume(){if(this.status!=='paused')return false;this.status='playing';for(const actor of [this.player,...this.fish,...this.effects,...this.labels])rememberPose(actor);return true;}
  dash(){if(this.status!=='playing'||this.energy<25||this.dashCooldown>0)return false;this.energy-=25;this.dashTime=.2;this.dashCooldown=1.15;this.emit('dash');return true;}
- burst(x,y,color,n=10){for(let i=0;i<n&&this.effects.length<140;i++){const a=this.rng()*Math.PI*2,s=25+this.rng()*85;this.effects.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:.4+this.rng()*.5,max:1,color,size:2+this.rng()*3});}}
- label(x,y,text,color='#fff7bb'){this.labels.push({x,y,text,color,life:1.1});if(this.labels.length>18)this.labels.shift();}
+ burst(x,y,color,n=10){for(let i=0;i<n&&this.effects.length<140;i++){const a=this.rng()*Math.PI*2,s=25+this.rng()*85;this.effects.push(rememberPose({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:.4+this.rng()*.5,max:1,color,size:2+this.rng()*3}));}}
+ label(x,y,text,color='#fff7bb'){this.labels.push(rememberPose({x,y,text,color,life:1.1}));if(this.labels.length>18)this.labels.shift();}
  eat(fish){
   if(this.status!=='playing'||!this.edible(fish))return false;const at=this.fish.indexOf(fish);if(at<0)return false;
   this.fish.splice(at,1);this.eaten++;this.bite=.25;this.chain=this.elapsed-this.lastMeal<=4?this.chain+1:1;this.lastMeal=this.elapsed;this.combo=Math.min(5,1+Math.floor((this.chain-1)/3));this.bestCombo=Math.max(this.bestCombo,this.combo);
@@ -126,6 +134,7 @@ export class Ocean{
   if(this.shield>0){this.shield=0;this.safe=2;this.emit('shield');this.burst(this.player.x,this.player.y,'#88f4ff',20);return false;}
   this.lives--;this.stageHits++;this.safe=4;this.chain=0;this.combo=1;this.fever=0;this.sucking=false;
   this.player.x=WORLD.width/2;this.player.y=WORLD.height/2;this.player.vx=this.player.vy=0;
+  rememberPose(this.player);for(const f of this.fish){f.chaseLeft=0;f.chaseCooldown=this.difficulty.chaseCooldown;}
   this.fish=this.fish.filter(f=>!this.dangerous(f)||Math.hypot(f.x-this.player.x,f.y-this.player.y)>230);this.ensurePrey();
   this.burst(this.player.x,this.player.y,'#ffd9da',20);this.emit('hit',{lives:this.lives});if(this.lives<=0)this.finish(false);return true;
  }
@@ -145,16 +154,28 @@ export class Ocean{
   for(const key of ['safe','shield','dashTime','dashCooldown','fever','feverCooldown','bite','freeze','speedBoost'])this[key]=Math.max(0,this[key]-dt);
   if(input.suck!==true)this.suctionExhausted=false;if(input.suck===true&&this.energy<=2)this.suctionExhausted=true;this.sucking=this.suctionUnlocked&&input.suck===true&&!this.suctionExhausted&&this.energy>2;this.energy=clamp(this.energy+dt*(this.sucking?-26:15),0,100);
   if(this.elapsed-this.lastMeal>4){this.chain=0;this.combo=1;}
-  const p=this.player,speed=310*(this.dashTime>0?1.65:this.speedBoost>0?1.25:1);let dx=Number.isFinite(input.x)?input.x:0,dy=Number.isFinite(input.y)?input.y:0;
+  const p=rememberPose(this.player),speed=310*(this.dashTime>0?1.65:this.speedBoost>0?1.25:1);let dx=Number.isFinite(input.x)?input.x:0,dy=Number.isFinite(input.y)?input.y:0;
   if(Number.isFinite(input.targetX)&&Number.isFinite(input.targetY)){
    dx=clamp(input.targetX,35,WORLD.width-35)-p.x;dy=clamp(input.targetY,110,WORLD.height-85)-p.y;
    const distance=Math.hypot(dx,dy),travel=Math.min(distance,speed*dt);p.vx=distance?dx/distance*travel/dt:0;p.vy=distance?dy/distance*travel/dt:0;
   }else{const n=Math.hypot(dx,dy);if(n>1){dx/=n;dy/=n;}p.vx=dx*speed;p.vy=dy*speed;}
   const margin=Math.max(35,p.size*1.2);p.x=clamp(p.x+p.vx*dt,margin,WORLD.width-margin);p.y=clamp(p.y+p.vy*dt,Math.max(115,margin),WORLD.height-Math.max(90,margin));
   if(Math.abs(p.vx)>1)p.face=p.vx>0?1:-1;p.angle=clamp(Math.atan2(p.vy,Math.abs(p.vx)+100)*.16,-.25,.25)*p.face;
+  let hunters=this.fish.filter(f=>f.chaseLeft>0).length;
   for(const f of this.fish){
+   rememberPose(f);
    if(f.warning>0){f.warning=Math.max(0,f.warning-dt);continue;}
-   const k=this.freeze>0?0:1;f.x+=f.face*f.speed*dt*k;f.y+=Math.sin(this.elapsed*1.1+f.phase)*dt*5*k;f.y=clamp(f.y,130,WORLD.height-110);if(f.kind==='boss'&&f.x<-140){f.x=WORLD.width+85;f.warning=this.difficulty.warning;}
+   const d=this.difficulty,canHunt=this.dangerous(f)&&this.safe<=0&&this.shield<=0;
+   if(f.chaseLeft>0&&!canHunt){f.chaseLeft=0;hunters--;f.chaseCooldown=d.chaseCooldown;}
+   if(this.freeze<=0){
+    const distance=Math.hypot(p.x-f.x,p.y-f.y);
+    f.chaseCooldown=Math.max(0,f.chaseCooldown-dt);
+    if(f.chaseLeft>0){f.chaseLeft=Math.max(0,f.chaseLeft-dt);if(distance>d.chaseRadius*1.5)f.chaseLeft=0;if(!f.chaseLeft){hunters--;f.chaseCooldown=d.chaseCooldown;}}
+    if(canHunt&&f.chaseLeft<=0&&f.chaseCooldown<=0&&hunters<d.chaseLimit&&distance<d.chaseRadius&&f.face*(p.x-f.x)>-f.size*.8&&f.x>=0&&f.x<=WORLD.width){f.chaseLeft=d.chaseDuration;hunters++;this.emit('chase',{id:f.id});}
+    const hunting=f.chaseLeft>0,heading=hunting?Math.atan2(p.y-f.y,p.x-f.x):(f.cruiseFace===1?0:Math.PI);
+    turnToward(f,heading,dt);const swim=hunting?Math.min(225,f.speed*d.chaseBoost):f.speed;
+    f.x+=Math.cos(f.angle)*swim*dt;f.y+=Math.sin(f.angle)*swim*dt+(hunting?0:Math.sin(this.elapsed*1.1+f.phase)*dt*5);f.y=clamp(f.y,130,WORLD.height-110);if(f.kind==='boss'&&f.x<-140){f.x=WORLD.width+85;f.warning=this.difficulty.warning;rememberPose(f);}
+   }
    if(this.sucking&&this.edible(f)){const dx=f.x-p.x,dy=f.y-p.y,d=Math.hypot(dx,dy);if(d<195&&dx*p.face>-p.size*.5&&d>1){f.x-=dx/d*350*dt;f.y-=dy/d*350*dt;}}
   }
   this.fish=this.fish.filter(f=>f.x>-180&&f.x<WORLD.width+180);
@@ -174,6 +195,6 @@ export class Ocean{
   }
   if(this.level>=30&&this.levelElapsed>=this.nextShark){this.nextShark+=this.difficulty.sharkGap;if(!this.fish.some(f=>f.kind==='shark'))this.addFish({tier:6,size:Math.max(this.config.sizes[2]*1.22,90),kind:'shark'});}
   if(this.levelElapsed>=this.nextArrival){this.nextArrival=this.levelElapsed+this.difficulty.spawnGap;this.ensurePrey();}
-  for(const e of this.effects){e.x+=e.vx*dt;e.y+=e.vy*dt;e.vy+=20*dt;e.life-=dt;}this.effects=this.effects.filter(e=>e.life>0);for(const e of this.labels){e.y-=dt*32;e.life-=dt;}this.labels=this.labels.filter(e=>e.life>0);
+  for(const e of this.effects){rememberPose(e);e.x+=e.vx*dt;e.y+=e.vy*dt;e.vy+=20*dt;e.life-=dt;}this.effects=this.effects.filter(e=>e.life>0);for(const e of this.labels){rememberPose(e);e.y-=dt*32;e.life-=dt;}this.labels=this.labels.filter(e=>e.life>0);
  }
 }

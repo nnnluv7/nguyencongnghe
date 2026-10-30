@@ -1,6 +1,6 @@
 import {mountScores} from '../assets/ncn-arcade/arcade.js?v=20261027-photo-save-1';
-import {Ocean,LEVELS,FISH,STAGE_COUNT,clamp,cleanRecord,awardRecord} from './core.js?v=20261030-chill-200-1';
-import {OceanPainter} from './draw.js?v=20261030-chill-200-1';
+import {Ocean,LEVELS,FISH,STAGE_COUNT,clamp,cleanRecord,awardRecord} from './core.js?v=20261030-smooth-chase-1';
+import {OceanPainter} from './draw.js?v=20261030-smooth-chase-1';
 import {installScrollUI} from '../assets/ncn-theme/scroll-ui.js?v=20261024-compact-1';
 
 const $=id=>document.getElementById(id),stage=$('ff-stage'),canvas=$('ff-canvas');
@@ -102,11 +102,12 @@ function direction(){
   if(x||y)return {x,y,suck};if(stickId!==null)return {...heading,suck};if(mouse)return {...(mouse.targetX===undefined?painter.worldPoint(mouse.x,mouse.y):mouse),suck};return {x:0,y:0,suck};
 }
 function frame(now){
-  if(disposed)return;const dt=clamp((now-lastFrame)/1000,0,.1);lastFrame=now;
-  if(ocean.status==='playing'){accumulator+=dt;while(accumulator>=1/60){ocean.step(1/60,direction());accumulator-=1/60;if(ocean.status!=='playing')break;}}
+  if(disposed)return;const dt=clamp((now-lastFrame)/1000,0,.05),step=1/60;lastFrame=now;
+  if(ocean.status==='playing'){accumulator+=dt;while(accumulator+1e-9>=step){ocean.step(step,direction());accumulator=Math.max(0,accumulator-step);if(ocean.status!=='playing')break;}}
   else accumulator=0;
   if(ocean.status==='ready')sceneTime+=dt;
-  painter.paint(ocean,ocean.status==='ready'?sceneTime:ocean.elapsed,dt);
+  const alpha=ocean.status==='playing'?clamp(accumulator/step,0,1):1,time=ocean.status==='ready'?sceneTime:Math.max(0,ocean.elapsed-(1-alpha)*step);
+  painter.paint(ocean,time,dt,alpha);
   if(now-lastHUD>100){hud();lastHUD=now;}
   requestAnimationFrame(frame);
 }

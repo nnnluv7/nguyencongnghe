@@ -31,12 +31,12 @@ async function context(options={}){
     // Observe the visible player marker and green prey rings drawn on Canvas.
     // This exercises the real source or compiled game without exposing game state.
     const proto=CanvasRenderingContext2D.prototype,transform=proto.setTransform,stroke=proto.stroke,fillText=proto.fillText,drawImage=proto.drawImage;
-    proto.setTransform=function(...args){if(this.canvas.id==='ff-canvas'){window.__ncnFishPrey=[];window.__ncnFishBodies=0;}return transform.apply(this,args);};
-    proto.drawImage=function(source,...args){if(this.canvas.id==='ff-canvas'&&source.width===384&&source.height===320)window.__ncnFishBodies++;return drawImage.call(this,source,...args);};
+    proto.setTransform=function(...args){if(this.canvas.id==='ff-canvas'){window.__ncnFishPrey=[];window.__ncnFishBodies=0;window.__ncnFishDrawn=[];window.__ncnFishHunters=[];}return transform.apply(this,args);};
+    proto.drawImage=function(source,...args){if(this.canvas.id==='ff-canvas'&&source.width===384&&source.height===320){window.__ncnFishBodies++;const m=this.getTransform(),r=this.canvas.getBoundingClientRect(),d=this.canvas.width/r.width;window.__ncnFishDrawn.push({x:m.e/d,y:m.f/d,size:Math.hypot(m.c,m.d)/d,face:Math.sign(m.a)});}return drawImage.call(this,source,...args);};
     proto.stroke=function(...args){if(this.canvas.id==='ff-canvas'&&String(this.strokeStyle).replace(/\s/g,'').startsWith('rgba(184,255,188,')){
       const m=this.getTransform(),r=this.canvas.getBoundingClientRect(),d=this.canvas.width/r.width;window.__ncnFishPrey.push({x:m.e/d,y:m.f/d});
     }return stroke.apply(this,args);};
-    proto.fillText=function(text,x,y,...args){if(text==='BẠN'&&this.canvas.id==='ff-canvas'){const m=this.getTransform(),r=this.canvas.getBoundingClientRect(),d=this.canvas.width/r.width;window.__ncnFishPlayer={x,y,sx:(m.a*x+m.c*y+m.e)/d,sy:(m.b*x+m.d*y+m.f)/d};}return fillText.call(this,text,x,y,...args);};
+    proto.fillText=function(text,x,y,...args){if(text==='!'&&this.canvas.id==='ff-canvas'){const m=this.getTransform(),r=this.canvas.getBoundingClientRect(),d=this.canvas.width/r.width;window.__ncnFishHunters.push({x:(m.a*x+m.c*y+m.e)/d,y:(m.b*x+m.d*y+m.f)/d});}if(text==='BẠN'&&this.canvas.id==='ff-canvas'){const m=this.getTransform(),r=this.canvas.getBoundingClientRect(),d=this.canvas.width/r.width;window.__ncnFishPlayer={x,y,sx:(m.a*x+m.c*y+m.e)/d,sy:(m.b*x+m.d*y+m.f)/d};if(window.__ncnFishRecordMotion)(window.__ncnFishFrames||=[]).push({t:performance.now(),x,y});}return fillText.call(this,text,x,y,...args);};
   });return ctx;
 }
 const desktop=await context();let page=await desktop.newPage();page.on('pageerror',e=>errors.push(e.message));
@@ -124,6 +124,31 @@ try{
       await page.locator('#ff-next').click();await tick(100);assert.equal(await state(),'playing');assert.equal(await page.locator('#ff-level').innerText(),'002 / 200');assert.equal(await page.locator('#ff-menu .is-edible').count(),1);
       await page.reload();await tick(150);assert.equal(await state(),'ready');assert.equal(await page.locator('#ff-stage-select').inputValue(),'2');assert.equal(await page.locator('#ff-stage-select option:not([disabled])').count(),2);assert.ok(Number((await page.locator('#ff-best').innerText()).replace(/\D/g,''))>0,'Clearing a stage must retain the best score across reload');
     }finally{await classic.close();page=previous;}
+  });
+  await check('high-refresh Canvas frames move continuously and releasing the key still stops precisely',async()=>{
+    const smooth=await context(),previous=page;page=await smooth.newPage();page.on('pageerror',e=>errors.push(e.message));
+    try{
+      await freezeClock(page);await page.goto(base+'/ca-lon-nuot-ca-be/');await tick(150);
+      // Drive the real animation loop every 8 ms, while physics remains at 60 Hz.
+      await page.evaluate(()=>{window.requestAnimationFrame=callback=>setTimeout(()=>callback(performance.now()),8);window.cancelAnimationFrame=clearTimeout;});
+      await page.locator('#ff-start').click();await tick(100);await page.evaluate(()=>{window.__ncnFishRecordMotion=true;window.__ncnFishFrames=[];});await page.keyboard.down('ArrowRight');await tick(160);await page.keyboard.up('ArrowRight');
+      const frames=await page.evaluate(()=>window.__ncnFishFrames);assert.ok(frames.length>=15,'The actual painter ran above 60 Hz');
+      for(let i=4;i<frames.length;i++){const before=frames[i-1],after=frames[i];assert.ok(after.x>before.x,'No repeated movement frames');assert.ok(Math.abs((after.x-before.x)/(after.t-before.t)-.310)<.00001,'Even speed through physics boundaries: '+JSON.stringify({before,after}));}
+      await tick(80);const stopped=await page.evaluate(()=>window.__ncnFishPlayer.x);await tick(300);assert.equal(await page.evaluate(()=>window.__ncnFishPlayer.x),stopped);await shot('smooth-high-refresh');
+    }finally{await smooth.close();page=previous;}
+  });
+  await check('a visible big fish follows briefly with a cue, and pausing freezes the pursuit',async()=>{
+    const chase=await context(),previous=page;page=await chase.newPage();page.on('pageerror',e=>errors.push(e.message));
+    try{
+      // This fixed seed brings a predator into range after the opening protection.
+      await freezeClock(page,'2026-10-30T09:00:00.006Z');await page.goto(base+'/ca-lon-nuot-ca-be/');await tick(150);await page.locator('#ff-start').click();await tick(6300);const sea=await page.locator('#ff-canvas').boundingBox();let seen=await page.evaluate(()=>(window.__ncnFishHunters||[]).length>0);
+      for(let i=0;i<110&&!seen&&await state()==='playing';i++){
+        const target=await page.evaluate(()=>{const bodies=window.__ncnFishDrawn||[],p=bodies.at(-1);if(!p)return;return bodies.slice(0,-1).filter(f=>f.size>p.size*1.12&&f.y>60).sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y))[0];});
+        if(target)await page.mouse.move(sea.x+Math.max(20,Math.min(sea.width-20,target.x+target.face*120)),sea.y+target.y);await tick(100);
+        const hunters=await page.evaluate(()=>window.__ncnFishHunters||[]);assert.ok(hunters.length<=1,'Only one pursuer in the opening stage');if(hunters.length){seen=true;break;}
+      }
+      await shot('short-predator-chase');if(!seen)console.log('Visible fish at failed chase:',await page.evaluate(()=>({bodies:window.__ncnFishDrawn,player:window.__ncnFishPlayer,shield:document.getElementById('ff-shield-label').innerText})));assert.equal(seen,true,'A nearby larger fish should visibly enter a pursuit');await page.keyboard.press('p');await tick(100);const frozen=await page.evaluate(()=>window.__ncnFishHunters);await tick(2000);assert.deepEqual(await page.evaluate(()=>window.__ncnFishHunters),frozen);
+    }finally{await chase.close();page=previous;}
   });
   await check('a completed old campaign continues at stage 41 with its record, new character and held suction',async()=>{
     const advanced=await context();await advanced.addInitScript(()=>localStorage.setItem('ncn:fish:record:v1',JSON.stringify({version:2,best:5000,skin:'aqua',unlocked:40,wins:1})));
