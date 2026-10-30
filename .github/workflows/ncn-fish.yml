@@ -21,9 +21,16 @@ jobs:
       - run: node --check public/ca-lon-nuot-ca-be/game.js && node --check public/ca-lon-nuot-ca-be/draw.js && node --test tests/ncn-fish.test.mjs
       - run: npx playwright install --with-deps chromium
       - run: node tests/browser/ncn-fish.mjs
+      - name: Verify the actual compiled classic ocean
+        run: |
+          node scripts/build-public.mjs
+          node tests/ncn-performance-build.mjs
+          NCN_BUILT_TEST=1 node tests/browser/ncn-fish.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: ncn-ocean-arcade
-          path: artifacts/fish/
+          path: |
+            artifacts/fish/
+            artifacts/fish-built/
           retention-days: 14
