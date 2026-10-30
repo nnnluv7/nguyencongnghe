@@ -35,7 +35,7 @@ export function createStickerApp({app,data,doc=document,win=window,fetcher=fetch
   function showFields() {
     const row=currentRow();if(!row)return;
     showRowList();
-    $('st-fields').innerHTML=layout.fields.map((field,i)=>`<label class="st-field" for="st-field-${i}">${escapeHTML(field.label)}${field.required?' *':''}<span class="st-input-pair"><input id="st-field-${i}" type="text" data-field-index="${i}" maxlength="160" value="${escapeHTML(row.values[i])}" placeholder="${escapeHTML(field.example)}" autocomplete="off"><span class="st-scale"><input type="number" min="20" max="200" step="5" data-scale-index="${i}" value="${row.scales[i]}" aria-label="Cỡ chữ ${escapeHTML(field.label)}, phần trăm">%</span></span></label>`).join('');
+    $('st-fields').innerHTML=layout.fields.map((field,i)=>`<label class="st-field" for="st-field-${i}">${escapeHTML(field.label)}${field.required?' *':''}<span class="st-input-pair"><input id="st-field-${i}" type="text" data-field-index="${i}" maxlength="160" value="${escapeHTML(row.values[i])}" placeholder="${escapeHTML(field.placeholder??field.example??'')}" autocomplete="off"><span class="st-scale"><input type="number" min="20" max="200" step="5" data-scale-index="${i}" value="${row.scales[i]}" aria-label="Cỡ chữ ${escapeHTML(field.label)}, phần trăm">%</span></span></label>`).join('');
     $('st-quantity').value=row.qty;
     $('st-static-note').hidden=layout.fields.length>0;
   }

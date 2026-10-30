@@ -6,8 +6,10 @@ on:
       - 'public/assets/ncn-sticker/**'
       - 'public/assets/ncn-popup/**'
       - 'public/assets/ncn-store-tools/**'
+      - 'public/assets/ncn-direct/**'
       - 'netlify/lib/ncn-*-private/**'
       - 'tests/browser/ncn-print-text.mjs'
+      - 'tests/browser/ncn-print-defaults.mjs'
       - '.github/workflows/ncn-print-text.yml'
   push:
     branches: [main]
@@ -16,8 +18,10 @@ on:
       - 'public/assets/ncn-sticker/**'
       - 'public/assets/ncn-popup/**'
       - 'public/assets/ncn-store-tools/**'
+      - 'public/assets/ncn-direct/**'
       - 'netlify/lib/ncn-*-private/**'
       - 'tests/browser/ncn-print-text.mjs'
+      - 'tests/browser/ncn-print-defaults.mjs'
       - '.github/workflows/ncn-print-text.yml'
   workflow_dispatch:
 permissions:
@@ -37,9 +41,15 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Inspect all printable text in preview and print
         run: node tests/browser/ncn-print-text.mjs
+      - name: Verify real numeric defaults and independent label editing
+        run: |
+          node scripts/build-public.mjs
+          node tests/browser/ncn-print-defaults.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: ncn-print-text
-          path: artifacts/print-text/
+          path: |
+            artifacts/print-text/
+            artifacts/print-defaults/
           retention-days: 14

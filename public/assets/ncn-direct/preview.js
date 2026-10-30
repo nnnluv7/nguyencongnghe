@@ -5,7 +5,9 @@ export function editableInput(tag,field,copyIndex) {
   tag=tag.replace(/\s(?:readonly|disabled|tabindex|aria-readonly)(?:=(?:"[^"]*"|'[^']*'|[^\s>]+))?/gi,'');
   tag=tag.replace(/\s(?:placeholder|maxlength|data-ncn-copy)(?:=(?:"[^"]*"|'[^']*'|[^\s>]+))?/gi,'');
   const text=field.type!=='checkbox';
-  return tag.replace(/\s*\/?\s*>$/,` data-ncn-copy="${copyIndex}"${text?` placeholder="${escape(field.example||'')}" maxlength="${field.maxLength||160}" autocomplete="off"`:''}>`);
+  const label=/\saria-label\s*=/i.test(tag)?'':` aria-label="${escape(field.label)}"`;
+  const spelling=field.placeholder===''&&!/\sspellcheck\s*=/i.test(tag)?' spellcheck="false"':'';
+  return tag.replace(/\s*\/?\s*>$/,` data-ncn-copy="${copyIndex}"${label}${spelling}${text?` placeholder="${escape(field.placeholder??field.example??'')}" maxlength="${field.maxLength||160}" autocomplete="off"`:''}>`);
 }
 
 export const editableStyles = `
@@ -59,7 +61,8 @@ export function editCopy(layout,rows,copyIndex,fieldIndex,value,{linked=false}={
 export function rowsForValidation(layout,rows) {
   const required=layout.fields.map((f,i)=>f.required?i:-1).filter(i=>i>=0);
   if(!required.length)return rows;
-  const untouched=row=>required.every(i=>!String(row.values[i]??'').trim())&&layout.fields.every((field,i)=>
+  // Real zero templates are editable defaults, just like an initially empty name.
+  const untouched=row=>required.every(i=>String(row.values[i]??'')===String(layout.fields[i].initial??''))&&layout.fields.every((field,i)=>
     field.required||field.date||String(row.values[i]??'')===String(field.initial??'')
   );
   return rows.filter(row=>!untouched(row));

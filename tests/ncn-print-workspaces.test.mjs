@@ -5,10 +5,54 @@ import {createHash} from 'node:crypto';
 import * as Sticker from '../public/assets/ncn-sticker/core.js';
 import * as Popup from '../public/assets/ncn-popup/core.js';
 import * as Store from '../public/assets/ncn-store-tools/core.js';
-import {editCopy,copyAt} from '../public/assets/ncn-direct/preview.js';
+import {editableInput,editCopy,copyAt,rowsForValidation} from '../public/assets/ncn-direct/preview.js';
 
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 const hash=value=>createHash('sha256').update(value).digest('hex');
+test('zero templates are real editable values while product names remain hints',()=>{
+  let zeroFields=0,zeroLayouts=0,names=0;
+  for(const [group,core] of [['ncn-sticker',Sticker],['ncn-popup',Popup],['ncn-store-tools',Store]]){
+    const data=JSON.parse(read('public/assets/'+group+'/catalogue.json'));
+    for(const layout of data.layouts){
+      const row=core.defaultRow(layout);let hasZero=false;
+      for(const [i,field] of layout.fields.entries()){
+        if(field.placeholder===''&&/0/.test(field.example)){
+          assert.equal(row.values[i],field.example,layout.id+': '+field.label);
+          const input=editableInput('<input type="text">',field,0);
+          assert.match(input,/placeholder=""/);
+          assert.ok(input.includes('aria-label="'+field.label+'"'));
+          zeroFields++;hasZero=true;
+        }
+        if(field.label==='Tên sản phẩm'){
+          assert.equal(row.values[i],'',layout.id+': names must stay empty');
+          assert.ok(editableInput('<input type="text">',field,0).includes('placeholder="'+field.example+'"'));
+          names++;
+        }
+      }
+      if(hasZero)zeroLayouts++;
+    }
+  }
+  assert.equal(zeroFields,131);assert.equal(zeroLayouts,58);assert.ok(names>20);
+});
+test('default zero copies do not block a filled copy, but edited incomplete copies do',()=>{
+  const data=JSON.parse(read('public/assets/ncn-sticker/catalogue.json'));
+  const layout=data.layouts.find(l=>l.id==='gg2-1'),original=Sticker.defaultRow(layout);
+  const named=editCopy(layout,[original],1,0,'SẢN PHẨM QA');
+  const checked=Sticker.normalizeRows(layout,named.rows);
+  assert.equal(rowsForValidation(layout,checked).length,1);
+  assert.doesNotThrow(()=>Sticker.validateForPrint(layout,rowsForValidation(layout,checked)));
+  const cleared=editCopy(layout,named.rows,1,1,'');
+  assert.throws(()=>Sticker.validateForPrint(layout,rowsForValidation(layout,cleared.rows)),/Giá gốc/);
+  const noName=editCopy(layout,[original],0,1,'12.345.000đ');
+  assert.throws(()=>Sticker.validateForPrint(layout,rowsForValidation(layout,noName.rows)),/Tên sản phẩm/);
+  const explicitZero=editCopy(layout,[original],0,1,'0');
+  assert.equal(copyAt(explicitZero.rows,0).row.values[1],'0');
+  assert.equal(copyAt(explicitZero.rows,1).row.values[1],'00.000.000đ');
+  const imported=Sticker.importTable(layout,[['Tên sản phẩm','Giá gốc','Giá giảm','Thời gian áp dụng','Số lượng'],['QA','1.234.000đ','999.000đ','','1']]);
+  assert.deepEqual(imported[0].values.slice(0,3),['QA','1.234.000đ','999.000đ']);
+  assert.equal(imported[0].values[4],'','explicitly empty imports must stay empty');
+  assert.equal(original.values[1],'00.000.000đ','edits must not mutate defaults');
+});
 for(const [group,core] of [['ncn-sticker',Sticker],['ncn-popup',Popup],['ncn-store-tools',Store]]){
   test(group+': every layout keeps paper sizes, passive exports and independent copy editing',()=>{
     const data=JSON.parse(read('public/assets/'+group+'/catalogue.json'));
