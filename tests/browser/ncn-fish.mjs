@@ -30,8 +30,9 @@ async function context(options={}){
     Math.random=()=>.31415926;
     // Observe the visible player marker and green prey rings drawn on Canvas.
     // This exercises the real source or compiled game without exposing game state.
-    const proto=CanvasRenderingContext2D.prototype,transform=proto.setTransform,stroke=proto.stroke,fillText=proto.fillText;
-    proto.setTransform=function(...args){if(this.canvas.id==='ff-canvas')window.__ncnFishPrey=[];return transform.apply(this,args);};
+    const proto=CanvasRenderingContext2D.prototype,transform=proto.setTransform,stroke=proto.stroke,fillText=proto.fillText,drawImage=proto.drawImage;
+    proto.setTransform=function(...args){if(this.canvas.id==='ff-canvas'){window.__ncnFishPrey=[];window.__ncnFishBodies=0;}return transform.apply(this,args);};
+    proto.drawImage=function(source,...args){if(this.canvas.id==='ff-canvas'&&source.width===384&&source.height===320)window.__ncnFishBodies++;return drawImage.call(this,source,...args);};
     proto.stroke=function(...args){if(this.canvas.id==='ff-canvas'&&String(this.strokeStyle).replace(/\s/g,'').startsWith('rgba(184,255,188,')){
       const m=this.getTransform(),r=this.canvas.getBoundingClientRect(),d=this.canvas.width/r.width;window.__ncnFishPrey.push({x:m.e/d,y:m.f/d});
     }return stroke.apply(this,args);};
@@ -110,28 +111,38 @@ try{
     const classic=await context(),previous=page;page=await classic.newPage();page.on('pageerror',e=>errors.push(e.message));
     try{
       await freezeClock(page);await page.goto(base+'/ca-lon-nuot-ca-be/');await tick(150);await page.locator('#ff-start').click();await tick(150);
-      assert.equal(await page.locator('#ff-level').innerText(),'01 / 40');assert.equal(await page.locator('#ff-menu [role=listitem]').count(),3);assert.equal(await page.locator('#ff-menu .is-edible').count(),1);
+      assert.equal(await page.locator('#ff-level').innerText(),'001 / 200');assert.equal(await page.locator('#ff-menu [role=listitem]').count(),3);assert.equal(await page.locator('#ff-menu .is-edible').count(),1);
       const canvas=await page.locator('#ff-canvas').boundingBox();
-      for(let i=0;i<300&&await state()==='playing';i++){
+      assert.ok(await page.evaluate(()=>window.__ncnFishBodies<=13),'The opening has at most 12 fish plus the player');
+      for(let i=0;i<600&&await state()==='playing';i++){
         const target=await page.evaluate(()=>{const p=window.__ncnFishPlayer;return (window.__ncnFishPrey||[]).filter(f=>f.x>20&&f.y>140&&f.x<innerWidth-20).sort((a,b)=>Math.hypot(a.x-p.sx,a.y-p.sy)-Math.hypot(b.x-p.sx,b.y-p.sy))[0];});
-        if(target)await page.mouse.move(canvas.x+target.x,canvas.y+target.y);await tick(150);
+        if(target)await page.mouse.move(canvas.x+target.x,canvas.y+target.y);else await page.mouse.move(canvas.x+canvas.width*(Math.floor(i/20)%2?.2:.8),canvas.y+canvas.height*.5);await tick(150);
       }
-      assert.equal(await state(),'cleared','Ordinary mouse steering should reach a stage clear');assert.equal(await page.locator('#ff-cleared').isVisible(),true);assert.equal(await page.locator('#ff-menu .is-edible').count(),3);
+      assert.equal(await state(),'cleared','Ordinary mouse steering should reach a stage clear');assert.notEqual(await page.locator('#ff-time').innerText(),'00:00');assert.equal(await page.locator('#ff-cleared').isVisible(),true);assert.equal(await page.locator('#ff-menu .is-edible').count(),3);
       const frozen=await page.locator('#ff-time').innerText();await tick(5000);assert.equal(await page.locator('#ff-time').innerText(),frozen);
       assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('ncn:fish:record:v1')).unlocked),2);await shot('classic-stage-clear');
-      await page.locator('#ff-next').click();await tick(100);assert.equal(await state(),'playing');assert.equal(await page.locator('#ff-level').innerText(),'02 / 40');assert.equal(await page.locator('#ff-menu .is-edible').count(),1);
+      await page.locator('#ff-next').click();await tick(100);assert.equal(await state(),'playing');assert.equal(await page.locator('#ff-level').innerText(),'002 / 200');assert.equal(await page.locator('#ff-menu .is-edible').count(),1);
       await page.reload();await tick(150);assert.equal(await state(),'ready');assert.equal(await page.locator('#ff-stage-select').inputValue(),'2');assert.equal(await page.locator('#ff-stage-select option:not([disabled])').count(),2);assert.ok(Number((await page.locator('#ff-best').innerText()).replace(/\D/g,''))>0,'Clearing a stage must retain the best score across reload');
     }finally{await classic.close();page=previous;}
   });
-  await check('stage nine switches character, unlocks held suction and keeps an old saved record',async()=>{
-    const advanced=await context();await advanced.addInitScript(()=>localStorage.setItem('ncn:fish:record:v1',JSON.stringify({version:1,best:5000,skin:'aqua',unlocked:9})));
+  await check('a completed old campaign continues at stage 41 with its record, new character and held suction',async()=>{
+    const advanced=await context();await advanced.addInitScript(()=>localStorage.setItem('ncn:fish:record:v1',JSON.stringify({version:2,best:5000,skin:'aqua',unlocked:40,wins:1})));
     const previous=page;page=await advanced.newPage();page.on('pageerror',e=>errors.push(e.message));
     try{
-      await freezeClock(page);await page.goto(base+'/ca-lon-nuot-ca-be/');await tick(150);assert.equal(await page.locator('#ff-stage-select').inputValue(),'9');assert.equal(await page.locator('#ff-best').innerText(),'5.000');await page.locator('#ff-start').click();await tick(150);
-      assert.equal(await page.locator('#ff-level').innerText(),'09 / 40');assert.equal(await page.locator('#ff-zone').innerText(),'Cá sư tử');assert.equal(await page.locator('#ff-suck').isEnabled(),true);
+      await freezeClock(page);await page.goto(base+'/ca-lon-nuot-ca-be/');await tick(150);assert.equal(await page.locator('#ff-stage-select').inputValue(),'41');assert.equal(await page.locator('#ff-best').innerText(),'5.000');await page.locator('#ff-start').click();await tick(150);
+      assert.equal(await page.locator('#ff-level').innerText(),'041 / 200');assert.equal(await page.locator('#ff-zone').innerText(),'Cá sư tử');assert.equal(await page.locator('#ff-suck').isEnabled(),true);
       const at=await page.evaluate(()=>window.__ncnFishPlayer.x),area=await page.locator('#ff-canvas').boundingBox();await page.keyboard.down('e');await page.mouse.move(area.x+area.width*.72,area.y+area.height*.5);await tick(1000);assert.ok(await page.evaluate(()=>window.__ncnFishPlayer.x)>at+50,'Holding suction must not disable mouse steering');assert.ok(parseInt(await page.locator('#ff-energy-value').innerText())<85);assert.equal(await page.locator('#ff-suck').evaluate(n=>n.classList.contains('is-held')),true);await page.keyboard.up('e');await tick(200);assert.equal(await page.locator('#ff-suck').evaluate(n=>n.classList.contains('is-held')),false);await shot('classic-suction');
-      await page.keyboard.press('p');await page.locator('#ff-end').click();await page.locator('#ff-retry').click();await tick(100);assert.equal(await page.locator('#ff-level').innerText(),'09 / 40');assert.equal(await state(),'playing');
+      await page.keyboard.press('p');await page.locator('#ff-end').click();await page.locator('#ff-retry').click();await tick(100);assert.equal(await page.locator('#ff-level').innerText(),'041 / 200');assert.equal(await state(),'playing');
     }finally{await advanced.close();page=previous;}
+  });
+  await check('the last of 200 saved stages starts and retries with the correct character',async()=>{
+    const late=await context();await late.addInitScript(()=>localStorage.setItem('ncn:fish:record:v1',JSON.stringify({version:3,best:12000,unlocked:200})));
+    const previous=page;page=await late.newPage();page.on('pageerror',e=>errors.push(e.message));
+    try{
+      await freezeClock(page);await page.goto(base+'/ca-lon-nuot-ca-be/');await tick(150);assert.equal(await page.locator('#ff-stage-select').inputValue(),'200');assert.equal(await page.locator('#ff-stage-select option:not([disabled])').count(),200);
+      await page.locator('#ff-start').click();await tick(150);assert.equal(await page.locator('#ff-level').innerText(),'200 / 200');assert.equal(await page.locator('#ff-zone').innerText(),'Cá voi sát thủ');assert.ok(await page.evaluate(()=>window.__ncnFishBodies<=21),'Even the last stage begins with at most 20 fish plus the player');await shot('stage-200');
+      await page.keyboard.press('p');await page.locator('#ff-end').click();await page.locator('#ff-retry').click();await tick(150);assert.equal(await page.locator('#ff-level').innerText(),'200 / 200');assert.equal(await state(),'playing');
+    }finally{await late.close();page=previous;}
   });
   await check('full-screen fallback fills the viewport, keeps Canvas visible and exits by button or Escape',async()=>{
     const full=await context();await full.addInitScript(()=>{Element.prototype.requestFullscreen=()=>Promise.reject(new Error('Native fullscreen unavailable in fixture'));});const previous=page;page=await full.newPage();page.on('pageerror',e=>errors.push(e.message));

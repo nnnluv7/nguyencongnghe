@@ -1,35 +1,32 @@
-# Cá lớn nuốt cá bé — hành trình PC cổ điển
+# Cá lớn nuốt cá bé — biển thưa cá, 200 màn
 
-Bản trước dùng một lượt chơi dài qua sáu vùng biển và trên điện thoại cá tiếp tục bơi khi thả tay. Bản này chuyển sang từng màn ngắn, cá dừng theo tay người chơi và có thực đơn chỉ rõ loài ăn được. Giao diện, tài khoản và bảng điểm NCN dùng lại hệ thống hiện hành.
+Hành trình mở rộng từ 40 lên 200 màn. Giảm mật độ cá và tốc độ người chơi để biển có khoảng trống; độ khó tăng qua tốc độ cá, số mối nguy, tăng trưởng và thời gian bảo vệ. Điều khiển theo tay, giao diện Liquid Glass, tài khoản và bảng điểm NCN dùng lại hệ thống hiện hành.
 
-## Cách chơi
+## Cách chơi và cân bằng
 
-- 40 màn, 5 nhân vật, 14 loài cá và 6 cảnh biển. Mỗi màn có ba cỡ cá, hai mốc lớn lên trên thanh tăng trưởng và màn qua rõ ràng. Màn 40 yêu cầu ăn vua cá mập thật để chiến thắng.
-- Trên PC, cá bơi đến đúng con trỏ và dừng, không vượt qua mục tiêu. WASD/phím mũi tên dùng cùng mô phỏng. Click trái, Space hoặc Shift để lướt ngắn.
-- Trên điện thoại, chạm kéo trong biển điều khiển tương đối từ vị trí hiện tại, không kéo cá nhảy tới ngón tay. Joystick cố định vẫn dùng được; cả hai đều dừng khi thả tay. Có thể vừa lái vừa lướt/hút bằng ngón thứ hai.
-- Từ màn 9, giữ chuột phải, phím E hoặc nút Hút cá để kéo con mồi ăn được phía trước. Năng lượng có giới hạn và phải thả ra sau khi cạn để dùng lại. Giữ E vẫn điều khiển chuột được.
-- Cá bơi theo luồng dễ đoán, không liên tục đuổi người chơi. Màn đầu có tối đa hai cá nguy hiểm ở xa, ít nhất bảy con mồi ở gần và khoảng biển dễ đọc hơn. Có tám giây bảo vệ đầu màn; bị cắn giữ nguyên tăng trưởng, được bảo vệ năm giây và dọn khoảng trống an toàn.
-- Không có thời gian đếm ngược. Qua màn hồi một mạng, dừng mô phỏng và đợi người chơi bấm sang màn kế tiếp. Thua chơi lại màn hiện tại; màn đã mở và kỷ lục được lưu sau khi qua màn.
-- Combo tới ×5, cuồng ăn có thời hạn, cá vàng giúp tăng trưởng, trai mở có ngọc, lá chắn, trái tim, tăng tốc và đóng băng. Ngọc chỉ cho điểm, không làm cá lớn lên. Sứa và cá mập báo trước chỉ xuất hiện từ màn 9.
-- Toàn màn hình có nút thoát trong biển. Nếu API toàn màn hình không có hoặc bị trình duyệt từ chối, dùng chế độ phóng đầy cửa sổ; Escape/F/nút thoát trả lại trang và khả năng cuộn.
+- 200 màn, 5 nhân vật, 14 loài cá và 6 cảnh biển. Nhân vật mới mở ở màn 41, 81, 121 và 161. Mỗi màn có ba cỡ cá và hai mốc lớn lên. Màn 200 yêu cầu ăn vua cá mập thật để chiến thắng.
+- Biển bắt đầu với mục tiêu 12 cá, tăng nhẹ đến 20 cá ở cuối hành trình, giới hạn cứng 22 kể cả cá đặc biệt. Chỉ có ba con mồi dẫn đường đầu màn. Cá bù và đàn nhỏ hai con bơi vào từ mép biển; không sinh quanh người chơi và không bù cả đàn tức thì.
+- Tốc độ bơi cơ bản 310 đơn vị/giây. Click trái, Space hoặc Shift để lướt ngắn 0,2 giây, tốn 25 năng lượng và hồi chiêu 1,15 giây. Năng lượng hồi 15/giây khi nghỉ. Từ màn 9, giữ chuột phải, E hoặc nút Hút cá để hút con mồi ăn được, tiêu hao 26 năng lượng/giây. Không hút được cá lớn; phải thả ra sau khi cạn để dùng lại.
+- Trên PC, cá bơi đến đúng con trỏ rồi dừng. WASD/phím mũi tên dùng cùng mô phỏng. Trên điện thoại, kéo trong biển điều khiển tương đối từ vị trí hiện tại; chạm ở nơi khác không làm cá nhảy tới tay. Joystick vẫn dùng được; cả hai đều dừng khi thả tay. Có thể vừa lái vừa lướt/hút bằng ngón thứ hai.
+- Cá bơi theo luồng dễ đoán. Cá nguy hiểm thông thường giới hạn từ một con đầu hành trình lên năm con cuối hành trình. Tốc độ tăng tuyến tính từng màn; thời gian bảo vệ đầu màn giảm từ 6 xuống 2,5 giây. Khi bị cắn giữ nguyên tăng trưởng, dọn khoảng trống an toàn và bảo vệ 4 giây. Qua màn hồi một mạng.
+- Không đếm ngược. Mô phỏng dừng khi qua màn và đợi bấm sang màn tiếp theo. Thua chơi lại màn hiện tại. Màn đã mở và kỷ lục được lưu sau khi qua màn.
+- Combo tới ×5, cuồng ăn có thời hạn, cá vàng giúp tăng trưởng. Trên biển có tối đa hai vật phẩm cùng lúc; ngọc chỉ cho điểm. Đàn nhỏ đầu tiên sau 24 giây; đợt vật phẩm đầu sau 18 giây. Sứa từ màn 21, cá mập có báo trước từ màn 31. Trai đóng gây va chạm từ màn 81.
+- Giảm đàn cá nền, bọt nước, vòng hướng dẫn và hiệu ứng ăn cá để khung hình thoáng hơn. Toàn màn hình vẫn có nút thoát trong biển và chế độ phóng đầy cửa sổ dự phòng; Escape/F/nút thoát trả lại trang và khả năng cuộn.
 
 ## Dữ liệu và phạm vi
 
-Mô phỏng, hình cá, cảnh và âm thanh là mã/đồ họa NCN tự dựng. Không đóng gói tài nguyên của Feeding Frenzy hoặc tải runtime từ dịch vụ bên ngoài.
+Giữ khóa `ncn:fish:record:v1`, nâng schema lên 3 và giữ best/fish/wins/skin/sound/reduced. `unlocked` giới hạn 1–200. Người đã thắng hành trình 40 màn của schema 2 được tiếp tục ở màn 41; các tiến độ khác giữ nguyên. Đây là dữ liệu chơi cục bộ, không cấp danh tính hay quyền hạn.
 
-Giữ `ncn:fish:record:v1` và di chuyển dữ liệu sang schema 2: giữ nguyên best/fish/wins/skin/sound/reduced, thêm `unlocked` từ 1 đến 40. Đây là dữ liệu chơi cục bộ, không phải danh tính hoặc quyền hạn. Không đổi xác thực, quyền ADMIN/VIP, backend bảng điểm hay bài viết. Vẫn gửi kết quả qua game `ocean`, mode `classic` bằng hồ sơ NCN chung; điểm các thành viên đã có không bị ghi đè bằng điểm thấp hơn.
+Backend chỉ mở giới hạn màn của game `ocean` lên 200. Giữ mode `classic`, hồ sơ NCN chung, xác thực, quyền ADMIN/VIP, giới hạn của các game khác và bảo vệ điểm `score <= 1000 + 2500 × seconds`. Điểm cũ không bị thay bằng điểm thấp hơn.
 
-Điểm thưởng được cân theo giới hạn hợp lệ hiện tại của máy chủ. Kiểm thử các lượt chơi nhanh và chơi lại màn cao xác nhận `score <= 1000 + 2500 × seconds`, giữ nguyên bảo vệ phía máy chủ.
-
-Mã thay đổi chỉ nằm trong trang game, kiểm thử, workflow game và tài liệu này. Các trò chơi khác, mẫu in và giao diện Liquid Glass chung giữ nguyên.
+Mô phỏng, hình cá, cảnh và âm thanh là mã/đồ họa NCN tự dựng. Không tải runtime ngoài. Các trò chơi khác, mẫu in và Liquid Glass chung giữ nguyên.
 
 ## Kiểm chứng
 
-- Kiểm thử mô phỏng bao gồm dừng đúng mục tiêu, thả tay không trôi, ba cỡ cá, mốc mở kỹ năng, giới hạn năng lượng, bất tử có hạn, dừng/tiếp tục, lưu dữ liệu cũ, đủ 40 màn và vua cá mập.
-- Mô phỏng điều khiển theo mục tiêu cách nhau 400 ms trên năm seed × 40 màn: 200 lượt đều hoàn thành. Đây là kiểm tra mô phỏng, không phải đánh giá từ người chơi thật.
-- Browser dùng HTTP fixture cục bộ và hồ sơ giả, chặn mọi request ra ngoài. Kiểm tra bảy cỡ màn 320–1440px, chuột, kéo tay không nhảy vị trí, thả tay dừng, joystick + lướt hai ngón, qua màn rồi tải lại, kỹ năng màn 9, toàn màn hình dự phòng, menu/tài khoản, âm thanh, giảm chuyển động và cuộn trên Canvas.
-- Theo dõi vị trí hiển thị bằng marker/vòng con mồi thực sự vẽ lên Canvas. Đồng hồ thử nghiệm dừng giữa các thao tác và chỉ chạy khi có tick, tránh so sánh vị trí qua những khung hình vô tình chạy thêm.
-- Chạy cùng bộ browser trên mã nguồn và bản dựng có hash/SRI; bộ NCN Arcade kiểm tra lưu điểm và hồ sơ thật bằng backend giả. Không tạo hồ sơ hoặc điểm thử trên website công khai.
+- Kiểm thử mô phỏng gồm điều khiển chính xác, ba cỡ cá, năng lượng, va chạm, tạm dừng, lưu/mở màn, chuyển dữ liệu cũ, đủ 200 màn và vua cá mập. Kiểm tra độ khó tăng đơn điệu và cá mới đi từ mép biển.
+- Mô phỏng lái về con mồi gần nhất mỗi 300 ms, ba seed × 200 màn: 600 lượt, 578 qua màn, 22 thua và không có màn bị kẹt. Lượt hoàn thành dài 13,78–24,92 giây, tối đa 20 cá trong các mẫu này. Đây là bot không chủ động né nguy hiểm, không phải đánh giá thời gian hay độ khó từ người chơi thật.
+- Browser dùng HTTP fixture cục bộ, hồ sơ giả và chặn request ra ngoài. Kiểm tra 320–1440px, chuột, kéo tay, thả tay, joystick + lướt hai ngón, qua màn/tải lại, chuyển tiến độ cũ sang màn 41, mở màn 200, hút cá, toàn màn hình, menu/tài khoản, cài đặt và cuộn trên Canvas.
+- Theo dõi marker, vòng con mồi và sprite thực sự vẽ lên Canvas. Đồng hồ thử nghiệm dừng giữa các thao tác để tránh khung hình chạy ngầm. Cùng bộ browser chạy trên mã nguồn và bản dựng hash/SRI; NCN Arcade kiểm tra hồ sơ và lưu điểm qua backend giả. Không tạo hồ sơ hoặc điểm thử trên website công khai.
 
 ```sh
 node --test tests/*.test.cjs tests/*.test.mjs
@@ -38,6 +35,5 @@ node scripts/build-public.mjs
 node tests/ncn-performance-build.mjs
 NCN_BUILT_TEST=1 node tests/browser/ncn-fish.mjs
 node tests/browser/ncn-arcade.mjs
+NCN_BUILT_TEST=1 node tests/browser/ncn-arcade.mjs
 ```
-
-Tham khảo cách chơi: [bản PC do Shockwave phân phối](https://www.shockwave.com/gamelanding/feedingfrenzy), [giới thiệu chính thức Xbox](https://news.xbox.com/en-us/2006/03/16/feeding-frenzy/amp/), [hướng dẫn PopCap](https://static-www.ec.popcap.com/support.popcap.com/sites/support.popcap.com/files/XBox_Vol1_manual.pdf).

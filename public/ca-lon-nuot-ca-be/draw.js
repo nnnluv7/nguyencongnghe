@@ -1,4 +1,4 @@
-import {WORLD,FISH,LEVELS,clamp,randomSource} from './core.js?v=20261030-classic-1';
+import {WORLD,FISH,LEVELS,clamp,randomSource} from './core.js?v=20261030-chill-200-1';
 const TAU=Math.PI*2;
 export function cameraFocus(player,width,height,zoom,follow=false){
   if(follow||width<640)return {x:player.x,y:player.y};
@@ -50,8 +50,8 @@ export class OceanPainter{
     for(let i=0;i<7;i++){const x=(i*.19-.2)*w+(this.reduced?0:Math.sin(time*.12+i)*18);const g=c.createLinearGradient(x,0,x+w*.18,h);g.addColorStop(0,'#c5ffff22');g.addColorStop(.8,'#a0ffff03');g.addColorStop(1,'#d1ffff00');c.fillStyle=g;c.beginPath();c.moveTo(x,0);c.lineTo(x+45,0);c.lineTo(x+w*.48,h);c.lineTo(x+w*.16,h);c.closePath();c.fill();}
     c.restore();
     // Distant shoals and suspended bubbles establish depth without busy particles.
-    c.save();c.globalAlpha=.15;c.fillStyle='#0d5981';for(let i=0;i<18;i++){const x=((i*117+time*(i%2?4:-5))%(w+100)+w+100)%(w+100)-50,y=80+(i*53)%(Math.max(180,h*.5));c.beginPath();c.ellipse(x,y,8+(i%3)*2,3+(i%2),0,0,TAU);c.fill();c.beginPath();c.moveTo(x-7,y);c.lineTo(x-14,y-5);c.lineTo(x-14,y+5);c.closePath();c.fill();}c.restore();
-    const bubbleCount=this.reduced?12:35;
+    c.save();c.globalAlpha=.15;c.fillStyle='#0d5981';for(let i=0;i<6;i++){const x=((i*117+time*(i%2?4:-5))%(w+100)+w+100)%(w+100)-50,y=80+(i*53)%(Math.max(180,h*.5));c.beginPath();c.ellipse(x,y,8+(i%3)*2,3+(i%2),0,0,TAU);c.fill();c.beginPath();c.moveTo(x-7,y);c.lineTo(x-14,y-5);c.lineTo(x-14,y+5);c.closePath();c.fill();}c.restore();
+    const bubbleCount=this.reduced?8:18;
     for(let i=0;i<bubbleCount;i++){const x=(i*117.71+Math.sin(time*.33+i)*9)%w,y=h-((i*49.3+(this.reduced?0:time*(5+i%4)))%(h+30)),r=1.5+i%4;c.strokeStyle='#d7ffff35';c.lineWidth=.8;c.beginPath();c.arc(x,y,r,0,TAU);c.stroke();ellipse(c,x-r*.25,y-r*.3,.7,.7,'#ecffff55');}
     c.save();c.translate(w/2-this.camera.x*z,h/2-this.camera.y*z);c.scale(z,z);
     // A foreground reef follows the camera gently, keeping the ocean grounded
@@ -60,7 +60,7 @@ export class OceanPainter{
     if(ocean.oyster)this.oyster(c,ocean.oyster);
     for(const j of ocean.jellies)this.jelly(c,j,time);
     for(const item of ocean.items)this.item(c,item,time);
-    const hintIds=new Set(ocean.fish.filter(f=>ocean.edible(f)&&Math.hypot(f.x-p.x,f.y-p.y)<280).sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y)).slice(0,6).map(f=>f.id));
+    const hintIds=new Set(ocean.fish.filter(f=>ocean.edible(f)&&Math.hypot(f.x-p.x,f.y-p.y)<280).sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y)).slice(0,3).map(f=>f.id));
     for(const f of [...ocean.fish].sort((a,b)=>a.size-b.size)){
       const at=this.point(f.x,f.y);if(at.x<-230*z||at.x>w+230*z||at.y<-130*z||at.y>h+130*z)continue;
       const edible=ocean.edible(f),distance=Math.hypot(f.x-p.x,f.y-p.y);

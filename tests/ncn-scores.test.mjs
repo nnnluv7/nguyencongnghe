@@ -95,3 +95,10 @@ test('Gold Miner uses the shared identity with separate classic and daily boards
 });
 
 test('NCN Blast shares the profile and keeps classic/daily scores and dates separate',async()=>{const f=fixture(),g=await guest(f,'Bạn Ghép Khối'),a=await scored(f,{game:'blast',mode:'classic',score:420,level:0,cookie:g.cookie});assert.equal((await call(f,'board&game=blast&mode=classic')).value.total,1);const d=await call(f,'start',{game:'blast',mode:'daily',date:'2026-10-26'},g.cookie);assert.equal(d.status,200);f.now+=20000;assert.equal((await call(f,'score',{runId:d.value.runId,score:900,level:0},g.cookie)).status,200);assert.equal((await call(f,'board&game=blast&mode=daily&date=2026-10-26')).value.total,1);assert.equal((await call(f,'board&game=blast&mode=daily&date=2026-10-27')).value.total,0);assert.equal((await call(f,'start',{game:'blast',mode:'arena'},g.cookie)).status,400);assert.equal((await call(f,'score',{runId:a.start.value.runId,score:10000000,level:0},g.cookie)).status,400);});
+
+test('the ocean can publish stage 200 while retaining every other game limit and score guard',async()=>{
+ const f=fixture();f.user=member;await scored(f,{game:'ocean',mode:'classic',score:850,level:200});assert.equal((await call(f,'board&game=ocean&mode=classic')).value.items[0].level,200);
+ f.now+=1000;const run=await call(f,'start',{game:'ocean',mode:'classic'});assert.equal((await call(f,'score',{runId:run.value.runId,score:900,level:201})).status,400);
+ assert.equal((await call(f,'score',{runId:run.value.runId,score:100000000,level:200})).status,400);
+ f.now+=1000;const flight=await call(f,'start',{game:'flight',mode:'normal'});assert.equal((await call(f,'score',{runId:flight.value.runId,score:100,level:101})).status,400);
+});

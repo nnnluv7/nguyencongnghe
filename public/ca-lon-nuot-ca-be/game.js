@@ -1,6 +1,6 @@
 import {mountScores} from '../assets/ncn-arcade/arcade.js?v=20261027-photo-save-1';
-import {Ocean,LEVELS,FISH,clamp,cleanRecord,awardRecord} from './core.js?v=20261030-classic-1';
-import {OceanPainter} from './draw.js?v=20261030-classic-1';
+import {Ocean,LEVELS,FISH,STAGE_COUNT,clamp,cleanRecord,awardRecord} from './core.js?v=20261030-chill-200-1';
+import {OceanPainter} from './draw.js?v=20261030-chill-200-1';
 import {installScrollUI} from '../assets/ncn-theme/scroll-ui.js?v=20261024-compact-1';
 
 const $=id=>document.getElementById(id),stage=$('ff-stage'),canvas=$('ff-canvas');
@@ -40,7 +40,7 @@ function updateSettings(){
   $('ff-sound').innerHTML=record.sound?'<svg viewBox="0 0 24 24"><path d="m11 5-6 4H2v6h3l6 4ZM16 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></svg>':'<svg viewBox="0 0 24 24"><path d="m11 5-6 4H2v6h3l6 4ZM16 9l5 6M21 9l-5 6"/></svg>';
   document.querySelectorAll('[data-skin]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.skin===record.skin)));text('ff-best',format(record.best));
   $('ff-stage-picker').hidden=record.unlocked<2;
-  $('ff-stage-select').innerHTML=LEVELS.map((level,i)=>'<option value="'+(i+1)+'"'+(i>=record.unlocked?' disabled':'')+'>Màn '+String(i+1).padStart(2,'0')+' · '+level.name+(i>=record.unlocked?' · Chưa mở':'')+'</option>').join('');
+  $('ff-stage-select').innerHTML=LEVELS.map((level,i)=>'<option value="'+(i+1)+'"'+(i>=record.unlocked?' disabled':'')+'>Màn '+String(i+1).padStart(3,'0')+' · '+level.name+(i>=record.unlocked?' · Chưa mở':'')+'</option>').join('');
   $('ff-stage-select').value=String(selectedLevel+1);text('ff-start-label',selectedLevel?'Tiếp tục màn '+(selectedLevel+1):'Bắt đầu chuyến đi');
 }
 function clearInput(){keys.clear();mouse=null;heading={x:0,y:0};stickId=dragId=suckId=null;dragAnchor=null;vacuumHeld=false;$('ff-stick').classList.remove('is-held');$('ff-stick').firstElementChild.style.transform='';}
@@ -53,7 +53,7 @@ function syncState(){
   $('ff-fever').hidden=!playing||ocean.fever<=0;
 }
 function hud(){
-  text('ff-score',format(ocean.score));text('ff-level',String(ocean.level+1).padStart(2,'0')+' / 40');text('ff-zone',ocean.character.name);
+  text('ff-score',format(ocean.score));text('ff-level',String(ocean.level+1).padStart(3,'0')+' / '+STAGE_COUNT);text('ff-zone',ocean.character.name);
   text('ff-goal',ocean.goalText);
   const value=Math.round(ocean.progress*100);$('ff-growth-fill').style.width=value+'%';$('ff-growth-meter').setAttribute('aria-valuenow',String(value));
   document.querySelectorAll('[data-growth]').forEach(node=>node.classList.toggle('is-current',Number(node.dataset.growth)===ocean.growth));
@@ -62,7 +62,7 @@ function hud(){
   text('ff-lives',Array.from({length:3},(_,i)=>i<ocean.lives?'♥':'♡').join(' '));$('ff-lives').setAttribute('aria-label','Còn '+ocean.lives+' mạng');
   text('ff-time',clock(ocean.elapsed));text('ff-combo',ocean.combo>1?'COMBO ×'+ocean.combo:'');
   const frenzy=Math.round(Math.min(1,ocean.chain/10)*100);$('ff-frenzy-fill').style.width=frenzy+'%';$('ff-frenzy-meter').setAttribute('aria-valuenow',String(frenzy));
-  const energy=Math.floor(ocean.energy);text('ff-energy-value',energy+'%');$('ff-energy-fill').style.width=energy+'%';$('ff-dash').disabled=ocean.status!=='playing'||ocean.energy<22||ocean.dashCooldown>0;
+  const energy=Math.floor(ocean.energy);text('ff-energy-value',energy+'%');$('ff-energy-fill').style.width=energy+'%';$('ff-dash').disabled=ocean.status!=='playing'||ocean.energy<25||ocean.dashCooldown>0;
   $('ff-suck').disabled=ocean.status!=='playing'||!ocean.suctionUnlocked||ocean.energy<3;$('ff-suck').classList.toggle('is-held',ocean.sucking);text('ff-suck-label',ocean.suctionUnlocked?'Giữ để hút':'Hút · Màn 9');$('ff-suck').setAttribute('aria-label',ocean.suctionUnlocked?'Giữ để hút cá':'Hút cá mở từ màn 9');
   text('ff-dash-label',ocean.dashCooldown>0?ocean.dashCooldown.toFixed(1)+'s':'Lướt nước');text('ff-shield-label',ocean.shield>0?'◇ Lá chắn · '+Math.ceil(ocean.shield)+'s':ocean.safe>0?'◌ Đang được bảo vệ':'');
   $('ff-fever').hidden=ocean.status!=='playing'||ocean.fever<=0;
@@ -71,13 +71,13 @@ function event(e){
   audio.play(e.type);
   if(e.type==='grow')toast(ocean.growth===1?'Lớn rồi! Bây giờ ăn được cá vừa.':'Đủ lớn! Ăn được cả ba loài trong thực đơn.',2400);
   if(e.type==='cleared'){
-    clearInput();siteChrome?.show();record.unlocked=Math.max(record.unlocked,Math.min(40,ocean.level+2));record.best=Math.max(record.best,ocean.score);selectedLevel=record.unlocked-1;const saved=save();updateSettings();scores.checkpoint(ocean.score,ocean.level+1,{force:true});
+    clearInput();siteChrome?.show();record.unlocked=Math.max(record.unlocked,Math.min(STAGE_COUNT,ocean.level+2));record.best=Math.max(record.best,ocean.score);selectedLevel=record.unlocked-1;const saved=save();updateSettings();scores.checkpoint(ocean.score,ocean.level+1,{force:true});
     text('ff-clear-title','Hoàn thành màn '+(ocean.level+1));text('ff-clear-note',saved?'Tiến độ đã lưu. Màn '+(ocean.level+2)+' đang chờ anh.':'Màn tiếp đã mở. Trình duyệt chưa lưu được tiến độ.');text('ff-clear-bonus',(e.perfect?'Màn hoàn hảo · ':'')+'Thưởng '+format(e.bonus)+' điểm · Hồi 1 mạng');hud();syncState();$('ff-next').focus({preventScroll:true});
   }
   if(e.type==='fever')toast('Cuồng ăn! Điểm được nhân đôi.',2300);
   if(e.type==='hit'){clearInput();toast(ocean.lives?'Còn '+ocean.lives+' mạng. Đã giữ nguyên cỡ cá và tăng trưởng.':'Có thể chơi lại ngay màn này.',2200);}
   if(e.type==='pickup')toast(e.kind==='shield'?'Lá chắn · Đỡ một va chạm':e.kind==='heart'?'Thêm một mạng, bơi tiếp thôi!':e.kind==='freeze'?'Các cá khác đóng băng 5 giây':e.kind==='speed'?'Tăng tốc 7 giây':'Ngọc biển · +150 điểm',1700);
-  if(e.type==='swarm')toast('Một đàn cá đang ghé thăm!',1900);
+  // Small schools enter at the edges without interrupting the quiet scene.
   if(e.type==='won'||e.type==='over')finish();
 }
 function finish(){
@@ -85,11 +85,11 @@ function finish(){
   text('ff-result-kicker',won?'CHÀO VUA ĐẠI DƯƠNG':'MỘT CHUYẾN ĐI ĐÁNG NHỚ');text('ff-result-title',won?'Từ cá bé, thành huyền thoại.':'Lớn hơn một chút rồi.');
   text('ff-final-score',format(ocean.score));text('ff-record-note',ocean.score>wasBest?'✦ Kỷ lục mới trên máy này!':'Màn '+(ocean.level+1)+' · '+LEVELS[ocean.level].name);
   text('ff-final-fish',ocean.eaten);text('ff-final-time',clock(ocean.elapsed));text('ff-final-combo','×'+ocean.bestCombo);
-  text('ff-result-tip',won?'Đã chinh phục cả 40 màn và vua cá mập!':'Anh đã mở đến màn '+record.unlocked+'. Chơi lại màn này hoặc chọn màn đã mở ở màn hình đầu.');hud();syncState();$('ff-retry').focus({preventScroll:true});
+  text('ff-result-tip',won?'Đã chinh phục cả 200 màn và vua cá mập!':'Anh đã mở đến màn '+record.unlocked+'. Chơi lại màn này hoặc chọn màn đã mở ở màn hình đầu.');hud();syncState();$('ff-retry').focus({preventScroll:true});
 }
 async function start(at){
   if(externalPanel())return;const level=Number.isSafeInteger(at)?at:selectedLevel;if(!await scores.begin({mode:'classic'}))return;audio.unlock();clearInput();inputMode=touchMode?'touch':'keyboard';settled=false;startingBest=record.best;accumulator=0;ocean.start(undefined,clamp(level,0,record.unlocked-1));painter.reset();lastFrame=performance.now();$('ff-toast').classList.remove('show');hud();syncState();
-  resize();canvas.focus({preventScroll:true});stage.scrollIntoView({block:'start',behavior:'instant'});toast(touchMode?'Kéo để dẫn cá · Thả tay là dừng · Bảo vệ 8 giây đầu màn.':'Cá bơi đến con trỏ và dừng ở đó. Bảng thực đơn cho biết cá ăn được.',3600);
+  resize();canvas.focus({preventScroll:true});stage.scrollIntoView({block:'start',behavior:'instant'});toast(touchMode?'Kéo để dẫn cá · Thả tay là dừng · Bơi thong thả, tránh cá lớn.':'Cá bơi đến con trỏ và dừng ở đó. Bảng thực đơn cho biết cá ăn được.',3600);
 }
 function pause(reason='manual'){
   if(!ocean.pause())return;scores.checkpoint(ocean.score,ocean.level+1,{force:true});clearInput();siteChrome?.show();audio.suspend();text('ff-pause-note',reason==='tab'?'Ván chơi đã nghỉ cùng bạn. Cá, combo và thời gian đều được giữ lại.':'Cá, combo và thời gian đều đã tạm dừng.');hud();syncState();
