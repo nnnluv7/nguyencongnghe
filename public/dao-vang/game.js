@@ -85,6 +85,6 @@ function frame(now){const dt=Math.min(.05,Math.max(0,(now-previous)/1000));previ
  const events=step(game,dt);for(const event of events){renderer.effect(event,reduced);if(event.type==='bank'){record();checkpoint();sound('bank');say(event.reward||('Kéo lên '+(event.value?'$'+format(event.value):'một túi rỗng')+'.'));}else if(event.type==='blast'){sound('blast');say('Thùng TNT nổ! Vật xung quanh đã bị phá.');}else if(event.type==='catch')sound('catch');}
  if(game.status!=='playing')ended();else if(now-lastUI>=100||events.length){lastUI=now;update();}if(now-lastSave>=1000){lastSave=now;persist();}
  }if(state==='playing'||dirty||renderer.animating){renderer.draw(game,{dt,reduced,active:state==='playing'});dirty=false;}requestAnimationFrame(frame);}
-const resize=()=>{$('app').style.setProperty('--gm-normal-width',Math.round(Math.min(1280,Math.max(300,innerHeight-310)*1.6))+'px');renderer.resize();dirty=true;renderer.draw(game,{reduced,active:state==='playing'});};
+const resize=()=>{renderer.resize();dirty=true;renderer.draw(game,{reduced,active:state==='playing'});};
 installFullscreen({app:$('app'),button:$('fullscreen'),status:$('awake-status'),resize,notify:say,immersiveClass:'gm-immersive',rootClass:'gm-fullscreen-open'});new ResizeObserver(resize).observe($('field'));window.addEventListener('resize',resize);
 applyPrefs();view('ready');storageNote();resize();requestAnimationFrame(frame);

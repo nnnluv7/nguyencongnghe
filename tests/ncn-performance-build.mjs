@@ -28,5 +28,12 @@ for(const path of ['/index.html','/thu-vien/index.html','/sticker/index.html','/
  const html=await readFile(root+path,'utf8');themeSets.push(new Set([...html.matchAll(/href="(\/assets\/ncn-built\/styles\/[^"]+)"/g)].map(x=>x[1])));
 }
 assert.ok([...themeSets[0]].some(path=>themeSets.every(set=>set.has(path))),'Every portal, tool and game must reuse the same immutable NCN CSS');
+const arcadeSets=[];
+for(const path of ['/arcade/','/ran-luot/','/flappy-bird/','/pikachu/','/ca-lon-nuot-ca-be/','/xep-hinh/','/dao-vang/','/ghep-khoi/','/ban-bong/']){
+ const html=await readFile(root+path+'index.html','utf8');
+ arcadeSets.push(new Set([...html.matchAll(/href="(\/assets\/ncn-built\/styles\/[^"]+)"/g)].map(x=>x[1])));
+}
+const arcadeStyle=[...arcadeSets[0]].filter(path=>arcadeSets.every(set=>set.has(path)));
+assert.ok(arcadeStyle.some(path=>!themeSets[0].has(path)),'All eight games and the hub must reuse one separately cached Arcade stylesheet');
 await mkdir('artifacts/performance',{recursive:true});await writeFile('artifacts/performance/build.json',JSON.stringify({pages:pages.length,entries:Object.keys(manifest.modules).length,ok:true},null,2));
 console.log('PASS '+pages.length+' built pages: local assets, SRI, shared styles and single import maps');

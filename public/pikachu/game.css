@@ -59,7 +59,7 @@ html[data-ncn-theme=dark] .pk-app.pk-immersive{background:#132b24}
 .pk-immersive .pk-assists button>span:nth-child(2){font-size:10px;flex:none}.pk-immersive .pk-assists small{display:none}
 .pk-immersive .pk-assist-icon{font-size:18px;width:auto}.pk-immersive .pk-assists b{font-size:9px;padding:2px 5px}
 .pk-immersive .pk-new{grid-column:3;grid-row:2;min-width:0;margin:0;padding:5px;font-size:10px;min-height:34px;border:1px solid var(--pk-edge);border-radius:9px;background:var(--pk-glass)}
-.pk-immersive .pk-overlay{padding:24px 7%;overflow:auto}
+.pk-immersive .pk-overlay{padding:24px 7%;overflow-x:hidden;overflow-y:auto}
 .pk-immersive .pk-welcome-copy{width:66%;max-width:390px}
 .pk-immersive .pk-welcome-copy h2{font-size:clamp(30px,5vw,53px);margin-bottom:16px}
 .pk-immersive .pk-welcome-copy>p{font-size:11px;margin-bottom:18px}

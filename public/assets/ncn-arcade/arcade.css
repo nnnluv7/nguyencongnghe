@@ -41,3 +41,82 @@ html[data-ncn-theme=dark] :is(.ncn-arcade-nav,.ncn-scoreboard,.ncn-arcade-dialog
 
 /* Eight games finish the hub with two equally sized feature cards. */
 .ncn-gold-card,.ncn-blast-card{grid-column:span 3}.ncn-blast-card{background:linear-gradient(120deg,#e3f4e7,#add9d3)!important;min-height:240px}.ncn-blast-card img{object-fit:contain;object-position:right center;top:-6%;right:-4%;height:120%;width:68%;opacity:.9}.ncn-blast-card:after{background:linear-gradient(90deg,#e0f1e4 0%,#d1ecdfb8 49%,#cfebe000 95%)}.ncn-blast-card h2,.ncn-blast-card p,.ncn-blast-card small{color:#285c53!important}.ncn-blast-card>div{max-width:75%}.ncn-blast-card b{color:#285c53;border-color:#568d7b66}@media(max-width:700px){.ncn-gold-card,.ncn-blast-card{grid-column:span 1}.ncn-gold-card>div,.ncn-blast-card>div{max-width:none}.ncn-blast-card h2{font-size:25px}.ncn-blast-card p{font-size:11px}}
+
+/* Desktop play uses the available page width. Keep the original board ratios,
+   mobile layouts and print rules; never magnify a canvas with a CSS transform. */
+@media screen and (min-width:1024px){
+ body.ncn-modern.ncn-game-page #outer-wrapper{max-width:1760px!important}
+ body.ncn-modern.ncn-game-page #feed-view{padding:0;max-width:none}
+ .ncn-game-page :is(.pk-app,.xh-app){max-width:none}
+ .ncn-game-page :is(.gm-page,.bn-page){max-width:none;padding:0 0 54px}
+ .ncn-game-page :is(.rl-stage,.ff-stage,.game-shell):not(:fullscreen):not(.is-theater){height:clamp(650px,82dvh,920px)}
+
+ .ncn-game-page .pk-app:not(.pk-immersive) .pk-board{max-width:1120px}
+ .ncn-game-page .pk-app:not(.pk-immersive) .pk-board-top,
+ .ncn-game-page .pk-app:not(.pk-immersive) .pk-board-bottom{font-size:12px}
+ .ncn-game-page .pk-app:not(.pk-immersive) .pk-assists button{min-height:58px}
+ .ncn-game-page .xh-app:not(.xh-immersive) .xh-play-layout{height:clamp(760px,88dvh,980px);max-width:1240px;grid-template-columns:minmax(150px,1fr) minmax(0,480px) minmax(150px,1fr);gap:30px}
+ .ncn-game-page .xh-app:not(.xh-immersive) :is(.xh-label,.xh-best,#xh-stage-title,.xh-toast){font-size:12px}
+ .ncn-game-page .xh-app:not(.xh-immersive) .xh-mission>div>strong{font-size:34px}
+ .ncn-game-page .xh-app:not(.xh-immersive) .xh-controls{max-width:650px;gap:10px}
+ .ncn-game-page .xh-app:not(.xh-immersive) .xh-controls button{width:64px;height:52px}
+ .ncn-game-page .xh-app:not(.xh-immersive) .xh-controls .xh-drop{width:165px;font-size:14px}
+ .ncn-game-page .xh-app.xh-immersive .xh-play-layout{max-width:1440px;grid-template-columns:minmax(160px,1fr) minmax(0,560px) minmax(160px,1fr)}
+
+ .ncn-game-page .gm-app:not(.gm-immersive){max-width:1400px}
+ .ncn-game-page .gm-app:not(.gm-immersive)[data-state=ready] .gm-field{height:auto;aspect-ratio:1.6}
+ .ncn-game-page .gm-app:not(.gm-immersive) .gm-controls button{min-height:64px;font-size:15px}
+ .ncn-game-page .gm-app:not(.gm-immersive) .gm-hud small{font-size:11px}
+ .ncn-game-page .gm-app:not(.gm-immersive) .gm-hud strong{font-size:34px}
+
+ .ncn-game-page .bn-app:not(.bn-immersive){--bn-size:clamp(640px,62vw,900px);grid-template-columns:minmax(0,var(--bn-size)) minmax(230px,280px);gap:24px;max-width:calc(var(--bn-size) + 304px)}
+ .ncn-game-page .bn-app:not(.bn-immersive) .bn-piece{min-height:104px}
+ .ncn-game-page .bn-app:not(.bn-immersive) .bn-piece-art,
+ .ncn-game-page .bn-app:not(.bn-immersive) .bn-piece-art svg{height:84px}
+
+ .ncn-game-page .bb-app:not(.bb-immersive){grid-template-columns:minmax(0,1fr) 300px;gap:24px}
+ .ncn-game-page .bb-app:not(.bb-immersive) .bb-field{max-width:660px}
+ .ncn-game-page .bb-app:not(.bb-immersive) .bb-hud small{font-size:10px}
+ .ncn-game-page .bb-app:not(.bb-immersive) .bb-hud strong{font-size:34px}
+ .ncn-game-page .bb-app:not(.bb-immersive) .bb-controls button{min-height:68px}
+ .ncn-game-page .bb-app:not(.bb-immersive) .bb-controls button>span:last-child{font-size:13px}
+
+ .ncn-game-page :is(.rl-tool,.ff-tool,.pk-app:not(.pk-immersive) .pk-tool,.xh-app:not(.xh-immersive) .xh-toolbar button,.gm-app:not(.gm-immersive) .gm-toolbar button,.bn-app:not(.bn-immersive) .bn-toolbar button,.bb-app:not(.bb-immersive) .bb-toolbar button){width:46px;min-width:46px;height:46px}
+}
+
+/* On a wide monitor, move secondary controls beside tall/square boards so
+   fullscreen can spend its height on the game instead of stacked toolbars. */
+@media screen and (min-width:1024px) and (min-height:650px){
+ .ncn-game-page .pk-immersive .pk-surface{grid-template-columns:minmax(0,1fr) 220px}
+ .ncn-game-page :is(.pk-immersive .pk-tool,.xh-immersive .xh-toolbar button){width:44px;min-width:44px;height:44px}
+ .ncn-game-page :is(.pk-immersive .pk-label,.pk-immersive .pk-best,.pk-immersive .pk-time-row,.xh-immersive .xh-label,.xh-immersive .xh-best,.xh-immersive .xh-toast){font-size:11px}
+ .ncn-game-page .pk-immersive .pk-score-card>strong{font-size:38px}
+ .ncn-game-page .pk-immersive .pk-assists button{min-height:52px;padding:8px 10px}
+ .ncn-game-page .pk-immersive .pk-assists button>span:nth-child(2){font-size:13px}
+ .ncn-game-page .pk-immersive .pk-assists small{font-size:10px}
+
+ .ncn-game-page .bb-immersive .bb-play-column{max-width:1320px;margin:auto;grid-template-columns:minmax(0,1fr) 280px;grid-template-rows:52px minmax(0,1fr) 152px 56px;column-gap:32px;padding:10px 20px}
+ .ncn-game-page .bb-immersive .bb-game-bar{grid-column:1/-1;grid-row:1}
+ .ncn-game-page .bb-immersive .bb-canvas-shell{grid-column:1;grid-row:2/5}
+ .ncn-game-page .bb-immersive .bb-field{max-width:none;width:min(100%,calc((100dvh - 84px)*.709677));height:auto}
+ .ncn-game-page .bb-immersive .bb-hud{grid-column:2;grid-row:2;align-self:start;grid-template-columns:1fr 1fr;gap:20px;padding:22px 8px}
+ .ncn-game-page .bb-immersive .bb-hud .bb-pressure{grid-column:1/-1}
+ .ncn-game-page .bb-immersive .bb-hud small{font-size:11px}
+ .ncn-game-page .bb-immersive .bb-hud strong{font-size:36px}
+ .ncn-game-page .bb-immersive .bb-controls{grid-column:2;grid-row:3;grid-template-columns:1fr;align-self:end;gap:7px;padding:0}
+ .ncn-game-page .bb-immersive .bb-controls button{height:44px;min-height:44px;flex-direction:row;justify-content:flex-start;padding:3px 12px}
+ .ncn-game-page .bb-immersive .bb-controls button>span:last-child{font-size:11px}
+ .ncn-game-page .bb-immersive .bb-controls small{display:inline;margin-left:8px;font-size:9px}
+ .ncn-game-page .bb-immersive .bb-toast{grid-column:2;grid-row:4;padding-top:8px;font-size:11px}
+ .ncn-game-page .bb-immersive .bb-overlay p{font-size:13px}
+ .ncn-game-page .bb-immersive .bb-mode-picker button{min-height:40px;font-size:11px}
+
+ .ncn-game-page .bn-app.bn-immersive .bn-play{width:min(calc(100vw - 32px),calc(100dvh + 160px),1240px)}
+ .ncn-game-page .bn-app.bn-immersive .bn-arena{display:grid;grid-template-columns:minmax(0,1fr) 170px;gap:16px;align-items:center}
+ .ncn-game-page .bn-app.bn-immersive .bn-board-shell{width:min(100%,calc(100dvh - 210px));justify-self:center}
+ .ncn-game-page .bn-app.bn-immersive .bn-tray{display:flex;flex-direction:column;align-self:stretch;min-height:0;padding:0;gap:12px}
+ .ncn-game-page .bn-app.bn-immersive .bn-piece{flex:1;min-height:0}
+ .ncn-game-page .bn-app.bn-immersive .bn-piece-art,
+ .ncn-game-page .bn-app.bn-immersive .bn-piece-art svg{height:110px}
+ .ncn-game-page .bn-app.bn-immersive .bn-overlay{right:186px}
+}

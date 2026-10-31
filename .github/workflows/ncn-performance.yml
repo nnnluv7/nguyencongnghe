@@ -36,6 +36,7 @@ jobs:
           node tests/browser/ncn-profile.mjs
           node tests/browser/ncn-account.mjs
           node tests/browser/ncn-arcade.mjs
+          node tests/browser/ncn-game-layout.mjs
           node tests/browser/ncn-gold.mjs
           node tests/browser/ncn-blast.mjs
           node tests/browser/ncn-layout.mjs
@@ -52,6 +53,7 @@ jobs:
             artifacts/tool-resources/
             artifacts/profile-built/
             artifacts/arcade-built/
+            artifacts/game-layout/
             artifacts/gold-built/
             artifacts/blast-built/
             artifacts/layout-built/

@@ -11,7 +11,7 @@ const root=resolve('public'),output=resolve('dist'),assets='/assets/ncn-built/';
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex').slice(0,16);
 async function files(dir){const list=[];for(const item of await readdir(dir,{withFileTypes:true})){const path=join(dir,item.name);if(item.isDirectory())list.push(...await files(path));else list.push(path);}return list;}
 const attr=(tag,name)=>tag.match(new RegExp('\\b'+name+'=["\x27]([^"\x27]*)["\x27]','i'))?.[1]||'';
-const styleGroup=src=>src.startsWith('/assets/ncn-theme/')&&['site.css','announcements.css'].includes(src.split('/').pop())?'ncn':[
+const styleGroup=src=>src==='/assets/ncn-arcade/arcade.css'?'arcade':src.startsWith('/assets/ncn-theme/')&&['site.css','announcements.css'].includes(src.split('/').pop())?'ncn':[
   '/assets/vendor/e8a621bed82faf2b49.css','/assets/vendor/c41950014110df0d51.css','/assets/css/9915bcaacd9d7a4ef9.css'
 ].includes(src)?'legacy-base':[
   '/assets/vendor/9693203622602734cb.css','/assets/css/9b16eee6c548ad8ad4.css'
