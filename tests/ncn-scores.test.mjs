@@ -102,3 +102,9 @@ test('the ocean can publish stage 200 while retaining every other game limit and
  assert.equal((await call(f,'score',{runId:run.value.runId,score:100000000,level:200})).status,400);
  f.now+=1000;const flight=await call(f,'start',{game:'flight',mode:'normal'});assert.equal((await call(f,'score',{runId:flight.value.runId,score:100,level:101})).status,400);
 });
+
+test('Gold Miner accepts stage 200 in classic, caps daily at five, and keeps the score-rate guard',async()=>{
+ const f=fixture();f.user=member;await scored(f,{game:'gold',mode:'classic',score:850,level:200});assert.equal((await call(f,'board&game=gold&mode=classic')).value.items[0].level,200);
+ f.now+=1000;const daily=await call(f,'start',{game:'gold',mode:'daily',date:'2026-10-31'});f.now+=1000;assert.equal((await call(f,'score',{runId:daily.value.runId,score:500,level:5})).status,200);assert.equal((await call(f,'score',{runId:daily.value.runId,score:550,level:6})).status,400);
+ const classic=await call(f,'start',{game:'gold',mode:'classic'});assert.equal((await call(f,'score',{runId:classic.value.runId,score:100000000,level:200})).status,400);
+});

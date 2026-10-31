@@ -1723,7 +1723,7 @@ window.CG_CATALOG = [
       "Giải trí"
     ],
     "datetime": "2026-10-29T20:30:00+07:00",
-    "summary": "Canh móc lắc, kéo vàng, né đá và săn kim cương. 100 màn cổ điển, cửa hàng nâng cấp, thử thách Hôm nay và tự lưu ván.",
+    "summary": "Canh móc lắc, kéo vàng, né đá và săn kim cương. 200 màn cổ điển khó dần, 10 vùng mỏ, cửa hàng nâng cấp và tự lưu ván.",
     "isPage": true,
     "author": "NCN",
     "date": "2026-10-29",

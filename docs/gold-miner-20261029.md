@@ -1,30 +1,30 @@
-# Đào vàng tuổi thơ — 29/10/2026
+# Đào vàng PC cổ điển — bản 200 màn
 
-Adds `/dao-vang/` to the existing NCN Arcade, home tools, site menu, Library, search, sitemap and server-rendered shell routes. The shared appearance, account, notice controller and current site stylesheet remain in place. The Arcade catalogue now has seven games; Gold Miner uses the same server-issued runs, guest/member identity, photos, score queue and per-mode leaderboard.
+Trang `/dao-vang/` dùng tranh Canvas/SVG tự vẽ theo những nét nhận diện của bản PC: bảng tiền vàng, bác thợ mỏ tóc bạc ngồi quay máy trong vòm xanh, nền đất uốn lớp, vàng vàng tươi có khối, đá xám, túi dấu hỏi đỏ, kim cương và chuột chũi. Mọi hình đều vẽ theo độ phân giải màn hình, không phóng lớn ảnh Flash. Ảnh bìa và linh vật mới thống nhất với game. Khung ngoài, cửa hàng, hộp thoại và tài khoản dùng Liquid Glass của NCN.
 
-## Play
+## Hành trình và độ khó
 
-Original Canvas/SVG artwork: bearded miner, wooden winch, desert mine, gold, rocks, diamonds, bags, moles, TNT and rope claw. Original Web Audio effects, muted by default. No Flash, iframe, external game asset, or additional runtime package.
+- 200 màn, 20 chặng và 10 vùng mỏ. Hôm nay vẫn là 5 màn chung seed theo ngày Việt Nam.
+- Giữ bốn mốc tiền đầu quen thuộc khi vừa đạt mục tiêu: 650 → 1195 → 2010 → 3095. Mỗi màn mới cần đào thêm một chỉ tiêu; tiền dư không tự mở màn sau. Mua đồ dùng tiền có, điểm xếp hạng là tổng tiền đào và không giảm theo chi tiêu.
+- Từ màn 5, chỉ tiêu đào mới tăng liên tục. Màn 200 cần đào thêm $9.289. Thời gian giảm từ 60 xuống 45 giây, nhịp lắc tăng từ 0,7 lên 1,2 rad/giây và sức nặng khi kéo tăng 45%.
+- Đá tăng từ 3 đến 10; TNT từ màn 3, tăng đến 4 thùng; chuột chũi từ màn 4, tăng đến 5 con và chạy nhanh, xa hơn. Giá khoáng vật tăng theo độ sâu. Vàng khối lớn từ màn 51 rất nặng. Kim cương ở sâu và nhỏ, cần canh chính xác.
+- Bộ sinh mỏ giữ một số đường móc có giá trị không bị vật khác chặn ngay từ đầu. Độ khó nằm ở canh thời điểm, chọn vật có lợi và tránh TNT, không phải một bản đồ ngẫu nhiên hết đường đào.
+- Đủ chỉ tiêu có thể bấm Qua màn hoặc đào thêm. Vật chưa kéo lên không được tính tiền. Thuốc nổ phá vật đang kéo; TNT nổ lan và phá cả vàng gần đó.
+- Cửa hàng vẫn có thuốc nổ, nước tăng lực, cỏ may mắn, sách đá và đánh bóng kim cương. Nâng cấp dùng cho màn kế tiếp, thuốc nổ mang theo. Các vật phẩm có tác dụng thật trong mô phỏng.
 
-The claw swings continuously. Space / Down / mouse click / Thả móc drops it. Up / D / Thuốc nổ destroys a carried object. P pauses, F opens native or fallback full screen; phones have large controls and normal vertical page scrolling over the mine. Global menu, dialogs, tab switching and blur pause the game.
+Space / ↓ / click chuột / chạm mỏ / nút Thả móc để thả. ↑ / D / Thuốc nổ để phá vật đang kéo. P tạm dừng; F toàn màn hình. Vuốt dọc trên mỏ vẫn cuộn trang, không thả móc nhầm. Menu, hộp thoại, đổi tab và mất focus đều tạm dừng.
 
-Each stage lasts 60 seconds. Larger items pull more slowly. Money is awarded only when banked; an unfinished payload at the deadline is discarded. Reaching the target allows continued mining until timeout or mine exhaustion. Spendable cash carries forward; gross mined cash is the ranking score and never falls when buying supplies. Classic has 100 stages and five mine palettes. Daily has five deterministic stages seeded by the Vietnamese date.
+## Tiến độ, điểm và tương thích
 
-The shop offers carried dynamite and next-stage strength, luck, rock value and diamond value upgrades. Bag rewards are seeded. TNT chains through nearby barrels and destroys adjacent ore. Save version 1 validates economy, geometry, clock, hook payload and stage limits. Restored gameplay starts paused. Shop purchases survive a reload; storage failures leave quick play usable. Reduced motion preserves essential gameplay while removing decorative motion.
+Giữ các khóa lưu hiện có và kỷ lục. Save schema 1 vẫn khôi phục đúng màn, móc, vật đang kéo, cửa hàng và đồng hồ 60 giây; sang màn tiếp chuyển sang schema 2. Schema 2 lưu tiền/điểm ở đầu màn để kiểm tra mục tiêu và kinh tế, đồng hồ theo độ khó, hình học và payload. Khôi phục luôn bắt đầu ở trạng thái nghỉ. Tiến độ cục bộ không cấp vai trò tài khoản.
 
-“Bắt đầu đào vàng” uses the normal Arcade profile flow. “Chơi nhanh” plays locally without creating a score run or submitting a result. Public production QA uses quick play to avoid test leaderboard entries.
+Gold classic được máy chủ nhận đến màn 200, daily giới hạn 5. Giữ nguyên hồ sơ chung 8 game, phân bảng theo mode/ngày, quyền sở hữu lượt chơi và giới hạn `score <= 1000 + 2500 × seconds`. Không giảm điểm cũ bằng kết quả thấp hơn. Chơi nhanh không tạo hồ sơ hay điểm công khai. Các mẫu in và game khác giữ hành vi hiện có; chỉ mô tả danh mục Đào vàng được cập nhật từ 100 sang 200 màn trên toàn site.
 
-## Validation
+## Kiểm chứng
 
-- 22 deterministic engine tests: all 100 generated mines, collision ordering, swept diamond catches, weight and strength, cash accounting, deadlines, explosives, bags, shops, boost expiry, save restoration and completion bounds.
-- Actual score handler test for Gold classic/daily partitioning, shared identity and plausibility rejection.
-- Thirteen browser scenarios in source and compiled output: 320px–desktop layout, actual gold haul, guest score submission in a synthetic fixture, precise carried-object restore, persisted shop purchase, deadline, daily win, page wheel/menu pause, phone portrait/landscape full screen, blocked storage/dark/reduced motion and runtime errors. All API writes stay inside the synthetic fixture.
-- Existing shared Arcade/profile tests include Gold; layout audit includes all 122 public pages. Netlify packaging and production asset checks remain required.
+- Mô phỏng: đủ 200 mỏ trên ba seed, vị trí không chồng nhau, ray móc có đủ giá trị, va chạm theo đoạn quét, cân nặng, vật phẩm, kinh tế, deadline, mốc kết thúc 200/5, lưu cũ/mới và giới hạn mole.
+- Bot canh móc chính xác trên ba seed × 200 màn, không/có nước tăng lực: 1.200 lượt đều đạt chỉ tiêu. Bot dùng thời gian lắc thật và thao tác thả/phá, không dịch chuyển móc đến vật. Đây là kiểm tra khả năng hoàn thành, không phải đánh giá độ khó từ người chơi thật.
+- Browser trên mã nguồn và bản dựng: 320px đến desktop; toàn màn hình native/dự phòng, ngang/dọc; kéo vàng và gửi điểm thật qua backend giả; lưu khi đang kéo; mua đồ qua reload; daily; màn 200 và win; chuyển save cũ 100 → 101; tiền dư; tap/vuốt điện thoại; chặn storage; theme tối; menu và cuộn trang.
+- Tất cả API thử nghiệm ở fixture cô lập. Không tạo hồ sơ/điểm thử trên website công khai. Giữ kiểm tra build hash/SRI, gói Netlify, tài khoản dùng chung, bố cục, bản in và hiệu năng.
 
-Mechanic reference: GameFools, “How to Play the Original Gold Miner Today,” https://www.gamefools.com/blog/post/how-to-play-the-original-gold-miner-today-and-why-it-is-still-one-of-the-best-casual-games . The implementation and art are new NCN work; third-party game assets are not bundled.
-
-## Fullscreen correction
-
-Opening full screen from the welcome state previously let the welcome selector override the mine aspect ratio. Its absolutely positioned canvas and overlay then contributed no intrinsic height; the mine collapsed to a 1px border in both native and fallback full screen. The immersive mine selector now has sufficient specificity to retain its aspect ratio, and a bounded welcome minimum height keeps the phone start controls visible. Normal-page geometry and game rules are unchanged.
-
-Regression coverage first reproduces the 1px failure on the old CSS, then verifies native fullscreen at 1440×900, 2048×1307 and 1280×720 before starting, while playing, paused and back at welcome with a saved run. Separate fallback checks cover desktop and 390×844, 320×640, 844×390 and 667×375 phones, alongside the existing playing tests. Both source and compiled output run the same coverage.
+Tham khảo hình và thao tác cổ điển: [Gold Miner tại nhà phân phối GameFools](https://www.gamefools.com/onlinegames/play/goldminer.html). Không đóng gói tài nguyên của game gốc hoặc runtime bên ngoài.
