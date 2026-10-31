@@ -92,7 +92,7 @@ export function createScoresHandler(deps){return async req=>{
   if(route==='score'&&req.method==='POST'){
    const data=await body(req);if(!/^[\da-f-]{36}$/.test(data.runId||'')||!Number.isSafeInteger(data.score)||data.score<0||data.score>MAX_SCORE||!Number.isInteger(data.level)||data.level<0||data.level>200)fail(400,'Kết quả không hợp lệ.');
    const run=await store.get('run/'+data.runId,{type:'json'});if(!run||run.player!==id&&!(user&&token&&run.player===hash('guest:'+token)))fail(403,'Ván chơi không thuộc hồ sơ này.');if(now-run.at>30*86400000)fail(410,'Ván đã lưu quá lâu. Bắt đầu ván mới để lên bảng điểm nhé.');
-   const maxLevel=run.game==='bubble'?(run.mode==='daily'?5:200):run.game==='ocean'?200:100;if(data.level>maxLevel)fail(400,'Màn chơi không hợp lệ.');
+   const maxLevel=run.game==='bubble'||run.game==='gold'?(run.mode==='daily'?5:200):run.game==='ocean'?200:100;if(data.level>maxLevel)fail(400,'Màn chơi không hợp lệ.');
    // Plausibility guard for client-side casual games, not an authoritative
    // anti-cheat claim: a server-issued run binds each result to this profile.
    const seconds=Math.max(0,(now-run.at)/1000),rate={snake:2500,flight:500,pikachu:2000,ocean:2500,gold:2500,blocks:5000,blast:5000,bubble:5000}[run.game];
