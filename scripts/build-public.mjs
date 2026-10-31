@@ -5,6 +5,7 @@ import {createHash} from 'node:crypto';
 import {pathToFileURL} from 'node:url';
 import sharp from 'sharp';
 import wawoff2 from 'wawoff2';
+import {buildPikachuArt} from './build-pikachu-art.mjs';
 import {assetPath,localAssetPath,stylesheetKey,optimizePublicHTML} from '../netlify/lib/ncn-public-assets.mjs';
 
 const root=resolve('public'),output=resolve('dist'),assets='/assets/ncn-built/';
@@ -18,6 +19,7 @@ const styleGroup=src=>src==='/assets/ncn-arcade/arcade.css'?'arcade':src.startsW
 ].includes(src)?'legacy-icons':'page';
 
 export async function buildPublic(){
+  await buildPikachuArt();
   await rm(output,{recursive:true,force:true});await cp(root,output,{recursive:true});await mkdir(output+assets,{recursive:true});
   const paths=(await files(root)).sort(),htmlFiles=paths.filter(x=>x.endsWith('.html'));
   const templates=[...htmlFiles,resolve('netlify/lib/ncn-library/article-shell.html')];

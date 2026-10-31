@@ -4,7 +4,7 @@ import {installFullscreen} from './fullscreen.js?v=20261026-fullscreen-2';
 
 const $=id=>document.getElementById('pk-'+id),saveKey='ncn-pikachu-save-v1',bestKey='ncn-pikachu-best-v1',prefsKey='ncn-pikachu-prefs-v1',names={classic:'Cổ điển',relax:'Thư giãn',daily:'Thử thách hôm nay'};
 const modeDescriptions={classic:LEVELS.length+' màn · 6 phút mỗi màn · Càng nối nhanh, combo càng cao.',relax:LEVELS.length+' màn · Không đếm giờ · Cứ thong thả tìm lại tuổi thơ.',daily:'1 bàn chung mỗi ngày Việt Nam · 6 phút · Thử sức hôm nay.'};
-let fullscreenUI=null;
+let fullscreenUI=null,tileNodes=[],tileRows=0,tileCols=0;
 let state='ready',mode='classic',game=null,saved=null,selected=-1,focused=0,busy=false,epoch=0,activeClock=0,lastTick=performance.now(),lastSave=0,hinted=[],hintTimer,lineTimer,audio,storageOK=true,muted=true,reduced=matchMedia('(prefers-reduced-motion: reduce)').matches,confirmResume=false;
 const best={classic:0,relax:0,daily:0};
 function read(key){try{return JSON.parse(localStorage.getItem(key)||'null');}catch{storageOK=false;return null;}}
@@ -21,7 +21,46 @@ function setState(next){state=next;$('app').dataset.state=state;$('overlay').hid
 function clearHint(){clearTimeout(hintTimer);hinted=[];$('board').querySelectorAll('.is-hint').forEach(el=>el.classList.remove('is-hint'));}
 function clearLine(){clearTimeout(lineTimer);$('connection').replaceChildren();}
 function drawLine(path,hold=350){clearLine();const board=$('board'),box=board.getBoundingClientRect(),zero=board.querySelector('[data-index="0"]').getBoundingClientRect(),one=board.querySelector('[data-index="1"]').getBoundingClientRect(),below=board.querySelector('[data-index="'+game.board.cols+'"]').getBoundingClientRect();$('connection').setAttribute('viewBox','0 0 '+box.width+' '+box.height);const points=path.map(p=>(zero.left-box.left+zero.width/2+p.c*(one.left-zero.left))+','+(zero.top-box.top+zero.height/2+p.r*(below.top-zero.top))).join(' ');for(const cls of ['pk-path-glow','pk-path']){const line=document.createElementNS('http://www.w3.org/2000/svg','polyline');line.setAttribute('points',points);line.setAttribute('class',cls);$('connection').append(line);}lineTimer=setTimeout(clearLine,hold);}
-function renderBoard(){const {rows,cols,cells}=game.board,board=$('board');board.style.setProperty('--frame-cols',cols+2);board.style.setProperty('--frame-rows',rows+2);const fragment=document.createDocumentFragment();for(let i=0;i<cells.length;i++){const type=cells[i],button=document.createElement('button');button.type='button';button.className='pk-tile'+(!type?' is-empty':'');button.dataset.index=i;button.dataset.type=type;button.style.gridColumn=i%cols+2;button.style.gridRow=Math.floor(i/cols)+2;button.disabled=state!=='playing'||busy||!type;button.tabIndex=i===focused&&type?0:-1;button.setAttribute('aria-pressed',String(i===selected));button.setAttribute('aria-label',type?SPECIES[type-1]+' · hàng '+(Math.floor(i/cols)+1)+', cột '+(i%cols+1):'Ô trống');if(type)button.innerHTML='<svg viewBox="0 0 80 80" aria-hidden="true"><use href="/pikachu/tiles.svg#p'+type+'"></use></svg>';fragment.append(button);}board.replaceChildren(fragment);board.append($('connection')||document.createElementNS('http://www.w3.org/2000/svg','svg'));if(!document.getElementById('pk-connection')){const svg=board.lastElementChild;svg.id='pk-connection';svg.setAttribute('class','pk-connection');svg.setAttribute('aria-hidden','true');}if(!cells[focused]){focused=cells.findIndex(Boolean);board.querySelector('[data-index="'+focused+'"]')?.setAttribute('tabindex','0');}drawSelection();fullscreenUI?.fit();}
+function prepareTileArt(){
+ const board=$('board'),source=document.querySelector('link[data-pk-art]')?.href;board.dataset.art='pending';
+ if(!source){board.dataset.art='fallback';return;}
+ const texture=new Image();texture.decoding='async';
+ const failed=()=>{board.dataset.art='fallback';};
+ texture.onload=()=>{const ready=()=>{board.dataset.art='ready';};if(texture.decode)texture.decode().then(ready,failed);else ready();};
+ texture.onerror=failed;texture.src=source;
+}
+function renderBoard(){
+ const {rows,cols,cells}=game.board,board=$('board');let geometryChanged=false;
+ if(tileRows!==rows||tileCols!==cols||tileNodes.length!==cells.length){
+  geometryChanged=true;
+  const connection=$('connection')||document.createElementNS('http://www.w3.org/2000/svg','svg');
+  connection.id='pk-connection';connection.setAttribute('class','pk-connection');connection.setAttribute('aria-hidden','true');
+  const fragment=document.createDocumentFragment();tileNodes=[];tileRows=rows;tileCols=cols;
+  board.style.setProperty('--frame-cols',cols+2);board.style.setProperty('--frame-rows',rows+2);
+  for(let i=0;i<cells.length;i++){
+   const button=document.createElement('button');button.type='button';button.className='pk-tile';button.dataset.index=i;
+   button.style.gridColumn=i%cols+2;button.style.gridRow=Math.floor(i/cols)+2;
+   button.innerHTML='<span class="pk-tile-art" aria-hidden="true"></span><span class="pk-tile-label" aria-hidden="true"></span>';
+   tileNodes.push(button);fragment.append(button);
+  }
+  // Rebuild only when the board geometry changes. Matching, gravity, shuffling
+  // and restoring another same-size board keep every existing tile/image node.
+  board.replaceChildren(fragment,connection);
+ }
+ if(!cells[focused])focused=cells.findIndex(Boolean);
+ for(let i=0;i<cells.length;i++){
+  const type=cells[i],button=tileNodes[i];
+  if(button.dataset.type!==String(type)){
+   button.dataset.type=type;
+   if(type)button.firstElementChild.style.backgroundPosition=(type-1)%5*25+'% '+Math.floor((type-1)/5)/3*100+'%';
+   button.lastElementChild.textContent=type?SPECIES[type-1]:'';
+   button.setAttribute('aria-label',type?SPECIES[type-1]+' · hàng '+(Math.floor(i/cols)+1)+', cột '+(i%cols+1):'Ô trống');
+  }
+  button.classList.toggle('is-empty',!type);button.classList.remove('is-matched','is-wrong');
+  button.disabled=state!=='playing'||busy||!type;button.tabIndex=i===focused&&type?0:-1;
+ }
+ drawSelection();if(geometryChanged)fullscreenUI?.fit();
+}
 function drawSelection(){for(const el of $('board').querySelectorAll('.pk-tile')){const i=Number(el.dataset.index);el.classList.toggle('is-selected',i===selected);el.classList.toggle('is-hint',hinted.includes(i));el.setAttribute('aria-pressed',String(i===selected));}}
 function update(){const current=game?.mode||mode,multiplier=game?Math.min(5,1+Math.floor(Math.max(0,game.combo-1)/3)):1;$('score').textContent=format(game?.score||0);$('best').textContent=format(best[current]);$('level').textContent=game?String(game.level+1).padStart(2,'0'):'01';$('level-total').textContent=current==='daily'?'01':String(LEVELS.length).padStart(2,'0');$('level-name').textContent=game?LEVELS[game.level].name:LEVELS[0].name;$('remaining').textContent=game?remaining(game.board)/2:40;$('time').textContent=current==='relax'?'∞':clock(game?.time??360);$('time').classList.toggle('is-urgent',current!=='relax'&&(game?.time??360)<=30);$('timer').value=current==='relax'?360:game?.time??360;$('timer').setAttribute('aria-label',current==='relax'?'Không giới hạn thời gian':'Thời gian còn lại');$('hint-count').textContent=game?.hints??3;$('shuffle-count').textContent=game?.shuffles??3;$('hint').disabled=state!=='playing'||busy||!game.hints;$('shuffle').disabled=state!=='playing'||busy||!game.shuffles;$('combo').textContent=game?.combo>1?'×'+multiplier:'×1';$('combo-note').textContent=game?.combo>1?game.combo+' cặp liền tay':'Nối tiếp trong 5 giây';$('combo-fill').style.transform='scaleX('+(game?.combo?Math.max(0,(game.comboUntil-activeClock)/5):0)+')';$('mode-label').textContent=current==='daily'?'THỬ THÁCH · '+(game?.date||vietnamDate()):names[current].toLocaleUpperCase('vi-VN');$('gravity').textContent=GRAVITY_LABELS[LEVELS[game?.level||0].gravity];}
 function renderMode(){for(const button of document.querySelectorAll('[data-pk-mode]'))button.setAttribute('aria-pressed',String(button.dataset.pkMode===mode));$('mode-description').textContent=modeDescriptions[mode];}
@@ -55,4 +94,4 @@ fullscreenUI=installFullscreen({app:$('app'),button:$('fullscreen'),board:$('boa
 document.addEventListener('keydown',e=>{if(e.ctrlKey||e.metaKey||e.altKey||e.target.closest('input,textarea,select,[contenteditable=true]')||document.querySelector('dialog[open],#ncn-sidebar[aria-hidden="false"],.ncn-account-menu[open]'))return;if(e.key.toLowerCase()==='p'){e.preventDefault();state==='playing'?pause():resume();}if(e.key.toLowerCase()==='h')hint();if(e.key==='Escape'&&selected>=0){selected=-1;drawSelection();}});
 document.addEventListener('visibilitychange',()=>{if(document.hidden)pause();});window.addEventListener('blur',pause);window.addEventListener('pagehide',()=>{pause();persist();});window.addEventListener('resize',clearLine);
 new MutationObserver(()=>{if(state==='playing'&&document.querySelector('dialog[open],#ncn-sidebar[aria-hidden="false"],.ncn-account-menu[open]'))pause();}).observe(document.body,{subtree:true,attributes:true,attributeFilter:['open','aria-hidden']});
-game={mode:'classic',board:createBoard({rows:innerWidth<700?10:8,cols:innerWidth<700?8:10,rng:seededRandom('ncn-pikachu-welcome')}),score:0,level:0,time:360,hints:3,shuffles:3};renderBoard();setState('ready');overlay('ready');applyPrefs();$('date').textContent=vietnamDate().split('-').reverse().join('/');$('storage-note').textContent=storageOK?'':'Trình duyệt không cho lưu. Bạn vẫn có thể chơi bình thường.';setInterval(tick,100);
+prepareTileArt();game={mode:'classic',board:createBoard({rows:innerWidth<700?10:8,cols:innerWidth<700?8:10,rng:seededRandom('ncn-pikachu-welcome')}),score:0,level:0,time:360,hints:3,shuffles:3};renderBoard();setState('ready');overlay('ready');applyPrefs();$('date').textContent=vietnamDate().split('-').reverse().join('/');$('storage-note').textContent=storageOK?'':'Trình duyệt không cho lưu. Bạn vẫn có thể chơi bình thường.';setInterval(tick,100);

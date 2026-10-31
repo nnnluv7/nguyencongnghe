@@ -1,7 +1,7 @@
 name: NCN Pikachu Arcade
 on:
   push:
-    branches: [main]
+    branches: [main, 'codex/pikachu-*']
     paths: ['public/pikachu/**', 'public/assets/ncn-theme/**', 'tests/ncn-pikachu*.test.mjs', 'tests/browser/ncn-pikachu*.mjs', '.github/workflows/ncn-pikachu.yml']
   pull_request:
     paths: ['public/pikachu/**', 'public/assets/ncn-theme/**', 'tests/ncn-pikachu*.test.mjs', 'tests/browser/ncn-pikachu*.mjs', '.github/workflows/ncn-pikachu.yml']
@@ -11,7 +11,7 @@ permissions:
 jobs:
   pikachu:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -19,12 +19,20 @@ jobs:
           node-version: '22'
       - run: npm install --no-save --package-lock=false playwright@1.56.1
       - run: node --check public/pikachu/game.js && node --test tests/ncn-pikachu*.test.mjs
-      - run: npx playwright install --with-deps chromium
+      - run: npx playwright install --with-deps chromium webkit
       - run: node tests/browser/ncn-pikachu.mjs
       - run: node tests/browser/ncn-pikachu-screen.mjs
+      - name: Build the exact production game and check iPhone painting in Chromium and WebKit
+        run: |
+          node scripts/build-public.mjs
+          node tests/ncn-performance-build.mjs
+          NCN_BUILT_TEST=1 node tests/browser/ncn-pikachu-art.mjs
+          NCN_BUILT_TEST=1 NCN_BROWSER=webkit node tests/browser/ncn-pikachu-art.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: ncn-pikachu-arcade
-          path: artifacts/pikachu/
+          path: |
+            artifacts/pikachu/
+            artifacts/pikachu-art-browser/
           retention-days: 14
