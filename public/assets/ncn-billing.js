@@ -1,4 +1,4 @@
-import {getAccount} from './ncn-account.js?v=20261101-donate-1';
+import {getAccount} from './ncn-account.js?v=20261027-photo-save-1';
 
 const ENDPOINT='/.netlify/functions/ncn-billing';
 const money=value=>Number(value).toLocaleString('vi-VN')+'đ';
