@@ -69,6 +69,7 @@ try{
  await check('touch joystick and boost work together, pointer cancellation releases both and app switching pauses',async()=>{
   await page.locator('#rl-start').tap();await page.clock.runFor(100);assert.equal(await page.locator('#rl-stick').isVisible(),true);
   const stick=await page.locator('#rl-stick').boundingBox(),b=await page.locator('#rl-boost').boundingBox();
+  for(const box of [stick,b])assert.ok(box.y>=0&&box.y+box.height<=844,'Touch controls must be on screen after starting');
   const session=await touch.newCDPSession(page),finger={x:stick.x+stick.width*.5,y:stick.y+stick.height*.8,id:1},thumb={x:b.x+20,y:b.y+20,id:2};
   await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[finger]});await page.clock.runFor(800);await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[finger,thumb]});await page.clock.runFor(800);assert.ok(parseInt(await page.locator('#rl-energy-value').innerText())<100);
   await session.send('Input.dispatchTouchEvent',{type:'touchCancel',touchPoints:[]});await page.clock.runFor(500);assert.equal(await page.locator('#rl-boost').evaluate(el=>el.classList.contains('is-held')),false);await screenshot('playing-phone');await session.detach();

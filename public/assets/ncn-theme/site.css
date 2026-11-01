@@ -1297,11 +1297,59 @@ body.ncn-modern .st-card-sizes button:focus-visible{outline: 3px solid #2563b8; 
 }
 /* END NCN GLASS HAIRLINE 20261029 */
 
-/* A quiet, static invitation on every page; it never covers tools or printouts. */
+/* DONATE: a visible glass action, present before scripts on every page. */
 @media screen{
- .ncn-top-vip svg{width:16px;height:16px;color:var(--ncn-muted);flex:none}
- #ncn-footer .ncn-footer-donate{display:inline-flex;align-items:center;gap:7px;color:var(--ncn-muted);font-weight:550;min-height:32px}
- #ncn-footer .ncn-footer-donate svg{width:15px;height:15px;flex:none}
- .ncn-top-vip:hover,#ncn-footer .ncn-footer-donate:hover{color:var(--ncn-accent)}
+ body.ncn-modern :is(.ncn-top-vip,#ncn-footer .ncn-footer-donate){
+  --ncn-donate-ink:#fffafc;
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;flex:none;
+  min-height:44px;padding:10px 18px;border:1px solid #ffffff70;border-radius:999px;
+  background:linear-gradient(140deg,#b83b60f5,#a92f52f5 65%,#972c4ff5);
+  color:var(--ncn-donate-ink);font-size:12px;font-weight:800;line-height:1.2;
+  text-decoration:none;white-space:nowrap;
+  box-shadow:inset .5px .5px 0 #ffffffa6,inset -.5px -.5px 0 #661c3b38,0 4px 12px #a3295129;
+  -webkit-backdrop-filter:blur(12px) saturate(145%);backdrop-filter:blur(12px) saturate(145%);
+  transition:filter .18s ease,box-shadow .18s ease,transform .18s ease;
+  touch-action:manipulation;
+ }
+ body.ncn-modern .ncn-top-vip{letter-spacing:.7px;text-transform:uppercase;min-width:116px}
+ body.ncn-modern :is(.ncn-top-vip,#ncn-footer .ncn-footer-donate) svg{
+  width:18px;height:18px;flex:none;color:currentColor;fill:#ffffff24;stroke-width:1.8;
+  filter:drop-shadow(0 1px 1px #6d173d24);
+ }
+ body.ncn-modern :is(.ncn-top-vip,#ncn-footer .ncn-footer-donate):focus-visible{outline:3px solid var(--ncn-ink);outline-offset:3px}
+ @media(hover:hover) and (pointer:fine){
+  body.ncn-modern :is(.ncn-top-vip,#ncn-footer .ncn-footer-donate):hover{
+   filter:brightness(.96);color:var(--ncn-donate-ink);
+   box-shadow:inset .5px .5px 0 #ffffffb3,inset -.5px -.5px 0 #661c3b38,0 6px 16px #a329513b;transform:translateY(-1px);
+  }
+ }
+ body.ncn-modern :is(.ncn-top-vip,#ncn-footer .ncn-footer-donate):active{transform:scale(.98)}
+ @media(max-width:1000px){
+  #ncn-topbar .ncn-top-search{min-width:44px;max-width:44px;width:44px;flex:0 0 44px;padding:11px;justify-content:center}
+  #ncn-topbar .ncn-top-search>span:not(:first-child),#ncn-topbar .ncn-top-search kbd{display:none}
+ }
+ @media(max-width:640px){
+  #ncn-topbar{
+   height:112px;display:grid;grid-template-columns:minmax(0,1fr) 44px 44px;grid-template-rows:44px 44px;
+   gap:6px;padding:8px 10px;align-content:center;
+  }
+  #ncn-topbar .ncn-topbar-left{grid-column:1;grid-row:1;min-width:0}
+  #ncn-topbar .ncn-topbar-right{display:contents}
+  #ncn-topbar .ncn-icon-button{grid-column:2;grid-row:1}
+  #ncn-topbar .ncn-account-menu{grid-column:3;grid-row:1;justify-self:end}
+  #ncn-topbar .ncn-top-search{grid-column:1;grid-row:2;min-width:0;max-width:none;width:100%;margin:0;justify-content:flex-start;gap:8px}
+  #ncn-topbar .ncn-top-search>span:not(:first-child){display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}
+  #ncn-topbar .ncn-top-vip{grid-column:2/4;grid-row:2;min-width:0;width:100%;padding:10px 9px;gap:6px;font-size:11px}
+  #ncn-site-shell{padding-top:128px}
+ }
+ @media(prefers-reduced-motion:reduce){
+  body.ncn-modern :is(.ncn-top-vip,#ncn-footer .ncn-footer-donate),body.ncn-modern :is(.ncn-top-vip,#ncn-footer .ncn-footer-donate):is(:hover,:active){transition:none;transform:none}
+ }
+ @media(prefers-reduced-transparency:reduce),(prefers-contrast:more){
+  body.ncn-modern :is(.ncn-top-vip,#ncn-footer .ncn-footer-donate){background:#a32951;border-color:#a32951;-webkit-backdrop-filter:none;backdrop-filter:none}
+ }
+ @media(forced-colors:active){
+  body.ncn-modern :is(.ncn-top-vip,#ncn-footer .ncn-footer-donate){background:ButtonFace;color:ButtonText;border-color:ButtonText;box-shadow:none}
+ }
 }
 @media print{.ncn-footer-donate,.ncn-top-vip{display:none!important}}

@@ -71,10 +71,10 @@ async function open(path){
     const clock=await currentPage.locator('#ncn-toolbar-clock').evaluate(node=>{
       const r=node.getBoundingClientRect(),bar=node.closest('header').getBoundingClientRect();
       const next=document.querySelector('.ncn-top-search,#ncn-game-topbar .top-actions')?.getBoundingClientRect();
-      return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,barLeft:bar.left,barRight:bar.right,barTop:bar.top,barBottom:bar.bottom,nextLeft:next?.left};
+      return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,barLeft:bar.left,barRight:bar.right,barTop:bar.top,barBottom:bar.bottom,nextLeft:next?.left,nextRight:next?.right,nextTop:next?.top,nextBottom:next?.bottom};
     });
     assert.ok(clock.left>=clock.barLeft&&clock.right<=clock.barRight&&clock.top>=clock.barTop&&clock.bottom<=clock.barBottom,JSON.stringify(clock));
-    assert.ok(!clock.nextLeft||clock.right<=clock.nextLeft,JSON.stringify(clock));
+    assert.ok(clock.nextLeft===undefined||clock.right<=clock.nextLeft||clock.left>=clock.nextRight||clock.bottom<=clock.nextTop||clock.top>=clock.nextBottom,JSON.stringify(clock));
   }finally{
     currentPage.off('framenavigated',navigated);currentPage.off('request',requested);
   }
