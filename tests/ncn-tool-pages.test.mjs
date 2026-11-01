@@ -37,7 +37,7 @@ test('modern form markup retains every existing calculation and stocktaking cont
 test('flight starts with the same NCN shell, search, account and current configuration as every page',()=>{
   const html=read('flappy-bird/index.html');
   assert.match(html,/<img src="\/assets\/ncn-theme\/logo\.png"/);
-  assert.equal((html.match(/class="ncn-nav-link"/g)||[]).length,JSON.parse(read('assets/ncn-theme/config.json')).tools.length+2);
+  assert.equal((html.match(/class="ncn-nav-link(?:\s[^"]*)?"/g)||[]).length,JSON.parse(read('assets/ncn-theme/config.json')).tools.length+2);
   for(const id of ['ncn-site-shell','ncn-menu-open','ncn-sidebar','ncn-topbar','ncn-search-dialog','ncn-account-host'])assert.ok(html.includes('id="'+id+'"'),id);
   assert.equal(html.includes('site-bridge.'),false);
   const config=JSON.parse(html.match(/<script id="ncn-initial-config" type="application\/json">([\s\S]*?)<\/script>/)[1]);

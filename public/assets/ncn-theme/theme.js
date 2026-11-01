@@ -103,8 +103,8 @@ export function createTheme({doc=document,win=window,config,catalog=win.CG_CATAL
   text('ncn-page-section',home?'Tổng quan':library?'Thư viện':currentTool?groups.find(g=>g.id===currentTool.group)?.name||'Công cụ':'Nội dung');
   text('ncn-page-title',home?'Cổng công cụ NCN':library?'Bài viết & hướng dẫn':currentTool?.title||doc.title.replace(/\s*\|\s*nguyencongnghe\.com$/i,''));
   function navLink(href,title,icon,badge='',id='') {
-    const active=canonicalPath(href)===path;
-    return `<a class="ncn-nav-link" href="${escapeHTML(href)}"${id?` data-ncn-tool="${escapeHTML(id)}"`:""}${active?' aria-current="page"':''}>${svg(icon)}<span>${escapeHTML(title)}</span>${badge?'<b class="ncn-nav-pill">VIP</b>':''}</a>`;
+    const active=canonicalPath(href)===path,donation=id==='vip'&&canonicalPath(href)===canonicalPath('/premium/');
+    return `<a class="ncn-nav-link${donation?' ncn-donate-button':''}" href="${escapeHTML(href)}"${id?` data-ncn-tool="${escapeHTML(id)}"`:""}${donation?' aria-label="Donate · Ủng hộ NCN tùy tâm"':''}${active?' aria-current="page"':''}>${svg(donation?'heart':icon)}<span>${donation?'DONATE':escapeHTML(title)}</span>${badge&&!donation?'<b class="ncn-nav-pill">VIP</b>':''}</a>`;
   }
   if(tools.length&&$('ncn-navigation')) $('ncn-navigation').innerHTML=navigationHTML(tools,navLink);
   doc.dispatchEvent(new win.CustomEvent('ncn-navigation-ready'));
@@ -146,8 +146,9 @@ export function createTheme({doc=document,win=window,config,catalog=win.CG_CATAL
   });
   let homeGroup='',homeQuery='';
   function toolCard(t) {
-    const pinned=favorites.has(t.id),tone=['blue','violet','teal','amber','coral','navy'].includes(t.tone)?t.tone:'blue';
-    return `<article class="ncn-tool-card ncn-tone-${tone}"><a class="ncn-tool-link" href="${escapeHTML(t.href)}"><div class="ncn-tool-top"><span class="ncn-tool-icon">${svg(t.icon)}</span>${t.access==='vip'?'<span class="ncn-tool-badge">VIP</span>':''}</div><h3>${escapeHTML(t.title)}</h3><p>${escapeHTML(t.description)}</p><span class="ncn-card-open"><span>${t.access==='vip'?'Đăng nhập NCN':'Mở công cụ'}</span>${svg('arrow')}</span></a><button type="button" class="ncn-pin" data-ncn-pin="${escapeHTML(t.id)}" aria-pressed="${pinned}" aria-label="${pinned?'Bỏ ghim':'Ghim'} ${escapeHTML(t.title)}">${svg('star')}</button></article>`;
+    const pinned=favorites.has(t.id),tone=['blue','violet','teal','amber','coral','navy'].includes(t.tone)?t.tone:'blue',donation=t.id==='vip'&&canonicalPath(t.href)===canonicalPath('/premium/');
+    const action=donation?`<span class="ncn-card-open ncn-donate-button">${svg('heart')}<span>DONATE</span></span>`:`<span class="ncn-card-open"><span>${t.access==='vip'?'Đăng nhập NCN':'Mở công cụ'}</span>${svg('arrow')}</span>`;
+    return `<article class="ncn-tool-card ncn-tone-${tone}"><a class="ncn-tool-link" href="${escapeHTML(t.href)}"><div class="ncn-tool-top"><span class="ncn-tool-icon">${svg(donation?'heart':t.icon)}</span>${t.access==='vip'?'<span class="ncn-tool-badge">VIP</span>':''}</div><h3>${escapeHTML(t.title)}</h3><p>${escapeHTML(t.description)}</p>${action}</a><button type="button" class="ncn-pin" data-ncn-pin="${escapeHTML(t.id)}" aria-pressed="${pinned}" aria-label="${pinned?'Bỏ ghim':'Ghim'} ${escapeHTML(t.title)}">${svg('star')}</button></article>`;
   }
   function renderTools() {
     const items=tools.filter(t=>(!homeGroup||t.group===homeGroup)&&matches(t,homeQuery));

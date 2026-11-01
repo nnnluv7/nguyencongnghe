@@ -2,7 +2,7 @@
 
 The existing `/premium/` route now accepts voluntary donations. Presets are conveniences; visitors can enter any positive whole VND amount within the QR field's 13-digit limit, or leave it blank and choose an amount in their banking app. Guests and members use the same page. QR preparation is a public, read-only request and creates no order, account, membership or transfer. The existing VietinBank receiving details are retained. Bank transfer details remain readable if either QR preparation or the external QR image fails.
 
-Every page and the dynamic article shell have a static DONATE button in the header and a matching footer invitation. The heart, rose-tinted glass, directional rim and white label distinguish this action from the blue menu and neutral tools. It is visible before scripts load, including on phones where the previous link was hidden. Narrow toolbars use two rows to retain search, the live clock, theme and account controls without overlap. The menu and homepage catalogue use the same wording. There are no donation popups, floating banners, shared-page payment requests or polling. These links are hidden in print; the existing full-screen game surfaces contain no donation controls.
+The approved rose-glass DONATE action now occupies the former VIP tool card on the homepage and the existing VIP shortcut in the menu. It is removed from every static toolbar and the dynamic article shell. The compact original toolbar layout is restored on phones. The heart, directional rim, colors and label are retained, including the matching footer invitation. Static HTML and hydrated cards use the same action, including pinned favorites. There are no donation popups, floating banners, shared-page payment requests or polling. Donation controls stay hidden in print and outside fullscreen game surfaces.
 
 ## Access
 
@@ -21,5 +21,5 @@ A properly signed incoming transfer to the configured bank/account containing `N
 - All Node unit suites, including real member access, confirmation/bans, guest restrictions, ADMIN separation, retired order creation, arbitrary/open donation amounts, signed webhook replays, duplicate bank references, donation/legacy separation and old receipt settlement.
 - Production build and all-page asset/SRI checks.
 - Isolated compiled-browser donation, shared-account and profile suites: custom/preset amounts, invalid values, stale responses, QR/API failure recovery, cross-page login/logout, retained avatars/scores, 320px phones, iPhone-size screens, desktop, dark mode and print.
-- Header action checks cover eleven viewport widths, both themes, a minimum 44px target, full visible label, text contrast, navigation overlap and direct guest navigation to the donation page.
+- Placement checks cover all static shells, eleven viewport widths, both themes, a minimum 44px card action, the complete label, text contrast, a compact donation-free toolbar, the original VIP menu entry and direct guest navigation to the donation page.
 - No production accounts, scores, bank transfers or payment receipts are created by the tests.

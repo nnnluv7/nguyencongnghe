@@ -82,9 +82,9 @@ test('an interrupted donation receipt cannot be reassigned before its final stat
  const response=await billing({...member,admin:true},store)(request('reconcile',{transactionId:'123',orderId:'NCNAAAAAAAAAAAAAAAAAAAA'}));assert.equal(response.status,409);
  await webhook(store)(receipt(transaction()));assert.equal((await store.get('txn-'+String(123).padStart(20,'0'))).status,'donated');assert.equal([...store.entries.keys()].some(k=>k.startsWith('member-')),false);
 });
-test('every public page has a quiet donation link and no remaining paid-upgrade prompt',async()=>{
+test('every page places the glass donation action in the original VIP menu entry and leaves the toolbar clear',async()=>{
  const files=async dir=>(await Promise.all((await readdir(dir,{withFileTypes:true})).map(entry=>entry.isDirectory()?files(dir+'/'+entry.name):entry.name.endsWith('.html')?[dir+'/'+entry.name]:[]))).flat();
  for(const path of [...await files('public'),'netlify/lib/ncn-library/article-shell.html']){
-  const html=await readFile(path,'utf8');assert.equal((html.match(/class="ncn-footer-donate"/g)||[]).length,1,path);assert.equal(/Nâng cấp VIP|Nâng cấp <b>VIP|Mua \/ gia hạn VIP|Đăng ký \/ gia hạn VIP|30\.000đ\/30 ngày/.test(html),false,path);
+  const html=await readFile(path,'utf8');assert.equal((html.match(/class="ncn-footer-donate"/g)||[]).length,1,path);assert.equal(/class="ncn-top-vip"/.test(html),false,path+' toolbar');assert.equal((html.match(/class="ncn-nav-link ncn-donate-button"/g)||[]).length,1,path+' original VIP menu entry');assert.equal(/Nâng cấp VIP|Nâng cấp <b>VIP|Mua \/ gia hạn VIP|Đăng ký \/ gia hạn VIP|30\.000đ\/30 ngày/.test(html),false,path);
  }
 });
