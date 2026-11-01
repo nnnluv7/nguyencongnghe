@@ -29,29 +29,29 @@ const page=await context.newPage();page.on('pageerror',error=>errors.push(error.
 async function open(path='/premium/'){await page.goto(origin+path);await page.waitForFunction(()=>window.NCNAccount?.state.ready);}
 async function check(name,fn){try{await fn();results.push({name,ok:true});console.log('PASS '+name);}catch(error){results.push({name,ok:false,error:error.message});await page.screenshot({path:out+'/failure.png'}).catch(()=>{});throw error;}}
 async function amount(value){await page.locator('#donate-amount').fill(value);await page.locator('#donate-submit').click();}
-async function qrReady(value){await page.waitForFunction(amount=>{const img=document.getElementById('donate-qr');return !img.hidden&&img.complete&&img.naturalWidth>0&&new URL(img.src).searchParams.get('amount')===amount;},value);}
+async function qrReady(value){await page.waitForFunction(amount=>{const img=document.getElementById('donate-qr');return !!img&&!img.hidden&&img.complete&&img.naturalWidth>0&&new URL(img.src).searchParams.get('amount')===amount;},value);}
 try{
- await check('DONATE is a readable, directly usable header action from 320px phones to desktop without overlapping navigation',async()=>{
+ await check('DONATE stays in the former VIP tool card with readable glass styling and a compact donation-free toolbar',async()=>{
   await open('/');
   for(const width of [1440,1000,900,768,641,640,620,480,390,360,320]){
    await page.setViewportSize({width,height:900});
    for(const theme of ['light','dark']){
     await page.evaluate(value=>document.documentElement.dataset.ncnTheme=value,theme);
-    const action=page.locator('#ncn-topbar .ncn-top-vip');assert.equal(await action.isVisible(),true,width+' '+theme);assert.equal(await action.getAttribute('href'),'/premium/');
+    await page.locator('#ncn-tool-grid .ncn-tool-card:has([data-ncn-pin="vip"])').scrollIntoViewIfNeeded();
+    const action=page.locator('#ncn-tool-grid a[href="/premium/"] .ncn-donate-button');assert.equal(await action.isVisible(),true,width+' '+theme);assert.equal(await action.evaluate(el=>el.closest('a').getAttribute('href')),'/premium/');assert.equal(await page.locator('#ncn-topbar .ncn-topbar-right>a[href="/premium/"]').count(),0);
     const geometry=await page.evaluate(()=>{
-     const box=el=>el.getBoundingClientRect().toJSON(),link=document.querySelector('#ncn-topbar .ncn-top-vip'),s=getComputedStyle(link);
-     return {width:innerWidth,scroll:document.documentElement.scrollWidth,bar:box(document.getElementById('ncn-topbar')),link:box(link),content:box(document.getElementById('ncn-home-latest')),controls:[...document.querySelectorAll('#ncn-menu-open,#ncn-topbar .ncn-top-search,#ncn-theme-toggle,#ncn-topbar .ncn-account-menu>summary,#ncn-topbar .ncn-header-brand,#ncn-toolbar-clock')].filter(el=>el.getClientRects().length).map(box),color:s.color,gradient:s.backgroundImage,label:link.textContent.trim(),textWidth:link.querySelector('span').scrollWidth,space:link.querySelector('span').clientWidth};
+     const box=el=>el.getBoundingClientRect().toJSON(),link=document.querySelector('#ncn-tool-grid a[href="/premium/"] .ncn-donate-button'),s=getComputedStyle(link);
+     return {width:innerWidth,scroll:document.documentElement.scrollWidth,bar:box(document.getElementById('ncn-topbar')),link:box(link),card:box(link.closest('a')),color:s.color,gradient:s.backgroundImage,label:link.textContent.trim(),textWidth:link.querySelector('span').scrollWidth,space:link.querySelector('span').clientWidth};
     });
     assert.ok(geometry.scroll<=width+1,JSON.stringify(geometry));assert.ok(geometry.link.height>=44&&geometry.link.width>=80,width+' touch target');
-    assert.ok(geometry.link.x>=geometry.bar.x&&geometry.link.right<=geometry.bar.right&&geometry.link.bottom<=geometry.bar.bottom,width+' within toolbar');
-    assert.ok(geometry.content.top>=geometry.bar.bottom,width+' content below toolbar');assert.ok(geometry.textWidth<=geometry.space+1,width+' full DONATE label');assert.match(geometry.label,/donate/i);
-    for(const b of geometry.controls)assert.ok(Math.min(b.right,geometry.link.right)-Math.max(b.x,geometry.link.x)<1||Math.min(b.bottom,geometry.link.bottom)-Math.max(b.y,geometry.link.y)<1,width+' controls overlap');
+    assert.ok(geometry.link.x>=geometry.card.x&&geometry.link.right<=geometry.card.right&&geometry.link.bottom<=geometry.card.bottom,width+' within original VIP card');
+    assert.ok(geometry.bar.height<=68,width+' compact toolbar');assert.ok(geometry.textWidth<=geometry.space+1,width+' full DONATE label');assert.match(geometry.label,/donate/i);
     const luminance=c=>c.map(v=>v/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4).reduce((sum,v,i)=>sum+v*[.2126,.7152,.0722][i],0),ink=luminance(geometry.color.match(/[\d.]+/g).slice(0,3).map(Number));
     for(const stop of geometry.gradient.matchAll(/rgba?\(([^)]+)\)/g)){const [r,g,b,a=1]=stop[1].split(',').map(Number),background=luminance([r,g,b].map(v=>v*a+255*(1-a)));assert.ok((ink+.05)/(background+.05)>=4.5,width+' text contrast');}
-    if([1440,390,320].includes(width))await page.screenshot({path:out+'/header-'+theme+'-'+width+'.png'});
+    if([1440,390,320].includes(width))await page.locator('#ncn-tool-grid a[href="/premium/"]').screenshot({path:out+'/card-'+theme+'-'+width+'.png'});
    }
   }
-  await page.locator('#ncn-topbar .ncn-top-vip').click();await qrReady(null);assert.equal(new URL(page.url()).pathname,'/premium/');assert.equal(await page.locator('#ncn-account-dialog').count(),1);assert.equal(await page.locator('#ncn-account-dialog').isVisible(),false);
+  await page.locator('#ncn-tool-grid a[href="/premium/"] .ncn-donate-button').click();await qrReady(null);assert.equal(new URL(page.url()).pathname,'/premium/');assert.equal(await page.locator('#ncn-account-dialog').count(),1);assert.equal(await page.locator('#ncn-account-dialog').isVisible(),false);
  });
  await check('donation is immediately available to guests with an open amount and no registration or plan purchase',async()=>{
   await open();await qrReady(null);assert.equal(await page.locator('#pay-auth').isVisible(),true);assert.equal(await page.locator('#ncn-account-dialog').isVisible(),false);assert.equal(await page.locator('[data-pay-plan]').count(),0);assert.equal(calls.some(c=>c.route==='create-order'),false);
@@ -89,7 +89,7 @@ try{
  await check('the invitation stays in normal page flow across tools, articles, the library and games and disappears in print',async()=>{
   await page.setViewportSize({width:1280,height:900});
   for(const path of ['/','/2024/01/in-fifo.html','/thu-vien/','/arcade/','/pikachu/','/in-event/','/in-gvgs/']){
-   await open(path);const link=page.locator('#ncn-footer .ncn-footer-donate');assert.equal(await link.count(),1,path);assert.equal(await link.getAttribute('href'),'/premium/');assert.equal(await link.evaluate(el=>getComputedStyle(el).position),'static');
+   await open(path);assert.equal(await page.locator('#ncn-topbar .ncn-topbar-right>a[href="/premium/"]').count(),0,path);await page.locator('#ncn-menu-open').click();const menu=page.locator('#ncn-navigation a[data-ncn-tool="vip"]');await page.locator('#ncn-sidebar').waitFor({state:'visible'});await menu.scrollIntoViewIfNeeded();assert.equal(await menu.getAttribute('href'),'/premium/');assert.match(await menu.getAttribute('class'),/ncn-donate-button/);assert.equal((await menu.innerText()).trim(),'DONATE');await page.locator('#ncn-menu-close').click();const link=page.locator('#ncn-footer .ncn-footer-donate');assert.equal(await link.count(),1,path);assert.equal(await link.getAttribute('href'),'/premium/');assert.equal(await link.evaluate(el=>getComputedStyle(el).position),'static');
    await page.emulateMedia({media:'print'});assert.equal(await link.isVisible(),false,path);await page.emulateMedia({media:'screen'});
   }
  });

@@ -32,6 +32,8 @@ for(const path of [...await pages('public'),'netlify/lib/ncn-library/article-she
   for(const tool of config.tools.filter(t=>t.group==='arcade'))if(!html.includes('data-ncn-pin="'+tool.id+'"')){
    const old=config.tools.find(t=>t.id==='vip'),card=html.match(/<article class="ncn-tool-card[^>]*><a class="ncn-tool-link" href="\/premium\/"[\s\S]*?<\/article>/)?.[0];
    if(!card)throw Error('Missing tool card template in '+path);let next=card;
+   // A future game cloned from this card must keep a normal tool action.
+   next=next.replace(/<span class="ncn-card-open ncn-donate-button">[\s\S]*?<\/span><\/span>/,'<span class="ncn-card-open"><span>Mở công cụ</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 12h16m-6-6 6 6-6 6"/></svg></span>');
    for(const [a,b]of [[old.href,tool.href],[old.title,tool.title],[old.description,tool.description],['data-ncn-pin="vip"','data-ncn-pin="'+tool.id+'"'],['ncn-tone-amber','ncn-tone-'+tool.tone]])next=next.replaceAll(a,b);
    html=html.replace(/(<div id="ncn-tool-grid"[^>]*>)([\s\S]*?)(<\/div>\s*<p id="ncn-tool-count")/,(_,a,b,c)=>a+b+next+c);
    // The count node precedes the grid in some retained shells.
