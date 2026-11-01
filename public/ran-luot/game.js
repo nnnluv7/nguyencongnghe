@@ -56,7 +56,10 @@ async function start(nextMode=mode,keepDate=false){
   mode=nextMode;if(mode==='daily'&&!keepDate)date=challengeDate(new URLSearchParams(location.search).get('challenge'))||vietnamDate();
   clearInput();unlockAudio();particles=[];floaters=[];accumulator=0;shake=0;runAwarded=false;
   arena.start({seed:mode==='daily'?hash('ncn-ran-luot-v1:'+date):(Date.now()^Math.floor(Math.random()*0xffffffff))>>>0,mode,skin:profile.skin,name:(scores.profile()?.name||'Rắn Nhỏ').slice(0,20)});
-  angle=0;camera={x:0,y:0,zoom:width<640?.69:.82};stateUI();updateHUD();canvas.focus({preventScroll:true});toast(stage.dataset.touch==='true'?'Kéo joystick để lái · Giữ ϟ tăng tốc':'Gom ánh sáng · Q lướt pha · Né biên đỏ',2.4);
+  angle=0;camera={x:0,y:0,zoom:width<640?.69:.82};stateUI();updateHUD();
+  // Keep both touch controls visible beneath the shared mobile toolbar.
+  if(innerWidth<=640&&stage.getBoundingClientRect().bottom>(window.visualViewport?.height||innerHeight))stage.scrollIntoView({block:'end',behavior:'instant'});
+  canvas.focus({preventScroll:true});toast(stage.dataset.touch==='true'?'Kéo joystick để lái · Giữ ϟ tăng tốc':'Gom ánh sáng · Q lướt pha · Né biên đỏ',2.4);
 }
 function pause(){if(arena.status!=='playing')return;arena.pause();clearInput();accumulator=0;stateUI();scores.checkpoint(arena.score,0,{force:true});$('resume').focus({preventScroll:true});}
 function resume(){if(arena.status!=='paused'||document.querySelector('dialog[open]')||document.body.classList.contains('ncn-menu-open'))return;arena.resume();clearInput();accumulator=0;lastFrame=performance.now();stateUI();canvas.focus({preventScroll:true});unlockAudio();}
