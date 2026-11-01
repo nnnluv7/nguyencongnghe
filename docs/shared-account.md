@@ -4,7 +4,7 @@ The website, quiz profile, `/premium/`, `/in-event/` and `/in-gvgs/` use one Net
 
 Existing Identity accounts keep their user ID, manual roles and paid membership ledger. The old Google Apps Script username/password database is not copied. Old website members create a shared account once with the same email; the previous local profile is only an email/name hint. Quiz history continues to use the verified email. Passwords are never sent to the old authentication API by the new interface.
 
-The dialog follows Identity's existing signup settings, including automatic confirmation or email confirmation, without changing those settings. Membership prices, transfer information, SePay processing and server permission checks are unchanged.
+The dialog follows Identity's existing signup settings, including automatic confirmation or email confirmation, without changing those settings. Since 2026-11-01, confirmed, unbanned NCN accounts can use the VIP tools after signing in. Donations are optional and do not grant admin privileges or determine access. Transfer details and historical payment records are preserved; new paid plans are retired.
 
 Members open the header avatar → **Quản lý tài khoản** to edit their display name and avatar or inspect **Thông tin VIP**. The same panel is available from each Arcade game's **Tài khoản NCN** button. The profile shows the verified email (read-only), join date and name; the VIP card shows paid expiry/remaining days, manual grants, administrator access or expiry/block status from the existing ledger. VIP dates use Vietnam time and the billing endpoint's server clock. Renewal links use the existing `/premium/` flow.
 

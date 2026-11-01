@@ -1296,3 +1296,12 @@ body.ncn-modern .st-card-sizes button:focus-visible{outline: 3px solid #2563b8; 
  html[data-ncn-theme] body.ncn-modern {--ncn-hairline:ButtonText;--ncn-hairline-soft:ButtonText;--ncn-control-rim:ButtonText;--ncn-control-shadow:none}
 }
 /* END NCN GLASS HAIRLINE 20261029 */
+
+/* A quiet, static invitation on every page; it never covers tools or printouts. */
+@media screen{
+ .ncn-top-vip svg{width:16px;height:16px;color:var(--ncn-muted);flex:none}
+ #ncn-footer .ncn-footer-donate{display:inline-flex;align-items:center;gap:7px;color:var(--ncn-muted);font-weight:550;min-height:32px}
+ #ncn-footer .ncn-footer-donate svg{width:15px;height:15px;flex:none}
+ .ncn-top-vip:hover,#ncn-footer .ncn-footer-donate:hover{color:var(--ncn-accent)}
+}
+@media print{.ncn-footer-donate,.ncn-top-vip{display:none!important}}

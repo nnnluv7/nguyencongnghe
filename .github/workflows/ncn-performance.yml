@@ -35,6 +35,7 @@ jobs:
         run: |
           node tests/browser/ncn-profile.mjs
           node tests/browser/ncn-account.mjs
+          node tests/browser/ncn-donate.mjs
           node tests/browser/ncn-arcade.mjs
           node tests/browser/ncn-game-layout.mjs
           node tests/browser/ncn-gold.mjs
@@ -52,6 +53,7 @@ jobs:
             artifacts/performance-tools/
             artifacts/tool-resources/
             artifacts/profile-built/
+            artifacts/donate-built/
             artifacts/arcade-built/
             artifacts/game-layout/
             artifacts/gold-built/

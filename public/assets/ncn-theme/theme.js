@@ -7,6 +7,7 @@ import {installToolUI} from './tool-ui.js?v=20261025-home-latest-1';
 import {installFloatingMenu,orderTools,navigationHTML} from './menu.js?v=20261017-mobile-dark-1';
 /* NCN portal: navigation and local display preferences. VIP authorization stays on the server. */
 const ICONS = {
+  heart:'<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/>',
   fish:'<ellipse cx="13" cy="12" rx="8" ry="6"/><path d="m5 12-4-5v10ZM17 10h.01M11 6l2-3 3 4M10 17l3 4 3-4"/>',
   home:'<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z"/>',
   printer:'<path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v7H6zM18 12h.01"/>',
@@ -146,7 +147,7 @@ export function createTheme({doc=document,win=window,config,catalog=win.CG_CATAL
   let homeGroup='',homeQuery='';
   function toolCard(t) {
     const pinned=favorites.has(t.id),tone=['blue','violet','teal','amber','coral','navy'].includes(t.tone)?t.tone:'blue';
-    return `<article class="ncn-tool-card ncn-tone-${tone}"><a class="ncn-tool-link" href="${escapeHTML(t.href)}"><div class="ncn-tool-top"><span class="ncn-tool-icon">${svg(t.icon)}</span>${t.access==='vip'?'<span class="ncn-tool-badge">VIP</span>':''}</div><h3>${escapeHTML(t.title)}</h3><p>${escapeHTML(t.description)}</p><span class="ncn-card-open"><span>${t.access==='vip'?'Tài khoản được duyệt':'Mở công cụ'}</span>${svg('arrow')}</span></a><button type="button" class="ncn-pin" data-ncn-pin="${escapeHTML(t.id)}" aria-pressed="${pinned}" aria-label="${pinned?'Bỏ ghim':'Ghim'} ${escapeHTML(t.title)}">${svg('star')}</button></article>`;
+    return `<article class="ncn-tool-card ncn-tone-${tone}"><a class="ncn-tool-link" href="${escapeHTML(t.href)}"><div class="ncn-tool-top"><span class="ncn-tool-icon">${svg(t.icon)}</span>${t.access==='vip'?'<span class="ncn-tool-badge">VIP</span>':''}</div><h3>${escapeHTML(t.title)}</h3><p>${escapeHTML(t.description)}</p><span class="ncn-card-open"><span>${t.access==='vip'?'Đăng nhập NCN':'Mở công cụ'}</span>${svg('arrow')}</span></a><button type="button" class="ncn-pin" data-ncn-pin="${escapeHTML(t.id)}" aria-pressed="${pinned}" aria-label="${pinned?'Bỏ ghim':'Ghim'} ${escapeHTML(t.title)}">${svg('star')}</button></article>`;
   }
   function renderTools() {
     const items=tools.filter(t=>(!homeGroup||t.group===homeGroup)&&matches(t,homeQuery));

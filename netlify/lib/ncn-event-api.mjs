@@ -1,5 +1,6 @@
 // All access decisions use a fresh, authenticated Identity /user response.
 import { randomUUID } from 'node:crypto';
+import {withMemberVip} from './ncn-membership.mjs';
 
 const headers = {'Cache-Control':'private, no-store, max-age=0','Netlify-CDN-Cache-Control':'no-store','Vary':'Cookie','X-Content-Type-Options':'nosniff'};
 function fail(status,message){const e=new Error(message);e.status=status;throw e;}
@@ -53,10 +54,9 @@ export function createHandler(deps){return async function(req){
     const method=req.method,route=new URL(req.url).searchParams.get('route')||'me';
     if(!['GET','POST'].includes(method))fail(405,'Phương thức không hỗ trợ.');
     if(method==='POST'&&req.headers.get('origin')!==new URL(req.url).origin)fail(403,'Yêu cầu phải gửi từ chính trang web.');
-    const user=await deps.verify(req);
+    const user=withMemberVip(await deps.verify(req));
     if(route==='me'&&method==='GET')return reply({user,allowed:!!(user&&(user.admin||user.vip))});
-    if(!user)fail(401,'Đăng nhập tài khoản VIP để sử dụng.');
-    if(!user.admin&&!user.vip)fail(403,'Tài khoản chưa có VIP hoặc gói đã hết hạn. Đăng ký/gia hạn VIP hoặc liên hệ ADMIN.');
+    if(!user)fail(401,'Đăng nhập và xác nhận email tài khoản NCN để sử dụng công cụ VIP.');
     const store=deps.store();
     if(route==='app'&&method==='GET')return reply({html:await deps.asset(user.admin?'admin.html':'vip.html'),user});
     if(route==='asset'&&method==='GET'){

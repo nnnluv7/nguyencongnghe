@@ -183,13 +183,14 @@
     },
     {
       "id": "vip",
-      "title": "Nâng cấp VIP",
-      "description": "30.000đ/30 ngày hoặc 55.000đ/60 ngày. Dùng chung Sticker Event và Giờ Vàng Giá Sốc.",
+      "title": "Donate · Ủng hộ NCN",
+      "description": "Gửi NCN một chút ủng hộ tùy tâm, với số tiền bạn chọn. Đăng nhập là dùng được công cụ VIP.",
       "href": "/premium/",
       "group": "tien-ich",
-      "icon": "shield",
+      "icon": "heart",
       "tone": "amber",
-      "featured": true
+      "featured": false,
+      "access": "public"
     },
     {
       "id": "ncn-arcade",

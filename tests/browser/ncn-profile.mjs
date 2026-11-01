@@ -8,7 +8,7 @@ import {createProfileHandler} from '../../netlify/lib/ncn-profile-api.mjs';
 import {createScoresHandler} from '../../netlify/lib/ncn-scores-api.mjs';
 import {scorePhoto} from '../../netlify/lib/ncn-score-photos.mjs';
 import {verifyIdentity} from '../../netlify/lib/ncn-event-api.mjs';
-import {withPaidVip,memberKey} from '../../netlify/lib/ncn-membership.mjs';
+import {withMemberVip,memberKey} from '../../netlify/lib/ncn-membership.mjs';
 import {memoryStore} from '../fixtures/arcade-store.mjs';
 
 // Synthetic HTTPS Identity, membership ledger and real photo/score handlers.
@@ -50,7 +50,7 @@ await context.route('**/*',async route=>{
   const response=await profileHandler(req);if(url.searchParams.get('route')==='upload'&&dropUploadOnce){dropUploadOnce=false;return route.abort('failed');}return route.fulfill({status:response.status,headers:Object.fromEntries(response.headers),body:Buffer.from(await response.arrayBuffer())});
  }
  if(url.pathname==='/.netlify/functions/ncn-scores'){const response=await scoreHandler(req);return route.fulfill({status:response.status,headers:Object.fromEntries(response.headers),body:Buffer.from(await response.arrayBuffer())});}
- if(url.pathname==='/.netlify/functions/ncn-billing'){if(holdMe){const held=holdMe;holdMe=null;const current=await withPaidVip(await verify(req),ledger,now);held.started();await held.wait;return json({user:current,serverNow:new Date(now).toISOString()});}return json({user:await withPaidVip(await verify(req),ledger,now),serverNow:new Date(now).toISOString()});}
+ if(url.pathname==='/.netlify/functions/ncn-billing'){if(holdMe){const held=holdMe;holdMe=null;const current=withMemberVip(await verify(req));held.started();await held.wait;return json({user:current,serverNow:new Date(now).toISOString()});}return json({user:withMemberVip(await verify(req)),serverNow:new Date(now).toISOString()});}
  if(url.pathname.startsWith('/.netlify/functions/'))return json(url.pathname.endsWith('ncn-announcements')?{items:[]}:{items:[],total:1,online:1});
  try{let path=resolve(root,'.'+decodeURIComponent(url.pathname));if(path!==root&&!path.startsWith(root+sep))throw Error();if((await stat(path)).isDirectory())path+='/index.html';return route.fulfill({contentType:mime[extname(path)]||'application/octet-stream',body:await readFile(path)});}catch{return route.fulfill({status:404,body:'Not found'});}
 });
@@ -69,8 +69,8 @@ try{
   assert.equal(await page.locator('[data-member-form]').isVisible(),true);assert.equal(await page.locator('#ncn-member-email').inputValue(),member.email);assert.equal(await page.locator('#ncn-member-email').getAttribute('readonly'),'');assert.equal(await page.locator('#ncn-member-since').innerText(),'1/9/2026');
   assert.equal(await page.evaluate(()=>NCNAccount.state.user.admin),false);
  });
- await check('VIP detail uses the existing server ledger and server time with a direct renewal link',async()=>{
-  await page.locator('[data-member-tab=vip]').click();assert.equal(await page.locator('#ncn-member-vip-title').innerText(),'VIP đang hoạt động');assert.equal(await page.locator('#ncn-member-vip-remaining').innerText(),'30 ngày');assert.equal(await page.locator('#ncn-member-vip-expiry').innerText(),'25/11/2026');assert.equal(await page.locator('.ncn-member-vip-link').getAttribute('href'),'/premium/');
+ await check('VIP detail explains account access with a direct optional donation link',async()=>{
+  await page.locator('[data-member-tab=vip]').click();assert.equal(await page.locator('#ncn-member-vip-title').innerText(),'Công cụ VIP đã sẵn sàng');assert.equal(await page.locator('#ncn-member-vip-remaining').innerText(),'Đã đăng nhập');assert.equal(await page.locator('#ncn-member-vip-expiry').innerText(),'Không giới hạn');assert.equal(await page.locator('.ncn-member-vip-link').getAttribute('href'),'/premium/');
   await page.screenshot({path:out+'/vip-desktop.jpg',fullPage:true});await page.locator('[data-member-tab=profile]').click();
  });
  await check('saving an avatar uses the photo handler and updates only the member display metadata',async()=>{
@@ -122,9 +122,9 @@ try{
   let release,started;const wait=new Promise(resolve=>release=resolve),requested=new Promise(resolve=>started=resolve);holdMe={wait,started};await page.evaluate(()=>{window.oldProfileRefresh=NCNAccount.refresh({force:true});});await requested;
   await page.locator('#ncn-member-name').fill('Hồ sơ mới nhất');await page.locator('[data-member-form] [type=submit]').click();await page.locator('#ncn-account-message').filter({hasText:'Đã cập nhật'}).waitFor();release();await page.evaluate(()=>window.oldProfileRefresh);assert.equal(await page.evaluate(()=>NCNAccount.state.user.name),'Hồ sơ mới nhất');assert.equal(await page.locator('#ncn-member-name').inputValue(),'Hồ sơ mới nhất');
  });
- await check('VIP refresh handles expiry and manual grants without changing the account profile',async()=>{
-  await ledger.setJSON(memberKey(member.id),{userId:member.id,expiresAt:'2026-10-25T12:00:00Z',blocked:false});await page.locator('[data-member-tab=vip]').click();await page.locator('[data-member-refresh]').click();await page.locator('#ncn-member-vip-title').filter({hasText:'đã hết hạn'}).waitFor();assert.equal(await page.locator('#ncn-member-vip-remaining').innerText(),'0 ngày');
-  member.roles=['vip'];await page.locator('[data-member-refresh]').click();await page.locator('#ncn-member-vip-plan').filter({hasText:'Admin cấp'}).waitFor();assert.equal(await page.locator('#ncn-member-vip-expiry').innerText(),'Không giới hạn');member.roles=[];
+ await check('past paid expiry and manual roles do not change login-based access or the profile',async()=>{
+  await ledger.setJSON(memberKey(member.id),{userId:member.id,expiresAt:'2026-10-25T12:00:00Z',blocked:true});await page.locator('[data-member-tab=vip]').click();await page.locator('[data-member-refresh]').click();await page.locator('#ncn-member-vip-title').filter({hasText:'đã sẵn sàng'}).waitFor();assert.equal(await page.locator('#ncn-member-vip-remaining').innerText(),'Đã đăng nhập');
+  member.roles=['vip'];await page.locator('[data-member-refresh]').click();assert.equal(await page.locator('#ncn-member-vip-plan').innerText(),'Thành viên NCN');assert.equal(await page.locator('#ncn-member-vip-expiry').innerText(),'Không giới hạn');member.roles=[];
  });
  await check('signing out while a photo upload waits never attaches that photo or restores private fields',async()=>{
   await page.locator('[data-member-tab=profile]').click();await page.locator('#ncn-member-photo').setInputFiles({name:'last.png',mimeType:'image/png',buffer:photo});await page.locator('#ncn-account-message').filter({hasText:'Đã chọn ảnh'}).waitFor();

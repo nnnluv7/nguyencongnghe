@@ -12,7 +12,7 @@ export function mountVipGate(endpoint,{doc=document,win=window,fetcher=fetch}={}
   waiting.innerHTML='<p>Mở công cụ của bạn</p><span></span><span></span><span></span>';gate.append(waiting);
   const phase=value=>{gate.dataset.ncnGateState=value;gate.setAttribute('aria-busy',String(value==='loading'));};phase('loading');
   const say=(text,error=false)=>{const el=doc.getElementById('vip-message');el.hidden=!text;el.textContent=text;el.classList.toggle('ev-error',error);};
-  const allowed=user=>!!(user&&(user.admin||user.vip));
+  const allowed=user=>!!user?.id;
   async function call(route,body){
     await identity.ensureSession();
     const response=await fetcher(endpoint+'?route='+route,{credentials:'same-origin',cache:'no-store',method:body?'POST':'GET',headers:body?{'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):undefined,signal:AbortSignal.timeout(15000)});
@@ -28,7 +28,7 @@ export function mountVipGate(endpoint,{doc=document,win=window,fetcher=fetch}={}
     gate.hidden=false;phase(user?'member':'guest');doc.getElementById('vip-account').hidden=!user;
     doc.getElementById('vip-account').textContent=user?.email||'';doc.getElementById('vip-signout').hidden=!user;
     doc.querySelector('[data-vip-auth]').hidden=!!user;
-    say(user?'Tài khoản website đã đăng nhập. Mua / gia hạn VIP để sử dụng công cụ.':'Dùng tài khoản nguyencongnghe.com để đăng nhập và đăng ký VIP.');
+    say(user?'Tài khoản NCN đã đăng nhập. Bấm mở lại công cụ nếu kết nối bị gián đoạn.':'Đăng nhập tài khoản NCN để dùng công cụ VIP. Donate hoàn toàn tùy tâm.');
   }
   function check({refresh=true}={}){
     forceNext=forceNext||refresh;

@@ -57,10 +57,12 @@ jobs:
         run: npm install --no-save --package-lock=false playwright@1.56.1
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
-      - name: Check shared accounts with isolated Identity and payment fixtures
+      - name: Check shared accounts with isolated Identity and donation fixtures
         run: node tests/browser/ncn-account.mjs
-      - name: Check member profiles, avatars, VIP and all six Arcade games
+      - name: Check member profiles, avatars, member access and all eight Arcade games
         run: node tests/browser/ncn-profile.mjs
+      - name: Check optional donations, QR amounts, mobile layouts and member prompts
+        run: node tests/browser/ncn-donate.mjs
       - name: Check print layouts, scrolling and compact calculators
         run: node tests/browser/ncn-scroll-ui.mjs
       - name: Check every library page at desktop and phone sizes
@@ -84,4 +86,5 @@ jobs:
             artifacts/account/
             artifacts/profile/
             artifacts/library/
+            artifacts/donate/
           retention-days: 14

@@ -7,8 +7,13 @@ export function emptyMember(user){
   return {schema:1,userId:user.id,email:user.email,name:user.name,expiresAt:null,blocked:false,grants:{},requests:{},updatedAt:null};
 }
 
-// Paid access lives in the server ledger, never in browser metadata or a permanent role.
-// Existing VIP roles granted by the owner remain unchanged.
+// Call only with the result of fresh Identity verification. Donations are optional;
+// every confirmed, unbanned NCN account can use the member tools. No ledger read.
+export function withMemberVip(user){
+  return user?{...user,vip:true,vipSource:user.admin?'admin':'account',vipExpiresAt:null,paidVipBlocked:false}:null;
+}
+
+// Historical receipts still use this view; it no longer authorizes tool access.
 export async function withPaidVip(user,storeFactory,now=Date.now()){
   if(!user)return null;
   if(user.admin||user.vip)return {...user,vipSource:user.admin?'admin':'manual',vipExpiresAt:null};

@@ -1,6 +1,7 @@
 const seedLibraryForFixture=JSON.parse(await readFile('netlify/lib/ncn-library/seed.json','utf8'));
 import {publicCatalog} from '../../netlify/lib/ncn-library-api.mjs';
 import {chromium} from 'playwright';
+import {donationDetails} from '../../netlify/lib/ncn-billing-api.mjs';
 import {readFile,stat,mkdir} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
 import assert from 'node:assert/strict';
@@ -9,12 +10,12 @@ import assert from 'node:assert/strict';
 const origin='https://ncn-account.test',root=resolve(process.env.NCN_BUILT_TEST?'dist':'public');
 const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.png':'image/png','.svg':'image/svg+xml','.jpg':'image/jpeg','.woff2':'font/woff2'};
 const users=new Map(),tokens=new Map(),calls=[];
-let autoconfirm=true,disableSignup=false,orderUser=null,confirmedUser=null,createHold=null,sessionHold=null,profileFailure=false,assetHold=null,logoutHold=null;
+let autoconfirm=true,disableSignup=false,confirmedUser=null,sessionHold=null,profileFailure=false,assetHold=null,logoutHold=null;
 const functionCalls=[];
 const member=(email='member@example.test',name='Thành viên')=>({id:'fixture-'+email,email,name,password:'Example123!',confirmed:true,vip:false,admin:false});
 const existing=member('vip@example.test','VIP hiện có');existing.vip=true;users.set(existing.email,existing);
 const raw=u=>({id:u.id,email:u.email,confirmed_at:u.confirmed?'2026-10-24T00:00:00Z':null,created_at:'2026-10-24T00:00:00Z',app_metadata:{roles:u.admin?['admin']:[]},user_metadata:{full_name:u.name,roles:['admin','vip']}});
-const view=u=>u?.confirmed?{id:u.id,email:u.email,name:u.name,admin:u.admin,vip:u.vip,vipSource:u.vip?'paid':null,vipExpiresAt:u.vip?'2026-12-24T00:00:00Z':null}:null;
+const view=u=>u?.confirmed?{id:u.id,email:u.email,name:u.name,admin:u.admin,vip:true,vipSource:'account',vipExpiresAt:null}:null;
 function session(u){
   const token=Buffer.from(JSON.stringify({alg:'fixture'})).toString('base64url')+'.'+Buffer.from(JSON.stringify({sub:u.id,email:u.email,exp:Math.floor(Date.now()/1000)+3600})).toString('base64url')+'.fixture';tokens.set(token,u);
   return {access_token:token,refresh_token:'refresh-'+u.id,token_type:'bearer',expires_in:3600,user:raw(u)};
@@ -61,15 +62,9 @@ async function fixtureContext(){
       if(tool==='ncn-announcements')return reply({items:[]});
       if(tool==='ncn-visitors')return reply({total:1,online:1});
       if(tool==='ncn-billing'){
-        if(action==='plans')return reply({ready:true,plans:[{id:'vip30',amount:30000},{id:'vip60',amount:55000}]});
+        if(action==='donation')return reply(donationDetails(url.searchParams.get('amount')));
         if(action==='me'){if(sessionHold){sessionHold.started();await sessionHold.wait;}if(profileFailure)return reply({error:'Temporary connection failure'},503);return reply({user:view(user)});}
         if(action==='orders')return view(user)?reply({orders:[]}):reply({error:'Unauthorized'},401);
-        if(action==='create-order'){
-          if(!view(user))return reply({error:'Unauthorized'},401);orderUser=user.id;calls.push({action:'create-order',userId:user.id,body});
-          if(createHold){createHold.started();await createHold.wait;}
-          return reply({order:{id:'NCNAAAAAAAAAAAAAAAAAAAA',planId:'vip30',name:'VIP 30 ngày',amount:30000,status:'pending',createdAt:new Date().toISOString(),expiresAt:new Date(Date.now()+600000).toISOString(),bankName:'Ngân hàng thử',bankAccount:'0000',payeeName:'FIXTURE',description:'FIXTURE ONLY',qrUrl:'https://vietqr.app/img?fixture=1'}});
-        }
-        if(action==='order')return reply({error:'Fixture has no persisted order'},404);
         throw new Error('Unmocked billing action '+action);
       }
       if(tool==='ncn-event'||tool==='ncn-gvgs'){
@@ -123,31 +118,28 @@ try{
     assert.equal(await home.evaluate(()=>NCNAccount.state.user.admin),false);
   });
   const premium=await open(context,'/premium/');
-  await check('same website account buys VIP without a second login or registration form',async()=>{
+  await check('the same website account can donate freely without a second account or paid plan',async()=>{
     await premium.waitForFunction(()=>document.getElementById('pay-email').textContent==='new@example.test');
-    assert.equal(await premium.locator('#pay-auth').isVisible(),false);assert.equal(await premium.locator('[data-pay-form]').count(),0);
-    await premium.locator('[data-pay-plan=vip30]').click();await premium.locator('#pay-checkout').waitFor({state:'visible'});
-    assert.equal(orderUser,registered.id);assert.equal(JSON.parse(calls.find(c=>c.action==='create-order').body).planId,'vip30');
+    assert.equal(await premium.locator('#pay-auth').isVisible(),false);assert.equal(await premium.locator('[data-pay-plan]').count(),0);
+    await premium.locator('[data-donate-amount="20000"]').click();await premium.waitForFunction(()=>document.getElementById('donate-qr-note').textContent.includes('20.000'));
+    assert.equal(calls.some(c=>c.action==='create-order'),false);
   });
   const event=await open(context,'/in-event/');
-  await check('shared member session is recognized but only server VIP unlocks private tools',async()=>{
-    await event.waitForFunction(()=>document.getElementById('vip-account').textContent==='new@example.test');
-    assert.equal(await event.locator('[data-vip-auth]').isVisible(),false);assert.equal(await event.locator('[data-private-fixture]').count(),0);
-    registered.vip=true;await event.locator('#vip-check').click();await event.locator('[data-private-fixture=ncn-event]').waitFor();
+  await check('a signed-in member opens private tools without paying or buying VIP',async()=>{
+    await event.locator('[data-private-fixture=ncn-event]').waitFor();assert.equal(registered.vip,false);assert.equal(await event.evaluate(()=>NCN_VIP.user.id),registered.id);
   });
   const gvgs=await open(context,'/in-gvgs/');
-  await check('paid entitlement and the same identity open both Event and Giờ Vàng',async()=>{
+  await check('the same confirmed member session opens both Event and Giờ Vàng',async()=>{
     await gvgs.locator('[data-private-fixture=ncn-gvgs]').waitFor();assert.equal(await gvgs.evaluate(()=>NCN_VIP.user.id),registered.id);
   });
-  await check('logout propagates across tabs, clears private apps and discards a pending checkout response',async()=>{
-    let release,started;const wait=new Promise(resolve=>release=resolve),requested=new Promise(resolve=>started=resolve);createHold={wait,started};
-    await premium.locator('[data-pay-plan=vip30]').click();await requested;
-    await home.evaluate(()=>NCNAccount.signOut());release();createHold=null;
+  await check('logout propagates across tabs and clears private tools while donation remains public',async()=>{
+    await home.evaluate(()=>NCNAccount.signOut());
     await premium.waitForFunction(()=>!NCNAccount.state.user&&!document.getElementById('pay-auth').hidden);
     await event.waitForFunction(()=>window.NCNAccount?.state.ready&&!document.querySelector('[data-private-fixture]'));
     await gvgs.waitForFunction(()=>window.NCNAccount?.state.ready&&!document.querySelector('[data-private-fixture]'));
     assert.equal(await home.evaluate(()=>QuizSystem.user),null);
-    await premium.waitForFunction(()=>!document.querySelector('[data-pay-plan=vip30]').disabled);assert.equal(await premium.locator('#pay-checkout').isVisible(),false);
+    await premium.locator('[data-donate-amount="50000"]').click();await premium.waitForFunction(()=>document.getElementById('donate-qr-note').textContent.includes('50.000'));
+    assert.equal(await premium.locator('#ncn-account-dialog').isVisible(),false);
   });
   await check('existing VIP accounts retain identity and entitlement after shared login',async()=>{
     await home.evaluate(()=>{
@@ -170,7 +162,7 @@ try{
     assert.equal(await home.locator('#auth-header-desktop [data-ncn-account-open]').count(),0);
     assert.match(await home.locator('#auth-header-desktop').textContent(),/vip@example.test/);
     assert.equal(await home.locator('#pay-auth').isVisible(),false);
-    assert.equal(await home.locator('[data-pay-plan=vip30]').isEnabled(),false);
+    assert.equal(await home.locator('#donate-submit').isEnabled(),true);
     assert.equal(await home.locator('#ncn-account-dialog').isVisible(),false);
     release();sessionHold=null;await home.waitForFunction(()=>NCNAccount.state.ready&&NCNAccount.state.user?.vip);
     await home.waitForFunction(()=>document.getElementById('pay-email').textContent==='vip@example.test');
@@ -195,11 +187,11 @@ try{
     profileFailure=false;await event.evaluate(()=>NCNAccount.refresh({force:true}));
     assert.equal(await event.locator('[data-ncn-account-retry]').count(),0);
   });
-  await check('server revocation still clears the private app and manual retry rechecks entitlement',async()=>{
-    existing.vip=false;await event.evaluate(()=>{window.revocationMarker=true;NCNAccount.refresh({force:true}).catch(()=>{});});
-    await event.waitForFunction(()=>!window.revocationMarker&&window.NCNAccount?.state.ready&&!NCNAccount.state.user?.vip&&document.getElementById('vip-gate')?.dataset.ncnGateState==='member'&&!document.querySelector('[data-private-fixture]'));
-    assert.equal(await event.locator('[data-vip-auth]').isVisible(),false);
-    existing.vip=true;await event.locator('#vip-check').click();await event.locator('[data-private-fixture=ncn-event]').waitFor();
+  await check('server session revocation still clears the private app and allows a fresh sign-in',async()=>{
+    existing.confirmed=false;await event.evaluate(()=>{window.revocationMarker=true;NCNAccount.refresh({force:true}).catch(()=>{});});
+    await event.waitForFunction(()=>!window.revocationMarker&&window.NCNAccount?.state.ready&&!NCNAccount.state.user&&document.getElementById('vip-gate')?.dataset.ncnGateState==='guest'&&!document.querySelector('[data-private-fixture]'));
+    assert.equal(await event.locator('[data-vip-auth]').isVisible(),true);
+    existing.confirmed=true;await login(event);await event.locator('[data-private-fixture=ncn-event]').waitFor();
   });
   await check('logout during private-script loading clears content before the session ends and never restores it',async()=>{
     let releaseAsset,startAsset,releaseLogout,startLogout;

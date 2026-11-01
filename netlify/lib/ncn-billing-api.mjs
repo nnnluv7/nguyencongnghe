@@ -1,12 +1,8 @@
-import {createHash,createHmac,randomBytes,timingSafeEqual} from 'node:crypto';
-import {memberKey,emptyMember,withPaidVip} from './ncn-membership.mjs';
+import {createHash,createHmac,timingSafeEqual} from 'node:crypto';
+import {memberKey,emptyMember,withMemberVip} from './ncn-membership.mjs';
 
-export const PLANS=Object.freeze([
-  Object.freeze({id:'vip30',name:'VIP 30 ngày',days:30,amount:30000}),
-  Object.freeze({id:'vip60',name:'VIP 60 ngày',days:60,amount:55000})
-]);
 export const BANK=Object.freeze({bank:'VietinBank',account:'105312456789',name:'NGUYEN NGHIA NGUYEN'});
-const DAY=86400000,ORDER_TTL=30*60*1000;
+const DAY=86400000;
 const ORDER=/^NCN[A-F0-9]{20}$/;
 const TX_ID=/^[1-9]\d{0,19}$/;
 const HEADERS={'Cache-Control':'private, no-store, max-age=0','Netlify-CDN-Cache-Control':'no-store','Vary':'Cookie','X-Content-Type-Options':'nosniff','Referrer-Policy':'same-origin'};
@@ -18,7 +14,6 @@ const orderKey=id=>'order-'+id;
 function fail(status,message){const e=new Error(message);e.status=status;throw e;}
 function reply(data,status=200){return new Response(JSON.stringify(data),{status,headers:{...HEADERS,'Content-Type':'application/json; charset=utf-8'}});}
 function errorReply(error,webhook=false){return reply(webhook?{success:false,error:error.status?error.message:'Chưa ghi nhận được giao dịch. Hệ thống sẽ thử lại.'}:{error:error.status?error.message:'Chưa thực hiện được thao tác. Vui lòng thử lại.'},error.status||503);}
-function isReady(config){return config.enabled===true&&typeof config.secret==='string'&&config.secret.length>=32;}
 function validateCode(value){if(typeof value!=='string'||!ORDER.test(value))fail(400,'Mã đơn không hợp lệ.');return value;}
 function validateTxId(value){const id=String(value??'');if(!TX_ID.test(id)||(typeof value==='number'&&!Number.isSafeInteger(value)))fail(400,'Mã giao dịch không hợp lệ.');return id;}
 async function rawBody(req,limit){
@@ -81,38 +76,10 @@ function orderView(order,member,now){
   qr.search=new URLSearchParams({acc:order.bankAccount,bank:'VietinBank',amount:String(order.amount),des:order.description}).toString();
   return {id:order.id,planId:order.planId,amount:order.amount,days:order.days,name:order.name,status:state,createdAt:order.createdAt,expiresAt:order.expiresAt,bankAccount:order.bankAccount,bankName:order.bankName,payeeName:order.payeeName,description:order.description,qrUrl:qr.href,paidAt:grant?.paidAt||null,vipExpiresAt:grant?.expiresAt||null,reviewReason:order.reviewReason||null};
 }
-async function newOrder(store,user,body,now){
-  const plan=PLANS.find(p=>p.id===body.planId);
-  if(!plan)fail(400,'Chọn gói VIP 30 ngày hoặc 60 ngày.');
-  if(user.admin||user.vipSource==='manual')fail(409,'Tài khoản đã được ADMIN cấp VIP không giới hạn. Anh/chị không cần mua thêm gói.');
-  const nonce=body.idempotencyKey;
-  if(typeof nonce!=='string'||!/^[a-zA-Z0-9-]{16,64}$/.test(nonce))fail(400,'Mã yêu cầu không hợp lệ. Tải lại trang rồi thử lại.');
-  const id='NCN'+randomBytes(10).toString('hex').toUpperCase();
-  const candidate={schema:1,id,userId:user.id,userEmail:user.email,name:plan.name,planId:plan.id,amount:plan.amount,days:plan.days,createdAt:iso(now),expiresAt:iso(now+ORDER_TTL),bankAccount:BANK.account,bankName:BANK.bank,payeeName:BANK.name,description:'SEVQR '+id,status:'pending',transactionId:null,reviewReason:null};
-  const order=await atomic(store,memberKey(user.id),emptyMember(user),member=>{
-    if(member.userId!==user.id)fail(503,'Chưa tạo được đơn thanh toán.');
-    if(member.blocked)fail(403,'VIP thanh toán của tài khoản đang bị tạm khóa. Vui lòng liên hệ ADMIN.');
-    member.requests=member.requests||{};member.grants=member.grants||{};
-    if(own(member.requests,nonce)){
-      const old=member.requests[nonce];if(old.planId!==plan.id)fail(409,'Yêu cầu này đã dùng cho gói khác. Chọn lại gói.');
-      return {skip:true,value:old};
-    }
-    const recent=Object.entries(member.requests).filter(([,o])=>Date.parse(o.createdAt)>now-DAY);
-    if(recent.length>=20)fail(429,'Đã tạo nhiều đơn trong ngày. Vui lòng dùng mã đơn đã có hoặc liên hệ ADMIN.');
-    if(recent.filter(([,o])=>Date.parse(o.expiresAt)>now&&!member.grants[o.id]).length>=5)fail(429,'Đang có nhiều mã thanh toán còn hạn. Vui lòng dùng mã đơn đã có.');
-    member.requests=Object.fromEntries(recent);member.requests[nonce]=candidate;member.updatedAt=iso(now);member.email=user.email;member.name=user.name;
-    return {value:candidate};
-  });
-  await atomic(store,orderKey(order.id),order,(draft,exists)=>{
-    if(exists&&(draft.userId!==user.id||draft.planId!==plan.id))fail(409,'Mã đơn đã được sử dụng.');
-    return {skip:exists,value:draft};
-  });
-  return orderView(await store.get(orderKey(order.id),{type:'json'}),await getMember(store,user),now);
-}
 
 async function markReview(store,tx,reason,order,now){
   await atomic(store,txKey(tx.id),null,draft=>{
-    if(draft.status==='applied')return {skip:true};
+    if(['applied','donated'].includes(draft.status))return {skip:true};
     draft.status='review';draft.reason=reason;draft.updatedAt=iso(now);return {};
   });
   if(order)await atomic(store,orderKey(order.id),null,draft=>{
@@ -125,11 +92,27 @@ async function markReview(store,tx,reason,order,now){
 export async function applyTransaction(store,tx,now,{orderId=null,admin=null}={}){
   let record=await store.get(txKey(tx.id),{type:'json'});
   if(!record||record.fingerprint!==fingerprint(tx))fail(409,'Dữ liệu giao dịch không khớp bản đã xác thực.');
+  if(record.status==='donated'){
+    if(orderId)fail(409,'Giao dịch donate đã được ghi nhận riêng.');
+    return {success:true,duplicate:true};
+  }
   if(record.status==='applied'){
     if(orderId&&record.orderId!==orderId)fail(409,'Giao dịch đã được dùng cho đơn khác.');
     return {success:true,duplicate:true};
   }
-  const codes=codesIn(tx.content),code=orderId||(codes.length===1?codes[0]:null);
+  const codes=codesIn(tx.content);
+  const donation=!codes.length&&/\bNCN\s+DONATE\b/i.test(tx.content);
+  if(donation&&orderId)fail(409,'Giao dịch donate không dùng để đối chiếu đơn VIP cũ.');
+  if(donation){
+    if(tx.direction!=='in'||tx.bank.toLowerCase()!=='vietinbank'||tx.account!==BANK.account)fail(400,'Tài khoản nhận không khớp.');
+    if(tx.reference){
+      const first=await atomic(store,'reference-'+hash(tx.account+'|'+tx.reference),{transactionId:tx.id,donation:true,createdAt:iso(now)},(r,exists)=>({skip:exists,value:r}));
+      if(first.transactionId!==tx.id)return markReview(store,tx,'Mã tham chiếu ngân hàng đã được ghi nhận ở giao dịch khác.',null,now);
+    }
+    await atomic(store,txKey(tx.id),null,r=>{r.status='donated';r.donation=true;r.reason=null;r.updatedAt=iso(now);return {};});
+    return {success:true,donation:true};
+  }
+  const code=orderId||(codes.length===1?codes[0]:null);
   if(!code)return markReview(store,tx,codes.length>1?'Nội dung có nhiều mã đơn.':'Chưa nhận diện được mã đơn.',null,now);
   const order=await store.get(orderKey(validateCode(code)),{type:'json'});
   if(!order)return markReview(store,tx,'Mã đơn chưa có trên NCN.',null,now);
@@ -207,21 +190,29 @@ async function listRecords(store,prefix,max=80,after=''){
   const records=await Promise.all(keys.map(k=>store.get(k,{type:'json'})));
   return {records:records.filter(Boolean),next:all.length>max?keys.at(-1):null};
 }
+export function donationDetails(value=null){
+  const input=value===null?'':String(value);
+  if(input&&!/^[1-9]\d{0,12}$/.test(input))fail(400,'Nhập số tiền nguyên dương bằng VND, hoặc để trống để chọn trong ứng dụng ngân hàng.');
+  const amount=input?Number(input):null,description='SEVQR NCN DONATE',qr=new URL('https://vietqr.app/img');
+  qr.search=new URLSearchParams({acc:BANK.account,bank:BANK.bank,...(amount===null?{}:{amount:String(amount)}),des:description}).toString();
+  return {bank:BANK,amount,description,qrUrl:qr.href,optional:true};
+}
+
 export function createBillingHandler(deps){return async req=>{
   try{
-    if(!deps.production())fail(503,'Thanh toán VIP chỉ hoạt động ở website chính thức.');
+    if(!deps.production())fail(503,'Chức năng tài khoản chỉ hoạt động ở website chính thức.');
     const url=new URL(req.url),route=url.searchParams.get('route')||'me',now=deps.now?.()??Date.now(),config=deps.config();
     if(!['GET','POST'].includes(req.method))fail(405,'Phương thức không hỗ trợ.');
     if(req.method==='POST'&&req.headers.get('origin')!==url.origin)fail(403,'Yêu cầu phải gửi từ chính website.');
-    if(req.method==='GET'&&route==='plans')return reply({plans:PLANS,bank:BANK,ready:isReady(config),serverNow:iso(now)});
-    const rawUser=await deps.verify(req),store=deps.store();
-    const user=await withPaidVip(rawUser,store,now);
+    // Public, read-only QR preparation never requires an account, a payment
+    // webhook secret, or a storage read. It does not initiate a transfer.
+    if(route==='donation'&&req.method==='GET')return reply(donationDetails(url.searchParams.get('amount')));
+    if(route==='plans'&&req.method==='GET')return reply({plans:[],retired:true,donateUrl:'/premium/',serverNow:iso(now)});
+    if(route==='create-order'&&req.method==='POST')fail(410,'NCN đã chuyển sang donate tùy tâm. Đăng nhập là dùng được công cụ VIP; không cần mua gói.');
+    const user=withMemberVip(await deps.verify(req));
     if(route==='me'&&req.method==='GET')return reply({user,serverNow:iso(now)});
-    if(!user)fail(401,'Đăng nhập và xác nhận email để thanh toán VIP.');
-    if(route==='create-order'&&req.method==='POST'){
-      if(!isReady(config))fail(503,'Website tạm chưa nhận thanh toán. Vui lòng quay lại sau.');
-      const body=jsonBody(await rawBody(req,8192));return reply({order:await newOrder(store,user,body,now),serverNow:iso(now)},201);
-    }
+    if(!user)fail(401,'Đăng nhập và xác nhận email để xem thông tin tài khoản.');
+    const store=deps.store();
     if(route==='order'&&req.method==='GET'){
       const order=await store.get(orderKey(validateCode(url.searchParams.get('id'))),{type:'json'});
       if(!order||order.userId!==user.id)fail(404,'Không tìm thấy đơn thanh toán.');

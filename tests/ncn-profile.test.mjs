@@ -30,12 +30,11 @@ test('avatar navigation hints retain display fields without carrying authorizati
  assert.deepEqual(hint,{id:user.id,email:user.email,name:user.name,avatar:'https://ncn.test/a.webp'});
  assert.equal(displayProfile({...user,avatar:'javascript:alert(1)'}).avatar,undefined);
 });
-test('VIP cards distinguish server-paid expiry, manual grants, administrators, blocks and ordinary members',()=>{
- assert.equal(vipSummary(null,now).state,'guest');assert.equal(vipSummary(user,now).state,'member');
- const paid={...user,vip:true,vipSource:'payment',vipExpiresAt:'2026-10-28T12:00:00Z'};
- assert.equal(vipSummary(paid,now).remaining,'2 ngày');assert.equal(vipSummary({...paid,vip:false},now+3*86400000).state,'expired');
- assert.equal(vipSummary({...paid,paidVipBlocked:true},now).state,'blocked');
- assert.equal(vipSummary({...user,vip:true,vipSource:'manual'},now).expires,'Không giới hạn');
+test('VIP cards explain login-based access without donation or expiry requirements',()=>{
+ assert.equal(vipSummary(null,now).state,'guest');
+ for(const current of [user,{...user,vip:true,vipSource:'payment',vipExpiresAt:'2025-01-01'},{...user,paidVipBlocked:true},{...user,vipSource:'manual'}]){
+  const card=vipSummary(current,now);assert.equal(card.state,'active');assert.equal(card.expires,'Không giới hạn');assert.equal(card.remaining,'Đã đăng nhập');assert.equal(card.plan,'Thành viên NCN');
+ }
  assert.equal(vipSummary({...user,admin:true},now).plan,'Quyền quản trị NCN');
 });
 test('fresh Identity display fields are optional and user metadata cannot grant VIP or admin',async()=>{
