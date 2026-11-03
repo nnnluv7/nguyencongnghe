@@ -73,6 +73,8 @@ export function createTheme({doc=document,win=window,config,catalog=win.CG_CATAL
   const groups=(Array.isArray(cfg.groups)?cfg.groups:[]).filter(g=>g&&typeof g.id==='string'&&g.name);
   const tools=orderTools((Array.isArray(cfg.tools)?cfg.tools:[]).filter(t=>t&&/^[a-z0-9-]+$/i.test(t.id)&&t.title&&safeHref(t.href)).map(t=>({...t,href:safeHref(t.href)})));
   const toolIds=new Set(tools.map(t=>t.id));
+  let signedIn=Boolean(win.NCNAccount?.state.user?.id);
+  const visibleTools=()=>tools.filter(t=>signedIn||!['event','gvgs'].includes(t.id));
   let rows=normalizeCatalog(catalog);
   let favorites;
   try { const value=JSON.parse(read('ncn-favorites')||'[]'); favorites=new Set(Array.isArray(value)?value.filter(x=>toolIds.has(x)):[]); } catch {favorites=new Set();}
@@ -106,8 +108,11 @@ export function createTheme({doc=document,win=window,config,catalog=win.CG_CATAL
     const active=canonicalPath(href)===path,donation=id==='vip'&&canonicalPath(href)===canonicalPath('/premium/');
     return `<a class="ncn-nav-link${donation?' ncn-donate-button':''}" href="${escapeHTML(href)}"${id?` data-ncn-tool="${escapeHTML(id)}"`:""}${donation?' aria-label="Donate · Ủng hộ NCN tùy tâm"':''}${active?' aria-current="page"':''}>${svg(donation?'heart':icon)}<span>${donation?'DONATE':escapeHTML(title)}</span>${badge&&!donation?'<b class="ncn-nav-pill">VIP</b>':''}</a>`;
   }
-  if(tools.length&&$('ncn-navigation')) $('ncn-navigation').innerHTML=navigationHTML(tools,navLink);
-  doc.dispatchEvent(new win.CustomEvent('ncn-navigation-ready'));
+  function renderNavigation(){
+    if(tools.length&&$('ncn-navigation')) $('ncn-navigation').innerHTML=navigationHTML(visibleTools(),navLink);
+    doc.dispatchEvent(new win.CustomEvent('ncn-navigation-ready'));
+  }
+  renderNavigation();
   // A repository without Event still gets a useful portal, without dead VIP links.
   if(!tools.some(t=>t.id==='event')) doc.querySelectorAll('#ncn-site-shell a[href="/in-event/"],.ncn-hero-actions a[href="/in-event/"]').forEach(a=>a.hidden=true);
   icons();const appearance=installAppearance({doc,win});appearance.refresh();
@@ -120,7 +125,7 @@ export function createTheme({doc=document,win=window,config,catalog=win.CG_CATAL
   listen($('ncn-tools-toggle'),'click',()=>setDrawer($('ncn-page-tools')?.hidden));
   listen($('ncn-tools-close'),'click',()=>setDrawer(false));
   listen(doc,'click',e=>{const details=doc.querySelector('.ncn-account-menu');if(details&&!details.contains(e.target)) details.open=false;});
-  const buildSearchItems=()=>[...tools.map(t=>({title:t.title,link:t.href,summary:t.description,labels:[groups.find(g=>g.id===t.group)?.name||'Công cụ'],kind:t.access==='vip'?'Công cụ VIP':'Công cụ',icon:t.icon})),...rows.filter(row=>!tools.some(t=>canonicalPath(t.href)===canonicalPath(row.link))).map(row=>({...row,kind:row.isPage?'Trang':'Bài viết',icon:'book'}))];
+  const buildSearchItems=()=>[...visibleTools().map(t=>({title:t.title,link:t.href,summary:t.description,labels:[groups.find(g=>g.id===t.group)?.name||'Công cụ'],kind:t.access==='vip'?'Công cụ VIP':'Công cụ',icon:t.icon})),...rows.filter(row=>!tools.some(t=>canonicalPath(t.href)===canonicalPath(row.link))).map(row=>({...row,kind:row.isPage?'Trang':'Bài viết',icon:'book'}))];
   let searchItems=buildSearchItems();
   const matches=(row,query)=>fold(`${row.title} ${row.summary||row.description||''} ${(row.labels||[]).join(' ')}`).includes(fold(query));
   function renderSearch() {
@@ -147,16 +152,16 @@ export function createTheme({doc=document,win=window,config,catalog=win.CG_CATAL
   let homeGroup='',homeQuery='';
   function toolCard(t) {
     const pinned=favorites.has(t.id),tone=['blue','violet','teal','amber','coral','navy'].includes(t.tone)?t.tone:'blue',donation=t.id==='vip'&&canonicalPath(t.href)===canonicalPath('/premium/');
-    const action=donation?`<span class="ncn-card-open ncn-donate-button">${svg('heart')}<span>DONATE</span></span>`:`<span class="ncn-card-open"><span>${t.access==='vip'?'Đăng nhập NCN':'Mở công cụ'}</span>${svg('arrow')}</span>`;
-    return `<article class="ncn-tool-card ncn-tone-${tone}"><a class="ncn-tool-link" href="${escapeHTML(t.href)}"><div class="ncn-tool-top"><span class="ncn-tool-icon">${svg(donation?'heart':t.icon)}</span>${t.access==='vip'?'<span class="ncn-tool-badge">VIP</span>':''}</div><h3>${escapeHTML(t.title)}</h3><p>${escapeHTML(t.description)}</p>${action}</a><button type="button" class="ncn-pin" data-ncn-pin="${escapeHTML(t.id)}" aria-pressed="${pinned}" aria-label="${pinned?'Bỏ ghim':'Ghim'} ${escapeHTML(t.title)}">${svg('star')}</button></article>`;
+    const action=donation?`<span class="ncn-card-open ncn-donate-button">${svg('heart')}<span>DONATE</span></span>`:`<span class="ncn-card-open"><span>Mở công cụ</span>${svg('arrow')}</span>`;
+    return `<article class="ncn-tool-card ncn-tone-${tone}" data-ncn-tool="${escapeHTML(t.id)}"><a class="ncn-tool-link" href="${escapeHTML(t.href)}"><div class="ncn-tool-top"><span class="ncn-tool-icon">${svg(donation?'heart':t.icon)}</span>${t.access==='vip'?'<span class="ncn-tool-badge">VIP</span>':''}</div><h3>${escapeHTML(t.title)}</h3><p>${escapeHTML(t.description)}</p>${action}</a><button type="button" class="ncn-pin" data-ncn-pin="${escapeHTML(t.id)}" aria-pressed="${pinned}" aria-label="${pinned?'Bỏ ghim':'Ghim'} ${escapeHTML(t.title)}">${svg('star')}</button></article>`;
   }
   function renderTools() {
-    const items=tools.filter(t=>(!homeGroup||t.group===homeGroup)&&matches(t,homeQuery));
+    const available=visibleTools(),items=available.filter(t=>(!homeGroup||t.group===homeGroup)&&matches(t,homeQuery)),pinned=available.filter(t=>favorites.has(t.id));
     if($('ncn-tool-grid')) $('ncn-tool-grid').innerHTML=items.map(toolCard).join('')||'<p class="ncn-empty">Không tìm thấy công cụ. Thử từ khóa khác.</p>';
-    text('ncn-tool-count',`${items.length} / ${tools.length} công cụ · Chọn ngôi sao để ghim lối tắt.`);
+    text('ncn-tool-count',`${items.length} / ${available.length} công cụ · Chọn ngôi sao để ghim lối tắt.`);
     doc.querySelectorAll('[data-ncn-group]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.ncnGroup===homeGroup)));
-    if($('ncn-favorites-section')) $('ncn-favorites-section').hidden=!favorites.size;
-    if($('ncn-favorites')) $('ncn-favorites').innerHTML=tools.filter(t=>favorites.has(t.id)).map(toolCard).join('');
+    if($('ncn-favorites-section')) $('ncn-favorites-section').hidden=!pinned.length;
+    if($('ncn-favorites')) $('ncn-favorites').innerHTML=pinned.map(toolCard).join('');
     previewLinks();
   }
   if(home){
@@ -209,6 +214,10 @@ export function createTheme({doc=document,win=window,config,catalog=win.CG_CATAL
     if(dialog?.open)renderSearch();
   }
   listen(win,'storage',e=>{if(e.key==='ncn-favorites'){try{const value=JSON.parse(e.newValue||'[]');favorites=new Set(Array.isArray(value)?value.filter(x=>toolIds.has(x)):[]);}catch{favorites=new Set();}renderTools();}});
+  listen(doc,'ncn-account-change',()=>{
+    const next=Boolean(win.NCNAccount?.state.user?.id);if(next===signedIn)return;signedIn=next;
+    renderNavigation();renderTools();searchItems=buildSearchItems();renderSearch();
+  });
   if(preview){
     // The preview uses the same UI, and opens existing website routes in the browser.
     previewLinks();
