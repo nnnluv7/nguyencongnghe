@@ -22,8 +22,8 @@ function session(u){
 }
 const browser=await chromium.launch();
 let checks=0;
-async function fixtureContext(){
-  const context=await browser.newContext();
+async function fixtureContext(options={}){
+  const context=await browser.newContext(options);
   await context.route('**/*',async route=>{
     const req=route.request(),url=new URL(req.url());
     if(url.origin!==origin){if(req.method()==='POST')throw new Error('Unexpected external write: '+url.origin);return route.abort();}
@@ -99,11 +99,22 @@ async function login(page,email=existing.email,password=existing.password){
 }
 let context;
 try{
+  context=await fixtureContext({javaScriptEnabled:false});
+  const initial=await context.newPage();await initial.goto(origin,{waitUntil:'domcontentloaded'});
+  for(const id of ['event','gvgs']){
+    assert.equal(await initial.locator('#ncn-tool-grid [data-ncn-tool="'+id+'"]').isVisible(),false,'Member cards must be hidden before scripts run');
+    assert.equal(await initial.locator('#ncn-navigation [data-ncn-tool="'+id+'"]').evaluate(el=>getComputedStyle(el).display),'none','Static menu links must be hidden before scripts run');
+  }
+  await context.close();
   context=await fixtureContext();
-  await context.addInitScript(()=>{if(!sessionStorage.getItem('legacy-seed')){localStorage.setItem('qz_user',JSON.stringify({username:'Tên cũ',email:'old@example.test',roles:['admin','vip']}));sessionStorage.setItem('legacy-seed','1');}});
+  await context.addInitScript(()=>{if(!sessionStorage.getItem('legacy-seed')){localStorage.setItem('qz_user',JSON.stringify({username:'Tên cũ',email:'old@example.test',roles:['admin','vip']}));localStorage.setItem('ncn-favorites',JSON.stringify(['event','gvgs']));sessionStorage.setItem('legacy-seed','1');}});
   const home=await open(context);
   await check('old browser profile is a prefill hint and cannot sign in or grant roles',async()=>{
     assert.equal(await home.evaluate(()=>NCNAccount.state.user),null);assert.equal(await home.evaluate(()=>QuizSystem.user),null);
+    assert.equal(await home.locator('#ncn-tool-grid [data-ncn-tool="event"],#ncn-tool-grid [data-ncn-tool="gvgs"],#ncn-navigation [data-ncn-tool="event"],#ncn-navigation [data-ncn-tool="gvgs"]').count(),0);
+    assert.equal(await home.locator('#ncn-favorites-section').isVisible(),false);
+    await home.locator('[data-ncn-search-open]').first().click();await home.locator('#ncn-global-query').fill('VIP');
+    assert.equal(await home.locator('#ncn-global-results a[href="/in-event/"],#ncn-global-results a[href="/in-gvgs/"]').count(),0);await home.locator('#ncn-search-close').click();
     await home.evaluate(()=>openModal('reg'));
     assert.equal(await home.locator('[data-account-form=register] [name=email]').inputValue(),'old@example.test');
     assert.equal(await home.locator('.auth-modal').count(),0);assert.equal(await home.locator('#ncn-account-dialog').count(),1);
@@ -116,6 +127,13 @@ try{
     assert.equal(await home.locator('#auth-header-desktop img').count(),0);
     const sent=JSON.parse(calls.find(c=>c.action==='signup').body);assert.deepEqual(Object.keys(sent.data),['full_name']);
     assert.equal(await home.evaluate(()=>NCNAccount.state.user.admin),false);
+    for(const id of ['event','gvgs']){
+      assert.equal(await home.locator('#ncn-tool-grid [data-ncn-tool="'+id+'"]').isVisible(),true);
+      assert.equal(await home.locator('#ncn-navigation [data-ncn-tool="'+id+'"]').count(),1);
+      assert.equal(await home.locator('#ncn-favorites [data-ncn-tool="'+id+'"]').count(),1);
+    }
+    await home.locator('[data-ncn-search-open]').first().click();await home.locator('#ncn-global-query').fill('VIP');
+    assert.equal(await home.locator('#ncn-global-results a[href="/in-event/"],#ncn-global-results a[href="/in-gvgs/"]').count(),2);await home.locator('#ncn-search-close').click();
   });
   const premium=await open(context,'/premium/');
   await check('the same website account can donate freely without a second account or paid plan',async()=>{
@@ -138,6 +156,9 @@ try{
     await event.waitForFunction(()=>window.NCNAccount?.state.ready&&!document.querySelector('[data-private-fixture]'));
     await gvgs.waitForFunction(()=>window.NCNAccount?.state.ready&&!document.querySelector('[data-private-fixture]'));
     assert.equal(await home.evaluate(()=>QuizSystem.user),null);
+    assert.equal(await home.locator('#ncn-tool-grid [data-ncn-tool="event"],#ncn-tool-grid [data-ncn-tool="gvgs"],#ncn-navigation [data-ncn-tool="event"],#ncn-navigation [data-ncn-tool="gvgs"]').count(),0);
+    assert.equal(await home.locator('#ncn-favorites-section').isVisible(),false);
+    assert.deepEqual(await home.evaluate(()=>JSON.parse(localStorage.getItem('ncn-favorites'))),['event','gvgs']);
     await premium.locator('[data-donate-amount="50000"]').click();await premium.waitForFunction(()=>document.getElementById('donate-qr-note').textContent.includes('50.000'));
     assert.equal(await premium.locator('#ncn-account-dialog').isVisible(),false);
   });
@@ -159,6 +180,7 @@ try{
     const navigation=home.goto(origin+'/premium/',{waitUntil:'domcontentloaded'});await requested;await navigation;
     await home.waitForFunction(()=>NCNAccount.state.profile?.email==='vip@example.test'&&!NCNAccount.state.ready);
     assert.equal(await home.evaluate(()=>NCNAccount.state.user),null);
+    assert.equal(await home.locator('#ncn-navigation [data-ncn-tool="event"],#ncn-navigation [data-ncn-tool="gvgs"]').count(),0,'Cached display text must not reveal member tools');
     assert.equal(await home.locator('#auth-header-desktop [data-ncn-account-open]').count(),0);
     assert.match(await home.locator('#auth-header-desktop').textContent(),/vip@example.test/);
     assert.equal(await home.locator('#pay-auth').isVisible(),false);
