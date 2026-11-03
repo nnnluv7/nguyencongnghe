@@ -190,25 +190,16 @@ async function listRecords(store,prefix,max=80,after=''){
   const records=await Promise.all(keys.map(k=>store.get(k,{type:'json'})));
   return {records:records.filter(Boolean),next:all.length>max?keys.at(-1):null};
 }
-export function donationDetails(value=null){
-  const input=value===null?'':String(value);
-  if(input&&!/^[1-9]\d{0,12}$/.test(input))fail(400,'Nhập số tiền nguyên dương bằng VND, hoặc để trống để chọn trong ứng dụng ngân hàng.');
-  const amount=input?Number(input):null,description='SEVQR NCN DONATE',qr=new URL('https://vietqr.app/img');
-  qr.search=new URLSearchParams({acc:BANK.account,bank:BANK.bank,...(amount===null?{}:{amount:String(amount)}),des:description}).toString();
-  return {bank:BANK,amount,description,qrUrl:qr.href,optional:true};
-}
-
 export function createBillingHandler(deps){return async req=>{
   try{
     if(!deps.production())fail(503,'Chức năng tài khoản chỉ hoạt động ở website chính thức.');
     const url=new URL(req.url),route=url.searchParams.get('route')||'me',now=deps.now?.()??Date.now(),config=deps.config();
     if(!['GET','POST'].includes(req.method))fail(405,'Phương thức không hỗ trợ.');
     if(req.method==='POST'&&req.headers.get('origin')!==url.origin)fail(403,'Yêu cầu phải gửi từ chính website.');
-    // Public, read-only QR preparation never requires an account, a payment
-    // webhook secret, or a storage read. It does not initiate a transfer.
-    if(route==='donation'&&req.method==='GET')return reply(donationDetails(url.searchParams.get('amount')));
-    if(route==='plans'&&req.method==='GET')return reply({plans:[],retired:true,donateUrl:'/premium/',serverNow:iso(now)});
-    if(route==='create-order'&&req.method==='POST')fail(410,'NCN đã chuyển sang donate tùy tâm. Đăng nhập là dùng được công cụ VIP; không cần mua gói.');
+    // Retired public billing routes return without Identity or ledger access.
+    if(route==='donation'&&req.method==='GET')fail(410,'Tính năng Donate đã ngừng hoạt động.');
+    if(route==='plans'&&req.method==='GET')return reply({plans:[],retired:true,serverNow:iso(now)});
+    if(route==='create-order'&&req.method==='POST')fail(410,'Các gói thanh toán đã ngừng hoạt động. Đăng nhập tài khoản NCN để dùng công cụ VIP.');
     const user=withMemberVip(await deps.verify(req));
     if(route==='me'&&req.method==='GET')return reply({user,serverNow:iso(now)});
     if(!user)fail(401,'Đăng nhập và xác nhận email để xem thông tin tài khoản.');

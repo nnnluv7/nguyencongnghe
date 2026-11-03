@@ -30,16 +30,15 @@ for(const path of [...await pages('public'),'netlify/lib/ncn-library/article-she
   // Arcade entries were previously missing from the static grid. Add both so
   // the server's card count and first paint match client-side hydration.
   for(const tool of config.tools.filter(t=>t.group==='arcade'))if(!html.includes('data-ncn-pin="'+tool.id+'"')){
-   const old=config.tools.find(t=>t.id==='vip'),card=html.match(/<article class="ncn-tool-card[^>]*><a class="ncn-tool-link" href="\/premium\/"[\s\S]*?<\/article>/)?.[0];
+   const old=config.tools.find(t=>t.group==='arcade'&&html.includes('data-ncn-pin="'+t.id+'"')),card=[...html.matchAll(/<article\b[\s\S]*?<\/article>/g)].map(([card])=>card).find(card=>old&&card.includes('data-ncn-pin="'+old.id+'"'));
    if(!card)throw Error('Missing tool card template in '+path);let next=card;
-   // A future game cloned from this card must keep a normal tool action.
-   next=next.replace(/<span class="ncn-card-open ncn-donate-button">[\s\S]*?<\/span><\/span>/,'<span class="ncn-card-open"><span>Mở công cụ</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 12h16m-6-6 6 6-6 6"/></svg></span>');
-   for(const [a,b]of [[old.href,tool.href],[old.title,tool.title],[old.description,tool.description],['data-ncn-pin="vip"','data-ncn-pin="'+tool.id+'"'],['ncn-tone-amber','ncn-tone-'+tool.tone]])next=next.replaceAll(a,b);
+   for(const [a,b]of [[old.href,tool.href],[old.title,tool.title],[old.description,tool.description],['data-ncn-pin="'+old.id+'"','data-ncn-pin="'+tool.id+'"'],['data-ncn-tool="'+old.id+'"','data-ncn-tool="'+tool.id+'"'],['ncn-tone-'+old.tone,'ncn-tone-'+tool.tone]])next=next.replaceAll(a,b);
    html=html.replace(/(<div id="ncn-tool-grid"[^>]*>)([\s\S]*?)(<\/div>\s*<p id="ncn-tool-count")/,(_,a,b,c)=>a+b+next+c);
    // The count node precedes the grid in some retained shells.
    if(!html.includes('data-ncn-pin="'+tool.id+'"'))html=html.replace(card,card+next);
   }
-  html=html.replace(/\d+ \/ \d+ công cụ · Chọn ngôi sao để ghim lối tắt\./,config.tools.length+' / '+config.tools.length+' công cụ · Chọn ngôi sao để ghim lối tắt.');
+  const guestCount=config.tools.filter(tool=>!['event','gvgs'].includes(tool.id)).length;
+  html=html.replace(/\d+ \/ \d+ công cụ · Chọn ngôi sao để ghim lối tắt\./,guestCount+' / '+guestCount+' công cụ · Chọn ngôi sao để ghim lối tắt.');
   // Cloned cards must follow the hydrated catalogue's order. A new, taller
   // arcade card in a different row otherwise shifts the homepage on hydration.
   html=html.replace(/(<div id="ncn-tool-grid"[^>]*>)((?:\s*<article\b[\s\S]*?<\/article>)+\s*)(<\/div>)/,(_,open,content,close)=>{

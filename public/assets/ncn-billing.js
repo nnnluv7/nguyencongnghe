@@ -3,12 +3,11 @@ import {getAccount} from './ncn-account.js?v=20261027-photo-save-1';
 const ENDPOINT='/.netlify/functions/ncn-billing';
 const money=value=>Number(value).toLocaleString('vi-VN')+'đ';
 const date=value=>value?new Date(value).toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh'}):'—';
-const labels={pending:'Chờ chuyển khoản',paid:'Đã ghi nhận',expired:'Mã cũ đã hết hạn',review:'Cần đối chiếu',received:'Đã nhận',processing:'Đang xử lý',applied:'Đã ghi nhận đơn cũ',donated:'Đã nhận donate'};
+const labels={pending:'Chờ chuyển khoản',paid:'Đã ghi nhận',expired:'Mã cũ đã hết hạn',review:'Cần đối chiếu',received:'Đã nhận',processing:'Đang xử lý',applied:'Đã ghi nhận đơn cũ',donated:'Đã ghi nhận'};
 
 export function mountBilling({doc=document,win=window,fetcher=fetch,account=getAccount(doc)}={}){
   const $=id=>doc.getElementById(id),listeners=[];
-  const state={user:null,epoch:0,details:null,transactions:[],members:[],nextTransaction:null,nextMember:null,reconcile:null,disposed:false};
-  let generation=0,controller=null;
+  const state={user:null,epoch:0,transactions:[],members:[],nextTransaction:null,nextMember:null,reconcile:null,disposed:false};
   const listen=(node,type,fn)=>{node?.addEventListener(type,fn);listeners.push(()=>node?.removeEventListener(type,fn));};
   const text=(tag,value,cls)=>{const node=doc.createElement(tag);node.textContent=value;if(cls)node.className=cls;return node;};
   function say(value,error=false,id='pay-message'){const node=$(id);node.textContent=value;node.hidden=!value;node.classList.toggle('pay-error',error);}
@@ -18,39 +17,8 @@ export function mountBilling({doc=document,win=window,fetcher=fetch,account=getA
     const url=new URL(ENDPOINT,win.location.origin);url.searchParams.set('route',route);
     for(const [key,value] of Object.entries(params))if(value!==undefined&&value!==null&&value!=='')url.searchParams.set(key,value);
     const response=await fetcher(url.href,{method:body?'POST':'GET',credentials:'same-origin',cache:'no-store',headers:body?{'Content-Type':'application/json'}:{},...(body?{body:JSON.stringify(body)}:{}),signal:signal||AbortSignal.timeout(15000)});
-    let result;try{result=await response.json();}catch{throw Error('Máy chủ chưa trả lời được. Bạn có thể thử lại hoặc sao chép thông tin chuyển khoản bên dưới.');}if(!response.ok)throw new Error(result.error||'Chưa kết nối được. Thử lại nhé.');return result;
+    let result;try{result=await response.json();}catch{throw Error('Máy chủ chưa trả lời được. Vui lòng thử lại.');}if(!response.ok)throw new Error(result.error||'Chưa kết nối được. Thử lại nhé.');return result;
   }
-  function invalidate(){
-    generation++;controller?.abort();controller=null;$('donate-submit').disabled=false;
-    $('donate-qr').hidden=true;$('donate-qr-open').hidden=true;$('donate-qr-error').hidden=true;
-    $('donate-qr-note').textContent='Bấm tạo QR để cập nhật số tiền bạn chọn.';
-    doc.querySelectorAll('[data-donate-amount]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.donateAmount===$('donate-amount').value.trim())));
-  }
-  async function prepare(){
-    const input=$('donate-amount'),amount=input.value.trim();
-    if(amount&&!/^[1-9]\d{0,12}$/.test(amount)){input.setCustomValidity('Nhập số tiền nguyên dương bằng VND, hoặc để trống để tự chọn khi chuyển khoản.');input.reportValidity();return;}
-    const version=++generation;controller?.abort();controller=new AbortController();
-    const current=controller,timeout=win.setTimeout(()=>current.abort(),15000);$('donate-submit').disabled=true;say('');$('donate-qr').hidden=true;$('donate-qr-open').hidden=true;$('donate-qr-error').hidden=true;$('donate-qr-note').textContent='Đang chuẩn bị QR…';
-    try{
-      const details=await api('donation',null,{amount},current.signal);
-      if(version!==generation||state.disposed)return;
-      const qr=new URL(details.qrUrl);if(qr.origin!=='https://vietqr.app'||qr.pathname!=='/img')throw Error('QR chưa hợp lệ. Thử lại nhé.');
-      state.details=details;const image=$('donate-qr');image.dataset.generation=String(version);image.src=qr.href;
-      $('donate-qr-open').href=qr.href;$('donate-qr-open').hidden=false;image.hidden=false;
-      $('donate-bank').textContent=details.bank.bank;$('donate-bank-account').textContent=details.bank.account;$('donate-payee').textContent=details.bank.name;$('donate-description').textContent=details.description;
-      $('donate-qr-note').textContent=details.amount===null?'Tự chọn số tiền trong ứng dụng ngân hàng.':'QR ủng hộ '+money(details.amount)+'.';
-      $('donate-selected').textContent=details.amount===null?'Một chút tùy tâm':money(details.amount);
-    }catch(error){if(version===generation&&!state.disposed){$('donate-qr-note').textContent='Bạn có thể chuyển khoản bằng thông tin bên dưới.';say(['TimeoutError','AbortError'].includes(error.name)?'Kết nối đang chậm. Thử tạo QR lại hoặc sao chép số tài khoản bên dưới.':error.message,true);}}
-    finally{win.clearTimeout(timeout);if(version===generation){controller=null;$('donate-submit').disabled=false;}}
-  }
-  listen($('donate-form'),'submit',event=>{event.preventDefault();prepare();});
-  listen($('donate-amount'),'input',()=>{$('donate-amount').setCustomValidity('');invalidate();});
-  doc.querySelectorAll('[data-donate-amount]').forEach(node=>listen(node,'click',()=>{$('donate-amount').value=node.dataset.donateAmount;$('donate-amount').setCustomValidity('');invalidate();prepare();}));
-  listen($('donate-qr'),'error',()=>{if($('donate-qr').dataset.generation!==String(generation))return;$('donate-qr').hidden=true;$('donate-qr-error').hidden=false;});
-  doc.querySelectorAll('[data-donate-copy]').forEach(node=>listen(node,'click',()=>run(async()=>{
-    const value=$(node.dataset.donateCopy).textContent;
-    try{await win.navigator.clipboard.writeText(value);say('Đã sao chép.');}catch{say('Chạm giữ nội dung để sao chép thủ công nhé.',true);}
-  },node)));
   function clearPreview(){state.reconcile=null;$('pay-reconcile-preview').hidden=true;$('pay-reconcile-apply').hidden=true;}
   function renderUser(user){
     $('ncn-billing-app').dataset.ncnAccountPanel='ready';
@@ -82,7 +50,7 @@ export function mountBilling({doc=document,win=window,fetcher=fetch,account=getA
     if(!more){state.transactions=result.transactions;state.members=result.members;state.nextTransaction=result.nextTransaction;state.nextMember=result.nextMember;}
     else if(more==='tx'){state.transactions.push(...result.transactions);state.nextTransaction=result.nextTransaction;}
     else{state.members.push(...result.members);state.nextMember=result.nextMember;}
-    $('pay-admin-setup').textContent=result.setup.secretConfigured?'Kết nối SePay đã được cấu hình. Các giao dịch donate được ghi nhận riêng.':'Donate bằng QR hoặc chuyển khoản. Kết nối ghi nhận SePay chưa được cấu hình.';renderAdmin();
+    $('pay-admin-setup').textContent=result.setup.secretConfigured?'Kết nối SePay đã được cấu hình.':'Kết nối ghi nhận SePay chưa được cấu hình.';renderAdmin();
   }
   listen($('pay-history-panel'),'toggle',()=>{if($('pay-history-panel').open)run(history);});
   listen($('pay-admin'),'toggle',()=>{if($('pay-admin').open)run(()=>loadAdmin());});
@@ -103,7 +71,7 @@ export function mountBilling({doc=document,win=window,fetcher=fetch,account=getA
     if(!state.reconcile||!state.user?.admin)return;const epoch=state.epoch,result=await api('reconcile',state.reconcile);if(epoch!==state.epoch)return;clearPreview();say(result.review?'Giao dịch vẫn cần đối chiếu.':'Đã ghi nhận giao dịch của đơn cũ.',!!result.review,'pay-admin-message');await loadAdmin();
   },$('pay-reconcile-apply')));
   listen(doc,'ncn-account-change',event=>renderUser(event.detail.user));
-  const ready=prepare();account.ready.then(()=>{if(!state.disposed)renderUser(account.state.user);});
-  return {state,ready,dispose(){state.disposed=true;controller?.abort();listeners.forEach(remove=>remove());}};
+  const ready=account.ready.then(()=>{if(!state.disposed)renderUser(account.state.user);});
+  return {state,ready,dispose(){state.disposed=true;listeners.forEach(remove=>remove());}};
 }
 if(typeof document!=='undefined'&&document.getElementById('ncn-billing-app'))mountBilling();

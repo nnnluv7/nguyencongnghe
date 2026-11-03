@@ -1,7 +1,6 @@
 const seedLibraryForFixture=JSON.parse(await readFile('netlify/lib/ncn-library/seed.json','utf8'));
 import {publicCatalog} from '../../netlify/lib/ncn-library-api.mjs';
 import {chromium} from 'playwright';
-import {donationDetails} from '../../netlify/lib/ncn-billing-api.mjs';
 import {readFile,stat,mkdir} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
 import assert from 'node:assert/strict';
@@ -62,7 +61,6 @@ async function fixtureContext(options={}){
       if(tool==='ncn-announcements')return reply({items:[]});
       if(tool==='ncn-visitors')return reply({total:1,online:1});
       if(tool==='ncn-billing'){
-        if(action==='donation')return reply(donationDetails(url.searchParams.get('amount')));
         if(action==='me'){if(sessionHold){sessionHold.started();await sessionHold.wait;}if(profileFailure)return reply({error:'Temporary connection failure'},503);return reply({user:view(user)});}
         if(action==='orders')return view(user)?reply({orders:[]}):reply({error:'Unauthorized'},401);
         throw new Error('Unmocked billing action '+action);
@@ -136,10 +134,10 @@ try{
     assert.equal(await home.locator('#ncn-global-results a[href="/in-event/"],#ncn-global-results a[href="/in-gvgs/"]').count(),2);await home.locator('#ncn-search-close').click();
   });
   const premium=await open(context,'/premium/');
-  await check('the same website account can donate freely without a second account or paid plan',async()=>{
+  await check('the retained account page uses the shared session without donation or a paid plan',async()=>{
     await premium.waitForFunction(()=>document.getElementById('pay-email').textContent==='new@example.test');
     assert.equal(await premium.locator('#pay-auth').isVisible(),false);assert.equal(await premium.locator('[data-pay-plan]').count(),0);
-    await premium.locator('[data-donate-amount="20000"]').click();await premium.waitForFunction(()=>document.getElementById('donate-qr-note').textContent.includes('20.000'));
+    assert.equal(await premium.locator('#donate-form,#donate-qr,[data-donate-amount]').count(),0);
     assert.equal(calls.some(c=>c.action==='create-order'),false);
   });
   const event=await open(context,'/in-event/');
@@ -150,7 +148,7 @@ try{
   await check('the same confirmed member session opens both Event and Giờ Vàng',async()=>{
     await gvgs.locator('[data-private-fixture=ncn-gvgs]').waitFor();assert.equal(await gvgs.evaluate(()=>NCN_VIP.user.id),registered.id);
   });
-  await check('logout propagates across tabs and clears private tools while donation remains public',async()=>{
+  await check('logout propagates across tabs and clears private tools while the account page stays public',async()=>{
     await home.evaluate(()=>NCNAccount.signOut());
     await premium.waitForFunction(()=>!NCNAccount.state.user&&!document.getElementById('pay-auth').hidden);
     await event.waitForFunction(()=>window.NCNAccount?.state.ready&&!document.querySelector('[data-private-fixture]'));
@@ -159,7 +157,7 @@ try{
     assert.equal(await home.locator('#ncn-tool-grid [data-ncn-tool="event"],#ncn-tool-grid [data-ncn-tool="gvgs"],#ncn-navigation [data-ncn-tool="event"],#ncn-navigation [data-ncn-tool="gvgs"]').count(),0);
     assert.equal(await home.locator('#ncn-favorites-section').isVisible(),false);
     assert.deepEqual(await home.evaluate(()=>JSON.parse(localStorage.getItem('ncn-favorites'))),['event','gvgs']);
-    await premium.locator('[data-donate-amount="50000"]').click();await premium.waitForFunction(()=>document.getElementById('donate-qr-note').textContent.includes('50.000'));
+    assert.equal(await premium.locator('#donate-form,#donate-qr,[data-donate-amount]').count(),0);
     assert.equal(await premium.locator('#ncn-account-dialog').isVisible(),false);
   });
   await check('existing VIP accounts retain identity and entitlement after shared login',async()=>{
@@ -184,7 +182,6 @@ try{
     assert.equal(await home.locator('#auth-header-desktop [data-ncn-account-open]').count(),0);
     assert.match(await home.locator('#auth-header-desktop').textContent(),/vip@example.test/);
     assert.equal(await home.locator('#pay-auth').isVisible(),false);
-    assert.equal(await home.locator('#donate-submit').isEnabled(),true);
     assert.equal(await home.locator('#ncn-account-dialog').isVisible(),false);
     release();sessionHold=null;await home.waitForFunction(()=>NCNAccount.state.ready&&NCNAccount.state.user?.vip);
     await home.waitForFunction(()=>document.getElementById('pay-email').textContent==='vip@example.test');

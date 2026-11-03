@@ -1,7 +1,7 @@
 import {ARCADE_COUNT} from './ncn-arcade/catalog.js?v=20261027-bubble-1';
 import * as identityClient from './ncn-identity-client.js';
 import {readDisplayProfile,saveDisplayProfile,displayProfile} from './ncn-account-session.js?v=20261026-profile-1';
-import {mountMemberPanel,paintAvatar,profileUpdate} from './ncn-member-profile.js?v=20261101-donate-1';
+import {mountMemberPanel,paintAvatar,profileUpdate} from './ncn-member-profile.js?v=20261103-account-1';
 import {requestJSON} from './ncn-profile-request.js?v=20261027-photo-save-1';
 
 const accounts=new WeakMap();
@@ -37,7 +37,7 @@ export function mountAccount({doc=document,win=window,identity=identityClient,fe
     <form data-account-form="register" hidden><label>Họ tên<input name="name" autocomplete="name" required maxlength="100"></label><label>Email<input name="email" type="email" autocomplete="username" required maxlength="254"></label><label>Mật khẩu<input name="password" type="password" autocomplete="new-password" required minlength="8" maxlength="128"></label><label>Nhập lại mật khẩu<input name="repeat" type="password" autocomplete="new-password" required minlength="8" maxlength="128"></label><button type="submit" class="ncn-account-primary">Tạo tài khoản dùng chung</button><details class="ncn-account-legacy"><summary>Đã có tài khoản website cũ?</summary><p>Dùng đúng email cũ để tạo tài khoản chung một lần. Lịch sử theo email được giữ lại. Mật khẩu của hệ thống cũ không tự chuyển sang. Đã có tài khoản Event hoặc VIP? Đăng nhập trực tiếp bằng tài khoản đó.</p></details></form>
     <form data-account-form="recovery" hidden><label>Email đã đăng ký<input name="email" type="email" autocomplete="username" required maxlength="254"></label><button type="submit" class="ncn-account-primary">Gửi email đặt lại mật khẩu</button><button type="button" class="ncn-account-link" data-account-mode="login">Quay lại đăng nhập</button></form>
     <form data-account-form="reset" hidden><label>Mật khẩu mới<input name="password" type="password" autocomplete="new-password" required minlength="8" maxlength="128"></label><label>Nhập lại mật khẩu<input name="repeat" type="password" autocomplete="new-password" required minlength="8" maxlength="128"></label><button type="submit" class="ncn-account-primary">Lưu mật khẩu</button></form>
-    <footer><a href="/premium/">Ủng hộ NCN tùy tâm ↗</a><span>Đăng nhập để dùng công cụ VIP. Donate hoàn toàn tùy tâm.</span></footer>`;
+    <footer><span>Đăng nhập để dùng các công cụ VIP.</span></footer>`;
   doc.body.append(dialog);
   const forms=Object.fromEntries([...dialog.querySelectorAll('[data-account-form]')].map(f=>[f.dataset.accountForm,f]));
   const member=mountMemberPanel({doc,dialog,getUser:()=>state.user,clock,onMessage:message,onMode:mode,onRefresh:()=>run(()=>refresh({force:true})),onSave:saveMember});
@@ -108,7 +108,7 @@ export function mountAccount({doc=document,win=window,identity=identityClient,fe
     if(!auth&&host){auth=node('div',null,'auth-wrap-desktop');auth.id='auth-header-desktop';host.replaceChildren(auth);}
     if(host&&auth&&!host.closest('.ncn-account-menu')&&!host.querySelector('.ncn-account-menu')){
       const menu=node('details',null,'ncn-account-menu'),summary=node('summary');summary.setAttribute('aria-label','Tài khoản');
-      const dropdown=node('div',null,'ncn-account-dropdown');dropdown.append(node('strong','Tài khoản của bạn'),auth);const vip=node('a','Ủng hộ NCN tùy tâm ↗');vip.href='/premium/';dropdown.append(vip);menu.append(summary,dropdown);host.replaceChildren(menu);
+      const dropdown=node('div',null,'ncn-account-dropdown');dropdown.append(node('strong','Tài khoản của bạn'),auth);menu.append(summary,dropdown);host.replaceChildren(menu);
     }
     const summary=(host?.closest('.ncn-account-menu')||host?.querySelector('.ncn-account-menu'))?.querySelector('summary');
     if(summary){let avatar=summary.querySelector('[data-account-avatar]');if(!avatar){avatar=node('span',null,'ncn-account-avatar');avatar.dataset.accountAvatar='';summary.replaceChildren(avatar);}if(user)paintAvatar(avatar,user);else avatar.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M5 21v-3a7 7 0 0 1 14 0v3"/></svg>';}
@@ -135,7 +135,6 @@ export function mountAccount({doc=document,win=window,identity=identityClient,fe
       }
     };
     fill(auth);fill($('auth-header-mobile'));
-    doc.querySelectorAll('.ncn-account-dropdown>a[href="/premium/"]').forEach(el=>el.textContent='Ủng hộ NCN tùy tâm ↗');
     doc.querySelectorAll('[data-account-mode=register],[data-ncn-account-open=register]').forEach(b=>b.hidden=!!state.settings?.disableSignup);
     renderAdminNavigation();
     member.render(state.user,{tab:state.mode,busy:state.busy,serverOffset:state.serverOffset});

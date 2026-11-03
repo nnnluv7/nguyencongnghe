@@ -182,17 +182,6 @@
       "tone": "coral"
     },
     {
-      "id": "vip",
-      "title": "Donate · Ủng hộ NCN",
-      "description": "Gửi NCN một chút ủng hộ tùy tâm, với số tiền bạn chọn. Đăng nhập là dùng được công cụ VIP.",
-      "href": "/premium/",
-      "group": "tien-ich",
-      "icon": "heart",
-      "tone": "amber",
-      "featured": false,
-      "access": "public"
-    },
-    {
       "id": "ncn-arcade",
       "title": "NCN Arcade · 8 game",
       "description": "Một khu giải trí, một hồ sơ chung. Chơi 8 game và so sánh kỷ lục trên bảng điểm cộng đồng.",

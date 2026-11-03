@@ -28,7 +28,7 @@ export function mountVipGate(endpoint,{doc=document,win=window,fetcher=fetch}={}
     gate.hidden=false;phase(user?'member':'guest');doc.getElementById('vip-account').hidden=!user;
     doc.getElementById('vip-account').textContent=user?.email||'';doc.getElementById('vip-signout').hidden=!user;
     doc.querySelector('[data-vip-auth]').hidden=!!user;
-    say(user?'Tài khoản NCN đã đăng nhập. Bấm mở lại công cụ nếu kết nối bị gián đoạn.':'Đăng nhập tài khoản NCN để dùng công cụ VIP. Donate hoàn toàn tùy tâm.');
+    say(user?'Tài khoản NCN đã đăng nhập. Bấm mở lại công cụ nếu kết nối bị gián đoạn.':'Đăng nhập tài khoản NCN để dùng công cụ VIP.');
   }
   function check({refresh=true}={}){
     forceNext=forceNext||refresh;
