@@ -7,7 +7,6 @@ import {installToolUI} from './tool-ui.js?v=20261025-home-latest-1';
 import {installFloatingMenu,orderTools,navigationHTML} from './menu.js?v=20261017-mobile-dark-1';
 /* NCN portal: navigation and local display preferences. VIP authorization stays on the server. */
 const ICONS = {
-  heart:'<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/>',
   fish:'<ellipse cx="13" cy="12" rx="8" ry="6"/><path d="m5 12-4-5v10ZM17 10h.01M11 6l2-3 3 4M10 17l3 4 3-4"/>',
   home:'<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z"/>',
   printer:'<path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v7H6zM18 12h.01"/>',
@@ -105,8 +104,8 @@ export function createTheme({doc=document,win=window,config,catalog=win.CG_CATAL
   text('ncn-page-section',home?'Tổng quan':library?'Thư viện':currentTool?groups.find(g=>g.id===currentTool.group)?.name||'Công cụ':'Nội dung');
   text('ncn-page-title',home?'Cổng công cụ NCN':library?'Bài viết & hướng dẫn':currentTool?.title||doc.title.replace(/\s*\|\s*nguyencongnghe\.com$/i,''));
   function navLink(href,title,icon,badge='',id='') {
-    const active=canonicalPath(href)===path,donation=id==='vip'&&canonicalPath(href)===canonicalPath('/premium/');
-    return `<a class="ncn-nav-link${donation?' ncn-donate-button':''}" href="${escapeHTML(href)}"${id?` data-ncn-tool="${escapeHTML(id)}"`:""}${donation?' aria-label="Donate · Ủng hộ NCN tùy tâm"':''}${active?' aria-current="page"':''}>${svg(donation?'heart':icon)}<span>${donation?'DONATE':escapeHTML(title)}</span>${badge&&!donation?'<b class="ncn-nav-pill">VIP</b>':''}</a>`;
+    const active=canonicalPath(href)===path;
+    return `<a class="ncn-nav-link" href="${escapeHTML(href)}"${id?` data-ncn-tool="${escapeHTML(id)}"`:""}${active?' aria-current="page"':''}>${svg(icon)}<span>${escapeHTML(title)}</span>${badge?'<b class="ncn-nav-pill">VIP</b>':''}</a>`;
   }
   function renderNavigation(){
     if(tools.length&&$('ncn-navigation')) $('ncn-navigation').innerHTML=navigationHTML(visibleTools(),navLink);
@@ -151,9 +150,9 @@ export function createTheme({doc=document,win=window,config,catalog=win.CG_CATAL
   });
   let homeGroup='',homeQuery='';
   function toolCard(t) {
-    const pinned=favorites.has(t.id),tone=['blue','violet','teal','amber','coral','navy'].includes(t.tone)?t.tone:'blue',donation=t.id==='vip'&&canonicalPath(t.href)===canonicalPath('/premium/');
-    const action=donation?`<span class="ncn-card-open ncn-donate-button">${svg('heart')}<span>DONATE</span></span>`:`<span class="ncn-card-open"><span>Mở công cụ</span>${svg('arrow')}</span>`;
-    return `<article class="ncn-tool-card ncn-tone-${tone}" data-ncn-tool="${escapeHTML(t.id)}"><a class="ncn-tool-link" href="${escapeHTML(t.href)}"><div class="ncn-tool-top"><span class="ncn-tool-icon">${svg(donation?'heart':t.icon)}</span>${t.access==='vip'?'<span class="ncn-tool-badge">VIP</span>':''}</div><h3>${escapeHTML(t.title)}</h3><p>${escapeHTML(t.description)}</p>${action}</a><button type="button" class="ncn-pin" data-ncn-pin="${escapeHTML(t.id)}" aria-pressed="${pinned}" aria-label="${pinned?'Bỏ ghim':'Ghim'} ${escapeHTML(t.title)}">${svg('star')}</button></article>`;
+    const pinned=favorites.has(t.id),tone=['blue','violet','teal','amber','coral','navy'].includes(t.tone)?t.tone:'blue';
+    const action=`<span class="ncn-card-open"><span>Mở công cụ</span>${svg('arrow')}</span>`;
+    return `<article class="ncn-tool-card ncn-tone-${tone}" data-ncn-tool="${escapeHTML(t.id)}"><a class="ncn-tool-link" href="${escapeHTML(t.href)}"><div class="ncn-tool-top"><span class="ncn-tool-icon">${svg(t.icon)}</span>${t.access==='vip'?'<span class="ncn-tool-badge">VIP</span>':''}</div><h3>${escapeHTML(t.title)}</h3><p>${escapeHTML(t.description)}</p>${action}</a><button type="button" class="ncn-pin" data-ncn-pin="${escapeHTML(t.id)}" aria-pressed="${pinned}" aria-label="${pinned?'Bỏ ghim':'Ghim'} ${escapeHTML(t.title)}">${svg('star')}</button></article>`;
   }
   function renderTools() {
     const available=visibleTools(),items=available.filter(t=>(!homeGroup||t.group===homeGroup)&&matches(t,homeQuery)),pinned=available.filter(t=>favorites.has(t.id));

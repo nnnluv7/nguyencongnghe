@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHmac} from 'node:crypto';
 import {readFile,readdir} from 'node:fs/promises';
-import {createBillingHandler,createWebhookHandler,donationDetails,BANK} from '../netlify/lib/ncn-billing-api.mjs';
+import {createBillingHandler,createWebhookHandler,BANK} from '../netlify/lib/ncn-billing-api.mjs';
 import {createHandler,verifyIdentity} from '../netlify/lib/ncn-event-api.mjs';
 import {withMemberVip,memberKey} from '../netlify/lib/ncn-membership.mjs';
 import {memoryStore} from './fixtures/arcade-store.mjs';
@@ -14,14 +14,9 @@ function receipt(data,key=secret){const body=JSON.stringify(data),stamp=String(n
 function billing(user=member,store=memoryStore()){return createBillingHandler({production:()=>true,verify:async()=>user,store:()=>store,now:()=>now,config:()=>({enabled:false,secret:''})});}
 function webhook(store){return createWebhookHandler({production:()=>true,store:()=>store,now:()=>now,config:()=>({secret})});}
 
-test('anonymous donations accept a custom positive amount or an open amount without Identity, storage or payment enablement',async()=>{
+test('the retired donation endpoint returns 410 without Identity, storage or writes',async()=>{
  const handler=createBillingHandler({production:()=>true,verify:()=>{throw Error('Must not verify');},store:()=>{throw Error('Must not open store');},now:()=>now,config:()=>({})});
- for(const amount of ['', '1','12345','987654321','9999999999999']){
-  const response=await handler(request('donation'+(amount?'&amount='+amount:'')));assert.equal(response.status,200);const data=await response.json(),qr=new URL(data.qrUrl);
-  assert.equal(data.amount,amount?Number(amount):null);assert.equal(data.optional,true);assert.equal(qr.searchParams.get('amount'),amount||null);assert.equal(qr.searchParams.get('acc'),BANK.account);assert.equal(qr.searchParams.get('des'),'SEVQR NCN DONATE');
- }
- for(const value of ['0','-1','1.5','1e5','abc','20000&acc=other','99999999999999'])assert.throws(()=>donationDetails(value));
- assert.equal((await handler(request('donation&amount=-2'))).status,400);
+ for(const amount of ['', '1','12345','0','-2','abc'])assert.equal((await handler(request('donation'+(amount?'&amount='+amount:'')))).status,410);
 });
 test('the current account does not depend on an expired, blocked, or unavailable historical payment ledger',async()=>{
  const handler=createBillingHandler({production:()=>true,verify:async()=>member,store:()=>{throw Error('Ledger offline');},now:()=>now,config:()=>({})});
@@ -82,9 +77,9 @@ test('an interrupted donation receipt cannot be reassigned before its final stat
  const response=await billing({...member,admin:true},store)(request('reconcile',{transactionId:'123',orderId:'NCNAAAAAAAAAAAAAAAAAAAA'}));assert.equal(response.status,409);
  await webhook(store)(receipt(transaction()));assert.equal((await store.get('txn-'+String(123).padStart(20,'0'))).status,'donated');assert.equal([...store.entries.keys()].some(k=>k.startsWith('member-')),false);
 });
-test('every page places the glass donation action in the original VIP menu entry and leaves the toolbar clear',async()=>{
+test('all static shells remove donation cards, menu entries, account links and footer invitations',async()=>{
  const files=async dir=>(await Promise.all((await readdir(dir,{withFileTypes:true})).map(entry=>entry.isDirectory()?files(dir+'/'+entry.name):entry.name.endsWith('.html')?[dir+'/'+entry.name]:[]))).flat();
  for(const path of [...await files('public'),'netlify/lib/ncn-library/article-shell.html']){
-  const html=await readFile(path,'utf8');assert.equal((html.match(/class="ncn-footer-donate"/g)||[]).length,1,path);assert.equal(/class="ncn-top-vip"/.test(html),false,path+' toolbar');assert.equal((html.match(/class="ncn-nav-link ncn-donate-button"/g)||[]).length,1,path+' original VIP menu entry');assert.equal(/Nâng cấp VIP|Nâng cấp <b>VIP|Mua \/ gia hạn VIP|Đăng ký \/ gia hạn VIP|30\.000đ\/30 ngày/.test(html),false,path);
+  const html=await readFile(path,'utf8');assert.equal((html.match(/class="ncn-footer-donate"/g)||[]).length,0,path);assert.equal(/class="ncn-top-vip"/.test(html),false,path+' toolbar');assert.equal((html.match(/class="ncn-nav-link ncn-donate-button"/g)||[]).length,0,path+' removed Donate menu entry');assert.equal(/href="\/premium\/"|data-ncn-pin="vip"|id="donate-form"|id="donate-qr"/.test(html),false,path);assert.equal(/Nâng cấp VIP|Nâng cấp <b>VIP|Mua \/ gia hạn VIP|Đăng ký \/ gia hạn VIP|30\.000đ\/30 ngày/.test(html),false,path);
  }
 });
