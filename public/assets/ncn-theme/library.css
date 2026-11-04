@@ -1,4 +1,4 @@
-/* Library surfaces match File kho. All print artwork keeps its existing styles. */
+/* Library surfaces share the NCN theme. All print artwork keeps its existing styles. */
 .ncn-library-admin-link{display:inline-flex;align-items:center;color:var(--ncn-accent);font:650 12px/1.5 var(--body-font);margin:0 0 18px;text-decoration:none;padding:9px 14px;border:1px solid var(--ncn-border);border-radius:13px;background:var(--ncn-glass-card)}
 .ncn-library-admin-link[hidden]{display:none!important}
 @media screen {

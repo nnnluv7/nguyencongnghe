@@ -2,6 +2,8 @@ import {randomUUID} from 'node:crypto';
 import {safeURL,slugify} from '../../public/assets/ncn-library/content.js';
 
 const KEY='index',MAX_CUSTOM=200;
+// Retired tools must not reappear from older saved Library metadata.
+const deletedLegacyIds=new Set(['legacy-70d5bee4a542c9c6']);
 const headers={'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','Netlify-CDN-Cache-Control':'no-store','Vary':'Cookie','X-Content-Type-Options':'nosniff'};
 const reply=(data,status=200)=>new Response(JSON.stringify(data),{status,headers});
 export function libraryError(status,message){throw Object.assign(new Error(message),{status});}
@@ -15,7 +17,7 @@ export function mergedLibrary(seed,index){
   const changes=new Map((index?.items||[]).map(item=>[item.id,item]));
   const rows=seed.map(item=>({...item,status:'published',mode:'original',version:null,...changes.get(item.id)}));
   const known=new Set(seed.map(item=>item.id));
-  return [...rows,...(index?.items||[]).filter(item=>!known.has(item.id))];
+  return [...rows,...(index?.items||[]).filter(item=>!known.has(item.id))].filter(item=>!deletedLegacyIds.has(item.id));
 }
 export function publicCatalog(seed,index){
   return mergedLibrary(seed,index).filter(item=>item.status==='published').map(item=>({

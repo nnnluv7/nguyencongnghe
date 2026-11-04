@@ -26,7 +26,7 @@ export function optimizePublicHTML(html,manifest=deployed){
   if(readingPage&&!html.includes('id="ncn-inline-ad"'))html=html.replace(/<footer\b[^>]*\bid="ncn-footer"/i,INLINE_AD+'$&');
   if(!manifest||html.includes('id="ncn-built-importmap"'))return html;
   const portal=/id="ncn-(?:home|library)"/.test(html);
-  const modern=portal||/id="(?:ncn-(?:sticker|popup|store|cash|warehouse)-app|vip-app)"/.test(html);
+  const modern=portal||/id="(?:ncn-(?:sticker|popup|store|cash)-app|vip-app)"/.test(html);
   const excel=/id="(?:ncn-(?:sticker|popup|store)-app|vip-app)"|src="\/assets\/(?:inventory|print-import)\.js/.test(html);
   // The large spreadsheet reader belongs only to the actual Excel importers.
   // Article pages, games, calculators and account screens never call XLSX.

@@ -1354,24 +1354,6 @@ window.CG_CATALOG = [
     "isPage": false
   },
   {
-    "title": "Kho Ver 5.2 + All Tools Hỗ Trợ Kho",
-    "link": "/2020/10/kho-ver-52-all-tools-ho-tro-kho.html",
-    "thumbnail": {
-      "src": "/assets/vendor/26f2ad2dd8bccf7856.png",
-      "type": "image"
-    },
-    "author": "Unknown",
-    "authorimage": "",
-    "date": "28 tháng 10",
-    "datetime": "2020-10-28T00:00:00.000+07:00",
-    "summary": "Cập nhật: 04/01/2024 Sắp tới, sau khi mình sửa lại toàn bộ nội dung website, mình sẽ dành thời gian để làm lại file kho với những thay đổi để phù hợp hơn v…",
-    "labels": [
-      "Kho"
-    ],
-    "category": "Công cụ",
-    "isPage": false
-  },
-  {
     "title": "Kiểm kê hàng hóa",
     "link": "/p/kiem-ke.html",
     "thumbnail": {
