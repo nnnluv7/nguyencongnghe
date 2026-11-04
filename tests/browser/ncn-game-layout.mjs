@@ -28,6 +28,7 @@ try{
   await page.clock.install({time:new Date('2026-10-31T10:00:00Z')});
   await ctx.route('**/*',async route=>{
    const req=route.request(),url=new URL(req.url());
+   if(req.method()==='GET'&&url.href==='https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4452301149146464')return route.fulfill({contentType:'text/javascript',body:'/* AdSense disabled in this isolated layout fixture. */'});
    assert.equal(url.origin,origin,'External traffic is forbidden in the layout fixture');
    if(url.pathname.startsWith('/.netlify/')){
     const value=url.pathname.includes('ncn-scores')?{profile,items:[],total:0,you:null,nextCursor:null,runId:'fixture-run',improved:true,best:100}:url.pathname.includes('identity')?{disable_signup:false,external:{email:true}}:url.pathname.includes('announcements')?{items:[]}:{user:null,items:[],online:1,total:1};

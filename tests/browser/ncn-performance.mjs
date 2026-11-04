@@ -32,7 +32,9 @@ await new Promise(done=>server.listen(0,'127.0.0.1',done));const base='http://12
 const browser=await chromium.launch(),results=[];
 try{
  for(const version of ['before','after']){
-  const context=await browser.newContext({viewport:{width:390,height:844}}),page=await context.newPage(),cdp=await context.newCDPSession(page),errors=[];
+  const context=await browser.newContext({viewport:{width:390,height:844}});
+  await context.route('https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4452301149146464',route=>route.fulfill({contentType:'text/javascript',body:'/* AdSense disabled in this isolated performance fixture. */'}));
+  const page=await context.newPage(),cdp=await context.newCDPSession(page),errors=[];
   page.on('pageerror',error=>errors.push(error.message));
   await cdp.send('Network.enable');await cdp.send('Network.emulateNetworkConditions',{offline:false,latency:150,downloadThroughput:200000,uploadThroughput:100000,connectionType:'cellular4g'});
   for(const navigation of ['cold','repeat']){

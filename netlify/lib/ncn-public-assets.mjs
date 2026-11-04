@@ -7,6 +7,8 @@ let deployed;
 try{deployed=JSON.parse(readFileSync(join(process.cwd(),'netlify/lib/ncn-shell/assets.generated.json'),'utf8'));}catch{}
 export const assetPath=value=>String(value||'').split(/[?#]/)[0];
 const attr=(tag,name)=>tag.match(new RegExp('\\b'+name+'=["\x27]([^"\x27]*)["\x27]','i'))?.[1]||'';
+const ADSENSE_URL='https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4452301149146464';
+const ADSENSE_SCRIPT='<script async src="'+ADSENSE_URL+'" crossorigin="anonymous"></script>';
 export function localAssetPath(value,html){
   if(!value||/^(?:data:|#|\/\/)/.test(value))return '';
   const canonical=[...html.matchAll(/<link\b[^>]*>/gi)].map(x=>x[0]).find(tag=>attr(tag,'rel')==='canonical');
@@ -15,6 +17,8 @@ export function localAssetPath(value,html){
 export const stylesheetKey=html=>[...html.matchAll(/<link\b[^>]*>/gi)].map(x=>x[0]).filter(tag=>attr(tag,'rel')==='stylesheet'&&localAssetPath(attr(tag,'href'),html)).map(tag=>localAssetPath(attr(tag,'href'),html)+'|'+attr(tag,'media')).join('\n');
 
 export function optimizePublicHTML(html,manifest=deployed){
+  // Static builds and server-rendered articles share the same AdSense head code.
+  if(!html.includes('src="'+ADSENSE_URL+'"'))html=html.replace(/<\/head>/i,ADSENSE_SCRIPT+'\n</head>');
   if(!manifest||html.includes('id="ncn-built-importmap"'))return html;
   const portal=/id="ncn-(?:home|library)"/.test(html);
   const modern=portal||/id="(?:ncn-(?:sticker|popup|store|cash|warehouse)-app|vip-app)"/.test(html);
@@ -69,7 +73,7 @@ export function optimizePublicHTML(html,manifest=deployed){
 }
 
 export async function optimizePublicResponse(response,manifest=deployed){
-  if(!manifest||!response.headers.get('content-type')?.startsWith('text/html')||!response.body)return response;
+  if(!response.headers.get('content-type')?.startsWith('text/html')||!response.body)return response;
   const headers=new Headers(response.headers);headers.delete('content-length');headers.delete('etag');
   return new Response(optimizePublicHTML(await response.text(),manifest),{status:response.status,statusText:response.statusText,headers});
 }
