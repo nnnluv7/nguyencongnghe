@@ -13,7 +13,7 @@ const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=u
 const server=createServer(async(req,res)=>{
  try{
   const url=new URL(req.url,'http://127.0.0.1');let body,type;
-  const headers={'Content-Security-Policy':"connect-src 'self'; img-src 'self' data:; font-src 'self' data:; frame-src 'self'; form-action 'none'",'Cache-Control':url.pathname.startsWith('/assets/ncn-built/')?'public, max-age=31536000, immutable':'public, max-age=0, must-revalidate'};
+  const headers={'Content-Security-Policy':"script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self'; img-src 'self' data:; font-src 'self' data:; frame-src 'self'; form-action 'none'",'Cache-Control':url.pathname.startsWith('/assets/ncn-built/')?'public, max-age=31536000, immutable':'public, max-age=0, must-revalidate'};
   if(url.pathname.startsWith('/.netlify/')){
    const value=url.searchParams.get('route')==='plans'?{ready:true,plans:[{id:'vip30',amount:30000},{id:'vip60',amount:55000}]}:url.pathname.includes('identity')?{disable_signup:false,external:{email:true}}:url.pathname.includes('profile')?{profile:null,needsProfile:true}:url.pathname.includes('announcements')?{items:[]}:{user:null,profile:null,items:[],total:0,you:null,nextCursor:null,online:1};
    body=Buffer.from(JSON.stringify(value));type=mime['.json'];headers['Cache-Control']='no-store';
