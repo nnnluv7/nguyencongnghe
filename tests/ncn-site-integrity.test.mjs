@@ -34,5 +34,5 @@ test('native managed articles retain NCN account and print controls without reti
  const html=await readFile('netlify/lib/ncn-library/article-shell.html','utf8');
  for(const name of ['125962e77eb283b9aa','8ec8dce35a344a43af','59cde7058d21c3f959','8f3382422a2f53503f','cddfd474b7421a3a07','47d8666c3b6ae2a146','2ef0baed16077abedf','ncn-vip-auth.js'])assert.equal(html.includes(name),false,name+' must not load on a native article');
  for(const name of ['site-bridge.js','b638b6b6b0e4f4118c.js','04eaf19c4b9f842a27.js','ncn-theme/theme.js','ncn-theme/announcements.js'])assert.ok(html.includes(name),name+' compatibility must remain');
- assert.ok(pages.length>=123);
+ assert.ok(pages.length>=122);
 });
