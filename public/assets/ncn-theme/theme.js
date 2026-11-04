@@ -1,5 +1,6 @@
 import {articleCardHTML,libraryLabelName,libraryLabels,latestArticles,featuredArticles} from './catalogue.js?v=20261025-sync-1';
 import '../ncn-account.js?v=20261027-photo-save-1';
+import {canUseVip,isVipToolURL} from '../ncn-vip-access.js';
 import {installAppearance} from './appearance.js?v=20261017-mobile-dark-1';
 // A metrics request must never delay or prevent the actual interface.
 if(typeof window!=='undefined')import('./visitor-counter.js?v=20261016-easy-2').catch(()=>{});
@@ -72,9 +73,10 @@ export function createTheme({doc=document,win=window,config,catalog=win.CG_CATAL
   const groups=(Array.isArray(cfg.groups)?cfg.groups:[]).filter(g=>g&&typeof g.id==='string'&&g.name);
   const tools=orderTools((Array.isArray(cfg.tools)?cfg.tools:[]).filter(t=>t&&/^[a-z0-9-]+$/i.test(t.id)&&t.title&&safeHref(t.href)).map(t=>({...t,href:safeHref(t.href)})));
   const toolIds=new Set(tools.map(t=>t.id));
-  let signedIn=Boolean(win.NCNAccount?.state.user?.id);
-  const visibleTools=()=>tools.filter(t=>signedIn||!['event','gvgs'].includes(t.id));
+  let vipAccess=canUseVip(win.NCNAccount?.state.user);
+  const visibleTools=()=>tools.filter(t=>vipAccess||!['event','gvgs'].includes(t.id));
   let rows=normalizeCatalog(catalog);
+  const visibleRows=(items=rows)=>vipAccess?items:items.filter(row=>!isVipToolURL(row.link));
   let favorites;
   try { const value=JSON.parse(read('ncn-favorites')||'[]'); favorites=new Set(Array.isArray(value)?value.filter(x=>toolIds.has(x)):[]); } catch {favorites=new Set();}
   const icons=root=>(root||doc).querySelectorAll('[data-ncn-icon]').forEach(el=>{el.innerHTML=svg(el.dataset.ncnIcon);});
@@ -124,7 +126,7 @@ export function createTheme({doc=document,win=window,config,catalog=win.CG_CATAL
   listen($('ncn-tools-toggle'),'click',()=>setDrawer($('ncn-page-tools')?.hidden));
   listen($('ncn-tools-close'),'click',()=>setDrawer(false));
   listen(doc,'click',e=>{const details=doc.querySelector('.ncn-account-menu');if(details&&!details.contains(e.target)) details.open=false;});
-  const buildSearchItems=()=>[...visibleTools().map(t=>({title:t.title,link:t.href,summary:t.description,labels:[groups.find(g=>g.id===t.group)?.name||'Công cụ'],kind:t.access==='vip'?'Công cụ VIP':'Công cụ',icon:t.icon})),...rows.filter(row=>!tools.some(t=>canonicalPath(t.href)===canonicalPath(row.link))).map(row=>({...row,kind:row.isPage?'Trang':'Bài viết',icon:'book'}))];
+  const buildSearchItems=()=>[...visibleTools().map(t=>({title:t.title,link:t.href,summary:t.description,labels:[groups.find(g=>g.id===t.group)?.name||'Công cụ'],kind:t.access==='vip'?'Công cụ VIP':'Công cụ',icon:t.icon})),...visibleRows().filter(row=>!tools.some(t=>canonicalPath(t.href)===canonicalPath(row.link))).map(row=>({...row,kind:row.isPage?'Trang':'Bài viết',icon:'book'}))];
   let searchItems=buildSearchItems();
   const matches=(row,query)=>fold(`${row.title} ${row.summary||row.description||''} ${(row.labels||[]).join(' ')}`).includes(fold(query));
   function renderSearch() {
@@ -172,18 +174,18 @@ export function createTheme({doc=document,win=window,config,catalog=win.CG_CATAL
   }
   const articleCard=row=>articleCardHTML(row,{logo:cfg.logo,imageURL});
   let sortedRows=rows.slice().sort((a,b)=>(Date.parse(b.datetime)||0)-(Date.parse(a.datetime)||0));
-  function renderArticleFeed(){html('ncn-articles',latestArticles(sortedRows,tools).map(articleCard).join('')||'<p class="ncn-empty">Chưa có bài viết được công khai.</p>');}
+  function renderArticleFeed(){html('ncn-articles',latestArticles(visibleRows(sortedRows),tools).map(articleCard).join('')||'<p class="ncn-empty">Chưa có bài viết được công khai.</p>');}
   renderArticleFeed();
   function renderFeatured(){
     const host=$('ncn-library-featured');if(!host)return;
-    const featured=featuredArticles(sortedRows,tools);host.hidden=!featured.length;
+    const featured=featuredArticles(visibleRows(sortedRows),tools);host.hidden=!featured.length;
     html('ncn-featured-results',featured.map(articleCard).join(''));previewLinks(host);
   }
   renderFeatured();
   let page=1,libraryQuery='',libraryLabel='',librarySource='';
   const PAGE_SIZE=12;
   function renderLibrary() {
-    const result=sortedRows.filter(row=>matches({...row,labels:libraryLabels(row)},libraryQuery)&&(!libraryLabel||libraryLabels(row).includes(libraryLabel))&&(!librarySource||(librarySource==='genk')===(row.source==='GenK')));
+    const result=visibleRows(sortedRows).filter(row=>matches({...row,labels:libraryLabels(row)},libraryQuery)&&(!libraryLabel||libraryLabels(row).includes(libraryLabel))&&(!librarySource||(librarySource==='genk')===(row.source==='GenK')));
     const pages=Math.max(1,Math.ceil(result.length/PAGE_SIZE));page=Math.max(1,Math.min(page,pages));
     html('ncn-library-results',result.slice((page-1)*PAGE_SIZE,page*PAGE_SIZE).map(articleCard).join('')||'<p class="ncn-empty">Không tìm thấy nội dung. Thử bỏ bộ lọc hoặc đổi từ khóa.</p>');
     text('ncn-library-count',`${result.length} nội dung${libraryQuery?' phù hợp':''}`);text('ncn-library-page',`Trang ${page} / ${pages}`);
@@ -193,7 +195,7 @@ export function createTheme({doc=document,win=window,config,catalog=win.CG_CATAL
   }
   function updateLibraryURL(){if(preview)return;try{const url=new URL(win.location.href);for(const [k,v] of [['q',libraryQuery],['label',libraryLabel],['source',librarySource],['page',page>1?String(page):'']]) v?url.searchParams.set(k,v):url.searchParams.delete(k);win.history.replaceState(null,'',url);}catch{/* file preview has no site route. */}}
   if(library){
-    const labels=[...new Set(rows.flatMap(libraryLabels))].sort((a,b)=>a.localeCompare(b,'vi'));
+    const labels=[...new Set(visibleRows().flatMap(libraryLabels))].sort((a,b)=>a.localeCompare(b,'vi'));
     if($('ncn-library-label')) $('ncn-library-label').innerHTML='<option value="">Tất cả</option>'+labels.map(label=>`<option value="${escapeHTML(label)}">${escapeHTML(label)}</option>`).join('');
     const query=new URLSearchParams(win.location.search);librarySource=['ncn','genk'].includes(query.get('source'))?query.get('source'):'';if($('ncn-library-source'))$('ncn-library-source').value=librarySource;page=Math.max(1,Number(query.get('page'))||1);const requestedLabel=libraryLabelName(query.get('label'));libraryQuery=query.get('q')||'';libraryLabel=labels.includes(requestedLabel)?requestedLabel:'';
     if($('ncn-library-query')) $('ncn-library-query').value=libraryQuery;if($('ncn-library-label')) $('ncn-library-label').value=libraryLabel;
@@ -205,7 +207,7 @@ export function createTheme({doc=document,win=window,config,catalog=win.CG_CATAL
   function replaceCatalogue(catalog){
     rows=normalizeCatalog(catalog);sortedRows=rows.slice().sort((a,b)=>(Date.parse(b.datetime)||0)-(Date.parse(a.datetime)||0));searchItems=buildSearchItems();renderArticleFeed();renderFeatured();
     if(library){
-      const labels=[...new Set(rows.flatMap(libraryLabels))].sort((a,b)=>a.localeCompare(b,'vi'));
+      const labels=[...new Set(visibleRows().flatMap(libraryLabels))].sort((a,b)=>a.localeCompare(b,'vi'));
       if(!labels.includes(libraryLabel))libraryLabel='';
       $('ncn-library-label').innerHTML='<option value="">Tất cả</option>'+labels.map(label=>`<option value="${escapeHTML(label)}">${escapeHTML(label)}</option>`).join('');
       $('ncn-library-label').value=libraryLabel;renderLibrary();
@@ -214,8 +216,8 @@ export function createTheme({doc=document,win=window,config,catalog=win.CG_CATAL
   }
   listen(win,'storage',e=>{if(e.key==='ncn-favorites'){try{const value=JSON.parse(e.newValue||'[]');favorites=new Set(Array.isArray(value)?value.filter(x=>toolIds.has(x)):[]);}catch{favorites=new Set();}renderTools();}});
   listen(doc,'ncn-account-change',()=>{
-    const next=Boolean(win.NCNAccount?.state.user?.id);if(next===signedIn)return;signedIn=next;
-    renderNavigation();renderTools();searchItems=buildSearchItems();renderSearch();
+    const next=canUseVip(win.NCNAccount?.state.user);if(next===vipAccess)return;vipAccess=next;
+    renderNavigation();renderTools();replaceCatalogue(rows);renderSearch();
   });
   if(preview){
     // The preview uses the same UI, and opens existing website routes in the browser.

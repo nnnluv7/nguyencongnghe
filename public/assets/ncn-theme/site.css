@@ -1,6 +1,6 @@
 /* NCN — one responsive interface, one floating navigation. */
-/* Member tools stay hidden before the shared account verifies the session. */
-html:not([data-ncn-account-state="authenticated"]) :is([data-ncn-tool="event"],[data-ncn-tool="gvgs"],a[href="/in-event"],a[href^="/in-event/"],a[href="/in-gvgs"],a[href^="/in-gvgs/"]){display:none!important}
+/* VIP tools stay hidden until the server verifies a directly assigned role. */
+html:not([data-ncn-vip-access="allowed"]) :is([data-ncn-tool="event"],[data-ncn-tool="gvgs"],a[href="/in-event"],a[href^="/in-event/"],a[href="/in-gvgs"],a[href^="/in-gvgs/"]){display:none!important}
 .ncn-account-social{margin:15px 0}.ncn-account-social[hidden]{display:none!important}.ncn-account-social button{width:100%;min-height:45px;border:1px solid #1b63bb;border-radius:12px;padding:12px;background:#2368c4;color:white;font:inherit;font-weight:750;cursor:pointer}.ncn-account-social small{display:block;font-size:10px;line-height:1.7;color:var(--ncn-muted);margin:8px 0 13px}
 @media screen {
 /* Appearance lives here; page heads only set the saved light/dark preference. */

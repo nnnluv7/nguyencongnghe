@@ -20,7 +20,9 @@ test('the retired donation endpoint returns 410 without Identity, storage or wri
 });
 test('the current account does not depend on an expired, blocked, or unavailable historical payment ledger',async()=>{
  const handler=createBillingHandler({production:()=>true,verify:async()=>member,store:()=>{throw Error('Ledger offline');},now:()=>now,config:()=>({})});
- const response=await handler(request('me'));assert.equal(response.status,200);const {user}=await response.json();assert.equal(user.vip,true);assert.equal(user.vipSource,'account');assert.equal(user.admin,false);assert.equal(user.vipExpiresAt,null);
+ const response=await handler(request('me'));assert.equal(response.status,200);const {user}=await response.json();assert.equal(user.vip,false);assert.equal(user.vipSource,'none');assert.equal(user.admin,false);assert.equal(user.vipExpiresAt,null);
+ assert.equal(withMemberVip({...member,vip:true}).vipSource,'manual');assert.equal(withMemberVip({...member,admin:true}).vipSource,'admin');
+ for(const vipSource of ['account','payment'])assert.equal(withMemberVip({...member,vip:true,vipSource}).vip,false);
  assert.equal(withMemberVip(null),null);assert.equal(withMemberVip({...member,paidVipBlocked:true,vipExpiresAt:'2025-01-01'}).paidVipBlocked,false);
  assert.equal((await (await billing(null)(request('me'))).json()).user,null);
 });
@@ -31,22 +33,27 @@ test('old plan creation is retired without writes, while authenticated receipt h
  for(const route of ['orders','admin','admin-order&id=NCNAAAAAAAAAAAAAAAAAAAA'])assert.equal((await billing(null,store)(request(route))).status,401);
  assert.equal((await handler(request('admin'))).status,403);
 });
-test('all confirmed NCN accounts can open Event and GVGS; guests cannot read assets or print and members cannot manage catalogues',async()=>{
+test('only Netlify VIP and ADMIN roles can open Event and GVGS; ordinary accounts and paid history cannot unlock assets or print',async()=>{
  for(const tool of ['event','gvgs']){
   const store=memoryStore(),product={code:'SP1',name:'Giá đã lưu',originalPrice:200,eventPrice:100};await store.setJSON('campaign-demo',{items:[product]});
-  for(const user of [member,{...member,vip:true,vipExpiresAt:'2025-01-01'},null]){
-   const handler=createHandler({production:()=>true,verify:async()=>user,store:()=>store,asset:async name=>name,print:items=>({html:'fixture',items})});
+  for(const user of [member,{...member,vip:true,vipExpiresAt:'2025-01-01'},{...member,vip:true,vipSource:'payment'},{...member,admin:true},null]){
+   const permitted=!!(user&&(user.admin||user.vip&&user.vipSource!=='payment'));
+   const handler=createHandler({production:()=>true,verify:async()=>user,store:()=>{assert.ok(permitted,'Unauthorized requests must not read private data');return store;},asset:async name=>name,print:items=>({html:'fixture',items})});
    const call=(route,data)=>handler(new Request(origin+'/.netlify/functions/ncn-'+tool+'?route='+route,{method:data?'POST':'GET',headers:{Origin:origin,...(data?{'Content-Type':'application/json'}:{})},...(data?{body:JSON.stringify(data)}:{})}));
-   for(const route of ['app','asset&name=core','catalogues'])assert.equal((await call(route)).status,user?200:401,tool+' '+route);
-   const response=await call('print',{items:[{...product,eventPrice:1,qty:1}],settings:{catalogueId:'demo'}});assert.equal(response.status,user?200:401);if(user)assert.equal((await response.json()).items[0].eventPrice,100);
-   if(user){assert.equal((await call('asset&name=bridge')).status,403);assert.equal((await call('publish',{admin:true})).status,403);assert.equal((await call('delete',{admin:true})).status,403);}
+   const status=permitted?200:user?403:401;
+   for(const route of ['app','asset&name=core','asset&name=ui','catalogues','catalogue&id=demo'])assert.equal((await call(route)).status,status,tool+' '+route);
+   const response=await call('print',{items:[{...product,eventPrice:1,qty:1}],settings:{catalogueId:'demo'}});assert.equal(response.status,status);if(permitted&&!user.admin)assert.equal((await response.json()).items[0].eventPrice,100);
+   assert.equal((await call('asset&name=bridge')).status,user?.admin?200:user?403:401);
+   if(!user?.admin){assert.equal((await call('publish',{admin:true})).status,user?403:401);assert.equal((await call('delete',{admin:true})).status,user?403:401);}
   }
  }
 });
 test('donation access never bypasses Identity email confirmation, bans, invalid sessions or ADMIN roles',async()=>{
  const req=new Request(origin,{headers:{Cookie:'nf_jwt=fixture'}}),raw={id:member.id,email:member.email,confirmed_at:'2026-10-01',user_metadata:{roles:['admin'],admin:true},app_metadata:{roles:[]}};
  const verify=value=>verifyIdentity(req,{url:origin},async()=>Response.json(value));
- const user=withMemberVip(await verify(raw));assert.equal(user.vip,true);assert.equal(user.admin,false);
+ const user=withMemberVip(await verify(raw));assert.equal(user.vip,false);assert.equal(user.admin,false);
+ assert.equal(withMemberVip(await verify({...raw,app_metadata:{roles:['vip']}})).vipSource,'manual');
+ assert.equal(withMemberVip(await verify({...raw,app_metadata:{roles:['admin']}})).vipSource,'admin');
  assert.equal(withMemberVip(await verify({...raw,confirmed_at:null})),null);assert.equal(withMemberVip(await verify({...raw,banned_until:'2099-01-01'})),null);
  assert.equal(await verifyIdentity(new Request(origin),{url:origin}),null);
  assert.equal(await verifyIdentity(req,{url:origin},async()=>new Response('',{status:401})),null);

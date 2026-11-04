@@ -43,6 +43,12 @@ test('library source, search, category and page query have matching initial serv
   assert.equal(html.includes('id="ncn-library-prev" disabled'),false);
   const empty=renderPublicHTML(await read('public/thu-vien/index.html'),mergeNews(rows,news),{query:new URLSearchParams('q=%3Cscript%3E&source=ncn'),now});assert.ok(empty.includes('0 nội dung phù hợp'));assert.ok(empty.includes('value="&lt;script&gt;"'));
 });
+test('public library and featured cards omit VIP tools before client verification',async()=>{
+  const vipRows=['/in-event/','/in-gvgs/index.html'].map((link,i)=>({link,title:'Private VIP '+i,labels:['Private VIP'],featured:true,datetime:'2026-11-01T00:00:00Z'}));
+  const html=renderPublicHTML(await read('public/thu-vien/index.html'),[...vipRows,...rows],{query:new URLSearchParams('q=Private+VIP')});
+  for(const name of ['results','featured','labels'])assert.doesNotMatch(html.match(new RegExp('<!-- NCN:'+name+':start -->([\\s\\S]*?)<!-- NCN:'+name+':end -->'))[1],/Private VIP|href="\/in-(?:event|gvgs)/);
+  assert.ok(html.includes('0 nội dung phù hợp'));
+});
 test('public shells cannot bypass managed article deletion, read arbitrary files or accept writes',async()=>{
   const pages=JSON.parse(await read('netlify/lib/ncn-shell/pages.json')),handler=createSitePageHandler({pages,html:path=>read('public/'+path),state:async()=>({catalog:rows}),inject:(html)=>html});
   const allowed=await handler(new Request('https://ncn.test/2024/02/kiem-quy.html'));assert.equal(allowed.status,200);assert.ok((await allowed.text()).includes('id="ncn-cash-app"'));

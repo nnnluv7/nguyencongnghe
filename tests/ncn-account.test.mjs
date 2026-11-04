@@ -1,6 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {quizProfile} from '../public/assets/ncn-account.js';
+import {canUseVip,isVipToolURL} from '../public/assets/ncn-vip-access.js';
+
+test('VIP visibility requires a verified direct grant and excludes old account and payment grants',()=>{
+  for(const user of [null,{}, {id:'ordinary'}, {id:'old',vip:true}, {id:'old',vip:true,vipSource:'account'}, {id:'paid',vip:true,vipSource:'payment'}, {vip:true,vipSource:'manual'}, {id:'revoked',vip:false,vipSource:'manual'}])assert.equal(canUseVip(user),false);
+  assert.equal(canUseVip({id:'vip',vip:true,vipSource:'manual'}),true);
+  assert.equal(canUseVip({id:'admin',admin:true}),true);
+  for(const href of ['/in-event','/in-event/','/in-gvgs/index.html','https://nguyencongnghe.com/in-gvgs/?q=1'])assert.equal(isVipToolURL(href),true);
+  for(const href of ['/popup-a7/','/in-eventual/','/thu-vien/?q=in-event'])assert.equal(isVipToolURL(href),false);
+});
 
 test('legacy profiles cannot authenticate and history requires the verified account email',()=>{
   const legacy={username:'Tên cũ',email:'old@example.test',admin:true};

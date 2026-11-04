@@ -30,11 +30,12 @@ test('avatar navigation hints retain display fields without carrying authorizati
  assert.deepEqual(hint,{id:user.id,email:user.email,name:user.name,avatar:'https://ncn.test/a.webp'});
  assert.equal(displayProfile({...user,avatar:'javascript:alert(1)'}).avatar,undefined);
 });
-test('VIP cards explain login-based access without donation or expiry requirements',()=>{
+test('VIP cards reflect only direct Netlify roles and never upgrade ordinary accounts or paid history',()=>{
  assert.equal(vipSummary(null,now).state,'guest');
  for(const current of [user,{...user,vip:true,vipSource:'payment',vipExpiresAt:'2025-01-01'},{...user,paidVipBlocked:true},{...user,vipSource:'manual'}]){
-  const card=vipSummary(current,now);assert.equal(card.state,'active');assert.equal(card.expires,'Không giới hạn');assert.equal(card.remaining,'Đã đăng nhập');assert.equal(card.plan,'Thành viên NCN');
+  const card=vipSummary(current,now);assert.equal(card.state,'inactive');assert.equal(card.expires,'—');assert.equal(card.remaining,'Chưa cấp VIP');assert.equal(card.plan,'Tài khoản thường');
  }
+ const direct=vipSummary({...user,vip:true,vipSource:'manual'},now);assert.equal(direct.state,'active');assert.equal(direct.plan,'VIP được cấp trực tiếp');assert.equal(direct.remaining,'Đã cấp VIP');
  assert.equal(vipSummary({...user,admin:true},now).plan,'Quyền quản trị NCN');
 });
 test('fresh Identity display fields are optional and user metadata cannot grant VIP or admin',async()=>{

@@ -69,8 +69,10 @@ try{
   assert.equal(await page.locator('[data-member-form]').isVisible(),true);assert.equal(await page.locator('#ncn-member-email').inputValue(),member.email);assert.equal(await page.locator('#ncn-member-email').getAttribute('readonly'),'');assert.equal(await page.locator('#ncn-member-since').innerText(),'1/9/2026');
   assert.equal(await page.evaluate(()=>NCNAccount.state.user.admin),false);
  });
- await check('VIP detail explains account access without donation prompts',async()=>{
-  await page.locator('[data-member-tab=vip]').click();assert.equal(await page.locator('#ncn-member-vip-title').innerText(),'Công cụ VIP đã sẵn sàng');assert.equal(await page.locator('#ncn-member-vip-remaining').innerText(),'Đã đăng nhập');assert.equal(await page.locator('#ncn-member-vip-expiry').innerText(),'Không giới hạn');assert.equal(await page.locator('.ncn-member-vip-link').count(),0);assert.doesNotMatch(await page.locator('[data-member-vip]').innerText(),/donate|ủng hộ/i);
+ await check('only a trusted Netlify role grants VIP despite paid history and spoofed profile roles',async()=>{
+  await page.locator('[data-member-tab=vip]').click();assert.equal(await page.locator('#ncn-member-vip-title').innerText(),'Chưa được cấp VIP');assert.equal(await page.evaluate(()=>NCNAccount.state.user.vip),false);assert.equal(await page.locator('#ncn-member-vip-remaining').innerText(),'Chưa cấp VIP');
+  member.roles=['vip'];await page.evaluate(()=>NCNAccount.refresh({force:true}));
+  assert.equal(await page.locator('#ncn-member-vip-title').innerText(),'Công cụ VIP đã sẵn sàng');assert.equal(await page.locator('#ncn-member-vip-remaining').innerText(),'Đã cấp VIP');assert.equal(await page.locator('#ncn-member-vip-expiry').innerText(),'Không giới hạn');assert.equal(await page.locator('.ncn-member-vip-link').count(),0);assert.doesNotMatch(await page.locator('[data-member-vip]').innerText(),/donate|ủng hộ/i);
   await page.screenshot({path:out+'/vip-desktop.jpg',fullPage:true});await page.locator('[data-member-tab=profile]').click();
  });
  await check('saving an avatar uses the photo handler and updates only the member display metadata',async()=>{
@@ -122,9 +124,10 @@ try{
   let release,started;const wait=new Promise(resolve=>release=resolve),requested=new Promise(resolve=>started=resolve);holdMe={wait,started};await page.evaluate(()=>{window.oldProfileRefresh=NCNAccount.refresh({force:true});});await requested;
   await page.locator('#ncn-member-name').fill('Hồ sơ mới nhất');await page.locator('[data-member-form] [type=submit]').click();await page.locator('#ncn-account-message').filter({hasText:'Đã cập nhật'}).waitFor();release();await page.evaluate(()=>window.oldProfileRefresh);assert.equal(await page.evaluate(()=>NCNAccount.state.user.name),'Hồ sơ mới nhất');assert.equal(await page.locator('#ncn-member-name').inputValue(),'Hồ sơ mới nhất');
  });
- await check('past paid expiry and manual roles do not change login-based access or the profile',async()=>{
-  await ledger.setJSON(memberKey(member.id),{userId:member.id,expiresAt:'2026-10-25T12:00:00Z',blocked:true});await page.locator('[data-member-tab=vip]').click();await page.locator('[data-member-refresh]').click();await page.locator('#ncn-member-vip-title').filter({hasText:'đã sẵn sàng'}).waitFor();assert.equal(await page.locator('#ncn-member-vip-remaining').innerText(),'Đã đăng nhập');
-  member.roles=['vip'];await page.locator('[data-member-refresh]').click();assert.equal(await page.locator('#ncn-member-vip-plan').innerText(),'Thành viên NCN');assert.equal(await page.locator('#ncn-member-vip-expiry').innerText(),'Không giới hạn');member.roles=[];
+ await check('paid expiry cannot change a direct role, and removing that role revokes VIP while preserving the profile',async()=>{
+  await ledger.setJSON(memberKey(member.id),{userId:member.id,expiresAt:'2026-10-25T12:00:00Z',blocked:true});await page.locator('[data-member-tab=vip]').click();await page.locator('[data-member-refresh]').click();await page.locator('#ncn-member-vip-title').filter({hasText:'đã sẵn sàng'}).waitFor();assert.equal(await page.locator('#ncn-member-vip-remaining').innerText(),'Đã cấp VIP');
+  assert.equal(await page.locator('#ncn-member-vip-plan').innerText(),'VIP được cấp trực tiếp');assert.equal(await page.locator('#ncn-member-vip-expiry').innerText(),'Không giới hạn');
+  member.roles=[];await page.locator('[data-member-refresh]').click();await page.locator('#ncn-member-vip-title').filter({hasText:'Chưa được cấp VIP'}).waitFor();assert.equal(await page.evaluate(()=>NCNAccount.state.user.vip),false);assert.equal(await page.locator('#ncn-member-vip-plan').innerText(),'Tài khoản thường');assert.equal(await page.evaluate(()=>NCNAccount.state.user.name),'Hồ sơ mới nhất');
  });
  await check('signing out while a photo upload waits never attaches that photo or restores private fields',async()=>{
   await page.locator('[data-member-tab=profile]').click();await page.locator('#ncn-member-photo').setInputFiles({name:'last.png',mimeType:'image/png',buffer:photo});await page.locator('#ncn-account-message').filter({hasText:'Đã chọn ảnh'}).waitFor();

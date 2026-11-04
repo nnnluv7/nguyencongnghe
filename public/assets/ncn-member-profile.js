@@ -1,4 +1,5 @@
 import {ARCADE_COUNT} from './ncn-arcade/catalog.js?v=20261027-bubble-1';
+import {canUseVip} from './ncn-vip-access.js';
 export function safeAvatar(value){
  if(typeof value!=='string'||value.length>2048)return '';
  try{const url=new URL(value);return url.protocol==='https:'&&!url.username&&!url.password?url.href:'';}catch{return '';}
@@ -14,9 +15,10 @@ export function profileUpdate(name,avatar){
  return {data:{full_name:clean,...(avatar!==undefined?{avatar_url:safeAvatar(avatar)}:{})}};
 }
 export function vipSummary(user){
- if(!user)return {state:'guest',title:'Chưa đăng nhập',plan:'Tài khoản NCN',expires:'—',remaining:'—',note:'Đăng nhập và xác nhận email để sử dụng công cụ VIP.'};
+ if(!user)return {state:'guest',title:'Chưa đăng nhập',plan:'Tài khoản NCN',expires:'—',remaining:'—',note:'Đăng nhập để xem thông tin tài khoản.'};
  if(user.admin)return {state:'active',title:'Tài khoản quản trị',plan:'Quyền quản trị NCN',expires:'Không giới hạn',remaining:'Toàn quyền',note:'Bạn có quyền sử dụng các công cụ VIP và quản trị website.'};
- return {state:'active',title:'Công cụ VIP đã sẵn sàng',plan:'Thành viên NCN',expires:'Không giới hạn',remaining:'Đã đăng nhập',note:'Tài khoản NCN đã đăng nhập được dùng Event và Giờ Vàng VIP.'};
+ if(canUseVip(user))return {state:'active',title:'Công cụ VIP đã sẵn sàng',plan:'VIP được cấp trực tiếp',expires:'Không giới hạn',remaining:'Đã cấp VIP',note:'Tài khoản đã được quản trị viên cấp quyền VIP.'};
+ return {state:'inactive',title:'Chưa được cấp VIP',plan:'Tài khoản thường',expires:'—',remaining:'Chưa cấp VIP',note:'Tài khoản này chưa được quản trị viên cấp quyền VIP.'};
 }
 export function paintAvatar(target,user,{preview=''}={}){
  const doc=target.ownerDocument,url=preview||safeAvatar(user?.avatar);

@@ -1,6 +1,7 @@
 import {ARCADE_COUNT} from './ncn-arcade/catalog.js?v=20261027-bubble-1';
 import * as identityClient from './ncn-identity-client.js';
 import {readDisplayProfile,saveDisplayProfile,displayProfile} from './ncn-account-session.js?v=20261026-profile-1';
+import {canUseVip} from './ncn-vip-access.js';
 import {mountMemberPanel,paintAvatar,profileUpdate} from './ncn-member-profile.js?v=20261103-account-1';
 import {requestJSON} from './ncn-profile-request.js?v=20261027-photo-save-1';
 
@@ -29,7 +30,7 @@ export function mountAccount({doc=document,win=window,identity=identityClient,fe
   doc.querySelectorAll('.auth-modal').forEach(el=>el.remove());
   const dialog=node('dialog',null,'ncn-account-dialog');dialog.id='ncn-account-dialog';dialog.setAttribute('aria-labelledby','ncn-account-title');
   dialog.innerHTML=`<header><div><small>NGUYENCONGNGHE.COM</small><h2 id="ncn-account-title">Đăng nhập</h2></div><button type="button" data-account-close aria-label="Đóng tài khoản">×</button></header>
-    <p class="ncn-account-intro">Một tài khoản dùng chung toàn website, Event và Giờ Vàng VIP.</p>
+    <p class="ncn-account-intro">1 tài khoản dùng chung website</p>
     <div class="ncn-account-social" hidden><button type="button" data-account-facebook>Tiếp tục với Facebook</button><small>Dùng tên hồ sơ của bạn để chơi và so sánh thành tích.</small></div>
     <div class="ncn-account-tabs" role="group" aria-label="Tài khoản"><button type="button" data-account-mode="login">Đăng nhập</button><button type="button" data-account-mode="register">Đăng ký</button></div>
     <p id="ncn-account-message" role="status" aria-live="polite" hidden></p>
@@ -37,7 +38,7 @@ export function mountAccount({doc=document,win=window,identity=identityClient,fe
     <form data-account-form="register" hidden><label>Họ tên<input name="name" autocomplete="name" required maxlength="100"></label><label>Email<input name="email" type="email" autocomplete="username" required maxlength="254"></label><label>Mật khẩu<input name="password" type="password" autocomplete="new-password" required minlength="8" maxlength="128"></label><label>Nhập lại mật khẩu<input name="repeat" type="password" autocomplete="new-password" required minlength="8" maxlength="128"></label><button type="submit" class="ncn-account-primary">Tạo tài khoản dùng chung</button><details class="ncn-account-legacy"><summary>Đã có tài khoản website cũ?</summary><p>Dùng đúng email cũ để tạo tài khoản chung một lần. Lịch sử theo email được giữ lại. Mật khẩu của hệ thống cũ không tự chuyển sang. Đã có tài khoản Event hoặc VIP? Đăng nhập trực tiếp bằng tài khoản đó.</p></details></form>
     <form data-account-form="recovery" hidden><label>Email đã đăng ký<input name="email" type="email" autocomplete="username" required maxlength="254"></label><button type="submit" class="ncn-account-primary">Gửi email đặt lại mật khẩu</button><button type="button" class="ncn-account-link" data-account-mode="login">Quay lại đăng nhập</button></form>
     <form data-account-form="reset" hidden><label>Mật khẩu mới<input name="password" type="password" autocomplete="new-password" required minlength="8" maxlength="128"></label><label>Nhập lại mật khẩu<input name="repeat" type="password" autocomplete="new-password" required minlength="8" maxlength="128"></label><button type="submit" class="ncn-account-primary">Lưu mật khẩu</button></form>
-    <footer><span>Đăng nhập để dùng các công cụ VIP.</span></footer>`;
+    <footer><span>Đăng nhập để quản lý tài khoản.</span></footer>`;
   doc.body.append(dialog);
   const forms=Object.fromEntries([...dialog.querySelectorAll('[data-account-form]')].map(f=>[f.dataset.accountForm,f]));
   const member=mountMemberPanel({doc,dialog,getUser:()=>state.user,clock,onMessage:message,onMode:mode,onRefresh:()=>run(()=>refresh({force:true})),onSave:saveMember});
@@ -62,7 +63,7 @@ export function mountAccount({doc=document,win=window,identity=identityClient,fe
     for(const [key,form] of Object.entries(forms))form.hidden=key!==name;
     const managing=['profile','vip'].includes(name);
     dialog.querySelector('.ncn-account-tabs').hidden=name==='reset'||managing;
-    dialog.querySelector('.ncn-account-intro').textContent=managing?`Hồ sơ và VIP dùng chung trên website và cả ${ARCADE_COUNT} game NCN Arcade.`:'Một tài khoản dùng chung toàn website, Event và Giờ Vàng VIP.';
+    dialog.querySelector('.ncn-account-intro').textContent=managing?`Hồ sơ dùng chung trên website và cả ${ARCADE_COUNT} game NCN Arcade.`:'1 tài khoản dùng chung website';
     dialog.querySelector('.ncn-account-social').hidden=managing||!state.settings?.providers?.facebook||state.resetPending;
     dialog.querySelectorAll('[data-account-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.accountMode===name)));
     member.render(state.user,{tab:name,busy:state.busy,serverOffset:state.serverOffset});
@@ -102,6 +103,7 @@ export function mountAccount({doc=document,win=window,identity=identityClient,fe
     const verified=state.user,user=verified||state.profile;
     const phase=verified?'authenticated':state.error?'error':state.ready?'guest':'restoring';
     doc.documentElement.dataset.ncnAccountState=phase;
+    doc.documentElement.dataset.ncnVipAccess=canUseVip(verified)?'allowed':'denied';
     doc.querySelectorAll('.ncn-account-dropdown>strong').forEach(el=>el.textContent='Tài khoản của bạn');
     const host=$('ncn-account-host');
     let auth=$('auth-header-desktop');
@@ -215,8 +217,8 @@ export function mountAccount({doc=document,win=window,identity=identityClient,fe
       if(form.elements.password.value!==form.elements.repeat.value)throw new Error('Hai mật khẩu chưa khớp.');
       const email=form.elements.email.value.trim(),password=form.elements.password.value;
       await identity.signUp(email,password,{full_name:form.elements.name.value.trim()});form.reset();
-      if(config.autoconfirm){await identity.signIn(email,password);if(!await refresh({force:true}))throw new Error('Đã tạo tài khoản. Đăng nhập lại để xác nhận phiên và sử dụng công cụ VIP.');signedIn();}
-      else{forms.login.elements.email.value=email;mode('login');message('Đã tạo tài khoản chung. Mở email xác nhận, sau đó đăng nhập để sử dụng công cụ VIP.');}
+      if(config.autoconfirm){await identity.signIn(email,password);if(!await refresh({force:true}))throw new Error('Đã tạo tài khoản. Đăng nhập lại để xác nhận phiên.');signedIn();}
+      else{forms.login.elements.email.value=email;mode('login');message('Đã tạo tài khoản chung. Mở email xác nhận, sau đó đăng nhập để hoàn tất.');}
     }else if(name==='recovery'){
       await identity.sendRecovery(form.elements.email.value.trim());message('Nếu email đã đăng ký, bạn sẽ nhận được thư đặt lại mật khẩu.');
     }else{
@@ -250,7 +252,7 @@ export function mountAccount({doc=document,win=window,identity=identityClient,fe
       await refresh();
       if(state.redirect?.type==='oauth'&&state.user){let path;try{path=sessionStorage?.getItem('ncn-oauth-return');sessionStorage?.removeItem('ncn-oauth-return');}catch{}if(typeof path==='string'&&/^\/ran-luot\/(?:\?room=[\w-]{22})?$/.test(path)&&path!==win.location.pathname+win.location.search)win.location.replace(path);}
       if(state.resetPending){open('reset');message('Nhập mật khẩu mới để hoàn tất tài khoản chung.');}
-      else if(state.redirect?.type==='confirmation'){open('login');message('Email đã được xác nhận. Đăng nhập để dùng các công cụ VIP.');}
+      else if(state.redirect?.type==='confirmation'){open('login');message('Email đã được xác nhận. Đăng nhập để sử dụng website.');}
     }catch(error){if(callback){open('login');message(error.message||'Chưa xác nhận được tài khoản.',true);}}
     finally{state.ready=true;render();doc.dispatchEvent(new win.CustomEvent('ncn-account-ready'));}
     return state.user;

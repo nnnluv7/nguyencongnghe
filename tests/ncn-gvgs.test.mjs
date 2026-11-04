@@ -67,8 +67,8 @@ test('VIP prints current server prices and the new campaign text',async()=>{
   assert.ok(!printed.html.includes('Tampered'));
 });
 
-test('new template requires login and a current catalogue for all NCN members',async()=>{
-  for(const [user,status] of [[null,401],[{id:'normal'},400],[{id:'vip-test',vip:true},400]]){
+test('new template requires direct VIP access before validating the current catalogue',async()=>{
+  for(const [user,status] of [[null,401],[{id:'normal'},403],[{id:'paid',vip:true,vipSource:'payment'},403],[{id:'vip-test',vip:true},400]]){
     const response=await handler(user)(request({items:[product],settings}));
     assert.equal(response.status,status);
   }
