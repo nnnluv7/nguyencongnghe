@@ -9,9 +9,15 @@ const reply=(data,status=200)=>new Response(JSON.stringify(data),{status,headers
 export function libraryError(status,message){throw Object.assign(new Error(message),{status});}
 export const emptyLibrary=()=>({items:[]});
 export async function readLibrary(store){
-  const saved=await store.getWithMetadata(KEY,{type:'json'});
-  if(saved&&(!Array.isArray(saved.data?.items)||saved.data.items.length>500))libraryError(503,'Danh sách Thư viện chưa sẵn sàng.');
-  return saved;
+  for(let attempt=0;attempt<3;attempt++){
+    const saved=await store.getWithMetadata(KEY,{type:'json'});
+    if(saved&&(!Array.isArray(saved.data?.items)||saved.data.items.length>500))libraryError(503,'Danh sách Thư viện chưa sẵn sàng.');
+    if(!saved?.data.items.some(item=>deletedLegacyIds.has(item.id)))return saved;
+    // Remove only the retired record, preserving concurrent edits to other items.
+    const data={...saved.data,items:saved.data.items.filter(item=>!deletedLegacyIds.has(item.id))};
+    await store.setJSON(KEY,data,{onlyIfMatch:saved.etag});
+  }
+  libraryError(503,'Danh sách Thư viện vừa thay đổi. Vui lòng thử lại.');
 }
 export function mergedLibrary(seed,index){
   const changes=new Map((index?.items||[]).map(item=>[item.id,item]));
