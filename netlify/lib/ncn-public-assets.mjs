@@ -9,6 +9,7 @@ export const assetPath=value=>String(value||'').split(/[?#]/)[0];
 const attr=(tag,name)=>tag.match(new RegExp('\\b'+name+'=["\x27]([^"\x27]*)["\x27]','i'))?.[1]||'';
 const ADSENSE_URL='https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4452301149146464';
 const ADSENSE_SCRIPT='<script async src="'+ADSENSE_URL+'" crossorigin="anonymous"></script>';
+const INLINE_AD='<aside id="ncn-inline-ad" class="ncn-inline-ad ncn-ui" aria-label="Quảng cáo"><span class="ncn-inline-ad-label">Quảng cáo</span><ins class="adsbygoogle ncn-inline-ad-unit" style="display:block" data-ad-client="ca-pub-4452301149146464" data-ad-slot="8631703362"></ins></aside>\n<script type="module" src="/assets/ncn-ads.js"></script>\n';
 export function localAssetPath(value,html){
   if(!value||/^(?:data:|#|\/\/)/.test(value))return '';
   const canonical=[...html.matchAll(/<link\b[^>]*>/gi)].map(x=>x[0]).find(tag=>attr(tag,'rel')==='canonical');
@@ -19,6 +20,10 @@ export const stylesheetKey=html=>[...html.matchAll(/<link\b[^>]*>/gi)].map(x=>x[
 export function optimizePublicHTML(html,manifest=deployed){
   // Static builds and server-rendered articles share the same AdSense head code.
   if(!html.includes('src="'+ADSENSE_URL+'"'))html=html.replace(/<\/head>/i,ADSENSE_SCRIPT+'\n</head>');
+  // One normal-flow banner after reading content. Working tools and games never
+  // receive an ad unit; Auto ads and automatic experiments are off in AdSense.
+  const readingPage=/id="ncn-(?:home|library|library-detail)"/.test(html)&&!/<body\b[^>]*\bclass=["'][^"']*\bstatic_page\b/.test(html);
+  if(readingPage&&!html.includes('id="ncn-inline-ad"'))html=html.replace(/<footer\b[^>]*\bid="ncn-footer"/i,INLINE_AD+'$&');
   if(!manifest||html.includes('id="ncn-built-importmap"'))return html;
   const portal=/id="ncn-(?:home|library)"/.test(html);
   const modern=portal||/id="(?:ncn-(?:sticker|popup|store|cash|warehouse)-app|vip-app)"/.test(html);
