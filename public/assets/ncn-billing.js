@@ -26,7 +26,7 @@ export function mountBilling({doc=document,win=window,fetcher=fetch,account=getA
     const changed=user?.id!==state.user?.id||!!user?.admin!==!!state.user?.admin;
     state.user=user;
     if(changed){state.epoch++;state.transactions=[];state.members=[];$('pay-history').replaceChildren();$('pay-admin-transactions').replaceChildren();$('pay-admin-members').replaceChildren();$('pay-history-panel').open=false;$('pay-admin').open=false;clearPreview();}
-    $('pay-email').textContent=user?.email||'Công cụ VIP dành cho thành viên NCN';
+    $('pay-email').textContent=user?.email||'Đăng nhập tài khoản NCN';
     const allowed=canUseVip(user);
     $('pay-entitlement').textContent=allowed?'Tài khoản đã được cấp quyền VIP.':user?'Tài khoản đang sử dụng quyền thành viên thông thường.':'Đăng nhập hoặc tạo tài khoản để sử dụng website.';
     $('pay-auth').hidden=!!user;$('pay-tools').hidden=!allowed;$('pay-history-panel').hidden=!user;$('pay-admin').hidden=!user?.admin;
