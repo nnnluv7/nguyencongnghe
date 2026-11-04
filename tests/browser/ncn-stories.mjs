@@ -5,7 +5,8 @@ import {chromium} from 'playwright';
 import {readFile,writeFile,mkdir,stat} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
 import assert from 'node:assert/strict';
-import {createLibraryHandler} from '../../netlify/lib/ncn-library-api.mjs';
+import {createLibraryHandler,publicCatalog} from '../../netlify/lib/ncn-library-api.mjs';
+import {isVipToolURL} from '../../public/assets/ncn-vip-access.js';
 import {createLibraryPageHandler} from '../../netlify/lib/ncn-library-page.mjs';
 
 // Synthetic HTTPS origin. Real handlers and the real UI use an isolated memory
@@ -100,7 +101,7 @@ try{
     assert.equal(await page.locator('[data-story-rail]').evaluate(el=>getComputedStyle(el).display),'flex');
     assert.equal(Math.round((await page.locator('[data-story-add]').boundingBox()).height),196);
     const order=await page.evaluate(()=>['ncn-library-featured','ncn-stories','ncn-library-count'].map(id=>document.getElementById(id).getBoundingClientRect().top));assert.ok(order[0]<order[1]&&order[1]<order[2]);
-    assert.equal(await page.locator('#ncn-library-count').innerText(),seed.length+' nội dung');await fits(page);await page.screenshot({path:out+'/library-desktop-empty.jpg',fullPage:true,type:'jpeg',quality:80});
+    assert.equal(await page.locator('#ncn-library-count').innerText(),publicCatalog(seed).filter(row=>!isVipToolURL(row.link)).length+' nội dung');await fits(page);await page.screenshot({path:out+'/library-desktop-empty.jpg',fullPage:true,type:'jpeg',quality:80});
   });
   await check('guest posting uses the single shared login and registration dialog',async()=>{
     await page.locator('[data-story-add]').click();await page.locator('#ncn-account-dialog').waitFor({state:'visible'});assert.equal(await page.locator('#ncn-account-dialog').count(),1);
