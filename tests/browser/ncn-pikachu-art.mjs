@@ -21,7 +21,9 @@ async function fixture({viewport={width:390,height:844},reduced=false,level=0}={
  context=await browser.newContext({...devices['iPhone 13 Pro Max'],viewport,reducedMotion:reduced?'reduce':'no-preference'});
  await context.addInitScript(({save,reduced})=>{if(!localStorage.getItem('ncn-pikachu-save-v1'))localStorage.setItem('ncn-pikachu-save-v1',JSON.stringify(save));localStorage.setItem('ncn-pikachu-prefs-v1',JSON.stringify({sound:false,reduced}));Object.defineProperty(Element.prototype,'requestFullscreen',{configurable:true,value:undefined});},{save:save(level),reduced});
  await context.route('**/*',async route=>{
-  const req=route.request(),url=new URL(req.url());assert.equal(url.origin,origin,'External traffic is forbidden');requests.push({path:url.pathname,method:req.method()});
+  const req=route.request(),url=new URL(req.url());
+  if(req.method()==='GET'&&url.href==='https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4452301149146464')return route.fulfill({contentType:'text/javascript',body:'/* AdSense disabled in this isolated art fixture. */'});
+  assert.equal(url.origin,origin,'External traffic is forbidden');requests.push({path:url.pathname,method:req.method()});
   if(url.pathname.startsWith('/.netlify/')){const json=url.pathname.endsWith('ncn-scores')?arcadeEngineFixture(url):url.pathname.includes('identity')?{disable_signup:false,external:{email:true}}:url.pathname.endsWith('ncn-billing')?{user:null}:{items:[],online:1,total:1};return route.fulfill({contentType:'application/json',body:JSON.stringify(json)});}
   if(url.pathname.startsWith('/pikachu/art/')){if(blockedArt)return route.fulfill({status:503,body:'Fixture image unavailable'});if(delayArt)await new Promise(done=>setTimeout(done,delayArt));}
   try{let file=resolve(root,'.'+decodeURIComponent(url.pathname));assert.ok(file===root||file.startsWith(root+sep));if((await stat(file)).isDirectory())file+='/index.html';return route.fulfill({contentType:mime[extname(file)]||'application/octet-stream',body:await readFile(file)});}catch{return route.fulfill({status:404,body:'Not found'});}

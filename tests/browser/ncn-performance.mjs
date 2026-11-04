@@ -19,7 +19,8 @@ const optimized=optimizePublicHTML(html),requests=[];
 const mime={'.js':'text/javascript','.css':'text/css','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.woff2':'font/woff2','.json':'application/json'};
 const server=createServer(async(req,res)=>{
  try{
-  const url=new URL(req.url,'http://127.0.0.1'),headers={'Content-Security-Policy':"connect-src 'self'; img-src 'self' data:; font-src 'self' data:; frame-src 'self'; form-action 'none'",'Cache-Control':url.pathname.startsWith('/assets/ncn-built/')?'public, max-age=31536000, immutable':'public, max-age=0, must-revalidate'};
+  // Block real advertising scripts without request interception disabling the cache benchmark.
+  const url=new URL(req.url,'http://127.0.0.1'),headers={'Content-Security-Policy':"script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self'; img-src 'self' data:; font-src 'self' data:; frame-src 'self'; form-action 'none'",'Cache-Control':url.pathname.startsWith('/assets/ncn-built/')?'public, max-age=31536000, immutable':'public, max-age=0, must-revalidate'};
   let body,type;
   if(['/before/','/after/'].includes(url.pathname)){body=Buffer.from(url.pathname==='/before/'?html:optimized);type='text/html';}
   else if(url.pathname.startsWith('/.netlify/')){type='application/json';body=Buffer.from(JSON.stringify(url.pathname.includes('announcements')?{items:[{text:'NCN · Kiểm tra tốc độ tải trang'}]}:url.pathname.includes('library')?{items:catalog}:{user:null,items:[],total:1,online:1}));headers['Cache-Control']='no-store';}
