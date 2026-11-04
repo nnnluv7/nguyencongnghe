@@ -69,8 +69,10 @@ try{
   assert.equal(await page.locator('[data-member-form]').isVisible(),true);assert.equal(await page.locator('#ncn-member-email').inputValue(),member.email);assert.equal(await page.locator('#ncn-member-email').getAttribute('readonly'),'');assert.equal(await page.locator('#ncn-member-since').innerText(),'1/9/2026');
   assert.equal(await page.evaluate(()=>NCNAccount.state.user.admin),false);
  });
- await check('VIP detail explains account access without donation prompts',async()=>{
-  await page.locator('[data-member-tab=vip]').click();assert.equal(await page.locator('#ncn-member-vip-title').innerText(),'Công cụ VIP đã sẵn sàng');assert.equal(await page.locator('#ncn-member-vip-remaining').innerText(),'Đã đăng nhập');assert.equal(await page.locator('#ncn-member-vip-expiry').innerText(),'Không giới hạn');assert.equal(await page.locator('.ncn-member-vip-link').count(),0);assert.doesNotMatch(await page.locator('[data-member-vip]').innerText(),/donate|ủng hộ/i);
+ await check('only a trusted Netlify role grants VIP despite paid history and spoofed profile roles',async()=>{
+  await page.locator('[data-member-tab=vip]').click();assert.equal(await page.locator('#ncn-member-vip-title').innerText(),'Chưa được cấp VIP');assert.equal(await page.evaluate(()=>NCNAccount.state.user.vip),false);assert.equal(await page.locator('#ncn-member-vip-remaining').innerText(),'Chưa cấp VIP');
+  member.roles=['vip'];await page.evaluate(()=>NCNAccount.refresh({force:true}));
+  assert.equal(await page.locator('#ncn-member-vip-title').innerText(),'Công cụ VIP đã sẵn sàng');assert.equal(await page.locator('#ncn-member-vip-remaining').innerText(),'Đã cấp VIP');assert.equal(await page.locator('#ncn-member-vip-expiry').innerText(),'Không giới hạn');assert.equal(await page.locator('.ncn-member-vip-link').count(),0);assert.doesNotMatch(await page.locator('[data-member-vip]').innerText(),/donate|ủng hộ/i);
   await page.screenshot({path:out+'/vip-desktop.jpg',fullPage:true});await page.locator('[data-member-tab=profile]').click();
  });
  await check('saving an avatar uses the photo handler and updates only the member display metadata',async()=>{

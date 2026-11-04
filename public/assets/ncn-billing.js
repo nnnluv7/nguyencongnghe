@@ -1,4 +1,5 @@
 import {getAccount} from './ncn-account.js?v=20261027-photo-save-1';
+import {canUseVip} from './ncn-vip-access.js';
 
 const ENDPOINT='/.netlify/functions/ncn-billing';
 const money=value=>Number(value).toLocaleString('vi-VN')+'đ';
@@ -26,8 +27,9 @@ export function mountBilling({doc=document,win=window,fetcher=fetch,account=getA
     state.user=user;
     if(changed){state.epoch++;state.transactions=[];state.members=[];$('pay-history').replaceChildren();$('pay-admin-transactions').replaceChildren();$('pay-admin-members').replaceChildren();$('pay-history-panel').open=false;$('pay-admin').open=false;clearPreview();}
     $('pay-email').textContent=user?.email||'Công cụ VIP dành cho thành viên NCN';
-    $('pay-entitlement').textContent=user?'Bạn đã đăng nhập và có thể sử dụng Event, Giờ Vàng VIP.':'Đăng nhập hoặc tạo tài khoản để dùng Event và Giờ Vàng VIP.';
-    $('pay-auth').hidden=!!user;$('pay-tools').hidden=!user;$('pay-history-panel').hidden=!user;$('pay-admin').hidden=!user?.admin;
+    const allowed=canUseVip(user);
+    $('pay-entitlement').textContent=allowed?'Tài khoản đã được cấp quyền VIP.':user?'Tài khoản đang sử dụng quyền thành viên thông thường.':'Đăng nhập hoặc tạo tài khoản để sử dụng website.';
+    $('pay-auth').hidden=!!user;$('pay-tools').hidden=!allowed;$('pay-history-panel').hidden=!user;$('pay-admin').hidden=!user?.admin;
   }
   function table(headers,rows){const node=doc.createElement('table'),head=doc.createElement('thead'),tr=doc.createElement('tr');for(const title of headers)tr.append(text('th',title));head.append(tr);node.append(head);const body=doc.createElement('tbody');for(const cells of rows){const row=doc.createElement('tr');for(const value of cells){const cell=doc.createElement('td');if(typeof value==='string')cell.textContent=value;else cell.append(value);row.append(cell);}body.append(row);}node.append(body);return node;}
   async function history(){

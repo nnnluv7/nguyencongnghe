@@ -1,5 +1,6 @@
 import {escapeHTML} from '../../public/assets/ncn-library/content.js';
 import {articleCardHTML,libraryLabelName,libraryLabels,latestArticles,featuredArticles} from '../../public/assets/ncn-theme/catalogue.js';
+import {isVipToolURL} from '../../public/assets/ncn-vip-access.js';
 
 const json=value=>JSON.stringify(value).replace(/</g,'\\u003c').replace(/\u2028/g,'\\u2028').replace(/\u2029/g,'\\u2029');
 const fold=value=>String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/gi,'d').toLowerCase();
@@ -12,7 +13,7 @@ export function renderPublicHTML(html,catalog,{notices=[],stories=null,now=Date.
     html=html.slice(0,first)+links+html.slice(first);
   }
   let config={};try{config=JSON.parse(html.match(/<script id="ncn-initial-config"[^>]*>([\s\S]*?)<\/script>/)?.[1]||'{}');}catch{}
-  const rows=catalog.slice().sort((a,b)=>(Date.parse(b.datetime)||0)-(Date.parse(a.datetime)||0)),options={logo:config.logo},card=row=>articleCardHTML(row,options);
+  const rows=catalog.filter(row=>!isVipToolURL(row.link)).sort((a,b)=>(Date.parse(b.datetime)||0)-(Date.parse(a.datetime)||0)),options={logo:config.logo},card=row=>articleCardHTML(row,options);
   html=region(html,'articles',latestArticles(rows,config.tools).map(card).join('')||'<p class="ncn-empty">Chưa có bài viết được công khai.</p>');
   const featured=featuredArticles(rows,config.tools);html=region(html,'featured',featured.map(card).join(''));
   html=html.replace(/(<section id="ncn-library-featured"[^>]*)(>)/,(_,start,end)=>start.replace(/ hidden/g,'')+(featured.length?'':' hidden')+end);

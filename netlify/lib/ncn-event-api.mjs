@@ -57,6 +57,7 @@ export function createHandler(deps){return async function(req){
     const user=withMemberVip(await deps.verify(req));
     if(route==='me'&&method==='GET')return reply({user,allowed:!!(user&&(user.admin||user.vip))});
     if(!user)fail(401,'Đăng nhập và xác nhận email tài khoản NCN để sử dụng công cụ VIP.');
+    if(!user.admin&&!user.vip)fail(403,'Tài khoản chưa được cấp quyền VIP. Vui lòng liên hệ quản trị viên.');
     const store=deps.store();
     if(route==='app'&&method==='GET')return reply({html:await deps.asset(user.admin?'admin.html':'vip.html'),user});
     if(route==='asset'&&method==='GET'){
