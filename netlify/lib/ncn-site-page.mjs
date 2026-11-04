@@ -11,8 +11,8 @@ export function createSitePageHandler(deps){return async req=>{
   if(!page||!Object.values(deps.pages).includes(page))return new Response('Not found',{status:404,headers});
   try{
     const start=performance.now();let degraded=false;
-    const [html,state]=await Promise.all([deps.html(page),deps.state().catch(()=>{degraded=true;return {catalog:[],notices:[],stories:[]};})]);
-    const body=deps.inject(renderPublicHTML(html,state.catalog,state),state.catalog);
+    const [html,state]=await Promise.all([deps.html(page),deps.state({catalog:page.startsWith('search/')}).catch(()=>{degraded=true;return {catalog:[],notices:[],stories:[],catalogDeferred:true};})]);
+    const body=deps.inject(renderPublicHTML(html,state.catalog,state),state.catalog,{deferred:state.catalogDeferred});
     return new Response(req.method==='HEAD'?null:body,{headers:{...(degraded?headers:publicPageHeaders()),'Server-Timing':'ncn;dur='+Math.round(performance.now()-start)}});
   }catch{return new Response('Trang đang kết nối lại. Vui lòng tải lại sau ít phút.',{status:503,headers});}
 };}

@@ -6,8 +6,8 @@ import {normalizeSocialMetadata} from './ncn-social-meta.mjs';
 
 const headers={'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','Netlify-CDN-Cache-Control':'no-store','X-Content-Type-Options':'nosniff'};
 const json=value=>JSON.stringify(value).replace(/</g,'\\u003c').replace(/\u2028/g,'\\u2028').replace(/\u2029/g,'\\u2029');
-export function injectCatalog(html,items){
-  return html.replace(/<script\b[^>]*src="\/assets\/catalog\.js"[^>]*><\/script>/,'<script>window.CG_CATALOG='+json(items)+';window.NCN_LIBRARY_SNAPSHOT=true;</script>');
+export function injectCatalog(html,items,{deferred=false}={}){
+  return html.replace(/<script\b[^>]*src="\/assets\/catalog\.js"[^>]*><\/script>/,()=>'<script>window.CG_CATALOG='+json(items)+';window.NCN_LIBRARY_SNAPSHOT='+!deferred+';'+(deferred?'window.NCN_LIBRARY_DEFERRED=true;':'')+'</script>');
 }
 function dateLabel(value){try{return new Intl.DateTimeFormat('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',day:'2-digit',month:'2-digit',year:'numeric'}).format(new Date(value));}catch{return '';}}
 function metadata(html,item){

@@ -10,12 +10,12 @@ export const publicSeed=read('netlify/lib/ncn-library/seed.json');
 export const newsSeed=read('netlify/lib/ncn-news/genk-seed.json');
 const store=name=>getStore({name,consistency:'strong'});
 export const currentNews=()=>readGenkNews(store('ncn-genk-feed-v1'),newsSeed);
-export async function currentPublicState({stories=false}={}){
+export async function currentPublicState({stories=false,catalog=true}={}){
   const now=Date.now();
   const [library,news,notices,photos]=await Promise.all([
-    readLibrary(store('ncn-site-library-v1')),currentNews(),
+    catalog?readLibrary(store('ncn-site-library-v1')):Promise.resolve(null),catalog?currentNews():Promise.resolve([]),
     store('ncn-site-announcements-v1').get('announcements',{type:'json'}).catch(()=>null),
     stories?readPublicStories(store('ncn-community-stories-v1'),now).catch(()=>[]):Promise.resolve([])
   ]);
-  return {index:library?.data,catalog:mergeNews(publicCatalog(publicSeed,library?.data),news),notices:notices?.items||[],stories:photos,now};
+  return {index:library?.data,catalog:catalog?mergeNews(publicCatalog(publicSeed,library?.data),news):[],catalogDeferred:!catalog,notices:notices?.items||[],stories:photos,now};
 }

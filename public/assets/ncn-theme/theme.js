@@ -141,6 +141,7 @@ export function createTheme({doc=document,win=window,config,catalog=win.CG_CATAL
     if(!dialog)return;setMenu(false,false);searchFocus=doc.activeElement;
     if(!dialog.open){if(typeof dialog.showModal==='function')dialog.showModal();else dialog.setAttribute('open','');}
     renderSearch();$('ncn-global-query')?.focus();
+    doc.dispatchEvent(new win.CustomEvent('ncn-search-open'));
   }
   function closeSearch(){if(!dialog)return;if(typeof dialog.close==='function')dialog.close();else dialog.removeAttribute('open');searchFocus?.focus();}
   doc.querySelectorAll('[data-ncn-search-open]').forEach(button=>listen(button,'click',openSearch));
@@ -255,13 +256,15 @@ export async function bootTheme() {
     const refresh=()=>{
       if(closed)return;if(pending){queued=true;return pending;}
       pending=fetch('/.netlify/functions/ncn-library?route=list',{credentials:'same-origin',cache:'no-store',signal:AbortSignal.timeout(10000)}).then(async response=>{
-        if(!response.ok||closed)return;const data=await response.json();if(Array.isArray(data.items)&&!closed)result.replaceCatalogue(data.items);
+        if(!response.ok||closed)return;const data=await response.json();if(Array.isArray(data.items)&&!closed){result.replaceCatalogue(data.items);window.NCN_LIBRARY_DEFERRED=false;}
       }).catch(()=>{}).finally(()=>{pending=null;if(queued){queued=false;refresh();}});return pending;
     };
     const storage=event=>{if(event.key==='ncn:library:changed')refresh();};
+    const search=()=>{if(window.NCN_LIBRARY_DEFERRED&&!pending)refresh();};
     window.addEventListener('ncn-library-changed',refresh);window.addEventListener('storage',storage);
-    const destroy=result.destroy;result.destroy=()=>{closed=true;window.removeEventListener('ncn-library-changed',refresh);window.removeEventListener('storage',storage);destroy();};
-    if(!window.NCN_LIBRARY_SNAPSHOT)refresh();
+    document.addEventListener('ncn-search-open',search);
+    const destroy=result.destroy;result.destroy=()=>{closed=true;window.removeEventListener('ncn-library-changed',refresh);window.removeEventListener('storage',storage);document.removeEventListener('ncn-search-open',search);destroy();};
+    if(!window.NCN_LIBRARY_SNAPSHOT&&!window.NCN_LIBRARY_DEFERRED)refresh();
   }
   if(configFailed){const host=document.getElementById('ncn-tool-grid');if(host)host.innerHTML='<p class="ncn-empty">Chưa tải được danh mục công cụ. <a href="/thu-vien/">Mở thư viện</a> hoặc tải lại trang.</p>';}
   return result;

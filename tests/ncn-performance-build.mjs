@@ -8,6 +8,9 @@ async function files(dir){let result=[];for(const item of await readdir(dir,{wit
 const pages=await files(root);
 for(const page of pages){
  const html=await readFile(page,'utf8');assert.equal((html.match(/id="ncn-built-importmap"/g)||[]).length,1,page);
+ const map=JSON.parse(html.match(/id="ncn-built-importmap"[^>]*>(.*?)<\/script>/s)[1]);
+ assert.deepEqual(map.imports,manifest.runtimeImports,page+': only unbundled runtime imports belong in the head');
+ const charset=html.search(/<meta\b[^>]*charset=/i);assert.ok(charset>=0&&charset<1024,page+': early UTF-8');
  for(const tag of html.match(/<(?:script|link)\b[^>]*>/g)||[]){
   const src=tag.match(/(?:src|href)="(\/assets\/ncn-built\/[^"?#]+)"/)?.[1];if(!src)continue;
   const bytes=await readFile(root+src);assert.ok(bytes.length,page+': '+src);
@@ -15,6 +18,7 @@ for(const page of pages){
   if(integrity)assert.equal(createHash(integrity[1]).update(bytes).digest('base64'),integrity[2],page+': copied script integrity');
  }
 }
+for(const target of Object.values(manifest.runtimeImports))assert.ok((await stat(root+target)).isFile(),target);
 for(const [source,target] of Object.entries(manifest.modules)){assert.ok(source.startsWith('/'));assert.ok((await stat(root+target)).isFile());for(const dep of manifest.dependencies[target]||[])assert.ok((await stat(root+dep)).isFile(),dep);}
 for(const [source,resource]of Object.entries(manifest.catalogues||{})){
  const original=JSON.parse(await readFile('public'+source,'utf8')),optimized=JSON.parse(await readFile(root+resource.href,'utf8'));

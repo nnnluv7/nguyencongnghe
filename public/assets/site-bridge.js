@@ -147,7 +147,7 @@
         window.closeAuth?.();
         document.querySelectorAll('.modal-open').forEach(e=>e.classList.remove('modal-open'));
         document.body.classList.remove('spring-open','active-search');
-        $('#search-flex').hide();
+        if($)$('#search-flex').hide();
       }
     });
     document.querySelectorAll('.auth-input').forEach(input=> input.addEventListener('keydown',event=>{ if(event.key==='Enter'){ const modal=input.closest('.auth-modal'); modal?.querySelector('.auth-submit')?.click(); } }));

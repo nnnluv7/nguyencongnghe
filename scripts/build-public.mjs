@@ -39,7 +39,7 @@ export async function buildPublic(){
       if(path!==args.path)return {path:resolve(dirname(args.importer),path)};
     });}
   }]});
-  const manifest={modules:{},imports:{},classic:{},styles:{},dependencies:{},catalogues:{},fonts:{}};
+  const manifest={modules:{},imports:{},runtimeImports:{},classic:{},styles:{},dependencies:{},catalogues:{},fonts:{}};
   const generatedAsset=async(folder,bytes,ext)=>{const url=assets+folder+'/'+hash(bytes)+'.'+ext;await mkdir(dirname(output+url),{recursive:true});await writeFile(output+url,bytes);return url;};
   manifest.logo=await generatedAsset('images',await sharp(root+'/assets/ncn-theme/logo.png').resize({width:512,height:512,fit:'inside',withoutEnlargement:true}).webp({quality:90}).toBuffer(),'webp');
   manifest.icon=await generatedAsset('images',await sharp(root+'/assets/ncn-theme/logo.png').resize({width:192,height:192,fit:'inside',withoutEnlargement:true}).png({compressionLevel:9}).toBuffer(),'png');
@@ -84,6 +84,17 @@ export async function buildPublic(){
   // source-page startup. Give that inert declaration the same immutable asset.
   for(const html of htmls)for(const match of html.matchAll(/<link\b[^>]*\bdata-ncn-spreadsheet\b[^>]*>/gi)){
     const src=localAssetPath(attr(match[0],'href'),html);if(src.startsWith('/'))classic.add(src);
+  }
+  // Compiled modules already import their hashed chunks. Source aliases are
+  // needed only by unbundled compatibility, inline and private-editor code.
+  const runtimeSources=[
+    ...[...classic].filter(src=>sources.has(root+src)).map(src=>[src,sources.get(root+src)]),
+    ...htmls.map(html=>['/',html]),
+    ...await Promise.all(['ncn-event','ncn-gvgs'].map(async name=>['/assets/'+name+'.js',await readFile('netlify/lib/'+name+'-private/ui.js','utf8')]))
+  ];
+  for(const [path,source]of runtimeSources)for(const match of source.matchAll(/(?:from\s*|import\s*\(?\s*)["']([/.][^"']+)["']/g)){
+    const url=new URL(match[1],'https://nguyencongnghe.com'+path),key=url.pathname+url.search;
+    if(manifest.modules[url.pathname])manifest.runtimeImports[key]=manifest.modules[url.pathname];
   }
   for(const src of classic){
     // Exact copies retain SRI and global bindings used by the existing editors.
