@@ -26,7 +26,8 @@ export function optimizePublicHTML(html,manifest=deployed){
   if(readingPage&&!html.includes('id="ncn-inline-ad"'))html=html.replace(/<footer\b[^>]*\bid="ncn-footer"/i,INLINE_AD+'$&');
   if(!manifest||html.includes('id="ncn-built-importmap"'))return html;
   const portal=/id="ncn-(?:home|library)"/.test(html);
-  const modern=portal||/id="(?:ncn-(?:sticker|popup|store|cash)-app|vip-app)"/.test(html);
+  const article=/<body\b[^>]*\bclass="[^"]*\bncn-library-(?:article|resource)\b/.test(html);
+  const modern=portal||article||/id="(?:ncn-(?:sticker|popup|store|cash)-app|vip-app)"/.test(html);
   const excel=/id="(?:ncn-(?:sticker|popup|store)-app|vip-app)"|src="\/assets\/(?:inventory|print-import)\.js/.test(html);
   // The large spreadsheet reader belongs only to the actual Excel importers.
   // Article pages, games, calculators and account screens never call XLSX.
@@ -41,7 +42,7 @@ export function optimizePublicHTML(html,manifest=deployed){
     // old quiz profile still use the same verified NCN account on these pages.
     if(['/assets/site-config.js','/assets/js/b638b6b6b0e4f4118c.js'].includes(assetPath(src)))return tag;
     if(!portal&&['/assets/js/04eaf19c4b9f842a27.js','/assets/site-bridge.js'].includes(assetPath(src)))return tag;
-    return /^\/assets\/(?:js\/|vendor\/|site-bridge\.js)/.test(src)||portal&&src.startsWith('/assets/ncn-vip-auth.js')?'':tag;
+    return /^\/assets\/(?:js\/|vendor\/|site-bridge\.js)/.test(src)||(portal||article)&&src.startsWith('/assets/ncn-vip-auth.js')?'':tag;
   });
   const css=manifest.styles[stylesheetKey(html)];
   if(css){let first=true;html=html.replace(/<link\b[^>]*>/gi,tag=>{
@@ -61,7 +62,7 @@ export function optimizePublicHTML(html,manifest=deployed){
     return result;
   });
   const imports={};
-  for(const [source,target] of Object.entries(manifest.imports))imports[source]=target;
+  for(const [source,target] of Object.entries(manifest.runtimeImports||manifest.imports))imports[source]=target;
   const preload=new Set();
   const visit=path=>{if(preload.has(path))return;preload.add(path);for(const child of manifest.dependencies[path]||[])visit(child);};
   entries.forEach(visit);
@@ -69,11 +70,13 @@ export function optimizePublicHTML(html,manifest=deployed){
   const head='<script id="ncn-built-importmap" type="importmap">'+JSON.stringify({imports}).replace(/</g,'\\u003c')+'</script>\n'+[...preload].map(path=>'<link rel="modulepreload" href="'+path+'">').join('\n')+'\n'+catalogues+'\n'+(manifest.logo?'<link data-ncn-logo-asset href="'+manifest.logo+'">\n':'');
   // Import maps must precede every module/preload, including dynamic imports in
   // old quiz scripts, so every page shares exactly one account/Identity module.
-  html=html.replace(/<head([^>]*)>/i,(_,attrs)=>'<head'+attrs+'>\n'+head);
+  const charset=/<meta\b[^>]*\bcharset\s*=\s*["']?utf-8["']?[^>]*>/i;
+  html=charset.test(html)?html.replace(charset,tag=>tag+'\n'+head):html.replace(/<head([^>]*)>/i,(_,attrs)=>'<head'+attrs+'>\n'+head);
   html=html.replace(/href="https:\/\/i\.ibb\.co\/vg5gwhS\/Bie-u-tru-ng-NCN-co-ng-nghe-to-i-gia-n\.png"/g,'href="/assets/ncn-theme/logo.png"');
   if(manifest.logo)html=html.replace(/(<img\b[^>]*src=")\/assets\/ncn-theme\/logo\.png(")/g,'$1'+manifest.logo+'$2');
   if(manifest.icon)html=html.replace(/<link\b[^>]*>/gi,tag=>/(?:^|\s)(?:icon|apple-touch-icon)(?:\s|$)/.test(attr(tag,'rel'))&&attr(tag,'href')==='/assets/ncn-theme/logo.png'?tag.replace('/assets/ncn-theme/logo.png',manifest.icon):tag);
   html=html.replace(/<img\b[^>]*class="[^"]*\bhuongdan\b[^"]*"[^>]*>/g,tag=>/\bloading=/.test(tag)?tag:tag.replace('<img','<img loading="lazy" decoding="async"'));
+  if(article)html=html.replace(/<iframe\b[^>]*>/gi,tag=>!attr(tag,'loading')&&/^https:\/\/(?:www\.)?youtube(?:-nocookie)?\.com\/embed\//i.test(attr(tag,'src'))?tag.replace('<iframe','<iframe loading="lazy"'):tag);
   return html;
 }
 

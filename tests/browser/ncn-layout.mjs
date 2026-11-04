@@ -15,7 +15,7 @@ const catalog=mergeNews(publicCatalog(seed),news),now=Date.now(),photo={id:'stor
 const state={catalog,notices:[{id:'fixture',text:'NCN · Thông báo kiểm tra giao diện đồng bộ'}],stories:[photo],now};
 const common={production:()=>true,seed,store:()=>({getWithMetadata:async()=>null}),state:async()=>state};
 const library=createLibraryPageHandler({...common,homeShell:()=>read('public/index.html'),indexShell:()=>read('public/thu-vien/index.html'),articleShell:()=>read('netlify/lib/ncn-library/article-shell.html'),original:path=>read('public/'+path)});
-const shell=createSitePageHandler({pages,html:path=>read('public/'+path),state:async()=>state,inject:injectCatalog});
+const shell=createSitePageHandler({pages,html:path=>read('public/'+path),state:async({catalog=true}={})=>catalog?state:{...state,catalog:[],catalogDeferred:true},inject:injectCatalog});
 const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml','.woff2':'font/woff2','.ttf':'font/ttf'};
 const browser=await chromium.launch(),results=[],controlAudit=[];let page,blocked=false,pending=[];
 const logo=await readFile('public/assets/ncn-theme/logo.png');
@@ -45,6 +45,17 @@ const paint=p=>p.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>req
 const fits=async p=>{const size=await p.evaluate(()=>({w:innerWidth,actual:document.documentElement.scrollWidth}));assert.ok(size.actual<=size.w+1,JSON.stringify(size));};
 const ctx=await context();
 try{
+ await check('tool search loads articles once on demand and still hides VIP entries from a guest',async()=>{
+  page=await ctx.newPage();let requests=0;const errors=[];
+  page.on('request',request=>{if(new URL(request.url()).pathname==='/.netlify/functions/ncn-library')requests++;});page.on('pageerror',error=>errors.push(error.message));
+  await page.goto(origin+'/2024/02/kiem-quy.html',{waitUntil:'networkidle'});await page.waitForFunction(()=>window.NCNAccount?.state.ready);
+  assert.equal(requests,0);assert.equal(await page.evaluate(()=>window.CG_CATALOG.length),0);
+  const search=page.locator('[data-ncn-search-open]').first();await search.click();await page.waitForFunction(()=>window.NCN_LIBRARY_DEFERRED===false);
+  for(const href of ['/in-event/','/in-gvgs/'])assert.equal(await page.locator('#ncn-global-results a[href="'+href+'"]').count(),0);
+  const title=seed.find(x=>x.managedPage).title;await page.locator('#ncn-global-query').fill(title);
+  assert.ok((await page.locator('#ncn-global-results').innerText()).includes(title));assert.equal(requests,1);
+  await page.keyboard.press('Escape');await search.click();assert.equal(requests,1);await page.keyboard.press('Escape');assert.deepEqual(errors,[]);await page.close();
+ });
  for(const path of ['/','/thu-vien/'])await check('complete first paint with delayed modules: '+path,async()=>{
   blocked=true;page=await ctx.newPage();await page.goto(origin+path,{waitUntil:'commit'});await page.locator(path==='/'?'#ncn-tool-grid':'#ncn-library-results').waitFor();await paint(page);
   const ids=path==='/'?['ncn-home-latest','ncn-tools']:['ncn-library-featured','ncn-stories','ncn-library-count'];
