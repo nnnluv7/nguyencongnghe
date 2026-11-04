@@ -41,6 +41,7 @@ body.ncn-modern #ncn-page-tools .sidebar-cover{display:block!important;float:non
 .ncn-brand strong{display:block;font-size:21px;font-weight:850;letter-spacing:-.7px;line-height:1.2}
 .ncn-brand small{display:block;color:var(--ncn-muted);font-size:10px;margin-top:5px;letter-spacing:0}
 .ncn-header-brand small,.ncn-location{display:none}
+@media(min-width:901px){.ncn-header-brand>span:not(.ncn-brand-image){display:none}}
 .ncn-top-search{display:flex;align-items:center;gap:10px;min-width:190px;max-width:470px;width:100%;margin-left:auto;min-height:44px;padding:10px 16px;background:var(--ncn-glass-soft);color:var(--ncn-muted);border:1px solid var(--ncn-border);border-radius:999px;font-size:12px!important;text-align:left;box-shadow:inset 0 1px 0 var(--ncn-highlight)}
 .ncn-top-search kbd{margin-left:auto;border:1px solid var(--ncn-border);background:var(--ncn-surface);border-radius:5px;padding:2px 5px;font-size:10px;white-space:nowrap}
 .ncn-topbar-right{display:flex;align-items:center;gap:10px;flex:none}
