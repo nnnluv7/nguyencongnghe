@@ -60,6 +60,7 @@ async function fixtureContext(options={}){
       const tool=url.pathname.split('/').at(-1),action=url.searchParams.get('route');functionCalls.push({tool,action});
       if(tool==='ncn-library'&&action==='list')return reply({items:[...publicCatalog(seedLibraryForFixture),...['event','gvgs'].map(id=>({title:'VIP '+id,link:'/in-'+id+'/',labels:['VIP'],datetime:'2026-11-01T00:00:00Z',isPage:true}))]});
       if(tool==='ncn-announcements')return reply({items:[]});
+      if(tool==='ncn-stories'&&action==='list')return reply({items:[],serverNow:new Date().toISOString()});
       if(tool==='ncn-visitors')return reply({total:1,online:1});
       if(tool==='ncn-billing'){
         if(action==='me'){if(sessionHold){sessionHold.started();await sessionHold.wait;}if(profileFailure)return reply({error:'Temporary connection failure'},503);return reply({user:view(user)});}
