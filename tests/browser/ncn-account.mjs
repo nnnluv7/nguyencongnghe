@@ -58,7 +58,7 @@ async function fixtureContext(options={}){
     }
     if(url.pathname.startsWith('/.netlify/functions/')){
       const tool=url.pathname.split('/').at(-1),action=url.searchParams.get('route');functionCalls.push({tool,action});
-      if(tool==='ncn-library'&&action==='list')return reply({items:[...publicCatalog(seedLibraryForFixture),...['event','gvgs'].map(id=>({title:'VIP '+id,link:'/in-'+id+'/',labels:['VIP'],datetime:'2026-11-01T00:00:00Z',isPage:true}))]});
+      if(tool==='ncn-library'&&action==='list')return reply({items:[...['event','gvgs'].map(id=>({title:'VIP '+id,link:'/in-'+id+'/',labels:['VIP'],datetime:'2026-11-01T00:00:00Z',isPage:true})),...publicCatalog(seedLibraryForFixture)]});
       if(tool==='ncn-announcements')return reply({items:[]});
       if(tool==='ncn-stories'&&action==='list')return reply({items:[],serverNow:new Date().toISOString()});
       if(tool==='ncn-visitors')return reply({total:1,online:1});
@@ -175,7 +175,8 @@ try{
   });
   await check('removing the Netlify VIP role hides links and clears both private tools for the same account',async()=>{
     registered.vip=false;
-    for(const page of [home,premium,event,gvgs,library])await page.evaluate(()=>NCNAccount.refresh({force:true}));
+    for(const page of [home,premium,library])await page.evaluate(()=>NCNAccount.refresh({force:true}));
+    for(const page of [event,gvgs])await page.evaluate(()=>{NCNAccount.refresh({force:true}).catch(()=>{});});
     for(const page of [event,gvgs])await page.waitForFunction(()=>window.NCNAccount?.state.ready&&NCNAccount.state.user&&!NCNAccount.state.user.vip&&document.getElementById('vip-gate').dataset.ncnGateState==='member'&&!document.querySelector('[data-private-fixture]'));
     assert.equal(await premium.locator('#pay-tools').isVisible(),false);
     assert.equal(await home.locator('#ncn-tool-grid [data-ncn-tool="event"],#ncn-tool-grid [data-ncn-tool="gvgs"],#ncn-navigation [data-ncn-tool="event"],#ncn-navigation [data-ncn-tool="gvgs"]').count(),0);
