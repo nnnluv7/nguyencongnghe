@@ -1,8 +1,10 @@
 // Pure Onet rules. The one-cell empty frame is part of the playing field.
+import {CAMPAIGN_LEVEL_COUNT} from '../assets/ncn-arcade/campaign.js';
+
 export const VERSION=1;
 export const SPECIES=['Pikachu','Bulbasaur','Charmander','Squirtle','Jigglypuff','Meowth','Psyduck','Eevee','Snorlax','Gengar','Oddish','Vulpix','Slowpoke','Poliwag','Mew','Togepi','Chikorita','Cyndaquil','Totodile','Pichu'];
 export const GRAVITY_LABELS={none:'Giữ nguyên vị trí',down:'Ô dồn xuống ↓',left:'Ô dồn sang trái ←',up:'Ô dồn lên trên ↑',right:'Ô dồn sang phải →','horizontal-in':'Dồn vào giữa → ←','horizontal-out':'Tách sang hai bên ← →','vertical-in':'Dồn giữa theo cột ↓ ↑','vertical-out':'Tách lên và xuống ↑ ↓','zigzag-rows':'Hàng chẵn lẻ đổi hướng ⇄','zigzag-columns':'Cột chẵn lẻ đổi hướng ⇅',cycle:'Đổi hướng sau mỗi cặp ↻'};
-export const LEVELS=[
+const opening=[
  {name:'Ngày đầu gặp lại',gravity:'none'},{name:'Rơi về tuổi thơ',gravity:'down'},{name:'Nghiêng một chút',gravity:'left'},{name:'Ngược dòng ký ức',gravity:'up'},{name:'Một lần nữa thôi',gravity:'right'},
  {name:'Hẹn nhau ở giữa',gravity:'horizontal-in'},{name:'Hai phía sân trường',gravity:'horizontal-out'},{name:'Những hàng ghế nhỏ',gravity:'zigzag-rows'},{name:'Chạm vào khoảng giữa',gravity:'vertical-in'},{name:'Chiếc chong chóng',gravity:'cycle'},
  {name:'Hè về bên cửa sổ',gravity:'down'},{name:'Cánh diều ngược gió',gravity:'up'},{name:'Hai đầu con phố',gravity:'vertical-out'},{name:'Lối đi zíc zắc',gravity:'zigzag-columns'},{name:'Hội bạn tụ họp',gravity:'horizontal-in'},
@@ -10,6 +12,23 @@ export const LEVELS=[
  {name:'Những người bạn cũ',gravity:'left'},{name:'Dòng sông hai ngả',gravity:'vertical-out'},{name:'Trò chơi ô ăn quan',gravity:'zigzag-columns'},{name:'Gom đầy một mùa hè',gravity:'horizontal-in'},{name:'Đường về hai phía',gravity:'horizontal-out'},
  {name:'Đi tìm mảnh ghép',gravity:'zigzag-rows'},{name:'Gặp nhau giữa trời',gravity:'vertical-in'},{name:'Bậc thang cầu vồng',gravity:'zigzag-columns'},{name:'Bầu trời rộng mở',gravity:'vertical-out'},{name:'Tuổi thơ không khép lại',gravity:'cycle'}
 ];
+const chapters=['Sân trường mùa hè','Ngã rẽ nhỏ','Chuyến xe chiều','Lối qua vườn','Những vòng xoay','Ngày hội nối thú','Hẹn lại tuổi thơ'];
+const advanced=['down','vertical-in','right','horizontal-out','up','vertical-out','zigzag-rows','zigzag-columns','horizontal-in'];
+export const LEVELS=[...opening,...Array.from({length:CAMPAIGN_LEVEL_COUNT-opening.length},(_,i)=>{
+ const chapter=Math.floor(i/10),stage=i%10;
+ return {name:chapters[chapter]+' · Màn '+(opening.length+i+1),gravity:stage===9||chapter>=4&&stage===4?'cycle':advanced[(stage+chapter*2)%advanced.length]};
+})];
+export function stageRules(level,mode='classic'){
+ if(mode==='daily')return {rows:8,cols:10,species:SPECIES.length,time:360,hints:3,shuffles:3};
+ const classic=mode==='classic';
+ return {
+  rows:level>=70?10:8,cols:level>=40?12:10,
+  species:Math.min(SPECIES.length,12+Math.floor(level/10)),
+  time:classic?360-5*Math.floor(level/5):360,
+  hints:classic&&level>=65?1:classic&&level>=25?2:3,
+  shuffles:classic&&level>=80?1:classic&&level>=40?2:3
+ };
+}
 export const vietnamDate=(date=new Date())=>new Date(+date+7*3600000).toISOString().slice(0,10);
 export function seededRandom(seed){let n=2166136261;for(const c of String(seed)){n^=c.charCodeAt(0);n=Math.imul(n,16777619);}return ()=>{n+=0x6D2B79F5;let t=n;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return ((t^(t>>>14))>>>0)/4294967296;};}
 export function shuffled(values,rng=Math.random){const a=values.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
@@ -21,12 +40,17 @@ export function findPath(board,first,second,{geometryOnly=false}={}){
  const a={r:Math.floor(first/cols),c:first%cols},b={r:Math.floor(second/cols),c:second%cols};
  const open=p=>p.r>=-1&&p.r<=rows&&p.c>=-1&&p.c<=cols&&(same(p,a)||same(p,b)||p.r===-1||p.r===rows||p.c===-1||p.c===cols||!cells[p.r*cols+p.c]);
  const clear=(p,q)=>{if(p.r!==q.r&&p.c!==q.c)return false;const dr=Math.sign(q.r-p.r),dc=Math.sign(q.c-p.c);let r=p.r,c=p.c;for(let n=0;n<=rows+cols+2;n++){if(!open({r,c}))return false;if(r===q.r&&c===q.c)return true;r+=dr;c+=dc;}return false;};
- const routes=[[a,b],[a,{r:a.r,c:b.c},b],[a,{r:b.r,c:a.c},b]];
- for(let r=-1;r<=rows;r++)routes.push([a,{r,c:a.c},{r,c:b.c},b]);
- for(let c=-1;c<=cols;c++)routes.push([a,{r:a.r,c},{r:b.r,c},b]);
- const valid=routes.map(compactPath).filter(p=>p.length>=2&&p.length<=4&&p.slice(1).every((q,i)=>clear(p[i],q)));
- const distance=p=>p.slice(1).reduce((n,q,i)=>n+Math.abs(p[i].r-q.r)+Math.abs(p[i].c-q.c),0);
- valid.sort((p,q)=>p.length-q.length||distance(p)-distance(q));return valid[0]||null;
+ if(clear(a,b))return [a,b];
+ for(const corner of [{r:a.r,c:b.c},{r:b.r,c:a.c}])if(clear(a,corner)&&clear(corner,b))return [a,corner,b];
+ let best=null,distance=Infinity;
+ function consider(first,second,length){
+  if(length<distance&&clear(a,first)&&clear(first,second)&&clear(second,b)){
+   best=compactPath([a,first,second,b]);distance=length;
+  }
+ }
+ for(let r=-1;r<=rows;r++)consider({r,c:a.c},{r,c:b.c},Math.abs(a.r-r)+Math.abs(b.r-r)+Math.abs(a.c-b.c));
+ for(let c=-1;c<=cols;c++)consider({r:a.r,c},{r:b.r,c},Math.abs(a.c-c)+Math.abs(b.c-c)+Math.abs(a.r-b.r));
+ return best;
 }
 export function findMatch(board){const groups=new Map();for(let i=0;i<board.cells.length;i++){const type=board.cells[i];if(!type)continue;const previous=groups.get(type)||[];for(const j of previous){const path=findPath(board,j,i);if(path)return {first:j,second:i,path};}previous.push(i);groups.set(type,previous);}return null;}
 export function reshuffle(board,rng=Math.random){
@@ -37,7 +61,12 @@ export function reshuffle(board,rng=Math.random){
  if(positions){const [a,b]=positions,type=next.cells[a],source=indices.find(i=>i!==a&&next.cells[i]===type);if(source!==undefined)[next.cells[b],next.cells[source]]=[next.cells[source],next.cells[b]];}
  return next;
 }
-export function createBoard({rows=8,cols=10,rng=Math.random}={}){if(!Number.isInteger(rows)||!Number.isInteger(cols)||rows<2||cols<2||rows*cols>160||rows*cols%2)throw Error('Invalid board size');const cells=[];for(let i=0;i<rows*cols/2;i++){const type=i%SPECIES.length+1;cells.push(type,type);}return reshuffle({rows,cols,cells},rng);}
+export function createBoard({rows=8,cols=10,species=SPECIES.length,rng=Math.random}={}){
+ if(!Number.isInteger(rows)||!Number.isInteger(cols)||rows<2||cols<2||rows*cols>160||rows*cols%2)throw Error('Invalid board size');
+ if(!Number.isInteger(species)||species<1||species>SPECIES.length)throw Error('Invalid species count');
+ const cells=[];for(let i=0;i<rows*cols/2;i++){const type=i%species+1;cells.push(type,type);}
+ return reshuffle({rows,cols,cells},rng);
+}
 export function collapse(board,direction='none'){
  const out={...board,cells:board.cells.slice()}, {rows,cols}=board;
  if(direction==='cycle')direction=['down','left','up','right'][Math.floor((cellsLength(board)-remaining(board))/2)%4];

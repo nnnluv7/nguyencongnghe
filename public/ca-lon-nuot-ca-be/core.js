@@ -1,10 +1,12 @@
 /* Original NCN classic ocean. Pure simulation; no browser, account or storage access. */
+import {CAMPAIGN_LEVEL_COUNT} from '../assets/ncn-arcade/campaign.js';
+
 export const WORLD={width:1280,height:800};
-export const STAGE_COUNT=200;
+export const STAGE_COUNT=CAMPAIGN_LEVEL_COUNT;
 export const POPULATION={target:12,max:22,nearbyPrey:3};
 export function difficultyForStage(index){
  const t=Math.min(1,Math.max(0,Number.isFinite(index)?index/(STAGE_COUNT-1):0));
- return {target:12+Math.floor(t*8),predators:1+Math.floor(t*4),fishSpeed:1+t*1.3,spawnGap:1.15-t*.45,protection:6-t*3.5,growthProtection:1.4-t*.6,itemGap:26+t*6,swarmGap:32-t*6,sharkGap:32-t*10,warning:1.8-t*.5,jellies:index>=160?3:index>=90?2:index>=20?1:0,chaseRadius:195+t*95,chaseDuration:1.05+t*.95,chaseCooldown:6.5-t*2,chaseBoost:1.6+t*.25,chaseLimit:index>=100?2:1};
+ return {target:12+Math.floor(t*8),predators:1+Math.floor(t*4),fishSpeed:1+t*1.3,spawnGap:1.15-t*.45,protection:6-t*3.5,growthProtection:1.4-t*.6,itemGap:26+t*6,swarmGap:32-t*6,sharkGap:32-t*10,warning:1.8-t*.5,jellies:index>=80?3:index>=45?2:index>=10?1:0,chaseRadius:195+t*95,chaseDuration:1.05+t*.95,chaseCooldown:6.5-t*2,chaseBoost:1.6+t*.25,chaseLimit:index>=50?2:1};
 }
 const PALETTES=[
  {sky:'#70e1ee',water:'#199dd0',deep:'#086398',sand:'#e5d8a6'},
@@ -24,9 +26,9 @@ export const CHARACTERS=[
 const REGIONS=['Rạn san hô','Vườn tảo ngọc','Vịnh ngọc trai','Biển hoàng hôn','Biển sao lấp lánh','Vua đại dương'];
 const MENUS=[[0,8,9],[1,10,11],[2,3,12],[10,13,5],[4,6,7]];
 export const LEVELS=Array.from({length:STAGE_COUNT},(_,index)=>{
- const chapter=Math.floor(index/40),region=Math.min(5,Math.floor(index/34)),final=index===STAGE_COUNT-1;
+ const chapter=Math.floor(index*CHARACTERS.length/STAGE_COUNT),region=Math.floor(index*REGIONS.length/STAGE_COUNT),final=index===STAGE_COUNT-1;
  const sizes=final?[42,88,156]:[24+chapter*3,40+chapter*4,66+chapter*6];
- return {...PALETTES[region],name:REGIONS[region],title:final?'Vua cá mập':REGIONS[region]+' · Màn '+(index+1),chapter,menu:[...MENUS[chapter]],sizes,size:sizes[0],bands:final?[24,54,96]:[13+chapter*2,28+chapter*3,48+chapter*4],goal:90+Math.floor(index*.45),difficulty:difficultyForStage(index),final};
+ return {...PALETTES[region],name:REGIONS[region],title:final?'Vua cá mập':REGIONS[region]+' · Màn '+(index+1),chapter,region,menu:[...MENUS[chapter]],sizes,size:sizes[0],bands:final?[24,54,96]:[13+chapter*2,28+chapter*3,48+chapter*4],goal:90+Math.floor(90*index/(STAGE_COUNT-1)),difficulty:difficultyForStage(index),final};
 });
 export const FISH=[
   {size:8,color:'#8ceade',shade:'#159fab',fin:'#5fcfd0',name:'Cá bạc',speed:66},
@@ -185,7 +187,7 @@ export class Ocean{
    else if(this.dangerous(f)&&distance<(p.size+f.size)*.48)this.hit(f);
   }
   for(const j of this.jellies)if(Math.hypot(p.x-j.x,p.y-(j.y+Math.sin(this.elapsed+j.phase)*12))<p.size*.5+j.size*.6)this.hit(j);
-  if(this.oyster){const o=this.oyster;o.open=(this.levelElapsed%12)<6;if(o.open&&this.levelElapsed>=o.nextPearl){o.nextPearl=this.levelElapsed+12;if(this.items.length<2)this.items.push({id:++this.serial,x:o.x,y:o.y-24,type:'pearl',phase:0});}if(!o.open&&this.level>=80&&Math.hypot(p.x-o.x,p.y-o.y)<p.size*.45+20)this.hit(o);}
+  if(this.oyster){const o=this.oyster;o.open=(this.levelElapsed%12)<6;if(o.open&&this.levelElapsed>=o.nextPearl){o.nextPearl=this.levelElapsed+12;if(this.items.length<2)this.items.push({id:++this.serial,x:o.x,y:o.y-24,type:'pearl',phase:0});}if(!o.open&&this.level>=40&&Math.hypot(p.x-o.x,p.y-o.y)<p.size*.45+20)this.hit(o);}
   for(const item of [...this.items])if(Math.hypot(item.x-p.x,item.y-p.y)<p.size+20)this.collect(item);
   if(this.status!=='playing')return;
   if(this.levelElapsed>=this.nextSwarm){this.nextSwarm+=this.difficulty.swarmGap;const right=this.rng()>.5;for(let i=0;i<2;i++)this.addFish({tier:this.pickPrey(),x:right?WORLD.width+60+i*35:-60-i*35,y:clamp(p.y+Math.sin(i)*36,145,WORLD.height-125),dir:right?-1:1});this.emit('swarm');}
@@ -193,7 +195,7 @@ export class Ocean{
    this.nextItem+=this.difficulty.itemGap;const roll=this.rng();if(this.items.length<2)this.items.push({id:++this.serial,x:clamp(p.x+(this.rng()-.5)*400,100,WORLD.width-100),y:clamp(p.y+(this.rng()-.5)*300,160,WORLD.height-140),type:this.lives<3?'heart':roll<.35?'shield':roll<.55?'freeze':roll<.7?'speed':'pearl',phase:this.rng()*6});
    if(!this.fish.some(f=>f.kind==='golden')){const right=this.rng()<.5;this.addFish({band:0,size:10,kind:'golden',x:right?-50:WORLD.width+50,y:250+this.rng()*200,dir:right?1:-1});}
   }
-  if(this.level>=30&&this.levelElapsed>=this.nextShark){this.nextShark+=this.difficulty.sharkGap;if(!this.fish.some(f=>f.kind==='shark'))this.addFish({tier:6,size:Math.max(this.config.sizes[2]*1.22,90),kind:'shark'});}
+  if(this.level>=15&&this.levelElapsed>=this.nextShark){this.nextShark+=this.difficulty.sharkGap;if(!this.fish.some(f=>f.kind==='shark'))this.addFish({tier:6,size:Math.max(this.config.sizes[2]*1.22,90),kind:'shark'});}
   if(this.levelElapsed>=this.nextArrival){this.nextArrival=this.levelElapsed+this.difficulty.spawnGap;this.ensurePrey();}
   for(const e of this.effects){rememberPose(e);e.x+=e.vx*dt;e.y+=e.vy*dt;e.vy+=20*dt;e.life-=dt;}this.effects=this.effects.filter(e=>e.life>0);for(const e of this.labels){rememberPose(e);e.y-=dt*32;e.life-=dt;}this.labels=this.labels.filter(e=>e.life>0);
  }

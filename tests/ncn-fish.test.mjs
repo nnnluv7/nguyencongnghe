@@ -15,7 +15,7 @@ test('PC shows a fixed ocean; phones keep a readable player in view',()=>{
 test('two hundred stages use five playable characters, six regions and three real sizes',()=>{
  assert.equal(LEVELS.length,STAGE_COUNT);assert.equal(CHARACTERS.length,5);assert.equal(new Set(LEVELS.map(l=>l.name)).size,6);
  for(const l of LEVELS){assert.equal(l.menu.length,3);assert.equal(l.sizes.length,3);assert.ok(l.sizes[0]<l.sizes[1]&&l.sizes[1]<l.sizes[2]);assert.ok(l.menu.every(t=>FISH[t]));assert.ok(l.goal>0);}
- for(let chapter=0;chapter<5;chapter++)assert.equal(start(1,chapter*40).character,CHARACTERS[chapter]);
+ for(let chapter=0;chapter<5;chapter++)assert.equal(start(1,chapter*20).character,CHARACTERS[chapter]);
 });
 test('equal seeds reproduce the ocean, and ordinary steering reaches the first meal',()=>{
  assert.deepEqual(start().fish,start().fish);
@@ -111,7 +111,7 @@ test('old records migrate without losing scores or preferences, and progress can
  const won=awardRecord(cleared,{score:900,eaten:30,level:STAGE_COUNT-1,status:'won'});assert.equal(won.unlocked,STAGE_COUNT);assert.equal(won.wins,3);
 });
 test('legitimate fast play and late-stage replays stay inside the existing score-server rate guard',()=>{
- for(const seed of [1,12,123,987,2026])for(const level of [0,39,79,119,159,199]){
+ for(const seed of [1,12,123,987,2026])for(const level of [0,19,39,59,79,99]){
   const o=start(seed,level);let target={};
   for(let i=0;i<6000&&o.status==='playing';i++){
    if(i%24===0){const f=o.fish.filter(f=>o.edible(f)&&f.x>=40&&f.x<=WORLD.width-40).sort((a,b)=>Math.hypot(a.x-o.player.x,a.y-o.player.y)-Math.hypot(b.x-o.player.x,b.y-o.player.y))[0];target=f?{targetX:f.x,targetY:f.y}:{};}
@@ -128,12 +128,12 @@ test('the new game is present before hydration in navigation, home cards, Librar
   const seed=JSON.parse(await read('netlify/lib/ncn-library/seed.json')),entry=seed.find(x=>x.href==='/ca-lon-nuot-ca-be/');assert.equal(entry.managedPage,false);assert.equal(entry.isPage,true);assert.equal(FISH.length,14);
 });
 
-test('difficulty ramps smoothly over all 200 stages without turning the sea into a crowd',()=>{
+test('difficulty ramps smoothly over all 100 stages without turning the sea into a crowd',()=>{
  for(let i=0;i<STAGE_COUNT;i++){
   const d=difficultyForStage(i);assert.ok(d.target>=12&&d.target<=20);assert.ok(d.predators>=1&&d.predators<=5);assert.ok(d.protection>=2.5);assert.ok(d.target<42/2);
-  if(i){const p=difficultyForStage(i-1);assert.ok(d.target>=p.target&&d.target-p.target<=1);assert.ok(d.predators>=p.predators&&d.predators-p.predators<=1);assert.ok(d.fishSpeed>=p.fishSpeed&&d.fishSpeed-p.fishSpeed<.01);assert.ok(d.protection<=p.protection&&p.protection-d.protection<.02);assert.ok(LEVELS[i].goal>=LEVELS[i-1].goal);}
+  if(i){const p=difficultyForStage(i-1);assert.ok(d.target>=p.target&&d.target-p.target<=1);assert.ok(d.predators>=p.predators&&d.predators-p.predators<=1);assert.ok(d.fishSpeed>=p.fishSpeed&&d.fishSpeed-p.fishSpeed<.015);assert.ok(d.protection<=p.protection&&p.protection-d.protection<.04);assert.ok(LEVELS[i].goal>=LEVELS[i-1].goal);}
  }
- assert.equal(difficultyForStage(0).target,12);assert.equal(difficultyForStage(199).target,20);assert.equal(difficultyForStage(19).jellies,0);assert.equal(difficultyForStage(20).jellies,1);assert.equal(difficultyForStage(199).jellies,3);
+ assert.equal(difficultyForStage(0).target,12);assert.equal(difficultyForStage(99).target,20);assert.equal(difficultyForStage(9).jellies,0);assert.equal(difficultyForStage(10).jellies,1);assert.equal(difficultyForStage(99).jellies,3);
 });
 test('replacement fish and schools enter from the edges rather than appearing around the player',()=>{
  const o=start();o.safe=999;const before=new Set(o.fish.map(f=>f.id));o.fish=o.fish.slice(0,3);o.step(.05);o.nextArrival=o.levelElapsed;
@@ -197,11 +197,11 @@ test('escaping, becoming large enough or gaining protection ends a pursuit witho
  }
 });
 test('chase difficulty grows gently, concurrency is limited and pursuit remains escapable',()=>{
- for(let level=0;level<200;level++){
+ for(let level=0;level<STAGE_COUNT;level++){
   const d=difficultyForStage(level);assert.ok(d.chaseDuration>=1&&d.chaseDuration<=2);assert.ok(d.chaseRadius>=195&&d.chaseRadius<=290);assert.ok(d.chaseCooldown>=4.5);assert.ok(d.chaseLimit>=1&&d.chaseLimit<=2);
   if(level){const p=difficultyForStage(level-1);assert.ok(d.chaseDuration>=p.chaseDuration&&d.chaseRadius>=p.chaseRadius&&d.chaseCooldown<=p.chaseCooldown);}
  }
- for(const level of [0,199]){
+ for(const level of [0,99]){
   const o=huntScene(level);for(let i=0;i<5;i++)food(o,2,{x:490,y:320+i*36,size:80,speed:200});
   o.step(1/60);assert.equal(o.fish.filter(f=>f.chaseLeft>0).length,o.difficulty.chaseLimit);
   for(const f of o.fish)assert.ok(Math.hypot(f.x-f.previousX,f.y-f.previousY)<=225/60+.1,'A chasing fish stays slower than normal player swimming');

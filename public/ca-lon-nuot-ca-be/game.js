@@ -29,7 +29,7 @@ class OceanAudio{
 const audio=new OceanAudio(),painter=new OceanPainter(canvas),ocean=new Ocean({onEvent:event});
 const siteChrome=installScrollUI();
 const touchMode=matchMedia('(pointer: coarse)').matches||navigator.maxTouchPoints>0;stage.dataset.touch=String(touchMode);
-let heading={x:0,y:0},inputMode=touchMode?'touch':'keyboard',stickId=null,dragId=null,dragAnchor=null,suckId=null,vacuumHeld=false,selectedLevel=record.unlocked-1,menuStamp='';
+let heading={x:0,y:0},touchHeading={x:0,y:0},stickId=null,dragId=null,suckId=null,vacuumHeld=false,selectedLevel=record.unlocked-1,menuStamp='';
 let settled=false,startingBest=record.best,keys=new Set(),mouse=null,lastFrame=performance.now(),accumulator=0,sceneTime=0,toastTimer=0,lastHUD=0,disposed=false;
 const reducedQuery=matchMedia('(prefers-reduced-motion: reduce)');
 record.reduced=record.reduced||reducedQuery.matches;
@@ -43,7 +43,7 @@ function updateSettings(){
   $('ff-stage-select').innerHTML=LEVELS.map((level,i)=>'<option value="'+(i+1)+'"'+(i>=record.unlocked?' disabled':'')+'>Màn '+String(i+1).padStart(3,'0')+' · '+level.name+(i>=record.unlocked?' · Chưa mở':'')+'</option>').join('');
   $('ff-stage-select').value=String(selectedLevel+1);text('ff-start-label',selectedLevel?'Tiếp tục màn '+(selectedLevel+1):'Bắt đầu chuyến đi');
 }
-function clearInput(){keys.clear();mouse=null;heading={x:0,y:0};stickId=dragId=suckId=null;dragAnchor=null;vacuumHeld=false;$('ff-stick').classList.remove('is-held');$('ff-stick').firstElementChild.style.transform='';}
+function clearInput(){keys.clear();mouse=null;heading=touchHeading={x:0,y:0};stickId=dragId=suckId=null;vacuumHeld=false;$('ff-stick').classList.remove('is-held');$('ff-stick').firstElementChild.style.transform='';}
 function externalPanel(){return document.body.matches('.ncn-menu-open,.ncn-game-menu-open')||Boolean(document.querySelector('dialog[open],.ncn-account-menu[open]'));}
 function syncState(){
   const status=ocean.status,playing=status==='playing',paused=status==='paused',result=['won','over'].includes(status);if(stage.dataset.state!==status)stage.dataset.state=status;
@@ -85,11 +85,11 @@ function finish(){
   text('ff-result-kicker',won?'CHÀO VUA ĐẠI DƯƠNG':'MỘT CHUYẾN ĐI ĐÁNG NHỚ');text('ff-result-title',won?'Từ cá bé, thành huyền thoại.':'Lớn hơn một chút rồi.');
   text('ff-final-score',format(ocean.score));text('ff-record-note',ocean.score>wasBest?'✦ Kỷ lục mới trên máy này!':'Màn '+(ocean.level+1)+' · '+LEVELS[ocean.level].name);
   text('ff-final-fish',ocean.eaten);text('ff-final-time',clock(ocean.elapsed));text('ff-final-combo','×'+ocean.bestCombo);
-  text('ff-result-tip',won?'Đã chinh phục cả 200 màn và vua cá mập!':'Anh đã mở đến màn '+record.unlocked+'. Chơi lại màn này hoặc chọn màn đã mở ở màn hình đầu.');hud();syncState();$('ff-retry').focus({preventScroll:true});
+  text('ff-result-tip',won?'Đã chinh phục cả '+STAGE_COUNT+' màn và vua cá mập!':'Anh đã mở đến màn '+record.unlocked+'. Chơi lại màn này hoặc chọn màn đã mở ở màn hình đầu.');hud();syncState();$('ff-retry').focus({preventScroll:true});
 }
 async function start(at){
-  if(externalPanel())return;const level=Number.isSafeInteger(at)?at:selectedLevel;if(!await scores.begin({mode:'classic'}))return;audio.unlock();clearInput();inputMode=touchMode?'touch':'keyboard';settled=false;startingBest=record.best;accumulator=0;ocean.start(undefined,clamp(level,0,record.unlocked-1));painter.reset();lastFrame=performance.now();$('ff-toast').classList.remove('show');hud();syncState();
-  resize();canvas.focus({preventScroll:true});stage.scrollIntoView({block:'start',behavior:'instant'});toast(touchMode?'Kéo để dẫn cá · Thả tay là dừng · Bơi thong thả, tránh cá lớn.':'Cá bơi đến con trỏ và dừng ở đó. Bảng thực đơn cho biết cá ăn được.',3600);
+  if(externalPanel())return;const level=Number.isSafeInteger(at)?at:selectedLevel;if(!await scores.begin({mode:'classic'}))return;audio.unlock();clearInput();settled=false;startingBest=record.best;accumulator=0;ocean.start(undefined,clamp(level,0,record.unlocked-1));painter.reset();lastFrame=performance.now();$('ff-toast').classList.remove('show');hud();syncState();
+  resize();canvas.focus({preventScroll:true});stage.scrollIntoView({block:'start',behavior:'instant'});toast(touchMode?'Giữ tay để bơi liên tục · Kéo để đổi hướng · Thả tay để dừng.':'Cá bơi đến con trỏ và dừng ở đó. Bảng thực đơn cho biết cá ăn được.',3600);
 }
 function pause(reason='manual'){
   if(!ocean.pause())return;scores.checkpoint(ocean.score,ocean.level+1,{force:true});clearInput();siteChrome?.show();audio.suspend();text('ff-pause-note',reason==='tab'?'Ván chơi đã nghỉ cùng bạn. Cá, combo và thời gian đều được giữ lại.':'Cá, combo và thời gian đều đã tạm dừng.');hud();syncState();
@@ -99,7 +99,11 @@ function dash(){if(ocean.dash())hud();}
 function direction(){
   let x=(keys.has('ArrowRight')||keys.has('KeyD')?1:0)-(keys.has('ArrowLeft')||keys.has('KeyA')?1:0),y=(keys.has('ArrowDown')||keys.has('KeyS')?1:0)-(keys.has('ArrowUp')||keys.has('KeyW')?1:0);
   const suck=vacuumHeld||keys.has('KeyE');
-  if(x||y)return {x,y,suck};if(stickId!==null)return {...heading,suck};if(mouse)return {...(mouse.targetX===undefined?painter.worldPoint(mouse.x,mouse.y):mouse),suck};return {x:0,y:0,suck};
+  if(x||y)return {x,y,suck};
+  if(stickId!==null)return {...heading,suck};
+  if(dragId!==null)return {...touchHeading,suck};
+  if(mouse)return {...painter.worldPoint(mouse.x,mouse.y),suck};
+  return {x:0,y:0,suck};
 }
 function frame(now){
   if(disposed)return;const dt=clamp((now-lastFrame)/1000,0,.05),step=1/60;lastFrame=now;
@@ -130,25 +134,31 @@ document.addEventListener('keydown',e=>{
 document.addEventListener('keyup',e=>keys.delete(e.code));
 function steerStick(e){
   const r=$('ff-stick').getBoundingClientRect(),dx=e.clientX-r.left-r.width/2,dy=e.clientY-r.top-r.height/2,n=Math.hypot(dx,dy),k=Math.min(1,29/(n||1));
-  heading=n>5?{x:dx/n*Math.min(1,n/29),y:dy/n*Math.min(1,n/29)}:{x:0,y:0};inputMode='touch';mouse=null;
+  heading=n>5?{x:dx/n*Math.min(1,n/29),y:dy/n*Math.min(1,n/29)}:{x:0,y:0};mouse=null;
   $('ff-stick').firstElementChild.style.transform='translate('+dx*k+'px,'+dy*k+'px)';
 }
 $('ff-stick').addEventListener('pointerdown',e=>{if(ocean.status!=='playing'||e.button!==0||stickId!==null)return;e.preventDefault();stickId=e.pointerId;steerStick(e);$('ff-stick').classList.add('is-held');$('ff-stick').setPointerCapture(e.pointerId);});
 $('ff-stick').addEventListener('pointermove',e=>{if(e.pointerId===stickId){e.preventDefault();steerStick(e);}});
-function steerCanvas(e){if(!dragAnchor)return;inputMode='touch';mouse={targetX:dragAnchor.x+(e.clientX-dragAnchor.clientX)/dragAnchor.zoom,targetY:dragAnchor.y+(e.clientY-dragAnchor.clientY)/dragAnchor.zoom};}
+function steerCanvas(e){
+  const rect=canvas.getBoundingClientRect(),target=painter.worldPoint(e.clientX-rect.left,e.clientY-rect.top);
+  const x=target.targetX-ocean.player.x,y=target.targetY-ocean.player.y,length=Math.hypot(x,y);
+  if(length>6)touchHeading={x:x/length,y:y/length};
+}
 canvas.addEventListener('pointerdown',e=>{
   if(ocean.status!=='playing')return;
   if(e.button===2&&e.pointerType==='mouse'){e.preventDefault();vacuumHeld=true;suckId=e.pointerId;canvas.setPointerCapture(e.pointerId);return;}
   if(e.button!==0)return;
-  if(e.pointerType==='mouse'){inputMode='mouse';const r=canvas.getBoundingClientRect();mouse={x:e.clientX-r.left,y:e.clientY-r.top};dash();return;}
-  if(dragId!==null)return;e.preventDefault();dragId=e.pointerId;dragAnchor={clientX:e.clientX,clientY:e.clientY,x:ocean.player.x,y:ocean.player.y,zoom:painter.zoom};steerCanvas(e);canvas.setPointerCapture(e.pointerId);
+  if(e.pointerType==='mouse'){const r=canvas.getBoundingClientRect();mouse={x:e.clientX-r.left,y:e.clientY-r.top};dash();return;}
+  if(dragId!==null)return;
+  e.preventDefault();dragId=e.pointerId;mouse=null;touchHeading={x:ocean.player.face,y:0};
+  steerCanvas(e);canvas.setPointerCapture(e.pointerId);
 });
 canvas.addEventListener('pointermove',e=>{
   if(ocean.status!=='playing')return;
-  if(e.pointerType==='mouse'){if(![...keys].some(key=>key!=='KeyE')){const r=canvas.getBoundingClientRect();inputMode='mouse';mouse={x:e.clientX-r.left,y:e.clientY-r.top};}return;}
+  if(e.pointerType==='mouse'){if(keys.size===(keys.has('KeyE')?1:0)){const r=canvas.getBoundingClientRect();mouse={x:e.clientX-r.left,y:e.clientY-r.top};}return;}
   if(e.pointerId===dragId){e.preventDefault();steerCanvas(e);}
 });
-function release(e){if(stickId===e.pointerId){stickId=null;heading={x:0,y:0};$('ff-stick').classList.remove('is-held');$('ff-stick').firstElementChild.style.transform='';}if(dragId===e.pointerId){dragId=null;dragAnchor=null;mouse=null;}if(suckId===e.pointerId){suckId=null;vacuumHeld=false;}}
+function release(e){if(stickId===e.pointerId){stickId=null;heading={x:0,y:0};$('ff-stick').classList.remove('is-held');$('ff-stick').firstElementChild.style.transform='';}if(dragId===e.pointerId){dragId=null;mouse=null;}if(suckId===e.pointerId){suckId=null;vacuumHeld=false;}}
 for(const type of ['pointerup','pointercancel','lostpointercapture']){canvas.addEventListener(type,release);$('ff-stick').addEventListener(type,release);$('ff-suck').addEventListener(type,release);}
 canvas.addEventListener('contextmenu',e=>{if(ocean.status==='playing')e.preventDefault();});
 canvas.addEventListener('pointerleave',e=>{if(e.pointerType==='mouse')mouse=null;});
@@ -173,7 +183,7 @@ async function fullscreen(){
 function syncFullscreen(){clearInput();resize();const wide=Boolean(document.fullscreenElement)||stage.classList.contains('is-theater');$('ff-exit-fullscreen').hidden=!wide;$('ff-fullscreen').setAttribute('aria-label',wide?'Thoát toàn màn hình':'Mở toàn màn hình');}
 function setTheater(active){document.body.classList.toggle('ncn-fish-theater',active);stage.classList.toggle('is-theater',active);syncFullscreen();if(active)canvas.focus({preventScroll:true});}
 $('ff-fullscreen').addEventListener('click',fullscreen);$('ff-exit-fullscreen').addEventListener('click',fullscreen);document.addEventListener('fullscreenchange',syncFullscreen);
-if(touchMode)text('ff-intro-input','Chạm kéo hoặc joystick để bơi · Thả tay là dừng');
+if(touchMode)text('ff-intro-input','Giữ tay để bơi · Kéo để đổi hướng · Thả tay để dừng');
 updateSettings();resize();hud();syncState();requestAnimationFrame(frame);
 // Leaving a live page removes observers naturally; this also supports page teardown tools.
 window.addEventListener('unload',()=>{disposed=true;clearTimeout(toastTimer);panelObserver.disconnect();resizeObserver.disconnect();audio.suspend();},{once:true});

@@ -1,4 +1,4 @@
-import {WORLD,FISH,LEVELS,clamp,randomSource,renderPose} from './core.js?v=20261030-smooth-chase-1';
+import {WORLD,FISH,clamp,randomSource,renderPose} from './core.js?v=20261030-smooth-chase-1';
 const TAU=Math.PI*2;
 export function cameraFocus(player,width,height,zoom,follow=false){
   if(follow||width<640)return {x:player.x,y:player.y};
@@ -8,14 +8,14 @@ export const SKINS={coral:{color:'#ffc36c',shade:'#ed7852',fin:'#4cbcc4'},aqua:{
 function ellipse(c,x,y,rx,ry,color){c.beginPath();c.ellipse(x,y,rx,ry,0,0,TAU);c.fillStyle=color;c.fill();}
 function star(c,x,y,r,color){c.beginPath();for(let i=0;i<10;i++){const a=i*Math.PI/5-Math.PI/2,k=i%2?r*.43:r;c.lineTo(x+Math.cos(a)*k,y+Math.sin(a)*k);}c.closePath();c.fillStyle=color;c.fill();}
 export class OceanPainter{
-  constructor(canvas){this.canvas=canvas;this.c=canvas.getContext('2d',{alpha:false});this.width=1;this.height=1;this.zoom=1;this.camera={x:WORLD.width/2,y:WORLD.height/2};this.level=-1;this.floor=null;this.background=null;this.sprites=new Map();this.reduced=false;this.skin='coral';}
+  constructor(canvas){this.canvas=canvas;this.c=canvas.getContext('2d',{alpha:false});this.width=1;this.height=1;this.zoom=1;this.camera={x:WORLD.width/2,y:WORLD.height/2};this.region=-1;this.floor=null;this.background=null;this.sprites=new Map();this.reduced=false;this.skin='coral';}
   resize(){const r=this.canvas.getBoundingClientRect(),dpr=Math.min(2,window.devicePixelRatio||1),width=Math.round(r.width*dpr),height=Math.round(r.height*dpr);this.width=Math.max(1,r.width);this.height=Math.max(1,r.height);if(this.canvas.width!==width||this.canvas.height!==height){this.canvas.width=width;this.canvas.height=height;this.background=null;}this.dpr=dpr;this.zoom=this.follow||this.width<640?Math.max(this.width/720,this.height/1050):Math.min(this.width/WORLD.width,this.height/WORLD.height);}
   reset(){this.camera={x:WORLD.width/2,y:WORLD.height/2};}
   point(x,y){return {x:(x-this.camera.x)*this.zoom+this.width/2,y:(y-this.camera.y)*this.zoom+this.height/2};}
   worldPoint(x,y){return {targetX:(x-this.width/2)/this.zoom+this.camera.x,targetY:(y-this.height/2)/this.zoom+this.camera.y};}
   vector(x,y,p){const at=this.point(p.x,p.y),dx=(x-at.x)/this.zoom,dy=(y-at.y)/this.zoom,distance=Math.hypot(dx,dy);return {x:distance?dx/distance*Math.min(1,distance/65):0,y:distance?dy/distance*Math.min(1,distance/65):0};}
-  makeScenery(level){
-    const palette=LEVELS[level],doc=this.canvas.ownerDocument,rng=randomSource(774+level*234);this.level=level;this.background=null;
+  makeScenery(palette){
+    const doc=this.canvas.ownerDocument,rng=randomSource(774+palette.region*234);this.region=palette.region;this.background=null;
     const floor=doc.createElement('canvas');floor.width=1600;floor.height=270;const c=floor.getContext('2d');
     const sand=c.createLinearGradient(0,160,0,270);sand.addColorStop(0,palette.sand);sand.addColorStop(1,'#597d89');c.fillStyle=sand;c.beginPath();c.moveTo(0,205);
     for(let x=0;x<=1600;x+=40)c.lineTo(x,199+Math.sin(x*.009)*9+Math.sin(x*.025)*4);c.lineTo(1600,270);c.lineTo(0,270);c.closePath();c.fill();
@@ -40,8 +40,8 @@ export class OceanPainter{
   }
   paint(ocean,time,dt=1/60,alpha=1){
     const c=this.c,w=this.width,h=this.height,z=this.zoom,p=renderPose(ocean.player,alpha),demo=ocean.status==='ready';if(!c)return;
-    if(this.level!==ocean.level)this.makeScenery(ocean.level);
-    const palette=LEVELS[ocean.level],vh=h/z,focus=cameraFocus(p,w,h,z,this.follow),ease=1-Math.exp(-dt*14);
+    const palette=ocean.config,vh=h/z,focus=cameraFocus(p,w,h,z,this.follow),ease=1-Math.exp(-dt*14);
+    if(this.region!==palette.region)this.makeScenery(palette);
     this.camera.x+=(focus.x-this.camera.x)*ease;this.camera.y+=(focus.y-this.camera.y)*ease;
     c.setTransform(this.dpr,0,0,this.dpr,0,0);
     if(!this.background){const bg=c.createLinearGradient(0,0,w*.15,h);bg.addColorStop(0,palette.sky);bg.addColorStop(.4,palette.water);bg.addColorStop(1,palette.deep);this.background=bg;}

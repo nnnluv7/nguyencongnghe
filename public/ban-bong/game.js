@@ -1,6 +1,6 @@
 import {mountScores} from '../assets/ncn-arcade/arcade.js?v=20261027-photo-save-1';
 import {vietnamDate} from '../assets/ncn-arcade/catalog.js?v=20261027-bubble-1';
-import {WIDTH,HEIGHT,LAUNCHER,MAX_ANGLE,MODES,WORLDS,maxLevels,levelSpec,createGame,shoot,tickGame,swap,advance,readSave,readProgress,cells} from './core.js?v=20261030-eggs-2';
+import {WIDTH,HEIGHT,LAUNCHER,MAX_ANGLE,MODES,WORLDS,LEVELS_PER_WORLD,maxLevels,levelSpec,createGame,shoot,tickGame,swap,advance,readSave,readProgress,cells} from './core.js?v=20261030-eggs-2';
 import {createRenderer,COLORS,COLOR_NAMES} from './render.js?v=20261030-eggs-2';
 import {installFullscreen} from '../xep-hinh/fullscreen.js?v=20261027-bubble-1';
 
@@ -35,7 +35,7 @@ function update(){
  $('swap').disabled=state!=='playing'||!!flight;
  for(const kind of ['rainbow','bomb']){$(kind).disabled=state!=='playing'||!!flight||game.powers[kind]===0;$(kind).setAttribute('aria-pressed',String(power===kind));$(kind+'-count').textContent=game.powers[kind]?'Còn 1 trứng':spec.powers[kind]?'Đã sử dụng':'Màn này không có';}
  for(const b of document.querySelectorAll('[data-bb-mode]'))b.setAttribute('aria-pressed',String(b.dataset.bbMode===mode));
- $('map-open').disabled=mode==='daily';$('map-open').firstChild.textContent=mode==='daily'?'Hôm nay · 5 màn chung ':'Bản đồ 200 màn ';
+ $('map-open').disabled=mode==='daily';$('map-open').firstChild.textContent=mode==='daily'?'Hôm nay · 5 màn chung ':'Bản đồ '+maxLevels(mode)+' màn ';
  lastClockText='';updateClock();
  $('board').tabIndex=state==='playing'?0:-1;$('board').setAttribute('aria-busy',String(!!flight));$('board').setAttribute('aria-label','Bàn bắn trứng, màn '+game.level+'. '+remaining+' trứng còn lại. Trứng đang cầm màu '+(COLOR_NAMES[game.current-1]||'')+'. Dùng mũi tên để ngắm, Space để bắn, X đổi trứng.');
 }
@@ -53,11 +53,11 @@ function persist(){if(!['playing','paused','cleared'].includes(state))return;sav
 function record(){progress.best=Math.max(progress.best,game.score);write(progressKey,progress);}
 function overlay(){
  const last=game.level===maxLevels(mode),data={
- ready:['200 MÀN · 20 MIỀN TIỀN SỬ','Bắn trứng.<br><em>Về tuổi thơ.</em>','Khủng long nhỏ, những quả trứng đầy màu sắc.<br>Ghép 3 cùng màu, cắt chùm trước khi hàng trứng hạ.','Chơi màn '+String(selected).padStart(2,'0')],
+ ready:[maxLevels('journey')+' MÀN · '+WORLDS.length+' MIỀN TIỀN SỬ','Bắn trứng.<br><em>Về tuổi thơ.</em>','Khủng long nhỏ, những quả trứng đầy màu sắc.<br>Ghép 3 cùng màu, cắt chùm trước khi hàng trứng hạ.','Chơi màn '+String(selected).padStart(2,'0')],
  paused:['NGHỈ MỘT NHỊP','Trứng vẫn chờ.<br><em>Mình chơi tiếp nhé?</em>','Bàn trứng và điểm được giữ lại.<br>Thêm một cú bắn đẹp khi bạn sẵn sàng.','Tiếp tục chơi'],
  cleared:['MỘT CHÙM NIỀM VUI','Màn '+game.level+' hoàn thành.<br><em>Lấp lánh quá!</em>','Bạn đã dọn sạch bàn trứng.<br>'+(mode==='daily'?'Cùng chinh phục thử thách tiếp theo.':'Màn '+(game.level+1)+' đang chờ thêm một cú bắn hay.'),'Sang màn '+(game.level+1)],
  lost:['ĐỔI MỘT GÓC NGẮM','Một lần nữa.<br><em>Một cú bắn hay hơn.</em>','Trứng đã chạm vạch giới hạn.<br>Thử đổi trứng và nhắm vào chùm ở trên nhé.','Chơi lại màn '+game.level],
- won:[mode==='daily'?'5 MÀN · MỘT NGÀY RỰC RỠ':'200 MÀN · TỔ RỒNG HUYỀN THOẠI',mode==='daily'?'Hôm nay<br><em>thật lấp lánh.</em>':'Đi hết hành trình.<br><em>Giữ lại niềm vui.</em>',mode==='daily'?'Bạn đã hoàn thành 5 màn hôm nay.<br>So điểm với bạn bè hoặc quay lại ngày mai.':'Bạn đã chinh phục cả 200 màn.<br>Các ngôi sao và kỷ lục đã được giữ lại.','Chơi lại '+(mode==='daily'?'thử thách hôm nay':'màn 200')]
+ won:[mode==='daily'?'5 MÀN · MỘT NGÀY RỰC RỠ':maxLevels(mode)+' MÀN · TỔ RỒNG HUYỀN THOẠI',mode==='daily'?'Hôm nay<br><em>thật lấp lánh.</em>':'Đi hết hành trình.<br><em>Giữ lại niềm vui.</em>',mode==='daily'?'Bạn đã hoàn thành 5 màn hôm nay.<br>So điểm với bạn bè hoặc quay lại ngày mai.':'Bạn đã chinh phục cả '+maxLevels(mode)+' màn.<br>Các ngôi sao và kỷ lục đã được giữ lại.','Chơi lại '+(mode==='daily'?'thử thách hôm nay':'màn 200')]
  }[state];
  if(!data)return;const [kicker,title,copy,label]=data;$('overlay-kicker').textContent=state==='ready'&&mode==='daily'?'HÔM NAY · 5 MÀN CHUNG':kicker;$('overlay-title').innerHTML=title;$('overlay-copy').innerHTML=copy;$('start-label').textContent=label;
  $('mode-picker').hidden=state!=='ready';$('free-note').hidden=state!=='ready';$('levels').hidden=state==='paused'||mode==='daily';$('home').hidden=state==='ready';
@@ -101,8 +101,8 @@ function fire(){
 }
 function changeBall(){if(state!=='playing'||flight)return;if(swap(game)){power='normal';sound('swap');update();persist();say('Đã đổi trứng. Trứng đang cầm màu '+COLOR_NAMES[game.current-1]+'.');}}
 function special(kind){if(state!=='playing'||flight||!game.powers[kind])return;power=power===kind?'normal':kind;update();say(power==='rainbow'?'Trứng cầu vồng sẽ nhận màu trứng chạm vào.':power==='bomb'?'Trứng nổ sẽ dọn một vùng quanh điểm chạm.':'Đã trở lại trứng thường.');}
-function map(){pause();if(mode==='daily'){say('Thử thách hôm nay gồm 5 màn theo thứ tự, giống nhau cho mọi người.');return;}mapWorld=Math.floor((selected-1)/10);$('world-select').value=String(mapWorld);renderMap();$('map').showModal();}
-function renderMap(){const p=progress.modes[mode];$('unlocked').textContent='Đã mở '+p.unlocked+' / '+maxLevels(mode)+' màn · '+MODES[mode];$('total-stars').textContent=Object.values(p.stars).reduce((a,b)=>a+b,0)+' ★';$('map-note').textContent=WORLDS[mapWorld].note;const fragment=document.createDocumentFragment();for(let i=1;i<=10;i++){const level=mapWorld*10+i,b=document.createElement('button'),stars=p.stars[level]||0;b.type='button';b.dataset.level=level;b.disabled=level>p.unlocked;b.setAttribute('aria-label','Màn '+level+(b.disabled?' · Chưa mở':stars?' · '+stars+' sao':' · Đã mở')+(level%10===0?' · Thử thách':''));b.setAttribute('aria-current',String(level===selected));const strong=document.createElement('strong'),small=document.createElement('small');strong.textContent=String(level).padStart(2,'0');small.textContent=b.disabled?'KHÓA':'★'.repeat(stars)+'☆'.repeat(3-stars);b.classList.toggle('bb-boss-stage',level%10===0);b.append(strong,small);fragment.append(b);}$('map-grid').replaceChildren(fragment);}
+function map(){pause();if(mode==='daily'){say('Thử thách hôm nay gồm 5 màn theo thứ tự, giống nhau cho mọi người.');return;}mapWorld=Math.floor((selected-1)/LEVELS_PER_WORLD);$('world-select').value=String(mapWorld);renderMap();$('map').showModal();}
+function renderMap(){const p=progress.modes[mode];$('unlocked').textContent='Đã mở '+p.unlocked+' / '+maxLevels(mode)+' màn · '+MODES[mode];$('total-stars').textContent=Object.values(p.stars).reduce((a,b)=>a+b,0)+' ★';$('map-note').textContent=WORLDS[mapWorld].note;const fragment=document.createDocumentFragment();for(let i=1;i<=LEVELS_PER_WORLD;i++){const level=mapWorld*LEVELS_PER_WORLD+i,b=document.createElement('button'),stars=p.stars[level]||0;b.type='button';b.dataset.level=level;b.disabled=level>p.unlocked;b.setAttribute('aria-label','Màn '+level+(b.disabled?' · Chưa mở':stars?' · '+stars+' sao':' · Đã mở')+(level%LEVELS_PER_WORLD===0?' · Thử thách':''));b.setAttribute('aria-current',String(level===selected));const strong=document.createElement('strong'),small=document.createElement('small');strong.textContent=String(level).padStart(2,'0');small.textContent=b.disabled?'KHÓA':'★'.repeat(stars)+'☆'.repeat(3-stars);b.classList.toggle('bb-boss-stage',level%LEVELS_PER_WORLD===0);b.append(strong,small);fragment.append(b);}$('map-grid').replaceChildren(fragment);}
 for(const [i,world]of WORLDS.entries()){const option=document.createElement('option');option.value=i;option.textContent=String(i+1).padStart(2,'0')+' · '+world.name;$('world-select').append(option);}
 const scores=mountScores({game:'bubble',host:$('app'),anchor:$('features'),pause});
 $('start').addEventListener('click',()=>{if(state==='paused')resume();else if(state==='cleared'){const next=advance(game);if(next)enter(next);}else if(['won','lost'].includes(state))void begin(mode,state==='won'&&mode==='daily'?1:game.level);else requestStart();});

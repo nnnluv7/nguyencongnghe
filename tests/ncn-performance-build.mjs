@@ -43,5 +43,17 @@ for(const path of ['/arcade/','/ran-luot/','/flappy-bird/','/pikachu/','/ca-lon-
 }
 const arcadeStyle=[...arcadeSets[0]].filter(path=>arcadeSets.every(set=>set.has(path)));
 assert.ok(arcadeStyle.some(path=>!themeSets[0].has(path)),'All eight games and the hub must reuse one separately cached Arcade stylesheet');
+const campaignTotals={
+ 'pikachu':'id="pk-level-total">100<',
+ 'ban-bong':'id="bb-total">100<',
+ 'dao-vang':'id="gm-level">001 / 100<',
+ 'ca-lon-nuot-ca-be':'id="ff-level">001 / 100<'
+};
+for(const [page,total] of Object.entries(campaignTotals)){
+ const html=await readFile(join(root,page,'index.html'),'utf8');
+ assert.ok(html.includes(total),page+': 100 stages on the first paint');
+}
+const config=JSON.parse(await readFile(join(root,'assets/ncn-theme/config.json'),'utf8'));
+for(const id of Object.keys(campaignTotals))assert.match(config.tools.find(tool=>tool.id===id).description,/\b100 màn\b/,id);
 await mkdir('artifacts/performance',{recursive:true});await writeFile('artifacts/performance/build.json',JSON.stringify({pages:pages.length,entries:Object.keys(manifest.modules).length,ok:true},null,2));
 console.log('PASS '+pages.length+' built pages: local assets, SRI, shared styles and single import maps');
