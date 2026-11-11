@@ -15,7 +15,7 @@
  #ncn-library-detail .ncn-library-kicker a{color:inherit;text-decoration:none}
  #ncn-library-detail h1{display:block;position:static;float:none;clear:both;width:auto;max-width:1000px;height:auto;min-height:0;margin:0;padding:0;border:0;background:none;box-shadow:none;font-size:32px;line-height:1.3;font-weight:750;letter-spacing:-.7px;color:var(--ncn-ink);overflow-wrap:anywhere}
  #ncn-library-detail .ncn-library-page-meta{margin:12px 0 0;color:var(--ncn-muted);font-size:12px}
- #ncn-library-detail:not(.ncn-library-print) #postBody{display:flow-root;width:100%!important;min-width:0;margin:0;padding:28px!important;background:var(--ncn-glass-card)!important;border:1px solid var(--ncn-rim)!important;border-radius:28px;box-shadow:var(--ncn-shadow);-webkit-backdrop-filter:blur(24px) saturate(145%);backdrop-filter:blur(24px) saturate(145%);color:var(--ncn-ink);font:15px/1.85 var(--body-font);text-align:left;overflow-wrap:anywhere}
+ #ncn-library-detail:not(.ncn-library-print) #postBody{display:flow-root;width:100%!important;min-width:0;margin:0;padding:28px!important;background:var(--ncn-glass-card)!important;border:1px solid var(--ncn-rim)!important;border-radius:28px;box-shadow:var(--ncn-shadow);color:var(--ncn-ink);font:15px/1.85 var(--body-font);text-align:left;overflow-wrap:anywhere}
  body.ncn-library-article .item-post-wrap,body.ncn-library-utility .item-post-wrap{max-width:920px!important}
  #ncn-library-detail #postBody :is(p,li){line-height:1.85}
  #ncn-library-detail #postBody p{margin:0 0 18px}
@@ -42,7 +42,7 @@
  #ncn-library-detail .ncn-library-downloads h2{margin:0 0 13px;font-size:16px;color:var(--ncn-ink)}
  .ncn-library-download-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
  .ncn-library-download-grid>a:only-child{grid-column:1/-1}
- #ncn-library-detail .ncn-library-download{display:flex;align-items:center;gap:15px;min-width:0;min-height:112px;padding:23px;border:1px solid var(--ncn-rim);border-radius:26px;background:var(--ncn-glass-card);box-shadow:var(--ncn-shadow);-webkit-backdrop-filter:blur(24px) saturate(145%);backdrop-filter:blur(24px) saturate(145%);color:var(--ncn-ink);text-decoration:none;transition:translate .18s,box-shadow .18s}
+ #ncn-library-detail .ncn-library-download{display:flex;align-items:center;gap:15px;min-width:0;min-height:112px;padding:23px;border:1px solid var(--ncn-rim);border-radius:26px;background:var(--ncn-glass-card);box-shadow:var(--ncn-shadow);color:var(--ncn-ink);text-decoration:none;transition:translate .18s,box-shadow .18s}
  .ncn-library-file-icon{display:grid;place-items:center;flex:none;width:46px;height:46px;border:1px solid var(--ncn-rim);border-radius:15px;background:var(--ncn-glass-soft);color:var(--ncn-accent)}
  .ncn-library-file-icon svg{width:24px;height:24px}
  .ncn-library-file-copy{flex:1;min-width:0}
