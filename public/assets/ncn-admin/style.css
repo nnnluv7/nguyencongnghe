@@ -10,7 +10,7 @@ body.ncn-admin-page #ncn-page-actions{display:none!important}
 #ncn-admin-app .na-heading{margin-bottom:26px;max-width:920px}
 #ncn-admin-app .na-heading>p,#ncn-admin-app .na-muted{color:var(--ncn-muted);font-size:13px}
 #ncn-admin-app .na-back{display:inline-flex;color:var(--ncn-accent);font-size:13px;text-decoration:none;margin-bottom:20px}
-#ncn-admin-app :is(.na-surface,.na-access,.na-module){border:1px solid var(--ncn-rim);background:var(--ncn-glass-card);box-shadow:var(--ncn-shadow);border-radius:26px;-webkit-backdrop-filter:blur(24px) saturate(145%);backdrop-filter:blur(24px) saturate(145%)}
+#ncn-admin-app :is(.na-surface,.na-access,.na-module){border:1px solid var(--ncn-rim);background:var(--ncn-glass-card);box-shadow:var(--ncn-shadow);border-radius:26px}
 #ncn-admin-app .na-surface{padding:24px;min-width:0}
 #ncn-admin-app .na-access{padding:40px;max-width:720px;margin:30px auto}
 #ncn-admin-app .na-heading-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}

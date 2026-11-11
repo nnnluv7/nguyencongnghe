@@ -102,6 +102,17 @@ try{
  for(const [i,file] of files.entries())await check('shared layout '+(i+1)+'/'+files.length+': '+file.slice(7),async()=>{
   page=await ctx.newPage();const runtimeErrors=[];page.on('pageerror',error=>runtimeErrors.push(error.message));const response=await page.goto(origin+'/'+file.slice(7),{waitUntil:'domcontentloaded'});const initial=await response.text();assert.ok(initial.includes('window.NCN_NOTICE_SNAPSHOT'),file+' server notice snapshot');assert.ok(initial.includes(built?'/assets/ncn-built/styles/':'site.css?v=20261025-sync-1')||file.includes('flappy-bird'),file+' final stylesheet');await page.waitForFunction(()=>window.NCNAccount?.state.ready);await paint(page);
   for(const width of [1280,390]){await page.setViewportSize({width,height:844});await paint(page);await fits(page);
+   if(width===1280&&await page.evaluate(()=>document.body.classList.contains('ncn-scroll-ready')&&
+    !document.querySelector('dialog[open]')&&document.documentElement.scrollHeight-innerHeight>80&&
+    [document.documentElement,document.body].every(el=>!['hidden','clip'].includes(getComputedStyle(el).overflowY)))){
+    await page.evaluate(()=>scrollTo(0,0));
+    await paint(page);
+    await page.mouse.move(4,600);
+    await page.mouse.wheel(0,140);
+    await page.waitForFunction(()=>scrollY>20&&document.body.classList.contains('ncn-chrome-hidden'),null,{timeout:4000});
+    await page.mouse.wheel(0,-200);
+    await page.waitForFunction(()=>scrollY<=8&&!document.body.classList.contains('ncn-chrome-hidden'),null,{timeout:4000});
+   }
    const controls=await page.locator('input,select,textarea,button,a,summary,label').evaluateAll(els=>{
     const visible=els.filter(el=>el.getClientRects().length);
     const read=el=>{const s=getComputedStyle(el);return {id:el.id||el.className,tag:el.tagName,radius:parseFloat(s.borderTopLeftRadius),border:parseFloat(s.borderTopWidth),shadow:s.boxShadow};};

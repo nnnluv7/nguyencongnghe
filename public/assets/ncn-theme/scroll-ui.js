@@ -26,58 +26,73 @@ export function installScrollUI({doc=document,win=window}={}){
   if(!chrome.length)return;
   const clock=installToolbarClock({doc,win});
   const direction=createScrollDirection(),listeners=[],positions=new WeakMap();
+  const scrollTargets='.ncn-direct-stage,.ncn-print-stage,.ncn-mobile-sheet-viewport,.ncn-print-sidebar';
+  const menuOpen=()=>body.matches('.ncn-menu-open,.ncn-game-menu-open');
   let previous=Math.max(0,win.scrollY||0),frame=0,destroyed=false,keyboardFocus=false,touchY=null,width=win.innerWidth;
+  let hidden=false,space=0,hasNotice=body.classList.contains('ncn-has-announcements');
   const listen=(node,event,handler,options)=>{node?.addEventListener(event,handler,options);listeners.push(()=>node?.removeEventListener(event,handler,options));};
-  const locked=()=>body.matches('.ncn-menu-open,.ncn-game-menu-open')||
+  const locked=()=>menuOpen()||
     Boolean(doc.querySelector('#ncn-search-dialog[open],.ncn-account-menu[open]'))||
     (keyboardFocus&&chrome.some(node=>node.contains(doc.activeElement)));
-  function apply(hidden){
-    if(destroyed)return;
-    body.classList.toggle('ncn-chrome-hidden',Boolean(hidden)&&!locked());
+  function apply(next){
+    if(destroyed||hidden===next)return;
+    hidden=next;
+    body.classList.toggle('ncn-chrome-hidden',hidden);
   }
   function show(){direction.reset();apply(false);}
+  function move(delta,atTop=false){
+    const next=direction.move(delta,{atTop});
+    if(next&&!hidden&&locked())show();
+    else apply(next);
+  }
   function measure(){
     frame=0;if(destroyed)return;
     let bottom=0;
     for(const node of chrome){
-      if(node.hidden||!node.getClientRects().length)continue;
+      const height=node.offsetHeight;
+      if(node.hidden||!height)continue;
       const style=win.getComputedStyle(node);
-      if(style.display==='none')continue;
       // Layout positions stay constant while CSS translate animates the chrome.
-      bottom=Math.max(bottom,(parseFloat(style.top)||0)+(parseFloat(style.marginTop)||0)+node.offsetHeight);
+      bottom=Math.max(bottom,(parseFloat(style.top)||0)+(parseFloat(style.marginTop)||0)+height);
     }
-    root.style.setProperty('--ncn-chrome-space',Math.ceil(bottom+12)+'px');
-    root.style.setProperty('--ncn-chrome-hide-distance',Math.ceil(bottom+24)+'px');
+    const next=Math.ceil(bottom+12);
+    if(space===next)return;
+    space=next;
+    root.style.setProperty('--ncn-chrome-space',space+'px');
+    root.style.setProperty('--ncn-chrome-hide-distance',(space+12)+'px');
   }
   function scheduleMeasure(){if(!frame)frame=win.requestAnimationFrame(measure);}
-  // Clicking a toolbar button leaves focus on it. Only keyboard focus should
-  // hold the header open; a later wheel/touch gesture must be able to hide it.
-  function gesture(delta){
+  // Use the actual scroll position in the document and its panels. Preview
+  // iframes also need gesture handling when their paper fills the viewport.
+  function wheel(event){
+    if(event.ctrlKey||Math.abs(event.deltaY)<=Math.abs(event.deltaX))return;
     keyboardFocus=false;
-    apply(direction.move(delta,{locked:locked()}));
+    if(event.currentTarget!==doc||(hidden&&previous<=8&&event.deltaY<0))move(event.deltaY);
   }
-  function wheel(event){if(!event.ctrlKey&&Math.abs(event.deltaY)>Math.abs(event.deltaX))gesture(event.deltaY);}
   function touchStart(event){touchY=event.touches?.[0]?.clientY??null;keyboardFocus=false;}
-  function touchMove(event){const next=event.touches?.[0]?.clientY;if(touchY!==null&&Number.isFinite(next))gesture(touchY-next);touchY=next??null;}
+  function touchMove(event){
+    const next=event.touches?.[0]?.clientY;
+    if(touchY!==null&&Number.isFinite(next))move(touchY-next);
+    touchY=next??null;
+  }
   function keyDown(event){if(['Tab','Escape','Home'].includes(event.key)){keyboardFocus=true;show();}}
   function onScroll(event){
     // Tab can scroll a field into view, including inside the paper iframe.
     // Keep navigation visible until the next pointer or scroll gesture.
-    if(keyboardFocus){show();return;}
     const target=event.target;
     if(target===doc||target===root||target===body){
       const next=Math.max(0,win.scrollY||root.scrollTop||0),delta=next-previous;previous=next;
-      apply(direction.move(delta,{atTop:next<=8,locked:locked()}));return;
+      if(!keyboardFocus)move(delta,next<=8);
+      return;
     }
-    if(!target?.matches?.('.ncn-direct-stage,.ncn-print-stage,.ncn-mobile-sheet-viewport,.ncn-print-sidebar'))return;
+    if(!target?.matches?.(scrollTargets))return;
     const next=target.scrollTop||0,last=positions.get(target)||0;positions.set(target,next);
-    apply(direction.move(next-last,{locked:locked()}));
+    if(!keyboardFocus)move(next-last);
   }
   body.classList.add('ncn-scroll-ready');measure();
   listen(doc,'scroll',onScroll,{capture:true,passive:true});
   listen(doc,'wheel',wheel,{capture:true,passive:true});
   listen(doc,'touchstart',touchStart,{capture:true,passive:true});
-  listen(doc,'touchmove',touchMove,{capture:true,passive:true});
   listen(doc,'pointerdown',()=>{keyboardFocus=false;},{capture:true,passive:true});
   listen(doc,'focusin',event=>{if(chrome.some(node=>node.contains(event.target)))show();});
   listen(doc,'keydown',keyDown);
@@ -86,7 +101,12 @@ export function installScrollUI({doc=document,win=window}={}){
   // Neither is a request to reveal navigation while the user scrolls down.
   listen(win,'resize',()=>{if(win.innerWidth!==width){width=win.innerWidth;show();}scheduleMeasure();},{passive:true});
   listen(win,'pageshow',()=>{previous=Math.max(0,win.scrollY||0);show();scheduleMeasure();});
-  const observer=win.MutationObserver?new win.MutationObserver(()=>{if(locked())show();scheduleMeasure();}):null;
+  const observer=win.MutationObserver?new win.MutationObserver(records=>{
+    if(menuOpen())show();
+    const next=body.classList.contains('ncn-has-announcements');
+    if(hasNotice!==next||records.some(record=>record.target!==body))scheduleMeasure();
+    hasNotice=next;
+  }):null;
   observer?.observe(body,{attributes:true,attributeFilter:['class']});
   const notice=doc.getElementById('ncn-announcement');
   if(notice)observer?.observe(notice,{attributes:true,attributeFilter:['hidden']});
@@ -104,9 +124,21 @@ export function installScrollUI({doc=document,win=window}={}){
     listen(frame,'load',bind);listeners.push(()=>cleanup());bind();
   }
   const frames=new WeakSet();
-  function scanFrames(){doc.querySelectorAll('.ncn-direct-stage iframe,.ncn-print-stage iframe').forEach(frame=>{if(!frames.has(frame)){frames.add(frame);bindFrame(frame);}});}
-  scanFrames();
-  const frameObserver=win.MutationObserver?new win.MutationObserver(scanFrames):null;
+  const frameSelector='.ncn-direct-stage iframe,.ncn-print-stage iframe';
+  function registerFrame(frame){
+    if(frames.has(frame))return;
+    frames.add(frame);
+    bindFrame(frame);
+  }
+  function scanFrames(node){
+    if(node.nodeType!==1)return;
+    if(node.matches(frameSelector))registerFrame(node);
+    else node.querySelectorAll(frameSelector).forEach(registerFrame);
+  }
+  scanFrames(body);
+  const frameObserver=win.MutationObserver?new win.MutationObserver(records=>{
+    for(const record of records)record.addedNodes.forEach(scanFrames);
+  }):null;
   frameObserver?.observe(body,{childList:true,subtree:true});
   const api={show,destroy(){destroyed=true;clock?.destroy();listeners.forEach(remove=>remove());observer?.disconnect();frameObserver?.disconnect();resize?.disconnect();win.cancelAnimationFrame(frame);body.classList.remove('ncn-chrome-hidden','ncn-scroll-ready');root.style.removeProperty('--ncn-chrome-space');root.style.removeProperty('--ncn-chrome-hide-distance');controllers.delete(doc);}};
   controllers.set(doc,api);return api;
