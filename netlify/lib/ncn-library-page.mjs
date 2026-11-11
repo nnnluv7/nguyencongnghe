@@ -3,6 +3,7 @@ import {mergedLibrary,publicCatalog,readLibrary} from './ncn-library-api.mjs';
 import {renderPublicHTML} from './ncn-public-render.mjs';
 import {publicPageHeaders} from './ncn-public-cache.mjs';
 import {normalizeSocialMetadata} from './ncn-social-meta.mjs';
+import {trimPublicCopy} from './ncn-public-copy.mjs';
 
 const headers={'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','Netlify-CDN-Cache-Control':'no-store','X-Content-Type-Options':'nosniff'};
 const json=value=>JSON.stringify(value).replace(/</g,'\\u003c').replace(/\u2028/g,'\\u2028').replace(/\u2029/g,'\\u2029');
@@ -11,11 +12,11 @@ export function injectCatalog(html,items,{deferred=false}={}){
 }
 function dateLabel(value){try{return new Intl.DateTimeFormat('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',day:'2-digit',month:'2-digit',year:'numeric'}).format(new Date(value));}catch{return '';}}
 function metadata(html,item){
-  html=html.replace(/<title>[\s\S]*?<\/title>/,'<title>'+escapeHTML(item.title)+' | NCN</title>');
+  html=html.replace(/<title>[\s\S]*?<\/title>/,()=>'<title>'+escapeHTML(item.title)+'</title>');
   return normalizeSocialMetadata(html,{title:item.title,description:item.summary,image:item.image||'',url:'https://nguyencongnghe.com'+item.href,type:'article'});
 }
 export async function articleHTML(deps,item,body,catalog){
-  let html=await deps.articleShell();
+  let html=trimPublicCopy(await deps.articleShell());
   const rendered=renderMarkdown(body),hasCover=item.image&&!rendered.includes('src="'+escapeHTML(item.image)+'"');
   const tokens={TITLE:escapeHTML(item.title),SUMMARY:escapeHTML(item.summary),BODY:rendered,DATE:escapeHTML(dateLabel(item.datetime)),DATETIME:escapeHTML(item.datetime),ID:escapeHTML(item.id),IMAGE:hasCover?'<img class="ncn-managed-cover" src="'+escapeHTML(item.image)+'" alt="">':'',URL:escapeHTML('https://nguyencongnghe.com'+item.href)};
   html=html.replace(/@@(TITLE|SUMMARY|BODY|DATE|DATETIME|ID|IMAGE|URL)@@/g,(_,name)=>tokens[name]);
@@ -23,7 +24,7 @@ export async function articleHTML(deps,item,body,catalog){
 }
 async function statusHTML(deps,catalog,status){
   const removed=status===410;
-  let html=await deps.articleShell();
+  let html=trimPublicCopy(await deps.articleShell());
   html=html.replace(/@@(TITLE|SUMMARY|BODY|DATE|DATETIME|ID|IMAGE|URL)@@/g,(_,name)=>({TITLE:removed?'Bài viết đã được gỡ':'Chưa tìm thấy bài viết',BODY:'<p>'+(removed?'Bài viết này hiện không còn được công khai.':'Bài viết chưa được đăng hoặc đường dẫn chưa đúng.')+'</p><p><a href="/thu-vien/">← Quay lại Thư viện</a></p>',URL:'https://nguyencongnghe.com/thu-vien/'}[name]||''));
   return injectCatalog(html.replace('</head>','<meta name="robots" content="noindex"></head>'),catalog);
 }
@@ -31,7 +32,7 @@ export function createLibraryPageHandler(deps){return async req=>{
   try{
     if(!['GET','HEAD'].includes(req.method))return new Response('Method not allowed',{status:405,headers});
     const url=new URL(req.url),initial=deps.state?await deps.state({stories:url.pathname.includes('thu-vien')||url.searchParams.get('view')==='index'}):{},old=!deps.state&&deps.production()?await readLibrary(deps.store()):null,index=initial.index||old?.data,catalog=initial.catalog||publicCatalog(deps.seed,index);
-    const render=html=>injectCatalog(renderPublicHTML(html,catalog,{...initial,query:url.searchParams}),catalog);
+    const render=html=>injectCatalog(renderPublicHTML(trimPublicCopy(html),catalog,{...initial,query:url.searchParams}),catalog);
     const internal=url.pathname==='/.netlify/functions/ncn-library-page';
     const originalRoute=deps.seed.find(x=>x.managedPage&&[x.href,x.href.replace(/\.html$/,''),x.href.replace(/\.html$/,'/')].includes(url.pathname));
     const listingHeaders=publicPageHeaders({seconds:15,stories:initial.stories,now:initial.now});
@@ -44,7 +45,7 @@ export function createLibraryPageHandler(deps){return async req=>{
     let html;
     if(item.mode==='original'){
       const base=deps.seed.find(x=>x.id===item.id);if(!base?.sourcePath)throw Error('Missing original');
-      html=await deps.original(base.sourcePath);
+      html=trimPublicCopy(await deps.original(base.sourcePath));
       html=html.replace(/(<h1\b[^>]*id="ncn-library-page-title"[^>]*>)[\s\S]*?<\/h1>/,(_,start)=>start+escapeHTML(item.title)+'</h1>');
       html=injectCatalog(metadata(html,item),catalog);
     }else{
@@ -52,5 +53,5 @@ export function createLibraryPageHandler(deps){return async req=>{
       html=await articleHTML(deps,item,content.body,catalog);
     }
     return new Response(req.method==='HEAD'?null:renderPublicHTML(html,catalog,initial),{headers});
-  }catch{return new Response('<!doctype html><html lang="vi"><meta charset="utf-8"><title>Thư viện NCN</title><p>Thư viện đang kết nối lại. Anh tải lại trang sau ít phút nhé.</p><a href="/">Về trang chủ</a></html>',{status:503,headers});}
+  }catch{return new Response('<!doctype html><html lang="vi"><meta charset="utf-8"><title>Thư viện</title><p>Thư viện đang kết nối lại. Anh tải lại trang sau ít phút nhé.</p><a href="/">Về trang chủ</a></html>',{status:503,headers});}
 };}

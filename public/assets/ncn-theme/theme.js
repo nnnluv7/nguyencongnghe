@@ -104,7 +104,7 @@ export function createTheme({doc=document,win=window,config,catalog=win.CG_CATAL
   // Printing editors uses the existing tool's own print button and dedicated print frame.
   listen($('ncn-page-print'),'click',()=>win.print());
   text('ncn-page-section',home?'Tổng quan':library?'Thư viện':currentTool?groups.find(g=>g.id===currentTool.group)?.name||'Công cụ':'Nội dung');
-  text('ncn-page-title',home?'Cổng công cụ NCN':library?'Bài viết & hướng dẫn':currentTool?.title||doc.title.replace(/\s*\|\s*nguyencongnghe\.com$/i,''));
+  text('ncn-page-title',home?'Cổng công cụ':library?'Bài viết & hướng dẫn':currentTool?.title||doc.title.replace(/\s*\|\s*nguyencongnghe\.com$/i,''));
   function navLink(href,title,icon,badge='',id='') {
     const active=canonicalPath(href)===path;
     return `<a class="ncn-nav-link" href="${escapeHTML(href)}"${id?` data-ncn-tool="${escapeHTML(id)}"`:""}${active?' aria-current="page"':''}>${svg(icon)}<span>${escapeHTML(title)}</span>${badge?'<b class="ncn-nav-pill">VIP</b>':''}</a>`;

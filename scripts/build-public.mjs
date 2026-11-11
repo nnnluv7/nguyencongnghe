@@ -7,6 +7,7 @@ import sharp from 'sharp';
 import wawoff2 from 'wawoff2';
 import {buildPikachuArt} from './build-pikachu-art.mjs';
 import {assetPath,localAssetPath,stylesheetKey,optimizePublicHTML} from '../netlify/lib/ncn-public-assets.mjs';
+import {trimPublicCopy} from '../netlify/lib/ncn-public-copy.mjs';
 
 const root=resolve('public'),output=resolve('dist'),assets='/assets/ncn-built/';
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex').slice(0,16);
@@ -21,9 +22,11 @@ const styleGroup=src=>src==='/assets/ncn-arcade/arcade.css'?'arcade':src.startsW
 export async function buildPublic(){
   await buildPikachuArt();
   await rm(output,{recursive:true,force:true});await cp(root,output,{recursive:true});await mkdir(output+assets,{recursive:true});
+  const fallbackConfig='/assets/ncn-theme/config.json';
+  await writeFile(output+fallbackConfig,trimPublicCopy(await readFile(root+fallbackConfig,'utf8')));
   const paths=(await files(root)).sort(),htmlFiles=paths.filter(x=>x.endsWith('.html'));
   const templates=[...htmlFiles,resolve('netlify/lib/ncn-library/article-shell.html')];
-  const htmls=await Promise.all(templates.map(path=>readFile(path,'utf8')));
+  const htmls=await Promise.all(templates.map(async path=>trimPublicCopy(await readFile(path,'utf8'))));
   const scripts=paths.filter(x=>x.endsWith('.js')),sources=new Map(await Promise.all(scripts.map(async path=>[path,await readFile(path,'utf8')])));
   const entryPoints={};
   for(const [path,source] of sources)if(/^\s*(?:import(?:\s+|['"])|export\s+)/m.test(source))entryPoints[relative(root,path).slice(0,-3)]=path;

@@ -53,7 +53,6 @@ html[data-ncn-theme=dark] #ncn-announcement-pause{background:#ffffff12;border-co
 .ncn-toolbar-clock [data-clock-short-date]{display:none}
 #ncn-game-topbar>.ncn-toolbar-clock{margin-right:auto}
 @media(max-width:640px){
-  #ncn-topbar .ncn-header-brand strong{display:none}
   #ncn-topbar .ncn-topbar-left{gap:7px;flex:none}
   .ncn-toolbar-clock{gap:0;padding:0;border:0;background:none;box-shadow:none;border-radius:0}
   .ncn-toolbar-clock>svg,.ncn-toolbar-clock [data-clock-date]{display:none}

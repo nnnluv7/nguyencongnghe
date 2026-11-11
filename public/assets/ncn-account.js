@@ -6,7 +6,7 @@ import {mountMemberPanel,paintAvatar,profileUpdate} from './ncn-member-profile.j
 import {requestJSON} from './ncn-profile-request.js?v=20261027-photo-save-1';
 
 const accounts=new WeakMap();
-const labels={login:'Đăng nhập',register:'Tạo tài khoản',recovery:'Quên mật khẩu',reset:'Đặt mật khẩu mới',profile:'Tài khoản NCN',vip:'Thông tin VIP'};
+const labels={login:'Đăng nhập',register:'Tạo tài khoản',recovery:'Quên mật khẩu',reset:'Đặt mật khẩu mới',profile:'Tài khoản',vip:'Thông tin VIP'};
 const aliases={reg:'register',forgot:'recovery'};
 
 export function quizProfile(user,hint=null){
@@ -63,7 +63,7 @@ export function mountAccount({doc=document,win=window,identity=identityClient,fe
     for(const [key,form] of Object.entries(forms))form.hidden=key!==name;
     const managing=['profile','vip'].includes(name);
     dialog.querySelector('.ncn-account-tabs').hidden=name==='reset'||managing;
-    dialog.querySelector('.ncn-account-intro').textContent=managing?`Hồ sơ dùng chung trên website và cả ${ARCADE_COUNT} game NCN Arcade.`:'1 tài khoản dùng chung website';
+    dialog.querySelector('.ncn-account-intro').textContent=managing?`Hồ sơ dùng chung trên website và cả ${ARCADE_COUNT} game Arcade.`:'1 tài khoản dùng chung website';
     dialog.querySelector('.ncn-account-social').hidden=managing||!state.settings?.providers?.facebook||state.resetPending;
     dialog.querySelectorAll('[data-account-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.accountMode===name)));
     member.render(state.user,{tab:name,busy:state.busy,serverOffset:state.serverOffset});
@@ -86,7 +86,7 @@ export function mountAccount({doc=document,win=window,identity=identityClient,fe
   }
   function close(){afterLogin=null;member.reset();dialog.close();}
   async function facebook(){
-    try{const config=await settings();if(!config.providers?.facebook)throw Error('Facebook chưa được mở. Bạn có thể đăng nhập bằng email NCN.');
+    try{const config=await settings();if(!config.providers?.facebook)throw Error('Facebook chưa được mở. Bạn có thể đăng nhập bằng email.');
       const path=win.location.pathname+win.location.search;if(path.startsWith('/ran-luot/'))try{sessionStorage?.setItem('ncn-oauth-return',path);}catch{}
       win.location.assign('/.netlify/identity/authorize?provider=facebook');
     }catch(error){message(error.message||'Chưa kết nối được Facebook.',true);}
@@ -118,7 +118,7 @@ export function mountAccount({doc=document,win=window,identity=identityClient,fe
       if(!target)return;target.dataset.ncnAccountState=phase;target.replaceChildren();
       if(user){
         const info=node('div',null,'ncn-account-info');info.append(node('strong',user.name||user.email),node('small',user.email));
-        const status=!verified?'Tài khoản':verified.admin?'ADMIN':verified.vip?'Thành viên NCN':'Thành viên';info.append(node('span',status,'ncn-account-badge'));
+        const status=!verified?'Tài khoản':verified.admin?'ADMIN':'Thành viên';info.append(node('span',status,'ncn-account-badge'));
         if(verified?.vipExpiresAt)info.append(node('small','Hạn VIP: '+new Date(verified.vipExpiresAt).toLocaleDateString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh'})));
         target.append(info);
         if(verified){const manage=node('button','Quản lý tài khoản','auth-btn btn-login');manage.type='button';manage.dataset.ncnAccountOpen='profile';target.append(manage);const details=node('button','Thông tin VIP','auth-btn btn-login');details.type='button';details.dataset.ncnAccountOpen='vip';target.append(details);const history=node('a','Lịch sử thi','auth-btn btn-login');history.href='/p/lich-su-thi.html';target.append(history);}

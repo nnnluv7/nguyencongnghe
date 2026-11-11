@@ -1,5 +1,6 @@
 import {renderPublicHTML} from './ncn-public-render.mjs';
 import {publicPageHeaders} from './ncn-public-cache.mjs';
+import {trimPublicCopy} from './ncn-public-copy.mjs';
 
 export function createSitePageHandler(deps){return async req=>{
   const headers={'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','Netlify-CDN-Cache-Control':'no-store','X-Content-Type-Options':'nosniff'};
@@ -12,7 +13,7 @@ export function createSitePageHandler(deps){return async req=>{
   try{
     const start=performance.now();let degraded=false;
     const [html,state]=await Promise.all([deps.html(page),deps.state({catalog:page.startsWith('search/')}).catch(()=>{degraded=true;return {catalog:[],notices:[],stories:[],catalogDeferred:true};})]);
-    const body=deps.inject(renderPublicHTML(html,state.catalog,state),state.catalog,{deferred:state.catalogDeferred});
+    const body=deps.inject(renderPublicHTML(trimPublicCopy(html),state.catalog,state),state.catalog,{deferred:state.catalogDeferred});
     return new Response(req.method==='HEAD'?null:body,{headers:{...(degraded?headers:publicPageHeaders()),'Server-Timing':'ncn;dur='+Math.round(performance.now()-start)}});
   }catch{return new Response('Trang đang kết nối lại. Vui lòng tải lại sau ít phút.',{status:503,headers});}
 };}
