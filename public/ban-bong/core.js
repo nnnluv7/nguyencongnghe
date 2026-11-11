@@ -1,8 +1,10 @@
 // Pure, deterministic Bubble Shooter rules. Rendering and storage live elsewhere.
+import {CAMPAIGN_LEVEL_COUNT,LEGACY_LEVEL_COUNT,classicDifficultyLevel} from '../assets/ncn-arcade/campaign.js';
+
 export const COLS=11,ROWS=15,RADIUS=24,WIDTH=528,HEIGHT=744,TOP=32,STEP=Math.sqrt(3)*RADIUS;
 export const LAUNCHER={x:WIDTH/2,y:HEIGHT-58},DANGER=HEIGHT-130,MAX_ANGLE=1.34;
 export const MODES={journey:'Hành trình',relax:'Thư giãn',daily:'Hôm nay'};
-export const CAMPAIGN_LEVELS=200,STONE=7;
+export const CAMPAIGN_LEVELS=CAMPAIGN_LEVEL_COUNT,STONE=7;
 export const WORLDS=[
  {name:'Vườn ban mai',color:'#85e0bf',sky:'#123c38',note:'Một góc vườn, một trời ký ức.'},
  {name:'Biển thủy tinh',color:'#82d8f4',sky:'#143a50',note:'Những viên bi mang màu của sóng.'},
@@ -13,7 +15,7 @@ export const WORLDS=[
  {name:'Đầm sương bạc',color:'#b9e3ec',sky:'#264854',note:'Đừng để hàng trứng chạm vạch tổ.'},
  {name:'Vách đá hổ phách',color:'#f5ca7e',sky:'#4d3d2d',note:'Trứng đá không ghép màu: hãy cắt chùm phía trên.'},
  {name:'Rừng cổ thụ',color:'#92cba4',sky:'#193e37',note:'Giữ trợ lực cho cú bắn thật cần thiết.'},
- {name:'Miệng núi lửa',color:'#ffac7e',sky:'#4c3037',note:'Cột mốc 100: cả khu rừng chờ một cú bật tường.'},
+ {name:'Miệng núi lửa',color:'#ffac7e',sky:'#4c3037',note:'Nửa hành trình: tìm góc bật tường để cắt chùm trứng.'},
  {name:'Hồ pha lê',color:'#98d9ef',sky:'#213e55',note:'Ít đường ngắm hơn, nhiều góc bắn hay hơn.'},
  {name:'Hẻm núi đỏ',color:'#efa18f',sky:'#4f343d',note:'Cắt những điểm nối để trứng đá rơi cùng chùm.'},
  {name:'Cánh đồng dương xỉ',color:'#bfe194',sky:'#31462c',note:'Bàn trứng dày hơn, cần chọn đúng thứ tự màu.'},
@@ -23,13 +25,15 @@ export const WORLDS=[
  {name:'Đảo san hô cổ',color:'#ffaac0',sky:'#46324b',note:'Một pha cắt chùm đẹp có thể cứu cả màn.'},
  {name:'Rừng cực quang',color:'#91eccd',sky:'#1a4148',note:'Sáu màu, ít trợ lực và nhịp rơi sát hơn.'},
  {name:'Thác trời',color:'#9fd3ff',sky:'#253a56',note:'Tận dụng đổi trứng trước mỗi lượt bắn.'},
- {name:'Tổ rồng huyền thoại',color:'#ffe0a1',sky:'#44394b',note:'Màn 200 đang chờ. Hãy giữ tổ an toàn!'}
+ {name:'Tổ rồng huyền thoại',color:'#ffe0a1',sky:'#44394b',note:'Màn cuối đang chờ. Hãy giữ tổ an toàn!'}
 ];
+export const LEVELS_PER_WORLD=CAMPAIGN_LEVELS/WORLDS.length;
 export const maxLevels=mode=>mode==='daily'?5:CAMPAIGN_LEVELS;
 export function validDate(date){return typeof date==='string'&&/^20\d\d-\d\d-\d\d$/.test(date)&&Number.isFinite(Date.parse(date))&&new Date(date).toISOString().slice(0,10)===date;}
 export function daySeed(date){let n=2166136261;for(const c of date)n=Math.imul(n^c.charCodeAt(0),16777619);return n>>>0;}
-export function levelSpec(level=1,mode='journey',date=''){
- const difficulty=mode==='daily'?35+(daySeed(date)%120)+level*3:level,world=Math.min(19,Math.floor((difficulty-1)/10)),boss=mode==='daily'?level===5:level%10===0;
+export function levelSpec(level=1,mode='journey',date='',legacy=false){
+ const daily=mode==='daily',difficulty=daily?35+(daySeed(date)%120)+level*3:legacy?level:classicDifficultyLevel(level);
+ const perWorld=legacy||daily?10:LEVELS_PER_WORLD,world=Math.min(WORLDS.length-1,Math.floor(((daily?difficulty:level)-1)/perWorld)),boss=daily?level===5:level%perWorld===0;
  const colors=mode==='daily'?6:difficulty<9?3:difficulty<23?4:difficulty<41?5:6;
  const rows=Math.min(11,3+Math.floor((difficulty-1)/24)+(boss?1:0));
  const riseEvery=mode==='relax'?0:Math.max(28,(difficulty<=5?90:difficulty<=20?65:difficulty<=50?55:difficulty<=100?45:difficulty<=150?38:32)-(boss?4:0));
@@ -54,7 +58,7 @@ export function createGame({mode='journey',level=1,seed=1,score=0,date=''}={}){
  if(!Object.hasOwn(MODES,mode)||!Number.isInteger(level)||level<1||level>maxLevels(mode)||mode==='daily'&&!validDate(date))throw new RangeError('Invalid bubble mode or stage');
  if(!Number.isSafeInteger(score)||score<0||score>999999999)throw new RangeError('Invalid score');
  const originSeed=mode==='daily'?daySeed(date):Number(seed)>>>0,spec=levelSpec(level,mode,date);
- const game={version:2,mode,date:mode==='daily'?date:'',level,seed:originSeed,random:(originSeed^Math.imul(level,2654435761))>>>0,board:Array(COLS*ROWS).fill(0),phase:0,current:0,next:0,score,shots:0,totalShots:0,totalMisses:0,misses:0,combo:0,bestCombo:0,rowsAdded:0,pressureTime:0,powers:{...spec.powers},status:'playing'};
+ const game={version:3,mode,date:mode==='daily'?date:'',level,seed:originSeed,random:(originSeed^Math.imul(level,2654435761))>>>0,board:Array(COLS*ROWS).fill(0),phase:0,current:0,next:0,score,shots:0,totalShots:0,totalMisses:0,misses:0,combo:0,bestCombo:0,rowsAdded:0,pressureTime:0,powers:{...spec.powers},status:'playing'};
  const offset=Math.floor(random(game)*spec.colors);
  for(let r=0;r<spec.rows;r++)for(let c=0;c<rowSize(r);c++){
   const edge=Math.min(c,rowSize(r)-1-c),cut=level>3&&r>spec.rows-2&&edge<(level%3);
@@ -155,22 +159,35 @@ export function advance(game){
 const integer=(n,min,max)=>Number.isInteger(n)&&n>=min&&n<=max;
 export function readSave(value){
  try{
-  const g=structuredClone(value);if(!g||![1,2].includes(g.version)||!Object.hasOwn(MODES,g.mode)||!integer(g.level,1,maxLevels(g.mode))||g.mode==='daily'&&!validDate(g.date)||g.mode!=='daily'&&g.date!=='')return null;
+  const g=structuredClone(value);
+  if(!g||![1,2,3].includes(g.version)||!Object.hasOwn(MODES,g.mode))return null;
+  const legacy=g.version<3,limit=legacy&&g.mode!=='daily'?LEGACY_LEVEL_COUNT:maxLevels(g.mode);
+  if(!integer(g.level,1,limit)||g.mode==='daily'&&!validDate(g.date)||g.mode!=='daily'&&g.date!=='')return null;
   if(!integer(g.phase,0,1)||!integer(g.seed,0,4294967295)||!integer(g.random,0,4294967295)||!Array.isArray(g.board)||g.board.length!==COLS*ROWS||!['playing','cleared','won','lost'].includes(g.status))return null;
-  const spec=levelSpec(g.level,g.mode,g.date);
-  if(g.version===1){g.version=2;g.pressureTime=0;if(integer(g.misses,0,6))g.misses=Math.min(g.misses,Math.max(0,spec.missLimit-1));if(g.status==='won'&&g.mode!=='daily'&&g.level===60)g.status='cleared';}
+  const spec=levelSpec(g.level,g.mode,g.date,legacy);
+  if(g.version===1){g.pressureTime=0;if(integer(g.misses,0,6))g.misses=Math.min(g.misses,Math.max(0,spec.missLimit-1));if(g.status==='won'&&g.mode!=='daily'&&g.level===60)g.status='cleared';}
   for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(!(integer(g.board[index(r,c)],0,spec.colors)||g.board[index(r,c)]===STONE&&spec.stones>0&&r>0)||c>=rowSize(r,g.phase)&&g.board[index(r,c)]!==0)return null;
   if(!integer(g.score,0,999999999)||!integer(g.shots,0,10000)||!integer(g.totalShots,g.shots,2000000)||!integer(g.totalMisses,0,g.shots)||!integer(g.misses,0,Math.max(0,spec.missLimit-1))||!integer(g.combo,0,g.shots)||!integer(g.bestCombo,g.combo,g.totalShots)||!integer(g.rowsAdded,0,10000)||!Number.isFinite(g.pressureTime)||g.pressureTime<0||g.pressureTime>spec.riseEvery||!g.powers||!integer(g.powers.rainbow,0,1)||!integer(g.powers.bomb,0,1))return null;
   const palette=colorsLeft(g);if(!integer(g.current,0,spec.colors)||!integer(g.next,0,spec.colors))return null;
   if(g.status==='playing'&&(!palette.includes(g.current)||!palette.includes(g.next)||cells(g.board,g.phase).some(tile=>tile.y+RADIUS>=DANGER)))return null;
-  if(['cleared','won'].includes(g.status)&&(palette.length||g.status==='cleared'&&g.level>=maxLevels(g.mode)||g.status==='won'&&g.level!==maxLevels(g.mode)))return null;
+  if(['cleared','won'].includes(g.status)&&(palette.length||g.status==='cleared'&&g.level>=limit||g.status==='won'&&g.level!==limit))return null;
   const probe=structuredClone(g);if(g.status==='playing'&&dropFloating(probe).length)return null;
+  if(legacy&&g.mode!=='daily'){
+   if(g.level>CAMPAIGN_LEVELS||g.level===CAMPAIGN_LEVELS&&g.status==='cleared'){
+    const last=createGame({mode:g.mode,level:CAMPAIGN_LEVELS,seed:g.seed,score:g.score});
+    last.totalShots=g.totalShots;last.bestCombo=g.bestCombo;return last;
+   }
+   const next=levelSpec(g.level,g.mode);
+   g.misses=Math.min(g.misses,Math.max(0,next.missLimit-1));
+   if(spec.riseEvery)g.pressureTime=Math.min(next.riseEvery,g.pressureTime/spec.riseEvery*next.riseEvery);
+  }
+  g.version=3;
   return g;
  }catch{return null;}
 }
 export function readProgress(value){
  const result={version:2,best:0,modes:{journey:{unlocked:1,stars:{}},relax:{unlocked:1,stars:{}}}};
  if(![1,2].includes(value?.version))return result;if(integer(value.best,0,999999999))result.best=value.best;
- for(const mode of ['journey','relax']){const old=value.modes?.[mode];if(!old)continue;const target=result.modes[mode];if(integer(old.unlocked,1,CAMPAIGN_LEVELS))target.unlocked=old.unlocked;for(const [key,n]of Object.entries(old.stars||{}))if(/^\d+$/.test(key)&&integer(Number(key),1,target.unlocked)&&integer(n,1,3))target.stars[Number(key)]=n;if(value.version===1&&target.unlocked===60&&target.stars[60])target.unlocked=61;}
+ for(const mode of ['journey','relax']){const old=value.modes?.[mode];if(!old)continue;const target=result.modes[mode];if(integer(old.unlocked,1,LEGACY_LEVEL_COUNT))target.unlocked=Math.min(old.unlocked,CAMPAIGN_LEVELS);for(const [key,n]of Object.entries(old.stars||{}))if(/^\d+$/.test(key)&&integer(Number(key),1,target.unlocked)&&integer(n,1,3))target.stars[Number(key)]=n;if(value.version===1&&target.unlocked===60&&target.stars[60])target.unlocked=61;}
  return result;
 }

@@ -1614,7 +1614,7 @@ window.CG_CATALOG = [
       "Giải trí"
     ],
     "datetime": "2026-10-26T00:00:00+07:00",
-    "summary": "Nối hai hình giống nhau bằng đường tối đa hai góc gấp. 30 màn đổi hướng dồn ô, combo, gợi ý, tự đảo khi bí và thử thách mỗi ngày. Chơi miễn phí, tự lưu ván trên trình duyệt.",
+    "summary": "Nối hai hình giống nhau bằng đường tối đa hai góc gấp. 100 màn đổi hướng dồn ô, combo, gợi ý, tự đảo khi bí và thử thách mỗi ngày. Chơi miễn phí, tự lưu ván trên trình duyệt.",
     "isPage": true,
     "author": "NCN",
     "date": ""
@@ -1674,7 +1674,7 @@ window.CG_CATALOG = [
     "date": ""
   },
   {
-    "title": "Bắn Trứng Khủng Long · 200 màn",
+    "title": "Bắn Trứng Khủng Long · 100 màn",
     "link": "/ban-bong/",
     "thumbnail": {
       "src": "/ban-bong/cover.svg",
@@ -1686,7 +1686,7 @@ window.CG_CATALOG = [
       "Giải trí"
     ],
     "datetime": "2026-10-27T08:00:00+07:00",
-    "summary": "Bắn bóng cổ điển với khủng long 3D bắn trứng. 200 màn, 20 miền tiền sử, trứng đá, hàng trứng hạ dần và chế độ Thư giãn.",
+    "summary": "Bắn bóng cổ điển với khủng long 3D bắn trứng. 100 màn, 20 miền tiền sử, trứng đá, hàng trứng hạ dần và chế độ Thư giãn.",
     "isPage": true,
     "author": "NCN",
     "date": "2026-10-27",
@@ -1705,7 +1705,7 @@ window.CG_CATALOG = [
       "Giải trí"
     ],
     "datetime": "2026-10-29T20:30:00+07:00",
-    "summary": "Canh móc lắc, kéo vàng, né đá và săn kim cương. 200 màn cổ điển khó dần, 10 vùng mỏ, cửa hàng nâng cấp và tự lưu ván.",
+    "summary": "Canh móc lắc, kéo vàng, né đá và săn kim cương. 100 màn cổ điển khó dần, 10 vùng mỏ, cửa hàng nâng cấp và tự lưu ván.",
     "isPage": true,
     "author": "NCN",
     "date": "2026-10-29",

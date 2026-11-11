@@ -100,10 +100,14 @@ try{
     assert.equal(await page.locator('#ff-stick').evaluate(el=>el.classList.contains('is-held')),true);assert.ok(parseInt(await page.locator('#ff-energy-value').innerText())<85);
     await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
     await page.reload();await tick(150);await page.locator('#ff-start').tap();await tick(100);
-    const sea=await page.locator('#ff-canvas').boundingBox(),tx=Math.round(sea.x+sea.width*.5),ty=Math.round(sea.y+sea.height*.53),beforeDrag=await page.evaluate(()=>window.__ncnFishPlayer.x);
-    await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[finger(tx,ty,3)]});await tick(50);assert.equal(await page.evaluate(()=>window.__ncnFishPlayer.x),beforeDrag,'Touching elsewhere must not teleport the fish');
-    await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[finger(tx+45,ty,3)]});await tick(350);assert.ok(await page.evaluate(()=>window.__ncnFishPlayer.x)>beforeDrag+20,'Dragging the sea must steer the fish');
-    await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await tick(50);const dragStop=await page.evaluate(()=>window.__ncnFishPlayer.x);await tick(250);assert.equal(await page.evaluate(()=>window.__ncnFishPlayer.x),dragStop,'Releasing a direct drag must stop the fish');
+    const sea=await page.locator('#ff-canvas').boundingBox(),tx=Math.round(sea.x+sea.width*.65),ty=Math.round(sea.y+sea.height*.5),playerX=()=>page.evaluate(()=>window.__ncnFishPlayer.x),start=await playerX();
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[finger(tx,ty,3)]});
+    await tick(70);const first=await playerX();assert.ok(first>start&&first<start+30,'A touch starts swimming without teleporting');
+    await tick(650);const held=await playerX();assert.ok(held>first+120,'The fish keeps swimming when a finger is held still');
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[finger(Math.round(sea.x+sea.width*.23),ty,3)]});
+    await tick(350);assert.ok(await playerX()<held-30,'Dragging the same finger changes heading');
+    await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await tick(50);const stoppedTouch=await playerX();
+    await tick(250);assert.equal(await playerX(),stoppedTouch,'Releasing a touch stops the fish');
     await page.locator('#ff-pause').tap();assert.equal(await state(),'paused');assert.equal(await page.locator('#ff-stick').isVisible(),false);const frozen=await page.locator('#ff-time').innerText();await tick(3000);assert.equal(await page.locator('#ff-time').innerText(),frozen);await shot('paused-phone');
     await page.locator('#ff-resume').tap();assert.equal(await page.locator('#ff-stick').isVisible(),true);for(const [width,height]of[[320,568],[360,640],[390,844]]){await page.setViewportSize({width,height});await tick(150);await page.locator('#ff-stage').evaluate(el=>el.scrollIntoView({block:'start',behavior:'instant'}));await tick(100);for(const id of['ff-stick','ff-pause','ff-dash']){const r=await page.locator('#'+id).boundingBox();assert.ok(r.x>=0&&r.x+r.width<=width+1&&r.y>=0&&r.y+r.height<=height+1,JSON.stringify({id,r,width,height}));}}await mobile.close();page=previous;
   });
@@ -111,7 +115,7 @@ try{
     const classic=await context(),previous=page;page=await classic.newPage();page.on('pageerror',e=>errors.push(e.message));
     try{
       await freezeClock(page);await page.goto(base+'/ca-lon-nuot-ca-be/');await tick(150);await page.locator('#ff-start').click();await tick(150);
-      assert.equal(await page.locator('#ff-level').innerText(),'001 / 200');assert.equal(await page.locator('#ff-menu [role=listitem]').count(),3);assert.equal(await page.locator('#ff-menu .is-edible').count(),1);
+      assert.equal(await page.locator('#ff-level').innerText(),'001 / 100');assert.equal(await page.locator('#ff-menu [role=listitem]').count(),3);assert.equal(await page.locator('#ff-menu .is-edible').count(),1);
       const canvas=await page.locator('#ff-canvas').boundingBox();
       assert.ok(await page.evaluate(()=>window.__ncnFishBodies<=13),'The opening has at most 12 fish plus the player');
       for(let i=0;i<600&&await state()==='playing';i++){
@@ -121,7 +125,7 @@ try{
       assert.equal(await state(),'cleared','Ordinary mouse steering should reach a stage clear');assert.notEqual(await page.locator('#ff-time').innerText(),'00:00');assert.equal(await page.locator('#ff-cleared').isVisible(),true);assert.equal(await page.locator('#ff-menu .is-edible').count(),3);
       const frozen=await page.locator('#ff-time').innerText();await tick(5000);assert.equal(await page.locator('#ff-time').innerText(),frozen);
       assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('ncn:fish:record:v1')).unlocked),2);await shot('classic-stage-clear');
-      await page.locator('#ff-next').click();await tick(100);assert.equal(await state(),'playing');assert.equal(await page.locator('#ff-level').innerText(),'002 / 200');assert.equal(await page.locator('#ff-menu .is-edible').count(),1);
+      await page.locator('#ff-next').click();await tick(100);assert.equal(await state(),'playing');assert.equal(await page.locator('#ff-level').innerText(),'002 / 100');assert.equal(await page.locator('#ff-menu .is-edible').count(),1);
       await page.reload();await tick(150);assert.equal(await state(),'ready');assert.equal(await page.locator('#ff-stage-select').inputValue(),'2');assert.equal(await page.locator('#ff-stage-select option:not([disabled])').count(),2);assert.ok(Number((await page.locator('#ff-best').innerText()).replace(/\D/g,''))>0,'Clearing a stage must retain the best score across reload');
     }finally{await classic.close();page=previous;}
   });
@@ -155,18 +159,18 @@ try{
     const previous=page;page=await advanced.newPage();page.on('pageerror',e=>errors.push(e.message));
     try{
       await freezeClock(page);await page.goto(base+'/ca-lon-nuot-ca-be/');await tick(150);assert.equal(await page.locator('#ff-stage-select').inputValue(),'41');assert.equal(await page.locator('#ff-best').innerText(),'5.000');await page.locator('#ff-start').click();await tick(150);
-      assert.equal(await page.locator('#ff-level').innerText(),'041 / 200');assert.equal(await page.locator('#ff-zone').innerText(),'Cá sư tử');assert.equal(await page.locator('#ff-suck').isEnabled(),true);
+      assert.equal(await page.locator('#ff-level').innerText(),'041 / 100');assert.equal(await page.locator('#ff-zone').innerText(),'Cá nóc');assert.equal(await page.locator('#ff-suck').isEnabled(),true);
       const at=await page.evaluate(()=>window.__ncnFishPlayer.x),area=await page.locator('#ff-canvas').boundingBox();await page.keyboard.down('e');await page.mouse.move(area.x+area.width*.72,area.y+area.height*.5);await tick(1000);assert.ok(await page.evaluate(()=>window.__ncnFishPlayer.x)>at+50,'Holding suction must not disable mouse steering');assert.ok(parseInt(await page.locator('#ff-energy-value').innerText())<85);assert.equal(await page.locator('#ff-suck').evaluate(n=>n.classList.contains('is-held')),true);await page.keyboard.up('e');await tick(200);assert.equal(await page.locator('#ff-suck').evaluate(n=>n.classList.contains('is-held')),false);await shot('classic-suction');
-      await page.keyboard.press('p');await page.locator('#ff-end').click();await page.locator('#ff-retry').click();await tick(100);assert.equal(await page.locator('#ff-level').innerText(),'041 / 200');assert.equal(await state(),'playing');
+      await page.keyboard.press('p');await page.locator('#ff-end').click();await page.locator('#ff-retry').click();await tick(100);assert.equal(await page.locator('#ff-level').innerText(),'041 / 100');assert.equal(await state(),'playing');
     }finally{await advanced.close();page=previous;}
   });
-  await check('the last of 200 saved stages starts and retries with the correct character',async()=>{
+  await check('old 200-stage progress continues at the new final stage',async()=>{
     const late=await context();await late.addInitScript(()=>localStorage.setItem('ncn:fish:record:v1',JSON.stringify({version:3,best:12000,unlocked:200})));
     const previous=page;page=await late.newPage();page.on('pageerror',e=>errors.push(e.message));
     try{
-      await freezeClock(page);await page.goto(base+'/ca-lon-nuot-ca-be/');await tick(150);assert.equal(await page.locator('#ff-stage-select').inputValue(),'200');assert.equal(await page.locator('#ff-stage-select option:not([disabled])').count(),200);
-      await page.locator('#ff-start').click();await tick(150);assert.equal(await page.locator('#ff-level').innerText(),'200 / 200');assert.equal(await page.locator('#ff-zone').innerText(),'Cá voi sát thủ');assert.ok(await page.evaluate(()=>window.__ncnFishBodies<=21),'Even the last stage begins with at most 20 fish plus the player');await shot('stage-200');
-      await page.keyboard.press('p');await page.locator('#ff-end').click();await page.locator('#ff-retry').click();await tick(150);assert.equal(await page.locator('#ff-level').innerText(),'200 / 200');assert.equal(await state(),'playing');
+      await freezeClock(page);await page.goto(base+'/ca-lon-nuot-ca-be/');await tick(150);assert.equal(await page.locator('#ff-stage-select').inputValue(),'100');assert.equal(await page.locator('#ff-stage-select option:not([disabled])').count(),100);
+      await page.locator('#ff-start').click();await tick(150);assert.equal(await page.locator('#ff-level').innerText(),'100 / 100');assert.equal(await page.locator('#ff-zone').innerText(),'Cá voi sát thủ');assert.ok(await page.evaluate(()=>window.__ncnFishBodies<=21),'Even the last stage begins with at most 20 fish plus the player');await shot('stage-100');
+      await page.keyboard.press('p');await page.locator('#ff-end').click();await page.locator('#ff-retry').click();await tick(150);assert.equal(await page.locator('#ff-level').innerText(),'100 / 100');assert.equal(await state(),'playing');
     }finally{await late.close();page=previous;}
   });
   await check('full-screen fallback fills the viewport, keeps Canvas visible and exits by button or Escape',async()=>{

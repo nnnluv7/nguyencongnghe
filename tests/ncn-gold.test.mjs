@@ -5,8 +5,8 @@ const item=(id,kind,x,y,value=250,mass=2,r=20)=>({id,kind,x,y,r,value,mass,activ
 function lined(kind='gold',value=250,mass=2){const g=game();g.hook.angle=0;g.items=[item(1,kind,480,300,value,mass),item(2,'rock',850,480,10,4)];return g;}
 const total=g=>g.items.reduce((n,o)=>n+o.value,0);
 function stage(g,level){g.level=level;g.goal=target(level);g.items=mine(g.seed,level);return g;}
-test('goals keep the familiar first stages and daily ends at five',()=>{assert.deepEqual([1,2,3,4].map(n=>target(n)),[650,1195,2010,3095]);assert.equal(maxLevels('classic'),200);assert.equal(maxLevels('daily'),5);assert.equal(Object.keys(MODES).length,2);});
-test('all 200 mines are deterministic, reachable, non-overlapping and contain enough value for the next target',()=>{for(let level=1;level<=200;level++)for(const seed of [123,917,3201]){const items=mine(seed,level);assert.deepEqual(items,mine(seed,level));assert.ok(items.length>=10&&items.length<=40);assert.ok(total({items})>=target(level)-(level===1?0:target(level-1)),String(level));for(const o of items){assert.ok(o.x-o.r>=0&&o.x+o.r<=WIDTH);assert.ok(o.y-o.r>=170&&o.y+o.r<=HEIGHT);assert.ok(Math.abs(Math.atan2(o.x-PIVOT.x,o.y-PIVOT.y))<=SWING);for(const b of items)if(b.id>o.id)assert.ok(Math.hypot(o.x-b.x,o.y-b.y)>o.r+b.r,'Overlap at '+level);}}});
+test('goals keep the familiar first stages and daily ends at five',()=>{assert.deepEqual([1,2,3,4].map(n=>target(n)),[650,1195,2010,3095]);assert.equal(maxLevels('classic'),100);assert.equal(maxLevels('daily'),5);assert.equal(Object.keys(MODES).length,2);});
+test('all 100 mines are deterministic, reachable, non-overlapping and contain enough value for the next target',()=>{for(let level=1;level<=100;level++)for(const seed of [123,917,3201]){const items=mine(seed,level);assert.deepEqual(items,mine(seed,level));assert.ok(items.length>=10&&items.length<=40);assert.ok(total({items})>=target(level)-(level===1?0:target(level-1)),String(level));for(const o of items){assert.ok(o.x-o.r>=0&&o.x+o.r<=WIDTH);assert.ok(o.y-o.r>=170&&o.y+o.r<=HEIGHT);assert.ok(Math.abs(Math.atan2(o.x-PIVOT.x,o.y-PIVOT.y))<=SWING);for(const b of items)if(b.id>o.id)assert.ok(Math.hypot(o.x-b.x,o.y-b.y)>o.r+b.r,'Overlap at '+level);}}});
 test('daily seed depends only on Vietnamese date',()=>{const a=createGame({mode:'daily',date:'2026-10-29',seed:1}),b=createGame({mode:'daily',date:'2026-10-29',seed:928});assert.deepEqual(a,b);assert.notEqual(a.seed,createGame({mode:'daily',date:'2026-10-30'}).seed);});
 test('swept collision hits a small diamond even when a frame passes through it',()=>{assert.ok(contact({x:480,y:200},{x:480,y:500},item(1,'diamond',480,307,600,.7,9))!==null);assert.equal(contact({x:470,y:200},{x:470,y:500},item(1,'diamond',530,307,600,.7,9)),null);});
 test('the first physical object on a ray blocks gold behind it',()=>{const g=lined();g.items.unshift(item(3,'rock',480,221,11,4));drop(g);step(g,.4);assert.equal(g.hook.item,3);});
@@ -29,28 +29,35 @@ test('malformed, stale structure and inconsistent save values are rejected',()=>
 test('final classic and daily stages win and cannot open another stage',()=>{for(const mode of ['classic','daily']){const g=createGame({mode,date:'2026-10-29'});g.level=maxLevels(mode);g.goal=target(g.level);g.score=g.money=g.goal;assert.equal(endStage(g),'won');assert.equal(advance(g),null);}const g=game();assert.equal(advance(g),null);});
 
 const currentStage=(level,seed=123)=>{const g=createGame({seed});g.level=level;g.startMoney=g.startScore=g.money=g.score=target(level-1);g.goal=target(level,g.startMoney);g.time=difficulty(level).time;g.items=mine(seed,level);return g;};
-test('200-stage difficulty increases through time, swing, resistance and real hazards',()=>{
- for(let level=1;level<=200;level++){const d=difficulty(level);assert.ok(d.time>=45&&d.time<=60);assert.ok(d.chapter>=1&&d.chapter<=20);assert.ok(d.rocks<=10&&d.tnt<=4&&d.moles<=5);if(level>1){const p=difficulty(level-1);assert.ok(d.time<=p.time&&d.swing>p.swing&&d.resistance>p.resistance&&d.moleSpeed>p.moleSpeed);assert.ok(d.rocks>=p.rocks&&d.tnt>=p.tnt&&d.moles>=p.moles);}if(level>4)assert.ok(quota(level)>quota(level-1));}
- assert.equal(difficulty(200).time,45);assert.equal(quota(200),9289);assert.equal(new Set(Array.from({length:200},(_,i)=>difficulty(i+1).chapter)).size,20);
+test('100-stage difficulty increases through time, swing, resistance and real hazards',()=>{
+ for(let level=1;level<=100;level++){const d=difficulty(level);assert.ok(d.time>=45&&d.time<=60);assert.ok(d.chapter>=1&&d.chapter<=10);assert.ok(d.rocks<=10&&d.tnt<=4&&d.moles<=5);if(level>1){const p=difficulty(level-1);assert.ok(d.time<=p.time&&d.swing>p.swing&&d.resistance>p.resistance&&d.moleSpeed>p.moleSpeed);assert.ok(d.rocks>=p.rocks&&d.tnt>=p.tnt&&d.moles>=p.moles);}if(level>4)assert.ok(quota(level)>quota(level-1));}
+ assert.equal(difficulty(100).time,45);assert.equal(quota(100),9289);assert.equal(new Set(Array.from({length:100},(_,i)=>difficulty(i+1).chapter)).size,10);
 });
 test('surplus money cannot skip the next quota and spending does not create an easier objective',()=>{
  const g=createGame();g.money=g.score=10000;endStage(g);buy(g,'strength');const n=advance(g);assert.equal(n.startMoney,g.money);assert.equal(n.startScore,g.score);assert.equal(stageEarned(n),0);assert.equal(stageGoal(n),quota(2));assert.equal(n.goal,n.money+quota(2));assert.equal(endStage(n),'lost');
  const paid=advance(g);paid.money+=quota(2);paid.score+=quota(2);assert.equal(endStage(paid),'shop');assert.ok(readSave(paid));
 });
 test('every mine leaves enough visible first-hit value for its quota',()=>{
- for(let level=1;level<=200;level++)for(const seed of [123,917,3201]){
+ for(let level=1;level<=100;level++)for(const seed of [123,917,3201]){
   const items=mine(seed,level);let accessible=0;
   for(const o of items.filter(o=>o.value>40&&o.kind!=='mole')){const angle=Math.atan2(o.x-PIVOT.x,o.y-PIVOT.y),a=tip({angle,length:REST}),b=tip({angle,length:reach(angle)});const first=items.map(item=>({item,t:contact(a,b,item)})).filter(x=>x.t!==null).sort((x,y)=>x.t-y.t)[0]?.item;if(first===o)accessible+=o.value;}
   assert.ok(accessible>=quota(level),'Clear-ray value at '+level+', seed '+seed+': '+accessible);
  }
 });
 test('late-stage timers, prices and baselines survive save/restore and malformed baselines fail',()=>{
- for(const level of [1,50,100,150,200]){const g=currentStage(level);assert.ok(readSave(g));step(g,.25);assert.equal(readSave(g).time,g.time);for(const key of ['startMoney','startScore']){const raw=structuredClone(g);raw[key]++;assert.equal(readSave(raw),null,key);}}
- const g=currentStage(200);assert.equal(stageTime(g),45);const raw=structuredClone(g);raw.time=60;assert.equal(readSave(raw),null);
+ for(const level of [1,25,50,75,100]){const g=currentStage(level);assert.ok(readSave(g));step(g,.25);assert.equal(readSave(g).time,g.time);for(const key of ['startMoney','startScore']){const raw=structuredClone(g);raw[key]++;assert.equal(readSave(raw),null,key);}}
+ const g=currentStage(100);assert.equal(stageTime(g),45);const raw=structuredClone(g);raw.time=60;assert.equal(readSave(raw),null);
 });
 test('legacy schema 1 keeps its exact stage and hook, then advances into the new campaign',()=>{
- const old=createGame({seed:123});old.version=1;delete old.startMoney;delete old.startScore;old.level=100;old.items=mine(123,100);old.goal=650;for(let i=2;i<=100;i++)old.goal+=Math.min(4000,545+(i-2)*270);old.money=old.score=old.goal;old.status='shop';const restored=readSave(old);assert.ok(restored);assert.equal(restored.level,100);assert.deepEqual(restored.hook,old.hook);const next=advance(restored);assert.equal(next.version,2);assert.equal(next.level,101);assert.equal(next.startMoney,old.money);assert.equal(stageGoal(next),quota(101));assert.ok(readSave(next));
+ const old=createGame({seed:123});old.version=1;delete old.startMoney;delete old.startScore;old.level=99;old.goal=650;for(let i=2;i<=99;i++)old.goal+=Math.min(4000,545+(i-2)*270);old.money=old.score=old.goal;old.status='shop';const restored=readSave(old);assert.ok(restored);assert.equal(restored.level,99);assert.deepEqual(restored.hook,old.hook);const next=advance(restored);assert.equal(next.version,3);assert.equal(next.level,100);assert.equal(next.startMoney,old.money);assert.equal(stageGoal(next),quota(101));assert.ok(readSave(next));
 });
 test('moving moles stay on the board and saves stay valid in the deepest mines',()=>{
- for(const level of [4,44,90,150,200])for(const seed of [123,917,3201]){const g=currentStage(level,seed);for(let i=0;i<800&&g.status==='playing';i++){step(g,.05);for(const m of g.items.filter(o=>o.kind==='mole'))assert.ok(m.x>=m.r&&m.x<=WIDTH-m.r);if(i%100===0)assert.ok(readSave(g),'Save after motion at '+level);}}
+ for(const level of [4,25,50,75,100])for(const seed of [123,917,3201]){const g=currentStage(level,seed);for(let i=0;i<800&&g.status==='playing';i++){step(g,.05);for(const m of g.items.filter(o=>o.kind==='mole'))assert.ok(m.x>=m.r&&m.x<=WIDTH-m.r);if(i%100===0)assert.ok(readSave(g),'Save after motion at '+level);}}
+});
+test('a saved 200-stage run beyond the new limit continues at the final mine',()=>{
+ const old=currentStage(100);old.version=2;old.level=200;old.money+=1250;old.score+=1250;old.goal=old.startMoney+9289;old.time=17;old.elapsed=28;old.dynamite=3;old.boosts.strength=true;
+ const next=readSave(old);
+ assert.equal(next.version,3);assert.equal(next.level,100);assert.equal(next.time,45);
+ assert.equal(next.money,old.money);assert.equal(next.score,old.score);assert.equal(next.dynamite,3);assert.equal(next.boosts.strength,true);
+ assert.equal(stageGoal(next),quota(100));assert.ok(readSave(next));
 });
