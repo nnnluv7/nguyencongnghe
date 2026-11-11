@@ -25,11 +25,11 @@ export function normalizeSocialMetadata(html,options={}){
       '<link rel="canonical" href="'+escapeHTML(url)+'">',meta('description',description),
       meta('og:type',type,true),meta('og:site_name','nguyencongnghe.com',true),
       meta('og:title',label,true),meta('og:description',description,true),meta('og:url',url,true),
-      meta('og:image',image,true),meta('og:image:alt',image===SOCIAL_IMAGE?'NCN · nguyencongnghe.com':label,true),
+      meta('og:image',image,true),meta('og:image:alt',image===SOCIAL_IMAGE?'nguyencongnghe.com':label,true),
       ...(image===SOCIAL_IMAGE?[meta('og:image:type','image/png',true),meta('og:image:width','1200',true),meta('og:image:height','630',true)]:[]),
       meta('og:locale','vi_VN',true),meta('twitter:card','summary_large_image'),
       meta('twitter:title',label),meta('twitter:description',description),meta('twitter:domain','nguyencongnghe.com'),
-      meta('twitter:image',image),meta('twitter:image:alt',image===SOCIAL_IMAGE?'NCN · nguyencongnghe.com':label)
+      meta('twitter:image',image),meta('twitter:image:alt',image===SOCIAL_IMAGE?'nguyencongnghe.com':label)
     ];
     head=head.replace(/<meta\b[^>]*>\n?/gi,tag=>{
       const key=attr(tag,'property')||attr(tag,'name');

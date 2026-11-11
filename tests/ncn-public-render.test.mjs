@@ -4,6 +4,7 @@ import {readFile} from 'node:fs/promises';
 import {parseGenkRSS,syncGenkNews,mergeNews,GENK_RSS} from '../netlify/lib/ncn-news.mjs';
 import {renderPublicHTML} from '../netlify/lib/ncn-public-render.mjs';
 import {createSitePageHandler} from '../netlify/lib/ncn-site-page.mjs';
+import {createLibraryPageHandler} from '../netlify/lib/ncn-library-page.mjs';
 import {publicCatalog} from '../netlify/lib/ncn-library-api.mjs';
 import {memoryStories} from './fixtures/ncn-stories.mjs';
 
@@ -36,6 +37,16 @@ test('a concurrent feed sync cannot overwrite a newer successful snapshot',async
 test('homepage sends four final article cards and notice geometry before any client code executes',async()=>{
   const html=renderPublicHTML(await read('public/index.html'),mergeNews(rows,news),{notices:[{text:'Tin mới <script>alert(1)</script>'}],now});
   const section=html.slice(html.indexOf('id="ncn-home-latest"'),html.indexOf('id="ncn-favorites-section"'));assert.equal((section.match(/class="ncn-article-card"/g)||[]).length,4);assert.ok(section.includes('data-ncn-source="genk"'));assert.ok(html.includes('class="ncn-has-announcements '));assert.ok(html.includes('&lt;script&gt;alert(1)&lt;/script&gt;'));assert.equal(html.includes('>Tin mới <script>'),false);
+});
+test('the live homepage keeps the logo and removes redundant copy before inserting notices',async()=>{
+  const notice='NCN Arcade · Giải đấu hôm nay';
+  const handler=createLibraryPageHandler({seed,state:async()=>({catalog:rows,notices:[{text:notice}]}),homeShell:()=>read('public/index.html')});
+  const response=await handler(new Request('https://ncn.test/')),html=await response.text();
+  assert.equal(response.status,200);
+  assert.match(html,/<title>Công cụ cho ngày làm việc<\/title>/);
+  assert.match(html,/<a class="ncn-brand ncn-header-brand"[^>]*><span class="ncn-brand-image"><img [^>]*><\/span><\/a>/);
+  assert.doesNotMatch(html,/>TỪ THƯ VIỆN NCN<|data-ncn-config="brand">NCN</);
+  assert.ok(html.includes(notice));
 });
 test('library source, search, category and page query have matching initial server results',async()=>{
   const html=renderPublicHTML(await read('public/thu-vien/index.html'),mergeNews(rows,news),{query:new URLSearchParams('source=genk&page=2'),now});

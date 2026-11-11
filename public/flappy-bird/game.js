@@ -443,7 +443,7 @@ const scrollUI = installScrollUI();
     const url = 'https://nguyencongnghe.com/flappy-bird/' + (daily ? '?challenge=' + challengeDate : '');
     const text = 'Mình vừa đạt ' + bestThisRun + ' điểm trong Bay Đi Đừng Cáu (' + (daily ? 'đường bay ' + challengeDate : MODES[mode].name) + '). Bạn bay được bao xa?';
     try {
-      if (navigator.share) { await navigator.share({ title: 'Bay Đi Đừng Cáu · NCN Arcade', text, url }); $('shareStatus').textContent = 'Đã mở chia sẻ.'; }
+      if (navigator.share) { await navigator.share({ title: 'Bay Đi Đừng Cáu', text, url }); $('shareStatus').textContent = 'Đã mở chia sẻ.'; }
       else if (navigator.clipboard && window.isSecureContext) { await navigator.clipboard.writeText(text + '\n' + url); $('shareStatus').textContent = 'Đã sao chép điểm và đường dẫn.'; }
       else $('shareStatus').textContent = text + ' ' + url;
     } catch (err) { if (err.name !== 'AbortError') $('shareStatus').textContent = text + ' ' + url; }

@@ -36,7 +36,7 @@ test('VIP cards reflect only direct Netlify roles and never upgrade ordinary acc
   const card=vipSummary(current,now);assert.equal(card.state,'inactive');assert.equal(card.expires,'—');assert.equal(card.remaining,'Chưa cấp VIP');assert.equal(card.plan,'Tài khoản thường');
  }
  const direct=vipSummary({...user,vip:true,vipSource:'manual'},now);assert.equal(direct.state,'active');assert.equal(direct.plan,'VIP được cấp trực tiếp');assert.equal(direct.remaining,'Đã cấp VIP');
- assert.equal(vipSummary({...user,admin:true},now).plan,'Quyền quản trị NCN');
+ assert.equal(vipSummary({...user,admin:true},now).plan,'Quyền quản trị');
 });
 test('fresh Identity display fields are optional and user metadata cannot grant VIP or admin',async()=>{
  const raw={id:user.id,email:user.email,confirmed_at:'2026-09-01',created_at:'2026-09-01T12:00:00Z',user_metadata:{full_name:user.name,avatar_url:'https://ncn.test/a.webp',roles:['admin','vip']},app_metadata:{roles:[]}},req=new Request(origin,{headers:{Cookie:'nf_jwt=fixture'}});

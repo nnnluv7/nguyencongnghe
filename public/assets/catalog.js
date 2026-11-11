@@ -1517,7 +1517,7 @@ window.CG_CATALOG = [
     "isPage": true
   },
   {
-    "title": "Thư viện NCN",
+    "title": "Thư viện",
     "link": "/thu-vien/",
     "thumbnail": {
       "src": "/assets/ncn-theme/logo.png",
@@ -1571,10 +1571,10 @@ window.CG_CATALOG = [
     "isPage": true
   },
   {
-    "title": "Rắn Lướt NCN: Đấu trường năng lượng",
+    "title": "Rắn Lướt: Đấu trường năng lượng",
     "link": "/ran-luot/",
     "datetime": "2026-10-25T20:30:00+07:00",
-    "summary": "Chơi đơn cùng 10 đối thủ AI, gom combo cuồng nhiệt và lướt pha. So sánh kỷ lục trên bảng NCN Arcade bằng hồ sơ dùng chung với 4 game còn lại.",
+    "summary": "Chơi đơn cùng 10 đối thủ AI, gom combo cuồng nhiệt và lướt pha. So sánh kỷ lục trên bảng Arcade bằng hồ sơ dùng chung với 4 game còn lại.",
     "labels": [
       "Giải trí"
     ],
@@ -1638,7 +1638,7 @@ window.CG_CATALOG = [
     "date": ""
   },
   {
-    "title": "NCN Arcade · 8 game, một bảng điểm",
+    "title": "Arcade · 8 game, một bảng điểm",
     "link": "/arcade/",
     "thumbnail": {
       "src": "/arcade/cover.svg",
@@ -1650,13 +1650,13 @@ window.CG_CATALOG = [
       "Giải trí"
     ],
     "datetime": "2026-10-26T20:00:00+07:00",
-    "summary": "8 game: Rắn Lướt, Flappy Bird, Pikachu, Cá lớn nuốt cá bé, Khối Sắc 3D, Bắn Bóng, Đào vàng và NCN Blast. Một hồ sơ dùng chung, bảng điểm cộng đồng.",
+    "summary": "8 game: Rắn Lướt, Flappy Bird, Pikachu, Cá lớn nuốt cá bé, Khối Sắc 3D, Bắn Bóng, Đào vàng và Blast. Một hồ sơ dùng chung, bảng điểm cộng đồng.",
     "isPage": true,
     "author": "NCN",
     "date": ""
   },
   {
-    "title": "Bay Đi Đừng Cáu · Flappy Bird NCN",
+    "title": "Bay Đi Đừng Cáu · Flappy Bird",
     "link": "/flappy-bird/",
     "thumbnail": {
       "src": "/flappy-bird/icon.svg",
@@ -1668,7 +1668,7 @@ window.CG_CATALOG = [
       "Giải trí"
     ],
     "datetime": "2026-10-26T20:00:00+07:00",
-    "summary": "Bay né đại bàng, khe đá và bom rơi, nhặt sao và lập kỷ lục. Chơi miễn phí bằng bàn phím hoặc cảm ứng; hồ sơ và bảng điểm dùng chung NCN Arcade.",
+    "summary": "Bay né đại bàng, khe đá và bom rơi, nhặt sao và lập kỷ lục. Chơi miễn phí bằng bàn phím hoặc cảm ứng; hồ sơ và bảng điểm dùng chung Arcade.",
     "isPage": true,
     "author": "NCN",
     "date": ""
@@ -1693,7 +1693,7 @@ window.CG_CATALOG = [
     "image": "/ban-bong/cover.svg"
   },
   {
-    "title": "Đào vàng tuổi thơ · NCN Arcade",
+    "title": "Đào vàng tuổi thơ · Arcade",
     "link": "/dao-vang/",
     "thumbnail": {
       "src": "/dao-vang/cover.png",
@@ -1712,7 +1712,7 @@ window.CG_CATALOG = [
     "image": "/dao-vang/cover.png"
   },
   {
-    "title": "NCN Blast · Ghép khối 8 × 8",
+    "title": "Blast · Ghép khối 8 × 8",
     "link": "/ghep-khoi/",
     "thumbnail": {
       "src": "/ghep-khoi/cover.png",

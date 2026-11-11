@@ -5,7 +5,7 @@ export const GAMES=Object.freeze({
  ocean:{name:'Cá lớn nuốt cá bé',path:'/ca-lon-nuot-ca-be/',icon:'◈',modes:{classic:'Đại dương'}},
  blocks:{name:'Khối Sắc 3D',path:'/xep-hinh/',icon:'▧',modes:{classic:'100 màn'}},
  gold:{name:'Đào vàng',path:'/dao-vang/',icon:'⛏',modes:{classic:'Cổ điển',daily:'Hôm nay'}},
- blast:{name:'NCN Blast',path:'/ghep-khoi/',icon:'▦',modes:{classic:'Cổ điển',daily:'Hôm nay'}},
+ blast:{name:'Blast',path:'/ghep-khoi/',icon:'▦',modes:{classic:'Cổ điển',daily:'Hôm nay'}},
  bubble:{name:'Bắn Bóng',path:'/ban-bong/',icon:'◉',modes:{journey:'Hành trình',relax:'Thư giãn',daily:'Hôm nay'}}
 });
 export const ARCADE_COUNT=Object.keys(GAMES).length;

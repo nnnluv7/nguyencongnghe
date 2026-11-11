@@ -8,6 +8,10 @@ async function files(dir){let result=[];for(const item of await readdir(dir,{wit
 const pages=await files(root);
 for(const page of pages){
  const html=await readFile(page,'utf8');assert.equal((html.match(/id="ncn-built-importmap"/g)||[]).length,1,page);
+ const brand=html.match(/<a class="ncn-brand ncn-header-brand"[^>]*>([\s\S]*?)<\/a>/)?.[1];
+ assert.ok(brand?.includes('<img '),page+': the header still has its logo');
+ assert.equal(brand.replace(/<[^>]+>/g,'').trim(),'',page+': no text next to the header logo');
+ assert.doesNotMatch(html,/<title>NCN \|| \| NCN<\/title>|>TỪ THƯ VIỆN NCN<\/span>/,page);
  const map=JSON.parse(html.match(/id="ncn-built-importmap"[^>]*>(.*?)<\/script>/s)[1]);
  assert.deepEqual(map.imports,manifest.runtimeImports,page+': only unbundled runtime imports belong in the head');
  const charset=html.search(/<meta\b[^>]*charset=/i);assert.ok(charset>=0&&charset<1024,page+': early UTF-8');
