@@ -186,9 +186,10 @@ try{
   for(const [paper,count,width,height] of [['A4',2,297,210],['A5',1,148,210]]){
     await delivery.locator('#nt-paper').selectOption(paper);
     await delivery.waitForFunction(({paper,count})=>{
-      const doc=document.getElementById('nt-preview').contentDocument;
+      const doc=document.getElementById('nt-preview')?.contentDocument;
+      if(!doc?.head?.textContent.includes('@page{size:'+paper))return false;
       const slips=[...doc.querySelectorAll('.delivery-slip')];
-      return doc.head.textContent.includes('@page{size:'+paper)&&slips.length===count&&slips.every(el=>el.querySelector('[data-field="2"]').value==='Nguyễn Thị Mai');
+      return slips.length===count&&slips.every(el=>el.querySelector('[data-field="2"]').value==='Nguyễn Thị Mai');
     },{paper,count});
     const [download]=await Promise.all([delivery.waitForEvent('download'),delivery.locator('#nt-download').click()]);
     const filename='bao-hanh-giao-hang-'+paper.toLowerCase();
