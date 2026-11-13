@@ -163,6 +163,8 @@ try{
  await player.waitFor();assert.equal(await player.getAttribute('preload'),'none');assert.equal(mediaRequests,0);
  await player.evaluate(audio=>audio.load());
  await buyer.waitForFunction(()=>document.querySelector('#au-samples audio')?.duration>0);
+ await page.evaluate(()=>window.scrollTo({top:0,behavior:'instant'}));
+ await page.waitForFunction(()=>{const bounds=document.getElementById('ncn-theme-toggle').getBoundingClientRect();return bounds.top>=0&&bounds.bottom<=innerHeight;});
  await page.locator('#ncn-theme-toggle').click();
  await page.waitForFunction(()=>document.documentElement.dataset.ncnTheme==='dark');
  await fits(page);await page.screenshot({path:out+'/sample-editor-desktop.png',fullPage:true});
