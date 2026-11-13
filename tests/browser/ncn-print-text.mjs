@@ -207,6 +207,8 @@ try{
     });
     assert.equal(await sheet.locator('.ncn-sheet').count(),1);
     assert.equal(layout.panels.length,count);
+    assert.equal(await sheet.locator('.delivery-fees').count(),count);
+    assert.equal(await sheet.locator('.delivery-slip').first().evaluate(el=>getComputedStyle(el).borderTopStyle),'double');
     const near=(a,b)=>assert.ok(Math.abs(a-b)<.8,JSON.stringify({a,b}));
     const px=mm=>mm*96/25.4;
     near(layout.sheet.width,px(width));near(layout.sheet.height,px(height));
