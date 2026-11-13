@@ -119,11 +119,11 @@ export function createDirectEditor({app,frame,stage,getState,onChange,onSelect,o
   listen(win,'keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='p'&&getState().layout){e.preventDefault();flush();onPrint?.();}});
   const commonPrint=doc.getElementById('ncn-page-print');
   listen(commonPrint,'click',e=>{if(getState().layout){e.preventDefault();e.stopImmediatePropagation();flush();onPrint?.();}},true);
-  function render(html,{paperSize,pageIndex=0,pages=1,editable=true}={}){
+  function render(html,{paperSize,pageIndex=0,pages=1,editable=true,editHint}={}){
     childCleanup();size=paperSize;page=pageIndex;count=pages;generation++;
     previous.disabled=page===0;next.disabled=page>=count-1;pageLabel.textContent=`Tờ ${page+1}/${count}`;
     heading.firstChild.textContent=editable?'Bấm vào chữ trên mẫu để nhập':'Mẫu in sẵn';
-    heading.lastChild.textContent=editable?'Mỗi mẫu trên tờ được điền riêng. Ô chưa nhập hiện chữ gợi ý.':'Anh chọn số lượng và khổ giấy rồi bấm In.';
+    heading.lastChild.textContent=editHint??(editable?'Mỗi mẫu trên tờ được điền riêng. Ô chưa nhập hiện chữ gợi ý.':'Anh chọn số lượng và khổ giấy rồi bấm In.');
     linkLabel.hidden=!editable;
     const screenRules='<style data-ncn-preview-viewport>@media screen{html,body{overflow:hidden!important}.ncn-sheet{margin:0!important}input[data-ncn-active]{outline:2px solid #2769b3!important;outline-offset:-2px;background-color:#eaf0ff!important}}</style>';
     frame.srcdoc=html.replace('</head>',screenRules+'</head>').replace('<html ',`<html data-ncn-direct-generation="${generation}" `);
