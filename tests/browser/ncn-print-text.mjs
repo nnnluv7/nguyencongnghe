@@ -180,6 +180,7 @@ try{
   await first.waitFor();
   assert.equal(await first.locator('strong').innerText(),'BẢO HÀNH · GIAO HÀNG');
   await first.locator('.st-card-preview').click();
+  await delivery.locator('.ncn-workspace-bar [data-ncn-pane=fields]').click();
   await delivery.locator('.ncn-print-settings').evaluate(el=>el.open=true);
   await delivery.locator('#nt-field-2').fill('Nguyễn Thị Mai');
   for(const [paper,count,width,height] of [['A4',2,297,210],['A5',1,148,210]]){
