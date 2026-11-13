@@ -4,6 +4,7 @@ import {readFile,mkdir,writeFile,stat} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
 import {createRequire} from 'node:module';
 import assert from 'node:assert/strict';
+import {withDeliveryTemplate} from '../../public/assets/ncn-store-tools/delivery.js';
 
 // Render real print documents, including rotated forms, rather than checking
 // only that the surrounding editor fits the viewport.
@@ -12,7 +13,8 @@ await mkdir(out,{recursive:true});
 const generated=new Map(),cases=[];
 generated.set('/__print-text/boundary-control.html','<!doctype html><style>.ncn-sheet{width:400px;height:400px}.test-frame{border:2px solid;width:90px;height:35px;font:20px/24px Arial}.rotated{transform:rotate(-90deg);margin:100px}</style><section class="ncn-sheet"><div class="test-frame">FIRST LINE<br>SECOND LINE<br>THIRD LINE</div><div class="test-frame rotated">ROTATED<br>SECOND LINE<br>THIRD LINE</div><input type="text" style="width:70px" value="TEXT THAT CANNOT FIT IN THIS FIELD"></section>');
 for(const group of ['ncn-sticker','ncn-popup','ncn-store-tools']){
-  const data=JSON.parse(await readFile(root+'/assets/'+group+'/catalogue.json','utf8'));
+  const source=JSON.parse(await readFile(root+'/assets/'+group+'/catalogue.json','utf8'));
+  const data=group==='ncn-store-tools'?withDeliveryTemplate(source):source;
   const core=await import('../../public/assets/'+group+'/core.js');
   for(const layout of data.layouts)for(const paper of ['A4','A5']){
     const row=core.defaultRow(layout);
@@ -171,6 +173,56 @@ try{
     await page.emulateMedia({media:'screen'});
   }
   await page.close();
+  const delivery=await browser.newPage({viewport:{width:1280,height:900},acceptDownloads:true});
+  await delivery.route('**/*',route=>new URL(route.request().url()).origin===base?route.continue():route.abort());
+  await delivery.goto(base+'/ban-hang/',{waitUntil:'domcontentloaded'});
+  const first=delivery.locator('#nt-cards .st-card').first();
+  await first.waitFor();
+  assert.equal(await first.locator('strong').innerText(),'BẢO HÀNH · GIAO HÀNG');
+  await first.locator('.st-card-preview').click();
+  await delivery.locator('.ncn-print-settings').evaluate(el=>el.open=true);
+  await delivery.locator('#nt-field-2').fill('Nguyễn Thị Mai');
+  for(const [paper,count,width,height] of [['A4',2,297,210],['A5',1,148,210]]){
+    await delivery.locator('#nt-paper').selectOption(paper);
+    await delivery.waitForFunction(({paper,count})=>{
+      const doc=document.getElementById('nt-preview').contentDocument;
+      const slips=[...doc.querySelectorAll('.delivery-slip')];
+      return doc.head.textContent.includes('@page{size:'+paper)&&slips.length===count&&slips.every(el=>el.querySelector('[data-field="2"]').value==='Nguyễn Thị Mai');
+    },{paper,count});
+    const [download]=await Promise.all([delivery.waitForEvent('download'),delivery.locator('#nt-download').click()]);
+    const filename='bao-hanh-giao-hang-'+paper.toLowerCase();
+    const path='/__print-text/'+filename+'.html',html=await readFile(await download.path(),'utf8');
+    assert.match(html,/data:image\/jpeg;base64,/);
+    assert.doesNotMatch(html,/data-ncn-copy/);
+    generated.set(path,html);
+    const sheet=await browser.newPage({viewport:{width:1200,height:850}});
+    await sheet.goto(base+path);
+    await sheet.emulateMedia({media:'print'});
+    const layout=await sheet.evaluate(()=>{
+      const rect=el=>el?.getBoundingClientRect().toJSON();
+      return {sheet:rect(document.querySelector('.ncn-sheet')),cut:rect(document.querySelector('.ncn-cut-line')),
+        panels:[...document.querySelectorAll('.ncn-a5-panel')].map(el=>({panel:rect(el),slip:rect(el.firstElementChild)}))};
+    });
+    assert.equal(await sheet.locator('.ncn-sheet').count(),1);
+    assert.equal(layout.panels.length,count);
+    const near=(a,b)=>assert.ok(Math.abs(a-b)<.8,JSON.stringify({a,b}));
+    const px=mm=>mm*96/25.4;
+    near(layout.sheet.width,px(width));near(layout.sheet.height,px(height));
+    for(const {panel,slip} of layout.panels){
+      near(panel.width,px(width/count));near(panel.height,px(height));
+      assert.ok(slip.bottom<=panel.bottom-px(6),JSON.stringify({panel,slip}));
+      assert.ok(slip.right<=panel.right-px(6),JSON.stringify({panel,slip}));
+    }
+    if(count===2)near(layout.cut.x+layout.cut.width/2,layout.sheet.x+layout.sheet.width/2);
+    else assert.equal(layout.cut,undefined);
+    const print=await sheet.evaluate(inspectText);
+    assert.deepEqual(print.problems,[]);
+    await sheet.pdf({path:out+'/'+filename+'.pdf',preferCSSPageSize:true,printBackground:true});
+    await sheet.screenshot({path:out+'/'+filename+'.png',clip:{x:layout.sheet.x,y:layout.sheet.y,width:Math.floor(layout.sheet.width),height:Math.floor(layout.sheet.height)}});
+    await sheet.close();
+    console.log('PASS delivery '+paper+' · '+count+' full-size '+(count===1?'slip':'slips'));
+  }
+  await delivery.close();
   // Exercise the actual entry points and downloads too: the app must use the
   // corrected catalogue, and its offline HTML must keep the same typography.
   for(const width of [1280,390])for(const [id,count] of [['sales-tv-tc',5],['sales-tv-bh',6],['sales-the-tt',5]]){

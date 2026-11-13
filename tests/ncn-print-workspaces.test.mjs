@@ -5,6 +5,7 @@ import {createHash} from 'node:crypto';
 import * as Sticker from '../public/assets/ncn-sticker/core.js';
 import * as Popup from '../public/assets/ncn-popup/core.js';
 import * as Store from '../public/assets/ncn-store-tools/core.js';
+import {withDeliveryTemplate} from '../public/assets/ncn-store-tools/delivery.js';
 import {editableInput,editCopy,copyAt,rowsForValidation} from '../public/assets/ncn-direct/preview.js';
 
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
@@ -95,6 +96,27 @@ test('legacy printable sheets retain their exact original markup',()=>{
     assert.equal(hash(source.slice(match.index,end)),expected,path);
   }
   for(const [path,expected] of Object.entries(baseline.rendererHashes))assert.equal(hash(readFileSync(new URL('../'+path,import.meta.url))),expected,path);
+});
+test('delivery slips impose an identical pair on A4 and one full-size slip on A5',()=>{
+  const {models,layouts,assets}=withDeliveryTemplate(JSON.parse(read('public/assets/ncn-store-tools/catalogue.json')));
+  const layout=layouts[0];
+  assert.equal(models[0].name,'BẢO HÀNH · GIAO HÀNG');
+  assert.equal(models[0].variants[0].layout,layout.id);
+  const logo=assets[0];
+  assert.equal(hash(readFileSync(new URL('../public'+logo.path,import.meta.url))),logo.sha256);
+  const row=Store.defaultRow(layout);
+  assert.equal(row.qty,1);
+  row.values[2]='Nguyễn & Mai';
+  for(const [paper,orientation,count] of [['A4','landscape',2],['A5','portrait',1]]){
+    const html=Store.renderDocument(layout,[row],{paper});
+    assert.ok(html.includes('@page{size:'+paper+' '+orientation+';margin:0}'));
+    const copies=[...html.matchAll(/<article class="delivery-slip">[\s\S]*?<\/article>/g)].map(m=>m[0]);
+    assert.equal(copies.length,count);
+    assert.ok(copies[0].includes('Nguyễn &amp; Mai'));
+    if(count===2)assert.equal(copies[0],copies[1]);
+    assert.equal((html.match(/class="ncn-cut-line"/g)||[]).length,count-1);
+    assert.equal(Store.paginate(layout,[{...row,qty:3}]).length,3);
+  }
 });
 test('all VIP roles share one preview layout while preserving their action IDs',()=>{
   for(const group of ['ncn-event-private','ncn-gvgs-private'])for(const role of ['admin','vip']){

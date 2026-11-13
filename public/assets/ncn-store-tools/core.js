@@ -25,7 +25,9 @@ export function paginate(layout,rows) {
   const pages=[];let page=[];normalizeRows(layout,rows).forEach(row=>{for(let i=0;i<row.qty;i++){page.push(row);if(page.length===layout.perPage){pages.push(page);page=[];}}});if(page.length)pages.push(page);return pages;
 }
 export function paperSize(layout,paper='A4') {
-  if(!['A4','A5'].includes(paper))throw new Error('Khổ giấy không hợp lệ.');const landscape=layout.defaultOrientation==='landscape',w=paper==='A4'?210:148,h=paper==='A4'?297:210;return {w:landscape?h:w,h:landscape?w:h,orientation:landscape?'landscape':'portrait',ratio:paper==='A4'?1:148/210};
+  if(!['A4','A5'].includes(paper))throw new Error('Khổ giấy không hợp lệ.');
+  if(layout.a5Cut)return paper==='A4'?{w:297,h:210,orientation:'landscape',ratio:1}:{w:148,h:210,orientation:'portrait',ratio:1};
+  const landscape=layout.defaultOrientation==='landscape',w=paper==='A4'?210:148,h=paper==='A4'?297:210;return {w:landscape?h:w,h:landscape?w:h,orientation:landscape?'landscape':'portrait',ratio:paper==='A4'?1:148/210};
 }
 export function renderFrame(layout,row,{preview=false,position=0,editable=false,copyIndex=0}={}) {
   const values=row.values.map((v,i)=>preview&&!editable&&!v&&layout.fields[i].type!=='checkbox'?(layout.fields[i].example||''):v);
@@ -47,14 +49,30 @@ export function renderFrame(layout,row,{preview=false,position=0,editable=false,
 }
 export function renderDocument(layout,rows,{paper='A4',fontCSS='',assets={},preview=false,pageIndex=0,pageLimit=MAX_PAGES,title='In ấn · NCN',editable=false}={}) {
   const pages=paginate(layout,rows),size=paperSize(layout,paper),selected=pages.slice(preview?pageIndex:0,(preview?pageIndex:0)+pageLimit),replaceAssets=text=>Object.entries(assets).reduce((out,[url,data])=>out.split(url).join(data),text);
-  const css=replaceAssets(fontCSS+'\n'+layout.css);if(/<\/style/i.test(css))throw new Error('CSS mẫu chưa hợp lệ.');
-  const content=selected.map((items,p)=>`<section class="ncn-sheet" aria-label="Tờ ${p+1+pageIndex}"><div class="paper"><div class="${escapeHTML(layout.contentClass||'ncn-store-content')}">${items.map((row,position)=>replaceAssets(renderFrame(layout,row,{preview,position,editable,copyIndex:(pageIndex+p)*layout.perPage+position}))).join('\n')}</div></div></section>`).join('\n');
+  const css=replaceAssets((layout.fontCSS??fontCSS)+'\n'+layout.css);if(/<\/style/i.test(css))throw new Error('CSS mẫu chưa hợp lệ.');
+  const content=selected.map((items,p)=>{
+    const index=p+pageIndex;
+    const frames=items.map((row,position)=>replaceAssets(renderFrame(layout,row,{preview,position,editable,copyIndex:index*layout.perPage+position}))).join('\n');
+    if(layout.a5Cut){
+      const panel=`<div class="ncn-a5-panel">${frames}</div>`;
+      const split=paper==='A4';
+      return `<section class="ncn-sheet" aria-label="Tờ ${index+1}"><div class="ncn-a5-imposition"${split?' data-cut':''}>${panel}${split?panel+'<span class="ncn-cut-line" aria-hidden="true"></span>':''}</div></section>`;
+    }
+    return `<section class="ncn-sheet" aria-label="Tờ ${index+1}"><div class="paper"><div class="${escapeHTML(layout.contentClass||'ncn-store-content')}">${frames}</div></div></section>`;
+  }).join('\n');
+  const cutStyles=layout.a5Cut?`
+  .ncn-a5-imposition{position:absolute;inset:0;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+  .ncn-a5-imposition[data-cut]{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ncn-a5-panel{padding:7mm;min-width:0;min-height:0}
+  .ncn-cut-line{position:absolute;left:50%;top:6mm;bottom:6mm;border-left:.25mm dashed #596570;transform:translateX(-50%);pointer-events:none}
+  `:'';
   return `<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHTML(title)}</title><style>
   html{box-sizing:border-box}*,*::before,*::after{box-sizing:inherit}body{font-family:'Times New Roman',serif;font-size:16px;color:#000}input{border-radius:0;box-shadow:none}
   .paper_content{width:738px;margin:0 auto;padding-top:20px}.ncn-store-content{width:100%;height:100%}
   ${css}
   html,body{margin:0;padding:0;min-width:0;color-scheme:light;background:#e9edf3}.ncn-sheet{position:relative;width:${size.w}mm;height:${size.h}mm;margin:0 auto 18px;background:#fff;overflow:hidden;break-after:page;page-break-after:always}.ncn-sheet:last-child{break-after:auto;page-break-after:auto}
   .paper{position:absolute;left:50%;top:0;margin:0 0 0 -390px;padding:0;width:780px;height:1100px;transform:scale(${size.ratio});transform-origin:top center;overflow:hidden}input[type=text]{outline:none;border-radius:0;box-shadow:none;-webkit-appearance:none;appearance:none}input[type=checkbox]{appearance:auto;-webkit-appearance:checkbox;accent-color:#000}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}@page{size:${paper} ${size.orientation};margin:0}@media print{html,body{background:#fff}.ncn-sheet{margin:0;box-shadow:none}}
+  ${cutStyles}
   ${editable?editableStyles:''}
   </style></head><body>${content}</body></html>`;
 }
