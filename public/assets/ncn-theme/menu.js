@@ -1,10 +1,10 @@
 /* One floating menu on desktop and mobile. It works before the config request completes. */
-export const PRIORITY=['event','gvgs','cash','insurance'];
+export const PRIORITY=['audio','event','gvgs','cash','insurance'];
 export const MENU_LABELS={event:'Event VIP',gvgs:'Giờ Vàng VIP',cash:'Kiểm quỹ',insurance:'Bảo Hiểm & Trả Chậm'};
 export function orderTools(tools=[]){return [...PRIORITY.flatMap(id=>tools.filter(t=>t.id===id)),...tools.filter(t=>!PRIORITY.includes(t.id))];}
 export function navigationHTML(tools,link){
  const ordered=orderTools(tools),first=ordered.filter(t=>PRIORITY.includes(t.id)),rest=ordered.filter(t=>!PRIORITY.includes(t.id));
- return '<p class="ncn-nav-label">Mở nhanh</p>'+first.map(t=>link(t.href,MENU_LABELS[t.id]||t.title,t.icon,t.access==='vip',t.id)).join('')+'<p class="ncn-nav-label">Tất cả công cụ</p>'+link('/','Trang chủ','home')+rest.map(t=>link(t.href,t.title,t.icon,t.access==='vip',t.id)).join('')+link('/thu-vien/','Thư viện bài viết','book');
+ return '<p class="ncn-nav-label">Mở nhanh</p>'+first.map(t=>link(t.href,MENU_LABELS[t.id]||t.title,t.icon,t.access==='vip'?'VIP':t.badge,t.id)).join('')+'<p class="ncn-nav-label">Tất cả công cụ</p>'+link('/','Trang chủ','home')+rest.map(t=>link(t.href,t.title,t.icon,t.access==='vip'?'VIP':t.badge,t.id)).join('')+link('/thu-vien/','Thư viện bài viết','book');
 }
 const controllers=new WeakMap();
 export function installFloatingMenu({doc=document,win=window}={}){

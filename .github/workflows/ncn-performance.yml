@@ -23,6 +23,8 @@ jobs:
       - run: node --test tests/ncn-performance.test.mjs
       - run: node tests/netlify-pack.mjs
       - run: npx playwright install --with-deps chromium
+      - name: Verify Audio booking, SePay confirmation, staff permissions and public playback
+        run: node tests/browser/ncn-audio.mjs
       - name: Compare cold and repeated frontend loads on the same simulated mobile connection
         run: node tests/browser/ncn-performance.mjs
       - name: Verify on-demand Excel, actual private editor imports, font metrics and every primary tool route
@@ -50,6 +52,7 @@ jobs:
           name: ncn-built-performance
           path: |
             artifacts/performance/
+            artifacts/audio/
             artifacts/performance-tools/
             artifacts/tool-resources/
             artifacts/profile-built/

@@ -6,8 +6,10 @@ import {installAppearance} from './appearance.js?v=20261017-mobile-dark-1';
 if(typeof window!=='undefined')import('./visitor-counter.js?v=20261016-easy-2').catch(()=>{});
 import {installToolUI} from './tool-ui.js?v=20261025-home-latest-1';
 import {installFloatingMenu,orderTools,navigationHTML} from './menu.js?v=20261017-mobile-dark-1';
+import {AUDIO_MIC,withAudioTool} from '../ncn-audio/shared.js';
 /* NCN portal: navigation and local display preferences. VIP authorization stays on the server. */
 const ICONS = {
+  mic:AUDIO_MIC,
   fish:'<ellipse cx="13" cy="12" rx="8" ry="6"/><path d="m5 12-4-5v10ZM17 10h.01M11 6l2-3 3 4M10 17l3 4 3-4"/>',
   home:'<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z"/>',
   printer:'<path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v7H6zM18 12h.01"/>',
@@ -71,7 +73,7 @@ export function createTheme({doc=document,win=window,config,catalog=win.CG_CATAL
   const imageURL=value=>preview&&win.NCN_THEME_PREVIEW_ASSETS?.[value]||(value==='/assets/ncn-theme/logo.png'?doc.querySelector('link[data-ncn-logo-asset]')?.getAttribute('href'):null)||safeHref(value);
   const previewLinks=root=>{if(preview)(root||doc).querySelectorAll('.ncn-ui a[href^="/"],a.ncn-search-result[href^="/"],a.ncn-search-all[href^="/"]').forEach(a=>{a.href='https://nguyencongnghe.com'+a.getAttribute('href');a.target='_blank';a.rel='noopener';});};
   const groups=(Array.isArray(cfg.groups)?cfg.groups:[]).filter(g=>g&&typeof g.id==='string'&&g.name);
-  const tools=orderTools((Array.isArray(cfg.tools)?cfg.tools:[]).filter(t=>t&&/^[a-z0-9-]+$/i.test(t.id)&&t.title&&safeHref(t.href)).map(t=>({...t,href:safeHref(t.href)})));
+  const tools=orderTools(withAudioTool(cfg.tools).filter(t=>t&&/^[a-z0-9-]+$/i.test(t.id)&&t.title&&safeHref(t.href)).map(t=>({...t,href:safeHref(t.href)})));
   const toolIds=new Set(tools.map(t=>t.id));
   let vipAccess=canUseVip(win.NCNAccount?.state.user);
   const visibleTools=()=>tools.filter(t=>vipAccess||!['event','gvgs'].includes(t.id));
@@ -107,7 +109,7 @@ export function createTheme({doc=document,win=window,config,catalog=win.CG_CATAL
   text('ncn-page-title',home?'Cổng công cụ':library?'Bài viết & hướng dẫn':currentTool?.title||doc.title.replace(/\s*\|\s*nguyencongnghe\.com$/i,''));
   function navLink(href,title,icon,badge='',id='') {
     const active=canonicalPath(href)===path;
-    return `<a class="ncn-nav-link" href="${escapeHTML(href)}"${id?` data-ncn-tool="${escapeHTML(id)}"`:""}${active?' aria-current="page"':''}>${svg(icon)}<span>${escapeHTML(title)}</span>${badge?'<b class="ncn-nav-pill">VIP</b>':''}</a>`;
+    return `<a class="ncn-nav-link" href="${escapeHTML(href)}"${id?` data-ncn-tool="${escapeHTML(id)}"`:""}${active?' aria-current="page"':''}>${svg(icon)}<span>${escapeHTML(title)}</span>${badge==='VIP'?'<b class="ncn-nav-pill">VIP</b>':badge==='NEW'?'<b class="ncn-nav-pill ncn-new-badge">NEW</b>':''}</a>`;
   }
   function renderNavigation(){
     if(tools.length&&$('ncn-navigation')) $('ncn-navigation').innerHTML=navigationHTML(visibleTools(),navLink);
@@ -155,7 +157,8 @@ export function createTheme({doc=document,win=window,config,catalog=win.CG_CATAL
   function toolCard(t) {
     const pinned=favorites.has(t.id),tone=['blue','violet','teal','amber','coral','navy'].includes(t.tone)?t.tone:'blue';
     const action=`<span class="ncn-card-open"><span>Mở công cụ</span>${svg('arrow')}</span>`;
-    return `<article class="ncn-tool-card ncn-tone-${tone}" data-ncn-tool="${escapeHTML(t.id)}"><a class="ncn-tool-link" href="${escapeHTML(t.href)}"><div class="ncn-tool-top"><span class="ncn-tool-icon">${svg(t.icon)}</span>${t.access==='vip'?'<span class="ncn-tool-badge">VIP</span>':''}</div><h3>${escapeHTML(t.title)}</h3><p>${escapeHTML(t.description)}</p>${action}</a><button type="button" class="ncn-pin" data-ncn-pin="${escapeHTML(t.id)}" aria-pressed="${pinned}" aria-label="${pinned?'Bỏ ghim':'Ghim'} ${escapeHTML(t.title)}">${svg('star')}</button></article>`;
+    const badge=t.access==='vip'?'<span class="ncn-tool-badge">VIP</span>':t.badge==='NEW'?'<span class="ncn-tool-badge ncn-new-badge">NEW</span>':'';
+    return `<article class="ncn-tool-card ncn-tone-${tone}" data-ncn-tool="${escapeHTML(t.id)}"><a class="ncn-tool-link" href="${escapeHTML(t.href)}"><div class="ncn-tool-top"><span class="ncn-tool-icon">${svg(t.icon)}</span>${badge}</div><h3>${escapeHTML(t.title)}</h3><p>${escapeHTML(t.description)}</p>${action}</a><button type="button" class="ncn-pin" data-ncn-pin="${escapeHTML(t.id)}" aria-pressed="${pinned}" aria-label="${pinned?'Bỏ ghim':'Ghim'} ${escapeHTML(t.title)}">${svg('star')}</button></article>`;
   }
   function renderTools() {
     const available=visibleTools(),items=available.filter(t=>(!homeGroup||t.group===homeGroup)&&matches(t,homeQuery)),pinned=available.filter(t=>favorites.has(t.id));
