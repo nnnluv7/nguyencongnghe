@@ -1,5 +1,5 @@
 import {createHash} from 'node:crypto';
-import {AUDIO_PRICE} from '../../public/assets/ncn-audio/shared.js';
+import {AUDIO_PRICE,earliestAudioDate} from '../../public/assets/ncn-audio/shared.js';
 
 export const AUDIO_STORE='ncn-audio-v1';
 const codePattern='NCNAUD[A-F0-9]{16}';
@@ -9,7 +9,6 @@ const orderKey=code=>'order-'+code;
 const historyPattern=new RegExp('^history-\\d{13}-'+codePattern+'$');
 export const failAudio=(status,message)=>{throw Object.assign(new Error(message),{status});};
 const iso=now=>new Date(now).toISOString();
-const localDate=now=>iso(now+7*3600000).slice(0,10);
 export const audioCodes=content=>[...new Set(content.toUpperCase().match(new RegExp('\\b'+codePattern+'\\b','g'))||[])];
 
 export function audioText(value,max,message){
@@ -29,7 +28,7 @@ function booking(data,now){
  if(!['Zalo','LINE'].includes(data.channel))failAudio(400,'Chọn Zalo hoặc LINE.');
  const date=data.date;
  if(typeof date!=='string'||!/^20\d{2}-\d\d-\d\d$/.test(date)||!Number.isFinite(Date.parse(date))||iso(Date.parse(date)).slice(0,10)!==date)failAudio(400,'Chọn ngày nhận dự kiến hợp lệ.');
- if(date<localDate(now))failAudio(400,'Ngày nhận dự kiến cần từ hôm nay trở đi.');
+ if(date<earliestAudioDate(now))failAudio(400,'Ngày nhận dự kiến cần từ ngày mai trở đi.');
  if(data.confirm!==true)failAudio(400,'Xác nhận thông tin đặt thu trước khi gửi.');
  return {name,phone,channel:data.channel,date,urgent:data.urgent===true,script:audioText(data.script,8000,'Nhập nội dung cần thu, tối đa 8.000 ký tự.')};
 }

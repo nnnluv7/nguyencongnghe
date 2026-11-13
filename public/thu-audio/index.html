@@ -93,7 +93,7 @@ if(typeof window!=='undefined'&&typeof document!=='undefined')installAppearance(
       <label>Tên người đặt<input name="name" autocomplete="name" maxlength="100" required></label>
       <label>Số điện thoại<input name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="24" required></label>
       <label>Cách liên hệ<select name="channel"><option>Zalo</option><option>LINE</option></select></label>
-      <label>Ngày nhận dự kiến<input name="date" type="date" required></label>
+      <div><label for="au-delivery-date">Ngày nhận dự kiến</label><input id="au-delivery-date" name="date" type="date" aria-describedby="au-date-help" required><small id="au-date-help">Sớm nhất là ngày mai.</small></div>
      </div>
      <label for="au-script">Kịch bản hoặc nội dung cần thu</label>
      <textarea id="au-script" name="script" rows="7" maxlength="8000" placeholder="Nhập lời rao, tên chương trình và cách phát âm cần lưu ý. Nếu cần hỗ trợ soạn lời, ghi nội dung chính ở đây." required></textarea>

@@ -1,5 +1,5 @@
 import {ensureSession,onAuthChange} from '../ncn-identity-client.js';
-import {MAX_AUDIO_SAMPLE_BYTES} from './shared.js';
+import {MAX_AUDIO_SAMPLE_BYTES,earliestAudioDate} from './shared.js';
 
 const endpoint='/.netlify/functions/ncn-audio';
 const savedKey='ncn:audio:order:v1';
@@ -23,6 +23,11 @@ export function mountAudio({doc=document,win=window,fetcher=fetch,identity={ensu
  function saveToken(value){
   token=value;
   try{if(value)win.localStorage.setItem(savedKey,value);else win.localStorage.removeItem(savedKey);}catch{}
+ }
+ function syncDeliveryDate(){
+  const date=form.elements.date;
+  date.min=earliestAudioDate();
+  if(!date.value)date.value=date.min;
  }
  async function api(route,{data,body,query,signal}={}){
   const url=new URL(endpoint,win.location.origin);url.searchParams.set('route',route);
@@ -77,6 +82,8 @@ export function mountAudio({doc=document,win=window,fetcher=fetch,identity={ensu
  }
  form.addEventListener('submit',async event=>{
   event.preventDefault();if(!ready||pending)return;
+  syncDeliveryDate();
+  if(!form.reportValidity())return;
   const fields=new FormData(form),generation=bookingGeneration;
   try{if(!token)saveToken(win.crypto.randomUUID());}catch{message('booking-message','Vui lòng mở trang qua HTTPS để đặt thu.');return;}
   pending=true;$('submit').disabled=true;message('booking-message','Đang tạo đơn…');
@@ -92,7 +99,7 @@ export function mountAudio({doc=document,win=window,fetcher=fetch,identity={ensu
   if(pending)return;
   if(current?.payment!=='paid'&&!win.confirm('Đặt đơn mới sẽ bỏ mã theo dõi đơn này trên trình duyệt. Anh/chị đã lưu mã đơn chưa?'))return;
   ++bookingGeneration;win.clearTimeout(poll);saveToken('');current=null;
-  $('checkout').hidden=true;$('qr').removeAttribute('src');form.hidden=false;form.reset();form.elements.date.value=form.elements.date.min;
+  $('checkout').hidden=true;$('qr').removeAttribute('src');form.hidden=false;form.reset();syncDeliveryDate();
   message('booking-message','');form.elements.name.focus();
  });
  $('copy').addEventListener('click',async()=>{
@@ -101,7 +108,9 @@ export function mountAudio({doc=document,win=window,fetcher=fetch,identity={ensu
  });
  doc.addEventListener('visibilitychange',()=>{
   win.clearTimeout(poll);
-  if(!doc.hidden&&current?.payment==='pending')refreshStatus();
+  if(doc.hidden)return;
+  syncDeliveryDate();
+  if(current?.payment==='pending')refreshStatus();
  });
 
  function renderSamples(items){
@@ -220,12 +229,13 @@ export function mountAudio({doc=document,win=window,fetcher=fetch,identity={ensu
  $('refresh').addEventListener('click',()=>loadHistory());
  $('more').addEventListener('click',()=>loadHistory(true));
  win.addEventListener('hashchange',()=>{if(win.location.hash==='#audio-history'&&!staff)loadStaff();});
- win.addEventListener('pageshow',event=>{if(event.persisted)loadStaff();});
+ win.addEventListener('pageshow',event=>{if(event.persisted){syncDeliveryDate();loadStaff();}});
  doc.addEventListener('ncn-account-change',event=>{if(!event.detail?.user)clearStaff();});
  doc.addEventListener('ncn-account-signed-out',clearStaff);
  identity.onAuthChange(event=>{if(event==='logout')clearStaff();else loadStaff();});
 
- const day=new Date(Date.now()+7*3600000).toISOString().slice(0,10);form.elements.date.min=form.elements.date.value=day;
+ form.elements.date.addEventListener('focus',syncDeliveryDate);
+ syncDeliveryDate();
  async function start(){
   try{
    const setup=await api('setup');

@@ -18,13 +18,14 @@ function request(route,data,headers={}){
  const raw=Buffer.isBuffer(data),method=data===undefined?'GET':'POST';
  return new Request(origin+'/.netlify/functions/ncn-audio?route='+route,{method,headers:{Origin:origin,...(data===undefined?{}:{'Content-Type':raw?'audio/mpeg':'application/json'}),...headers},...(data===undefined?{}:{body:raw?data:JSON.stringify(data)})});
 }
-function fixture({user=null,ready=true,production=true}={}){
+function fixture({user=null,ready=true,production=true,time=now}={}){
  const store=memoryStories(),ledger=memoryStories();
- const call=(route,data,headers)=>createAudioHandler({store:()=>store,bank:bankDetails,production:()=>production,now:()=>now,paymentReady:()=>ready,verify:async()=>user})(request(route,data,headers));
- const webhook=createSePayRouter({store:()=>ledger,audioStore:()=>store,bank:bankDetails,production:()=>production,now:()=>now,config:()=>({secret})});
+ const call=(route,data,headers)=>createAudioHandler({store:()=>store,bank:bankDetails,production:()=>production,now:()=>time,paymentReady:()=>ready,verify:async()=>user})(request(route,data,headers));
+ const webhook=createSePayRouter({store:()=>ledger,audioStore:()=>store,bank:bankDetails,production:()=>production,now:()=>time,config:()=>({secret})});
  const bank=(data={},key=secret)=>{
-  const transaction={id:991,gateway:bankDetails.bank,accountNumber:bankDetails.account,transferType:'in',transferAmount:100000,content:'',transactionDate:'2026-11-13 16:04:23',referenceCode:'fixture-991',...data};
-  const body=JSON.stringify(transaction),stamp=String(now/1000),sig=createHmac('sha256',key).update(stamp+'.'+body).digest('hex');
+  const transactionDate=new Date(time+7*3600000).toISOString().slice(0,19).replace('T',' ');
+  const transaction={id:991,gateway:bankDetails.bank,accountNumber:bankDetails.account,transferType:'in',transferAmount:100000,content:'',transactionDate,referenceCode:'fixture-991',...data};
+  const body=JSON.stringify(transaction),stamp=String(time/1000),sig=createHmac('sha256',key).update(stamp+'.'+body).digest('hex');
   return webhook(new Request(origin+'/.netlify/functions/ncn-sepay-webhook',{method:'POST',headers:{'Content-Type':'application/json','x-sepay-timestamp':stamp,'x-sepay-signature':'sha256='+sig},body}));
  };
  return {store,ledger,call,bank};
@@ -61,6 +62,19 @@ test('booking validates contact, date and confirmation and rejects cross-site su
  }
  assert.equal((await f.call('create',{...initial,token:randomUUID()},{Origin:'https://elsewhere.test'})).status,403);
  assert.equal(f.store.entries.size,0);
+});
+test('the earliest delivery date rolls over at midnight in Vietnam, including at year-end',async()=>{
+ for(const [time,today,tomorrow] of [
+  ['2026-12-31T16:59:59Z','2026-12-31','2027-01-01'],
+  ['2026-12-31T17:00:00Z','2027-01-01','2027-01-02']
+ ]){
+  const f=fixture({time:Date.parse(time)}),data={...initial,token:randomUUID()};
+  const response=await f.call('create',{...data,date:today});
+  assert.equal(response.status,400);
+  assert.match((await response.json()).error,/từ ngày mai/);
+  assert.equal(f.store.entries.size,0);
+  assert.equal((await f.call('create',{...data,date:tomorrow})).status,201);
+ }
 });
 test('only verified Admin and Audio roles can view history or add or remove samples',async()=>{
  for(const [user,status] of [[null,401],[member,403],[staff,200],[admin,200]]){

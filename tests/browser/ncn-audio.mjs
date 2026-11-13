@@ -104,6 +104,7 @@ const message=(p,selector,value)=>p.locator(selector).filter({hasText:value}).wa
 try{
  const guest=await context({width:390,height:844});
  page=await guest.newPage();
+ await page.clock.setFixedTime(new Date(now));
  await page.goto(origin+'/');
  await message(page,'#ncn-tool-grid article:first-child .ncn-new-badge','NEW');
  assert.equal(await page.locator('#ncn-tool-grid article:first-child a').getAttribute('href'),'/thu-audio/');
@@ -119,6 +120,14 @@ try{
  await page.screenshot({path:out+'/booking-mobile.png',fullPage:true});
  assert.equal(await page.locator('#au-sample-editor').isVisible(),false);
  const form=page.locator('#au-order-form'),script='Thu lời rao khuyến mãi cuối tuần.';
+ const date=form.locator('[name=date]');
+ const today=new Date(now+7*3600000).toISOString().slice(0,10);
+ const tomorrow=new Date(Date.parse(today)+86400000).toISOString().slice(0,10);
+ assert.equal(await date.getAttribute('min'),tomorrow);
+ assert.equal(await date.inputValue(),tomorrow);
+ await date.fill(today);
+ assert.equal(await date.evaluate(input=>input.validity.rangeUnderflow),true);
+ await date.fill(tomorrow);
  await form.locator('[name=name]').fill('Khách thử nghiệm');
  await form.locator('[name=phone]').fill('0900123456');
  await form.locator('[name=script]').fill(script);
