@@ -1,5 +1,6 @@
-// Sales template transcribed from the supplied Điện Máy Xanh form.
+// Delivery details and installation prices follow the supplied store form.
 const id='sales-bh-giao-hang',logo='/assets/ncn-store-tools/sales/delivery-logo.jpg';
+const policyURL='https://www.dienmayxanh.com/chinh-sach-bao-hanh-san-pham';
 const model={
  id,name:'BẢO HÀNH · GIAO HÀNG',section:'sales',group:'ban-hang',
  thumbnail:'/assets/ncn-store-tools/sales/delivery-preview.webp',
@@ -15,7 +16,7 @@ const layout={
   field('Tên khách hàng',42,'Nguyễn Thị Mai'),
   field('Số điện thoại',17,'0900000000'),
   field('Giờ giao hàng',27,'09:00–11:00'),
-  field('Ngày giao hàng',18,'15/11/2026')
+  field('Ngày giao hàng',18,'dd/mm/yyyy')
  ],
  prototype:`
 <article class="delivery-slip">
@@ -26,27 +27,15 @@ const layout={
   <h1>CHÍNH SÁCH BẢO HÀNH VÀ PHIẾU HẸN GIAO HÀNG</h1>
   <p><strong>Tivi, tủ lạnh, máy giặt, máy lạnh, máy nước nóng (mới)</strong></p>
   <div class="delivery-pair"><label>Bảo hành <input type="text" data-field="0"> năm</label><label>Remote bảo hành <input type="text" data-field="1"></label></div>
-  <p><strong>Lưu ý</strong> Remote rỉ sét không áp dụng bảo hành. Quý khách nên sử dụng pin tốt và kiểm tra thay pin thường xuyên.</p>
-  <p class="delivery-invoice">HÓA ĐƠN CÔNG TY CHỈ XUẤT TRONG NGÀY</p>
+  <p>Quý khách nên kiểm tra và thay pin remote thường xuyên để tránh rỉ sét.</p>
+  <p class="delivery-invoice">Nếu cần hóa đơn công ty, vui lòng báo nhân viên trong ngày mua.</p>
 
-  <h2>TRƯỜNG HỢP SẢN PHẨM BỊ LỖI</h2>
-  <p><strong>Tháng 1.</strong> Nếu sản phẩm bị lỗi do nhà sản xuất, sẽ được đổi 1 sản phẩm mới cùng hàng, cùng màu, cùng model với sản phẩm đã mua (chỉ áp dụng cho thân máy).</p>
-  <p><strong>Điều kiện đổi.</strong> Máy không trầy xước, không cấn móp, còn nguyên vẹn.</p>
-  <p><strong>Tháng 2 đến tháng 24.</strong> Anh/chị <span class="delivery-name">{{field:2}}</span> có 3 lựa chọn.</p>
-  <ol>
-    <li>ĐMX chuyển hãng bảo hành trong 15 ngày.</li>
-    <li>Đổi sản phẩm cùng model có mất phí 10%/tháng tính từ tháng thứ 2.</li>
-    <li>Hoàn tiền mất phí 20% (tháng 1) + 10% mỗi tháng tiếp theo.</li>
-  </ol>
-  <p><strong>Phụ kiện đi kèm.</strong> Gửi hãng bảo hành trong 15 ngày hoặc đổi sản phẩm tương đương TGDĐ/ĐMX đang kinh doanh.</p>
-
-  <h2>SẢN PHẨM KHÔNG BỊ LỖI NHƯNG KHÁCH MUỐN ĐỔI SẢN PHẨM KHÁC HOẶC TRẢ</h2>
-  <p><strong>Tháng 1.</strong> Khách hàng mất phí sử dụng 20% trong tháng đầu tiên. Thời gian sử dụng tính từ lúc xuất hàng. Quá 1 giờ vẫn tính là 1 tháng. Từ tháng 2 cộng thêm 10% mỗi tháng.</p>
-  <table class="delivery-fees" aria-label="Phí đổi hoặc trả theo tháng">
-    <tbody><tr><th scope="row">Tháng</th><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td></tr>
-    <tr><th scope="row">Phí</th><td>30%</td><td>40%</td><td>50%</td><td>60%</td><td>70%</td><td>80%</td><td>90%</td></tr></tbody>
-  </table>
-  <p class="delivery-condition">Sản phẩm không đủ điều kiện bảo hành không áp dụng đổi và trả. Sản phẩm cần còn đầy đủ phụ kiện đi kèm.</p>
+  <h2>CHÍNH SÁCH BẢO HÀNH VÀ ĐỔI TRẢ</h2>
+  <p><strong>Bảo hành có cam kết trong 12 tháng.</strong> Sản phẩm chính đủ điều kiện được xử lý trong 15 ngày. Nếu quá hạn hoặc phải bảo hành lại trong 30 ngày, phí đổi hoặc hoàn tiền giảm 50% theo chính sách.</p>
+  <p><strong>Đổi sản phẩm lỗi do nhà sản xuất.</strong> Đổi máy mới cùng model và thông số. Tháng đầu miễn phí. Từ tháng 2 đến tháng 12, phí 10% giá trị hóa đơn/tháng. Phụ kiện lỗi đủ điều kiện được đổi tương đương.</p>
+  <p><strong>Hoàn tiền.</strong> Áp dụng cho sản phẩm lỗi và không lỗi đủ điều kiện. Phí tháng đầu là 20% giá trị hóa đơn. Từ tháng 2, mức phí tính theo thời gian và điều kiện của chính sách.</p>
+  <p><strong>Điều kiện.</strong> Sản phẩm còn nguyên vẹn và đủ điều kiện bảo hành hãng. Khi trả hàng, hoàn lại hộp, phụ kiện và quà tặng theo quy định. Từ tháng 13, áp dụng bảo hành hãng nếu còn hạn.</p>
+  <p class="delivery-source">Xem chi tiết tại <a href="${policyURL}">dienmayxanh.com/chinh-sach-bao-hanh-san-pham</a>.</p>
 
   <h2>VẬT TƯ PHÁT SINH</h2>
   <p>Khách thanh toán riêng khi có nhu cầu sử dụng.</p>
@@ -75,12 +64,11 @@ const layout={
 .delivery-slip h1{font-size:12.2pt;line-height:1.14;text-align:center;margin:1.8mm 0 1.6mm;color:#0b2940}
 .delivery-slip h2{font-size:9.5pt;line-height:1.16;margin:1.65mm 0 .55mm}
 .delivery-slip p{margin:.55mm 0}
-.delivery-slip ol,.delivery-slip ul{margin:.45mm 0 .65mm;padding-left:4.25mm}
+.delivery-slip ul{margin:.45mm 0 .65mm;padding-left:4.25mm}
 .delivery-slip li{margin:.32mm 0}
 .delivery-slip .delivery-invoice{font-weight:700;text-align:center;padding:.8mm 0;margin:1.1mm 0;border-block:.2mm solid #52616e}
-.delivery-fees{width:100%;border-collapse:collapse;text-align:center;font-variant-numeric:tabular-nums;margin:.75mm 0}
-.delivery-fees th,.delivery-fees td{border:.18mm solid #687580;padding:.32mm .5mm}
-.delivery-slip .delivery-condition{font-weight:700}
+.delivery-slip .delivery-source{font-size:8.4pt;overflow-wrap:anywhere}
+.delivery-source a{color:inherit}
 .delivery-pair{display:flex;gap:2.2mm;margin:.4mm 0 .65mm}
 .delivery-pair label{display:flex;align-items:baseline;gap:1.15mm;white-space:nowrap;flex:1;min-width:0}
 .delivery-pair input{box-sizing:border-box;min-width:0;flex:1;width:0;max-width:100%;border:0;border-bottom:.2mm dotted #48515b;padding:0 .35mm;color:#111;background:transparent;font:inherit;line-height:1.15}
@@ -88,8 +76,7 @@ const layout={
 .delivery-appointment{border-top:.3mm solid #12222f;margin-top:1.6mm}
 .delivery-appointment h2{margin-top:1.2mm}
 .delivery-appointment label{font-weight:700}
-.delivery-appointment input{font-weight:400}
-.delivery-name{display:inline-block;min-width:24mm;border-bottom:.2mm dotted #48515b}
+.delivery-appointment input{font-weight:400;min-height:4.5mm}
 .delivery-confirm{display:flex;align-items:baseline;gap:1.5mm;font-size:8.8pt;margin:.7mm 0}
 .delivery-confirm span{flex:1;border-bottom:.2mm dotted #48515b;min-height:.8em}
 .delivery-slip .delivery-hotline{margin:1mm 0 0;text-align:center;font-size:9.4pt}

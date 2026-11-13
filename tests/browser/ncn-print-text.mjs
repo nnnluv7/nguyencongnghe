@@ -180,8 +180,8 @@ try{
   await first.waitFor();
   assert.equal(await first.locator('strong').innerText(),'BẢO HÀNH · GIAO HÀNG');
   await first.locator('.st-card-preview').click();
-  await delivery.locator('.ncn-workspace-bar [data-ncn-pane=fields]').click();
   await delivery.locator('.ncn-print-settings').evaluate(el=>el.open=true);
+  await delivery.locator('.ncn-print-fields').evaluate(el=>el.open=true);
   await delivery.locator('#nt-field-2').fill('Nguyễn Thị Mai');
   for(const [paper,count,width,height] of [['A4',2,297,210],['A5',1,148,210]]){
     await delivery.locator('#nt-paper').selectOption(paper);
@@ -218,7 +218,8 @@ try{
     else assert.equal(layout.cut,undefined);
     const print=await sheet.evaluate(inspectText);
     assert.deepEqual(print.problems,[]);
-    await sheet.pdf({path:out+'/'+filename+'.pdf',preferCSSPageSize:true,printBackground:true});
+    const pdf=await sheet.pdf({path:out+'/'+filename+'.pdf',preferCSSPageSize:true,printBackground:true});
+    assert.equal((pdf.toString('latin1').match(/\/Type\s*\/Page\b/g)||[]).length,1,'PDF must contain exactly one page');
     await sheet.screenshot({path:out+'/'+filename+'.png',clip:{x:layout.sheet.x,y:layout.sheet.y,width:Math.floor(layout.sheet.width),height:Math.floor(layout.sheet.height)}});
     await sheet.close();
     console.log('PASS delivery '+paper+' · '+count+' full-size '+(count===1?'slip':'slips'));
