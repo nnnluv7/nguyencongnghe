@@ -1,3 +1,4 @@
+import {withAudioTool} from '../../public/assets/ncn-audio/shared.js';
 import {createServer} from 'node:http';
 import {readFile,stat,mkdir,writeFile} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
@@ -12,7 +13,7 @@ import {optimizePublicHTML} from '../../netlify/lib/ncn-public-assets.mjs';
 // Reproducible local comparison of exactly the same public content. This is a
 // throttled frontend benchmark, not a claim about a visitor's real connection.
 const root=resolve('public'),dist=resolve('dist'),out=resolve('artifacts/performance');await mkdir(out,{recursive:true});
-const toolCount=JSON.parse(await readFile(root+'/assets/ncn-theme/config.json','utf8')).tools.filter(t=>!['event','gvgs'].includes(t.id)).length;
+const toolCount=withAudioTool(JSON.parse(await readFile(root+'/assets/ncn-theme/config.json','utf8')).tools).filter(t=>!['event','gvgs'].includes(t.id)).length;
 const catalog=publicCatalog(JSON.parse(await readFile('netlify/lib/ncn-library/seed.json','utf8')));
 const html=injectCatalog(renderPublicHTML(await readFile(root+'/index.html','utf8'),catalog,{notices:[{text:'NCN · Kiểm tra tốc độ tải trang'}]}),catalog);
 const optimized=optimizePublicHTML(html),requests=[];

@@ -31,6 +31,7 @@ async function context(){
    if(url.pathname.endsWith('ncn-announcements'))return json({items:state.notices});
    if(url.pathname.endsWith('ncn-stories'))return url.searchParams.get('route')==='image'?route.fulfill({contentType:'image/png',body:logo}):json({items:state.stories,serverNow:new Date().toISOString()});
    if(url.pathname.endsWith('ncn-billing'))return json({user:null});
+   if(url.pathname.endsWith('ncn-audio'))return json({ready:false,samples:[]});
    return json({online:1,total:1});
   }
   if(url.pathname.startsWith('/.netlify/identity/'))return json({disable_signup:false,external:{email:true}});

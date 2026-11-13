@@ -112,7 +112,8 @@ try{
   admin=await context();page=await open(admin,'/');await login(page,'admin@example.test');
   await check('verified ADMIN receives a separate navigation entry and extensible hub',async()=>{
     await page.locator('#ncn-admin-navigation').waitFor({state:'attached'});
-    page=await open(admin,'/admin/');await page.locator('.na-module').first().waitFor();assert.equal(await page.locator('.na-module').count(),5);
+    page=await open(admin,'/admin/');await page.locator('.na-module').first().waitFor();assert.equal(await page.locator('.na-module').count(),6);
+    assert.equal(await page.locator('.na-module[href="/thu-audio/#audio-history"]').count(),1);
     assert.equal(await page.locator('.na-module[href="/admin/thu-vien/"]').count(),1);await fits(page);await page.screenshot({path:out+'/admin-hub-desktop.jpg',type:'jpeg',quality:80});
   });
   editor=await open(admin,'/admin/thu-vien/');page=editor;

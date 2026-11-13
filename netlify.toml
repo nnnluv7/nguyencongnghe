@@ -71,6 +71,10 @@
 [functions."ncn-sepay-webhook"]
   node_bundler = "esbuild"
   external_node_modules = ["@netlify/blobs"]
+
+[functions."ncn-audio"]
+  node_bundler = "esbuild"
+  external_node_modules = ["@netlify/identity", "@netlify/blobs"]
 # END NCN VIP PAYMENT
 
 # BEGIN NCN LIBRARY ADMIN

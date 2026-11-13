@@ -144,6 +144,7 @@ body.ncn-menu-open #ncn-menu-backdrop{opacity:1;pointer-events:auto}
 .ncn-tone-coral .ncn-tool-icon{background:#fff0eb;color:#bf6750}
 .ncn-tone-navy .ncn-tool-icon{background:#e9eef7;color:#294d7d}
 .ncn-tool-badge{font-size:8px;padding:4px 5px;margin:0;border-radius:999px;color:#7a52b3;background:#f0eafa;letter-spacing:.3px;font-weight:800;flex:none}
+.ncn-ui .ncn-new-badge{background:#087668;color:#fff;font-size:10px;line-height:1.2;letter-spacing:.05em;font-weight:800;border-radius:999px;padding:4px 7px}
 .ncn-tool-card h3{font-size:16px;line-height:1.4;font-weight:800;margin:0 0 8px;color:var(--ncn-ink)}
 .ncn-tool-card p{font-size:12px;line-height:1.7;color:var(--ncn-muted);margin:0;min-height:40px}
 .ncn-card-open{display:flex;align-items:center;justify-content:space-between;gap:10px;border-top:1px solid var(--ncn-border);padding-top:13px;margin-top:18px;font-size:10px;font-weight:700;color:var(--ncn-accent)}

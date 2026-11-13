@@ -10,7 +10,7 @@ function cookie(req){
   if(entries.length!==1)return null;
   try {const token=decodeURIComponent(entries[0].slice(7));return token.length<16384&&/^[A-Za-z0-9_.-]+$/.test(token)?token:null;}catch{return null;}
 }
-export async function verifyIdentity(req,config,fetcher=fetch,{includeAvatar=false,includeJoined=false}={}){
+export async function verifyIdentity(req,config,fetcher=fetch,{includeAvatar=false,includeJoined=false,includeAudio=false}={}){
   const token=cookie(req);if(!token)return null;
   if(!config?.url)fail(503,'Chưa bật Netlify Identity. ADMIN cần bật Identity trong Netlify.');
   let res;
@@ -23,7 +23,7 @@ export async function verifyIdentity(req,config,fetcher=fetch,{includeAvatar=fal
   // Only app_metadata grants roles. User metadata supplies display fields only.
   const roles=Array.isArray(raw.app_metadata?.roles)?raw.app_metadata.roles:[];
   const avatar=raw.user_metadata?.avatar_url||raw.user_metadata?.picture||raw.user_metadata?.avatar;
-  return {id:String(raw.id),email:String(raw.email),name:String(raw.user_metadata?.full_name||raw.user_metadata?.name||raw.email),admin:roles.includes('admin'),vip:roles.includes('vip'),...(includeAvatar&&typeof avatar==='string'&&avatar.length<2048&&/^https:\/\//.test(avatar)?{avatar}:{}),...(includeJoined&&typeof raw.created_at==='string'&&Number.isFinite(Date.parse(raw.created_at))?{createdAt:raw.created_at}:{})};
+  return {id:String(raw.id),email:String(raw.email),name:String(raw.user_metadata?.full_name||raw.user_metadata?.name||raw.email),admin:roles.includes('admin'),vip:roles.includes('vip'),...(includeAudio?{audio:roles.includes('audio')}:{}),...(includeAvatar&&typeof avatar==='string'&&avatar.length<2048&&/^https:\/\//.test(avatar)?{avatar}:{}),...(includeJoined&&typeof raw.created_at==='string'&&Number.isFinite(Date.parse(raw.created_at))?{createdAt:raw.created_at}:{})};
 }
 async function body(req){
   if(Number(req.headers.get('content-length')||0)>3_000_000)fail(413,'Bảng giá quá lớn. Chia nhỏ chương trình.');
