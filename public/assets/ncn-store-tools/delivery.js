@@ -69,7 +69,7 @@ const layout={
   <section class="delivery-materials">
     <p>▸ VẬT TƯ PHÁT SINH khách thanh toán riêng khi có nhu cầu sử dụng.</p>
     <p>+ CB Panasonic 90.000đ/cái. + EKE 100.000đ/cặp. + Dây điện nguồn Ø 2,5 mm 30.000đ/mét. + Chân đế cao su máy lạnh (4 cái) 40.000đ/bộ.</p>
-    <p class="delivery-copper">*** Phí ống đồng tùy công suất máy, từ 236.000đ, 270.000đ, 320.000đ hoặc 420.000đ/mét (ĐÃ GỒM DÂY ĐIỆN, ỐNG NƯỚC MỀM, QUẤN SI, ĐÓNG MÓC ỐNG).</p>
+    <p class="delivery-copper">*** Phí ống đồng tùy công suất máy. 236.000đ, 270.000đ, 320.000đ hoặc 420.000đ/mét (ĐÃ GỒM DÂY ĐIỆN, ỐNG NƯỚC MỀM, QUẤN SI, ĐÓNG MÓC ỐNG).</p>
     <p>* Phí lắp âm ống đồng trong tường/la phông cố định 70.000đ/mét.</p>
     <p class="delivery-material-item">➢ Khung treo tivi dưới 40 inch (200.000–300.000đ), 37–65 inch (350.000–400.000đ), 60–80 inch (450.000đ).</p>
     <div class="delivery-material-item delivery-confirm"><span>➢ Chân đế máy giặt 350.000–550.000đ</span><strong>XÁC NHẬN ĐÃ TƯ VẤN VẬT TƯ PHÁT SINH</strong></div>
@@ -85,9 +85,9 @@ const layout={
 </article>
 `.trim(),
  css:`
-.delivery-slip{min-width:0;width:100%;min-height:100%;padding:5mm 2mm 2mm;border:1mm double #000;background:#fff;color:#000;font:9.35pt/1.12 "Times New Roman","Liberation Serif",serif}
+.delivery-slip{min-width:0;width:100%;min-height:100%;padding:4mm 2mm 2mm;border:1mm double #000;background:#fff;color:#000;font:9.35pt/1.08 "Times New Roman","Liberation Serif",serif}
 .delivery-slip p,.delivery-slip h2{margin:0}
-.delivery-header{display:flex;align-items:center;justify-content:space-between;gap:1.2mm;margin:.2mm .7mm 5.2mm}
+.delivery-header{display:flex;align-items:center;justify-content:space-between;gap:1.2mm;margin:.2mm .7mm 4mm}
 .delivery-header img{display:block;width:33mm;height:auto}
 .delivery-header strong{font:700 14.8pt/1.05 Calibri,Carlito,Arial,sans-serif;white-space:nowrap}
 .delivery-slip h1{margin:0;text-align:center;font-size:13.2pt;line-height:1.13}
@@ -118,8 +118,8 @@ const layout={
 .delivery-fees{width:100%;border-collapse:collapse;text-align:center;font-size:9pt;font-weight:700;table-layout:fixed}
 .delivery-fees th,.delivery-fees td{border:.22mm solid #000;padding:.17mm 0}
 .delivery-fees th{background:#eee}
-.delivery-return .delivery-condition{text-align:center;font-size:8.85pt;font-weight:700;line-height:1.13;margin:4.5mm 0 1.2mm}
-.delivery-materials{font-size:9.1pt;font-weight:700;line-height:1.11}
+.delivery-return .delivery-condition{text-align:center;font-size:8.85pt;font-weight:700;line-height:1.13;margin:3.2mm 0 1.2mm}
+.delivery-materials{font-size:9.1pt;font-weight:700;line-height:1.08}
 .delivery-copper{text-indent:2mm}
 .delivery-materials .delivery-material-item{padding-left:5mm}
 .delivery-confirm{display:flex;align-items:baseline;gap:2.5mm;margin-top:.2mm}
@@ -130,7 +130,7 @@ const layout={
 .delivery-phone{width:53mm}
 .delivery-time{flex-wrap:wrap;gap:1.1mm}
 .delivery-time label{flex:1 0 30mm}
-.delivery-slip .delivery-hotline{margin-top:1.8mm;font-weight:700}
+.delivery-slip .delivery-hotline{margin-top:1.4mm;font-weight:700}
 .delivery-hotline strong{font-size:15.5pt;line-height:1.05}
 `.trim()
 };
