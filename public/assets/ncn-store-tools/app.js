@@ -1,4 +1,4 @@
-import {catalogueCard} from '../ncn-theme/cards.js?v=20261016-easy-2';
+import {catalogueCard,installCataloguePreview} from '../ncn-theme/cards.js?v=20261016-easy-2';
 import {defaultRow,normalize,escapeHTML,normalizeRows,validateForPrint,paginate,paperSize,renderDocument,parseCSV,sampleCSV,importTable} from './core.js?v=20261015-direct-1';
 import {createDirectEditor} from '../ncn-direct/editor.js?v=20261024-selection-1';
 import {rowsForValidation} from '../ncn-direct/preview.js?v=20261015-direct-1';
@@ -13,11 +13,11 @@ export function createStoreApp({app,data,doc=document,win=window,fetcher=fetch})
  const listen=(node,event,fn,options)=>{node?.addEventListener(event,fn,options);listeners.push(()=>node?.removeEventListener(event,fn,options));};
  const status=(message,error=false)=>{const el=$('nt-status');el.textContent=message;el.hidden=!message;el.classList.toggle('st-error',error);};
  const safe=fn=>event=>{try{fn(event);}catch(error){status(error.message,true);}},selectedRow=()=>rows[selected],total=()=>rows.reduce((n,r)=>n+Number(r.qty||0),0),groupName=id=>groups.find(g=>g.id===id)?.name||'';
- function showCatalogue() {
+ function showCatalogue(selectedId) {
   const query=normalize($('nt-search').value),matches=models.filter(m=>(group==='all'||m.group===group)&&normalize(m.name+' '+groupName(m.group)).includes(query));
   $('nt-groups').innerHTML=[{id:'all',name:'Tất cả'},...groups].map(g=>`<button type="button" data-group="${escapeHTML(g.id)}" aria-pressed="${g.id===group}">${escapeHTML(g.name)}</button>`).join('');
   $('nt-result-count').textContent=`${matches.length} / ${models.length} mẫu`;
-  $('nt-cards').innerHTML=matches.map(m=>catalogueCard(m,data.layouts)).join('')||'<p>Không tìm thấy mẫu. Anh thử từ khóa khác.</p>';
+  $('nt-cards').innerHTML=matches.map(m=>catalogueCard(m,data.layouts,selectedId)).join('')||'<p>Không tìm thấy mẫu. Anh thử từ khóa khác.</p>';
  }
  function showFields() {
   const row=selectedRow();if(!row)return;
@@ -98,7 +98,8 @@ export function createStoreApp({app,data,doc=document,win=window,fetcher=fetch})
   },
   closeModel:()=>{direct.flush();saveDraft();win.clearTimeout(timer);model=null;layout=null;status('');}
  });
- listen($('nt-groups'),'click',safe(e=>{const b=e.target.closest('[data-group]');if(b){group=b.dataset.group;showCatalogue();}}));listen($('nt-search'),'input',showCatalogue);listen($('nt-cards'),'click',safe(e=>{const b=e.target.closest('[data-model]');if(b)chooseModel(b.dataset.model,{source:b});}));
+ const cataloguePreview=installCataloguePreview($('nt-cards'),{win});
+ listen($('nt-groups'),'click',safe(e=>{const b=e.target.closest('[data-group]');if(b){group=b.dataset.group;showCatalogue();}}));listen($('nt-search'),'input',()=>showCatalogue());listen($('nt-cards'),'click',safe(e=>{const b=e.target.closest('[data-model]');if(b)chooseModel(b.dataset.model,{source:b});}));
  listen($('nt-row-list'),'click',safe(e=>{const b=e.target.closest('[data-row]');if(b){selected=Number(b.dataset.row);previewIndex=Math.floor(rows.slice(0,selected).reduce((n,r)=>n+Number(r.qty),0)/layout.perPage);showFields();updatePreview();}}));
  listen($('nt-fields'),'input',safe(e=>{const input=e.target;if(input.dataset.fieldIndex!==undefined){const i=Number(input.dataset.fieldIndex);selectedRow().values[i]=input.type==='checkbox'?(input.checked?'1':''):input.value;}else if(input.dataset.scaleIndex!==undefined)selectedRow().scales[Number(input.dataset.scaleIndex)]=Number(input.value);if(model.letters)$('nt-letter-text').value=selectedRow().values.join('');win.clearTimeout(timer);timer=win.setTimeout(updatePreview,100);}));
  listen($('nt-letter-text'),'input',safe(e=>{const letters=Array.from(e.target.value.normalize('NFC'));selectedRow().values=layout.fields.map((f,i)=>letters[i]||'');showFields();updatePreview();}));listen($('nt-outline'),'change',safe(e=>{selectedRow().outline=e.target.checked;updatePreview();}));listen($('nt-quantity'),'input',safe(e=>{selectedRow().qty=Number(e.target.value);updatePreview();}));listen($('nt-paper'),'change',safe(e=>{paper=e.target.value;updatePreview();}));
@@ -112,6 +113,6 @@ export function createStoreApp({app,data,doc=document,win=window,fetcher=fetch})
  }catch(error){status(error.message,true);}finally{e.target.value='';}});
  const observer=win.ResizeObserver?new win.ResizeObserver(scalePreview):null;if(observer)observer.observe($('nt-preview-stage'));else listen(win,'resize',scalePreview);
  navigation.start();app.dataset.ready='true';
- return {chooseModel,updatePreview,output,direct,getState:()=>({model,layout,rows,selected,group,paper,previewIndex}),setRows:next=>{rows=normalizeRows(layout,next);selected=0;previewIndex=0;showFields();updatePreview();},destroy:()=>{navigation.destroy();direct.destroy();listeners.forEach(fn=>fn());observer?.disconnect();win.clearTimeout(timer);}};
+ return {chooseModel,updatePreview,output,direct,getState:()=>({model,layout,rows,selected,group,paper,previewIndex}),setRows:next=>{rows=normalizeRows(layout,next);selected=0;previewIndex=0;showFields();updatePreview();},destroy:()=>{cataloguePreview.destroy();navigation.destroy();direct.destroy();listeners.forEach(fn=>fn());observer?.disconnect();win.clearTimeout(timer);}};
 }
 if(typeof document!=='undefined'&&document.getElementById('ncn-store-app')&&!window.NCN_STORE_TEST){const app=document.getElementById('ncn-store-app');fetch(catalogueURL('/assets/ncn-store-tools/catalogue.json?v=20261025-print-text-1')).then(r=>{if(!r.ok)throw new Error('Chưa tải được danh mục mẫu.');return r.json();}).then(data=>createStoreApp({app,data:app.dataset.section==='sales'?withReturnsTemplate(withDeliveryTemplate(data)):data})).catch(error=>{const s=document.getElementById('nt-status');s.hidden=false;s.classList.add('st-error');s.textContent=error.message+' Anh tải lại trang bằng Cmd+Shift+R hoặc Ctrl+Shift+R.';});}

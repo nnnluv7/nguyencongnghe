@@ -26,7 +26,7 @@ function coverPosition(model){
     categoryCovers[model.group]||[2,2];
 }
 
-export function catalogueCard(model,layouts){
+export function catalogueCard(model,layouts,selectedId){
   const id=escape(model.id),name=escape(model.name),render=renderPopups.has(model.id);
   const [column,row]=coverPosition(model),atlasSize=100/3;
   const buttons=model.variants.map((variant,index)=>{
@@ -34,7 +34,7 @@ export function catalogueCard(model,layouts){
     const color=count>=4?'small':count>=2?'medium':'large';
     return `<button type="button" class="st-size-${color}" data-model="${id}" data-variant="${index}" aria-label="${name}: ${escape(variant.size)}">${model.variants.length===1?'Chọn mẫu · ':''}${escape(variant.size)}</button>`;
   }).join('');
-  return `<article class="st-card" data-card-model="${id}"${render?' data-render-preview':''}>
+  return `<article class="st-card" data-card-model="${id}" data-current="${model.id===selectedId}"${render?' data-render-preview':''}>
   <button type="button" class="st-card-preview" data-model="${id}" aria-label="${name}: chọn mẫu">
     <span class="st-card-visual" style="--st-cover-position:${column*atlasSize}% ${row*atlasSize}%">
       ${render?'':`<img class="st-card-thumbnail" src="${escape(model.thumbnail)}" alt="Mẫu ${name}" loading="lazy" decoding="async" width="220" height="205">`}
@@ -49,21 +49,29 @@ export function catalogueCard(model,layouts){
 export function installCataloguePreview(cards,{win=window,renderPreview}={}){
   const doc=cards.ownerDocument;
   let frame;
-  function clear(){
+  function removeFrame(){
     const active=frame?.closest('[data-card-model]');
     frame?.remove();frame=null;
     active?.removeAttribute('data-preview-ready');
   }
+  function clear(){
+    removeFrame();
+    const open=cards.querySelector('.st-card-peek[aria-pressed=true]');
+    if(!open)return;
+    open.setAttribute('aria-pressed','false');
+    open.textContent='Xem mẫu in';
+  }
   function reveal(card){
     if(!renderPreview||!card?.hasAttribute('data-render-preview')||frame?.closest('[data-card-model]')===card)return;
-    clear();
+    const source=renderPreview(card.dataset.cardModel);
+    removeFrame();
     frame=doc.createElement('iframe');
     frame.className='st-card-live';
     frame.setAttribute('sandbox','allow-same-origin');
     frame.setAttribute('aria-hidden','true');
     frame.tabIndex=-1;
     frame.title='Mẫu '+card.querySelector('strong').textContent;
-    frame.srcdoc=renderPreview(card.dataset.cardModel);
+    frame.srcdoc=source;
     const preview=frame;
     preview.addEventListener('load',async()=>{
       const content=preview.contentDocument;
@@ -86,30 +94,21 @@ export function installCataloguePreview(cards,{win=window,renderPreview}={}){
     const button=event.target.closest('.st-card-peek');
     if(!button)return;
     const active=button.getAttribute('aria-pressed')==='true';
-    cards.querySelectorAll('.st-card-peek[aria-pressed=true]').forEach(open=>{
-      open.setAttribute('aria-pressed','false');
-      open.textContent='Xem mẫu in';
-    });
+    clear();
     if(!active){
       button.setAttribute('aria-pressed','true');
       button.textContent='Hiện minh họa';
       reveal(button.closest('[data-card-model]'));
-    }else clear();
+    }
   }
+  const pointer=win.matchMedia('(hover:hover) and (pointer:fine)');
   function point(event){
-    if(event.pointerType==='mouse')reveal(event.target.closest('[data-card-model]'));
+    if(pointer.matches&&event.pointerType==='mouse')reveal(event.target.closest('[data-card-model]'));
   }
-  function focus(event){if(event.target.matches(':focus-visible'))reveal(event.target.closest('[data-card-model]'));}
+  function focus(event){if(pointer.matches&&event.target.matches(':focus-visible'))reveal(event.target.closest('[data-card-model]'));}
   function leave(event){
     const card=frame?.closest('[data-card-model]');
-    if(card&&!card.contains(event.relatedTarget)&&!card.matches(':hover')&&!card.querySelector(':focus-visible')&&!card.querySelector('[aria-pressed=true].st-card-peek'))clear();
-  }
-  function resize(){
-    const card=frame?.closest('[data-card-model]');
-    if(card?.querySelector('[aria-pressed=true].st-card-peek')||card?.querySelector(':focus-visible')||card?.matches(':hover')){
-      clear();
-      reveal(card);
-    }else clear();
+    if(card&&!card.contains(event.relatedTarget)&&!card.matches(':hover')&&!card.querySelector(':focus-visible')&&!card.querySelector('[aria-pressed=true].st-card-peek'))removeFrame();
   }
   cards.addEventListener('click',show);
   if(renderPreview){
@@ -117,15 +116,14 @@ export function installCataloguePreview(cards,{win=window,renderPreview}={}){
     cards.addEventListener('pointerout',leave);
     cards.addEventListener('focusin',focus);
     cards.addEventListener('focusout',leave);
-    win.addEventListener('resize',resize);
   }
-  return ()=>{
+  function destroy(){
     clear();
     cards.removeEventListener('click',show);
     cards.removeEventListener('pointerover',point);
     cards.removeEventListener('pointerout',leave);
     cards.removeEventListener('focusin',focus);
     cards.removeEventListener('focusout',leave);
-    win.removeEventListener('resize',resize);
-  };
+  }
+  return {clear,destroy};
 }

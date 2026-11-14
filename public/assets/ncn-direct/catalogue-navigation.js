@@ -1,6 +1,4 @@
-import {installCataloguePreview} from '../ncn-theme/cards.js';
-
-export function createCatalogueNavigation({app,cards,workspace,change,search,filters,restoreFilters,renderCatalogue,openFromURL,closeModel,renderPreview,win=window}) {
+export function createCatalogueNavigation({app,cards,workspace,change,search,filters,restoreFilters,renderCatalogue,openFromURL,closeModel,win=window}) {
   const catalogue=cards.closest('.st-catalogue');
   const {history,location}=win;
   const key='ncnPrintCatalogue';
@@ -24,15 +22,18 @@ export function createCatalogueNavigation({app,cards,workspace,change,search,fil
     }
     const card=source.closest('[data-card-model]');
     const cardTop=card?.getBoundingClientRect().top;
+    const choiceTop=source.getBoundingClientRect().top;
     const list={
       query:search.value,
       filters:filters(),
       y:win.scrollY,
       model:card?.dataset.cardModel,
       variant:source.dataset.variant,
-      cardTop,
+      choiceTop,
       cardY:cardTop+win.scrollY
     };
+    // Save the catalogue separately so browser traversal and the editor button
+    // share the same history entry and restore the same filters and position.
     history.scrollRestoration='manual';
     write('replaceState',location.href,{list});
     write('pushState',url,{fromCatalogue:true});
@@ -48,8 +49,8 @@ export function createCatalogueNavigation({app,cards,workspace,change,search,fil
       search.value=list.query;
       restoreFilters(list.filters);
     }
-    renderCatalogue();
     const id=list?.model||previousModel;
+    renderCatalogue(id);
     if(!id)return;
     const card=[...cards.children].find(node=>node.dataset.cardModel===id);
     if(!card){
@@ -61,7 +62,7 @@ export function createCatalogueNavigation({app,cards,workspace,change,search,fil
     button?.focus({preventScroll:true});
     const space=parseFloat(win.getComputedStyle(app).getPropertyValue('--ncn-chrome-space'))||100;
     const top=card.getBoundingClientRect().top;
-    const anchor=list&&Math.abs(top+win.scrollY-list.cardY)<4&&list.cardTop>=space&&list.cardTop<=win.innerHeight-64
+    const anchor=list&&Math.abs(top+win.scrollY-list.cardY)<4&&list.choiceTop>=space&&list.choiceTop<=win.innerHeight-32
       ?list.y:win.scrollY+top-space-12;
     win.scrollTo({top:Math.max(0,anchor),behavior:'instant'});
   }
@@ -90,14 +91,12 @@ export function createCatalogueNavigation({app,cards,workspace,change,search,fil
     showList(null,previousModel);
   }
 
-  const removePreview=installCataloguePreview(cards,{win,renderPreview});
   change.addEventListener('click',onChangeModel);
   win.addEventListener('popstate',onPopState);
   return {
     select,
     start:()=>sync(false),
     destroy(){
-      removePreview();
       change.removeEventListener('click',onChangeModel);
       win.removeEventListener('popstate',onPopState);
       history.scrollRestoration=initialRestoration;

@@ -123,6 +123,7 @@ try{
       return getComputedStyle(image).opacity==='1'&&image.complete&&image.naturalWidth>0;
     },id);
     assert.equal(await image.evaluate(img=>img.complete&&img.naturalWidth>0),true);
+    assert.ok(await image.evaluate(img=>img.getBoundingClientRect().bottom<=img.parentElement.getBoundingClientRect().bottom));
     if(path==='/popup-a7/')await desktop.screenshot({path:out+'/popup-a7-hover.jpg',type:'jpeg',quality:79});
     const variant=card.locator('[data-variant]').last();
     await variant.click();
@@ -133,6 +134,7 @@ try{
     await desktop.goBack();
     await desktop.waitForURL(base+path);
     await card.waitFor();
+    assert.equal(await card.getAttribute('data-current'),'true');
     assert.ok(await card.evaluate(el=>{
       const box=el.getBoundingClientRect();
       return box.top<innerHeight&&box.bottom>0;

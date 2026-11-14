@@ -1,4 +1,4 @@
-import {catalogueCard} from '../ncn-theme/cards.js?v=20261016-easy-2';
+import {catalogueCard,installCataloguePreview} from '../ncn-theme/cards.js?v=20261016-easy-2';
 import {defaultRow,normalize,normalizeRows,validateForPrint,paginate,renderDocument,parseCSV,importTable,sampleCSV,escapeHTML} from './core.js?v=20261015-direct-1';
 import {createDirectEditor} from '../ncn-direct/editor.js?v=20261024-selection-1';
 import {rowsForValidation} from '../ncn-direct/preview.js?v=20261015-direct-1';
@@ -19,12 +19,12 @@ export function createStickerApp({app,data,doc=document,win=window,fetcher=fetch
   const currentRow=()=>rows[selected];
   const groupName=id=>data.groups.find(g=>g.id===id)?.name||'';
 
-  function showCatalogue() {
+  function showCatalogue(selectedId) {
     const query=normalize($('st-search').value);
     const matches=data.models.filter(m=>(group==='all'||m.group===group)&&normalize(m.name+' '+groupName(m.group)).includes(query));
     $('st-groups').innerHTML=[{id:'all',name:'Tất cả'},...data.groups].map(g=>`<button type="button" data-group="${g.id}" aria-pressed="${g.id===group}">${escapeHTML(g.name)}</button>`).join('');
     $('st-result-count').textContent=`${matches.length} mẫu${group==='all'?'':' · '+groupName(group)}`;
-    $('st-cards').innerHTML=matches.map(m=>catalogueCard(m,data.layouts)).join('')||'<p>Không tìm thấy mẫu. Anh thử từ khóa khác.</p>';
+    $('st-cards').innerHTML=matches.map(m=>catalogueCard(m,data.layouts,selectedId)).join('')||'<p>Không tìm thấy mẫu. Anh thử từ khóa khác.</p>';
   }
 
   function showRowList() {
@@ -165,8 +165,9 @@ export function createStickerApp({app,data,doc=document,win=window,fetcher=fetch
     },
     closeModel:()=>{direct.flush();saveDraft();win.clearTimeout(timer);model=null;layout=null;status('');}
   });
+  const cataloguePreview=installCataloguePreview($('st-cards'),{win});
   $('st-groups').addEventListener('click',safe(event=>{const button=event.target.closest('[data-group]');if(button){group=button.dataset.group;showCatalogue();}}));
-  $('st-search').addEventListener('input',showCatalogue);
+  $('st-search').addEventListener('input',()=>showCatalogue());
   $('st-cards').addEventListener('click',safe(event=>{const button=event.target.closest('[data-model]');if(button)chooseModel(button.dataset.model,button.dataset.variant===undefined?null:Number(button.dataset.variant),{source:button});}));
   $('st-row-list').addEventListener('click',safe(event=>{const button=event.target.closest('[data-row]');if(button){selected=Number(button.dataset.row);previewIndex=Math.floor(rows.slice(0,selected).reduce((n,r)=>n+Number(r.qty),0)/layout.perPage);showFields();updatePreview();}}));
   $('st-fields').addEventListener('input',safe(event=>{
@@ -207,7 +208,7 @@ export function createStickerApp({app,data,doc=document,win=window,fetcher=fetch
   else win.addEventListener('resize',scalePreview);
   navigation.start();
   app.dataset.ready='true';
-  return {chooseModel,updatePreview,output,direct,destroy:()=>{navigation.destroy();direct.destroy();win.clearTimeout(timer);},getState:()=>({model,layout,rows,selected,group,paper,previewIndex}),setRows:next=>{rows=normalizeRows(layout,next);selected=0;previewIndex=0;showFields();updatePreview();}};
+  return {chooseModel,updatePreview,output,direct,destroy:()=>{cataloguePreview.destroy();navigation.destroy();direct.destroy();win.clearTimeout(timer);},getState:()=>({model,layout,rows,selected,group,paper,previewIndex}),setRows:next=>{rows=normalizeRows(layout,next);selected=0;previewIndex=0;showFields();updatePreview();}};
 }
 
 if(typeof document!=='undefined'&&document.getElementById('ncn-sticker-app')) {
