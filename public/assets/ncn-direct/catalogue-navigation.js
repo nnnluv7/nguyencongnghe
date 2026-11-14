@@ -52,7 +52,7 @@ export function createCatalogueNavigation({app,cards,workspace,change,search,fil
     const id=list?.model||previousModel;
     renderCatalogue(id);
     if(!id)return;
-    const card=[...cards.children].find(node=>node.dataset.cardModel===id);
+    const card=[...cards.querySelectorAll('[data-card-model]')].find(node=>node.dataset.cardModel===id);
     if(!card){
       if(list)win.scrollTo({top:list.y,behavior:'instant'});
       return;

@@ -1084,29 +1084,14 @@
   {
     "id": "legacy-93601601acdc8dea",
     "kind": "legacy",
-    "title": "Popup A7 / LED",
+    "title": "Bộ Popup A4–A7 / LED",
     "href": "/popup-a7/",
     "image": "/assets/ncn-popup/media/cc2f77872892dd82.png",
     "labels": [
       "In ấn"
     ],
     "datetime": "2026-10-14T00:00:00+07:00",
-    "summary": "Bộ popup giảm giá, trả chậm và dịch vụ; chọn tiêu đề, nhập nội dung và in.",
-    "isPage": true,
-    "managedPage": false,
-    "sourcePath": ""
-  },
-  {
-    "id": "legacy-fac3cad0b0e6d1f9",
-    "kind": "legacy",
-    "title": "Popup A4 / A5 / A6",
-    "href": "/popup-a4-a5-a6/",
-    "image": "/assets/ncn-popup/media/6de930d95bbdab14.png",
-    "labels": [
-      "In ấn"
-    ],
-    "datetime": "2026-10-14T00:00:00+07:00",
-    "summary": "Popup A4/A5/A6, thêm mẫu Giờ Vàng giá sốc 2 với 5 ô nhập riêng.",
+    "summary": "Chọn mẫu giảm giá, trả chậm và dịch vụ theo ngành hàng.",
     "isPage": true,
     "managedPage": false,
     "sourcePath": ""

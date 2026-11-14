@@ -1,5 +1,7 @@
 import {CAMPAIGN_LEVEL_COUNT} from '../../public/assets/ncn-arcade/campaign.js';
 import {AUDIO_MIC,AUDIO_TOOL,withAudioTool} from '../../public/assets/ncn-audio/shared.js';
+import {homeCardArt} from '../../public/assets/ncn-theme/home-card-art.js';
+import {POPUP_TOOL,withMergedPopup} from '../../public/assets/ncn-theme/popup-tool.js';
 
 // The retained pages share these fragments. Remove them before rendering
 // catalogue entries, notices, stories or managed article text.
@@ -31,11 +33,11 @@ export function trimPublicCopy(html){
 }
 
 // Use the same first entry for the initial HTML, fallback config and hydrated menu.
-export function audioToolConfig(config){return {...config,tools:withAudioTool(config.tools)};}
+export function publicToolConfig(config){return {...config,tools:withMergedPopup(withAudioTool(config.tools))};}
 const audioIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+AUDIO_MIC+'</svg>';
 export function addAudioTool(html){
  const {id,title,href,description,tone}=AUDIO_TOOL;
- html=html.replace(/(<script id="ncn-initial-config" type="application\/json">)([\s\S]*?)(<\/script>)/,(_,start,config,end)=>start+JSON.stringify(audioToolConfig(JSON.parse(config))).replace(/</g,'\\u003c')+end);
+ html=html.replace(/(<script id="ncn-initial-config" type="application\/json">)([\s\S]*?)(<\/script>)/,(_,start,config,end)=>start+JSON.stringify(publicToolConfig(JSON.parse(config))).replace(/</g,'\\u003c')+end);
  const link='<a class="ncn-nav-link" href="'+href+'" data-ncn-tool="'+id+'"'+(html.includes('id="ncn-audio-app"')?' aria-current="page"':'')+'>'+audioIcon+'<span>'+title+'</span><b class="ncn-nav-pill ncn-new-badge">NEW</b></a>';
  html=html.replace(/(<nav id="ncn-navigation"[^>]*>\s*<p class="ncn-nav-label">Mở nhanh<\/p>)(?!<a class="ncn-nav-link" href="\/thu-audio\/")/,'$1'+link);
  const star='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m12 3 2.8 5.8 6.4.9-4.6 4.5 1.1 6.4-5.7-3-5.7 3 1.1-6.4-4.6-4.5 6.4-.9Z"/></svg>';
@@ -45,4 +47,27 @@ export function addAudioTool(html){
   html=html.replace(/(<p id="ncn-tool-count"[^>]*>)(\d+) \/ (\d+) công cụ/,(_,start,shown,total)=>start+(Number(shown)+1)+' / '+(Number(total)+1)+' công cụ');
  }
  return html;
+}
+
+export function preparePublicTools(html){
+  html=addAudioTool(html);
+  html=html.replace(/<a class="ncn-nav-link"[^>]*data-ncn-tool="(popup-large|popup-a7)"[^>]*>[\s\S]*?<\/a>/g,(link,id)=>
+    id==='popup-large'?'':link.replace(/<span>Popup A7 \/ LED<\/span>/,'<span>'+POPUP_TOOL.title+'</span>'));
+  let removedCard=false;
+  html=html.replace(/<article class="ncn-tool-card[^"]*"[^>]*>[\s\S]*?<\/article>/g,card=>{
+    const id=card.match(/data-ncn-pin="([^"]+)"/)?.[1];
+    if(id==='popup-large'){
+      removedCard=true;
+      return '';
+    }
+    if(id===POPUP_TOOL.id){
+      card=card.replaceAll('Popup A7 / LED',POPUP_TOOL.title).replace(/(<\/h3><p>)[^<]*/,'$1'+POPUP_TOOL.description);
+    }
+    if(card.includes('class="ncn-tool-art"'))return card;
+    return card.replace('<div class="ncn-tool-top">',homeCardArt(id)+'<div class="ncn-tool-top">');
+  });
+  if(removedCard){
+    html=html.replace(/(<p id="ncn-tool-count"[^>]*>)(\d+) \/ (\d+) công cụ/,(_,start,shown,total)=>start+(Number(shown)-1)+' / '+(Number(total)-1)+' công cụ');
+  }
+  return html;
 }

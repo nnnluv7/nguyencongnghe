@@ -16,7 +16,7 @@ const state={catalog,notices:[{id:'fixture',text:'NCN · Thông báo kiểm tra 
 const common={production:()=>true,seed,store:()=>({getWithMetadata:async()=>null}),state:async()=>state};
 const library=createLibraryPageHandler({...common,homeShell:()=>read('public/index.html'),indexShell:()=>read('public/thu-vien/index.html'),articleShell:()=>read('netlify/lib/ncn-library/article-shell.html'),original:path=>read('public/'+path)});
 const shell=createSitePageHandler({pages,html:path=>read('public/'+path),state:async({catalog=true}={})=>catalog?state:{...state,catalog:[],catalogDeferred:true},inject:injectCatalog});
-const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml','.woff2':'font/woff2','.ttf':'font/ttf'};
+const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.png':'image/png','.jpg':'image/jpeg','.webp':'image/webp','.svg':'image/svg+xml','.woff2':'font/woff2','.ttf':'font/ttf'};
 const browser=await chromium.launch(),results=[],controlAudit=[];let page,blocked=false,pending=[];
 const logo=await readFile('public/assets/ncn-theme/logo.png');
 async function context(){
@@ -62,13 +62,42 @@ try{
   const ids=path==='/'?['ncn-home-latest','ncn-tools']:['ncn-library-featured','ncn-stories','ncn-library-count'];
   const before=await page.evaluate(ids=>Object.fromEntries(ids.map(id=>[id,document.getElementById(id).getBoundingClientRect().toJSON()])),ids);
   assert.equal(await page.locator(path==='/'?'#ncn-articles a':'#ncn-library-results a').count(),path==='/'?4:12);
-  assert.equal(await page.locator('#ncn-announcement').isVisible(),true);if(path==='/thu-vien/')assert.equal(await page.locator('[data-story-id]').count(),1);
+  assert.equal(await page.locator('#ncn-announcement').isVisible(),true);
+  if(path==='/thu-vien/')assert.equal(await page.locator('[data-story-id]').count(),1);
+  else{
+   const cards=page.locator('#ncn-tool-grid .ncn-tool-card:visible');
+   assert.ok(await cards.count()>0);
+   assert.equal(await cards.locator('.ncn-tool-art').count(),await cards.count());
+   assert.equal(await cards.locator('a[href="/popup-a7/"]').count(),1);
+   assert.equal(await cards.locator('a[href="/popup-a4-a5-a6/"]').count(),0);
+  }
   blocked=false;pending.splice(0).forEach(resolve=>resolve());await page.waitForFunction(()=>window.NCNAccount?.state.ready);await paint(page);
   const after=await page.evaluate(ids=>Object.fromEntries(ids.map(id=>[id,document.getElementById(id).getBoundingClientRect().toJSON()])),ids);
   for(const id of ids)for(const key of ['x','y','width','height'])assert.ok(Math.abs(before[id][key]-after[id][key])<1.1,id+' '+key+' moved: '+before[id][key]+' → '+after[id][key]);
   await fits(page);await page.screenshot({path:out+(path==='/'?'/home-desktop.jpg':'/library-desktop.jpg'),fullPage:true,type:'jpeg',quality:80});await page.close();
  });
  page=await ctx.newPage();await page.goto(origin+'/',{waitUntil:'domcontentloaded'});
+ await check('hover keeps the real tool preview visible while nearby cards keep rotating',async()=>{
+  const art=id=>page.locator('#ncn-tool-grid [data-ncn-tool="'+id+'"] .ncn-tool-art');
+  const current=art('audio'),neighbor=art('cash');
+  await current.scrollIntoViewIfNeeded();
+  await page.mouse.move(0,0);
+  await page.locator('#ncn-tool-grid [data-ncn-tool=cash][data-card-visible]').waitFor();
+  const samples=async(id,opacity)=>page.waitForFunction(({id,opacity})=>{
+   const el=document.querySelector('#ncn-tool-grid [data-ncn-tool="'+id+'"] .ncn-tool-art');
+   const sample=getComputedStyle(el,'::after');
+   return sample.opacity===opacity&&(opacity==='0'||sample.backgroundImage.includes('home-tool-previews'));
+  },{id,opacity},{timeout:7000});
+  await samples('cash','0');
+  await current.hover();
+  await samples('audio','1');
+  await samples('cash','1');
+  await samples('cash','0');
+  assert.equal(await current.evaluate(el=>getComputedStyle(el,'::after').opacity),'1');
+  assert.equal(await neighbor.evaluate(el=>getComputedStyle(el,'::after').opacity),'0');
+  await page.mouse.move(0,0);
+  await samples('audio','0');
+ });
  await check('heading sizes and inline search icon, input and card edges align at every breakpoint',async()=>{
   for(const width of [1920,1280,820,640,390,320]){
    await page.setViewportSize({width,height:900});await paint(page);await fits(page);

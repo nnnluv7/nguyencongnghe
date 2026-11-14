@@ -97,7 +97,7 @@ try{
   }
   const catalogues=[
     ['/popup-a7/','btn-giam','st','giam-gia','BÀN TRẢI NGHIỆM'],
-    ['/popup-a4-a5-a6/','ml-giam','st','giam-gia','MÁY LẠNH'],
+    ['/popup-a7/','ml-giam','st','giam-gia','MÁY LẠNH','ML'],
     ['/sticker/','gg2','st','thong-tin','Gạch giá'],
     ['/ban-hang/','sales-bh-giao-hang','nt','ban-hang','BẢO HÀNH'],
     ['/trang-tri/','decor-buom-2','nt','buom','BƯỚM']
@@ -106,18 +106,25 @@ try{
   const catalogueErrors=[];
   desktop.on('pageerror',error=>catalogueErrors.push(error.message));
   await desktop.route('**/*',route=>new URL(route.request().url()).origin===base?route.continue():route.abort());
-  for(const [path,id,prefix,group,query] of catalogues){
+  for(const [path,id,prefix,group,query,industry] of catalogues){
     await desktop.goto(base+'/');
     await desktop.goto(base+path);
     await desktop.locator('[data-ready=true] .st-cards .st-card').first().waitFor();
+    if(path==='/popup-a7/'){
+      assert.equal(await desktop.locator('#st-cards .st-card').count(),33);
+      assert.equal(await desktop.locator('#st-cards .pp-industry > h3').count(),7);
+      if(industry)await desktop.locator('#pp-industries [data-industry="'+industry+'"]').click();
+    }
     await desktop.locator('#'+prefix+'-groups [data-group="'+group+'"]').click();
     const search=desktop.locator('#'+prefix+'-search'),card=desktop.locator('[data-card-model="'+id+'"]');
     const image=card.locator('.st-card-thumbnail'),primary=card.locator('.st-card-preview');
     await search.fill(query);
     await primary.scrollIntoViewIfNeeded();
     await desktop.mouse.move(0,0);
-    assert.equal(await image.evaluate(el=>getComputedStyle(el).opacity),'0');
-    await primary.hover();
+    const illustrated=path==='/popup-a7/'||path==='/trang-tri/';
+    assert.equal(await card.locator('.st-card-visual').count(),illustrated?1:0);
+    assert.equal(await image.evaluate(el=>getComputedStyle(el).opacity),illustrated?'0':'1');
+    if(illustrated)await primary.hover();
     await desktop.waitForFunction(id=>{
       const image=document.querySelector('[data-card-model="'+id+'"] .st-card-thumbnail');
       return getComputedStyle(image).opacity==='1'&&image.complete&&image.naturalWidth>0;
@@ -142,6 +149,7 @@ try{
     assert.equal(await search.inputValue(),query);
     assert.equal(await desktop.locator('#'+prefix+'-groups [aria-pressed=true]').getAttribute('data-group'),group);
     assert.equal(await variant.evaluate(el=>el===document.activeElement),true);
+    if(industry)assert.equal(await desktop.locator('#pp-industries [aria-pressed=true]').getAttribute('data-industry'),industry);
     await desktop.goForward();
     await desktop.waitForURL(selectedURL.href);
     await desktop.locator('#'+prefix+'-workspace').waitFor();
@@ -175,12 +183,14 @@ try{
   await peek.tap();
   assert.equal(phone.url(),base+'/popup-a7/');
   assert.equal(await peek.getAttribute('aria-pressed'),'true');
-  await model.frameLocator('iframe.st-card-live').locator('input[data-field="0"]').waitFor();
-  await phone.waitForSelector('[data-card-model=btn-tc][data-preview-ready]');
+  const finish=phone.locator('[data-card-model=btn-tc][data-sample-ready] .st-card-thumbnail');
+  await finish.waitFor();
+  await phone.waitForFunction(img=>getComputedStyle(img).opacity==='1',await finish.elementHandle());
+  assert.equal(await model.locator('iframe').count(),0);
   assert.equal(await phone.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
   await phone.screenshot({path:out+'/popup-a7-touch-preview.jpg',type:'jpeg',quality:79});
   await peek.tap();
-  await model.locator('iframe.st-card-live').waitFor({state:'detached'});
+  await phone.waitForFunction(img=>getComputedStyle(img).opacity==='0',await finish.elementHandle());
   await model.locator('.st-card-preview').tap();
   await phone.waitForURL(/mau=btn-tc/);
   await phone.locator('#st-change-model').tap();
@@ -189,5 +199,26 @@ try{
   assert.deepEqual(catalogueErrors,[]);
   console.log('PASS Popup A7 touch preview uses the real installment layout and returns to its card');
   await phone.close();
+
+  const rotating=await browser.newPage({viewport:{width:390,height:844},hasTouch:true,isMobile:true});
+  await rotating.route('**/*',route=>new URL(route.request().url()).origin===base?route.continue():route.abort());
+  await rotating.clock.install();
+  await rotating.goto(base+'/popup-a7/');
+  await rotating.locator('#pp-industries [data-industry=ICT]').tap();
+  const preview=rotating.locator('[data-card-model=btn-giam] .st-card-thumbnail');
+  await preview.scrollIntoViewIfNeeded();
+  await rotating.waitForSelector('[data-card-model=btn-giam][data-card-visible][data-sample-ready]');
+  const host=rotating.locator('.st-catalogue');
+  const initial=await preview.boundingBox();
+  assert.equal(await preview.evaluate(img=>getComputedStyle(img).opacity),'0');
+  await rotating.clock.runFor(3250);
+  assert.equal(await host.getAttribute('data-preview-phase'),'');
+  await rotating.waitForFunction(img=>getComputedStyle(img).opacity==='1',await preview.elementHandle());
+  await rotating.clock.runFor(3000);
+  assert.equal(await host.getAttribute('data-preview-phase'),null);
+  await rotating.waitForFunction(img=>getComputedStyle(img).opacity==='0',await preview.elementHandle());
+  assert.deepEqual(await preview.boundingBox(),initial);
+  await rotating.close();
+  console.log('PASS Popup switches both ways every 3 seconds without touch and holds its layout');
   console.log('PASS '+checkedFields+' real numeric defaults across '+cases.length+' layouts; source '+root);
 }finally{await browser.close();await new Promise(done=>server.close(done));}

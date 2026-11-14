@@ -7,7 +7,7 @@ import sharp from 'sharp';
 import wawoff2 from 'wawoff2';
 import {buildPikachuArt} from './build-pikachu-art.mjs';
 import {assetPath,localAssetPath,stylesheetKey,optimizePublicHTML} from '../netlify/lib/ncn-public-assets.mjs';
-import {addAudioTool,audioToolConfig,trimPublicCopy} from '../netlify/lib/ncn-public-copy.mjs';
+import {preparePublicTools,publicToolConfig,trimPublicCopy} from '../netlify/lib/ncn-public-copy.mjs';
 
 const root=resolve('public'),output=resolve('dist'),assets='/assets/ncn-built/';
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex').slice(0,16);
@@ -24,10 +24,10 @@ export async function buildPublic(){
   await rm(output,{recursive:true,force:true});await cp(root,output,{recursive:true});await mkdir(output+assets,{recursive:true});
   const fallbackConfig='/assets/ncn-theme/config.json';
   const config=JSON.parse(trimPublicCopy(await readFile(root+fallbackConfig,'utf8')));
-  await writeFile(output+fallbackConfig,JSON.stringify(audioToolConfig(config)));
+  await writeFile(output+fallbackConfig,JSON.stringify(publicToolConfig(config)));
   const paths=(await files(root)).sort(),htmlFiles=paths.filter(x=>x.endsWith('.html'));
   const templates=[...htmlFiles,resolve('netlify/lib/ncn-library/article-shell.html')];
-  const htmls=await Promise.all(templates.map(async path=>addAudioTool(trimPublicCopy(await readFile(path,'utf8')))));
+  const htmls=await Promise.all(templates.map(async path=>preparePublicTools(trimPublicCopy(await readFile(path,'utf8')))));
   const scripts=paths.filter(x=>x.endsWith('.js')),sources=new Map(await Promise.all(scripts.map(async path=>[path,await readFile(path,'utf8')])));
   const entryPoints={};
   for(const [path,source] of sources)if(/^\s*(?:import(?:\s+|['"])|export\s+)/m.test(source))entryPoints[relative(root,path).slice(0,-3)]=path;
@@ -60,7 +60,16 @@ export async function buildPublic(){
   const thumbnails=new Map();
   for(const [name,app] of [['ncn-sticker','ncn-sticker-app'],['ncn-popup','ncn-popup-app'],['ncn-store-tools','ncn-store-app']]){
     const source='/assets/'+name+'/catalogue.json',data=JSON.parse(await readFile(root+source,'utf8'));
-    for(const model of data.models){const original=model.thumbnail;if(!thumbnails.has(original))thumbnails.set(original,await generatedAsset('thumbnails',await sharp(root+original).resize({width:480,height:448,fit:'inside',withoutEnlargement:true}).webp({quality:85}).toBuffer(),'webp'));model.thumbnail=thumbnails.get(original);}
+    for(const model of data.models){
+      const original=model.thumbnail;
+      if(!thumbnails.has(original)){
+        const bytes=await readFile(root+original);
+        const compressed=await sharp(bytes).resize({width:480,height:448,fit:'inside',withoutEnlargement:true}).webp({quality:85}).toBuffer();
+        const preview=original.endsWith('.webp')&&bytes.length<=compressed.length?bytes:compressed;
+        thumbnails.set(original,await generatedAsset('thumbnails',preview,'webp'));
+      }
+      model.thumbnail=thumbnails.get(original);
+    }
     // Only catalogue thumbnails change. Full-resolution print layouts, assets,
     // checksums and font CSS keep their original values.
     manifest.catalogues[source]={app,href:await generatedAsset('catalogues',Buffer.from(JSON.stringify(data)),'json')};

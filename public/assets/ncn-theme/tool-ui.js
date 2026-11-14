@@ -19,8 +19,6 @@ export function installToolUI({doc=document,win=window,config={},preview=false}=
     if(settings)settings.classList.add('st-settings');
     if(imports)disclosure(imports,'Nhập danh sách từ Excel / CSV');
     if(settings){const toggle=make('button','st-text-button ncn-font-toggle','Chỉnh cỡ chữ');toggle.type='button';toggle.setAttribute('aria-pressed','false');settings.after(toggle);listen(toggle,'click',()=>{const on=app.classList.toggle('ncn-show-font-tools');toggle.setAttribute('aria-pressed',String(on));toggle.textContent=on?'Ẩn chỉnh cỡ chữ':'Chỉnh cỡ chữ';});}
-    const industries=$('pp-industries');if(industries&&app.contains(industries))disclosure(industries,'Lọc thêm theo ngành hàng');
-    const title=$('pp-title');if(title&&app.contains(title)&&settings){const label=title.closest('label'),filter=app.querySelector('.pp-filter-bar'),note=$('pp-title-note');if(label)settings.prepend(label);if(note){note.classList.add('ncn-popup-title-note');settings.after(note);}if(filter)filter.hidden=true;}
     if(prefix==='nt'){const quick=$('nt-letter-control');if(quick&&!quick.hidden)quick.classList.add('ncn-letter-quick');}
   }
   for(const id of ['ncn-sticker-app','ncn-popup-app','ncn-store-app'])enhanceEditor($(id));

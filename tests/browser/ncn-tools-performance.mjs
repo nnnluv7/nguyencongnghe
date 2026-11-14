@@ -4,6 +4,7 @@ import {resolve,extname,sep} from 'node:path';
 import {gzipSync} from 'node:zlib';
 import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
+import {withMergedPopup} from '../../public/assets/ncn-theme/popup-tool.js';
 
 // All network traffic stays on a disposable local server. Public pages, their
 // real assets and simulated network conditions match between audit versions.
@@ -25,7 +26,7 @@ const server=createServer(async(req,res)=>{
  }catch{res.writeHead(404);res.end('Not found');}
 });
 await new Promise(done=>server.listen(0,'127.0.0.1',done));const base='http://127.0.0.1:'+server.address().port;
-await mkdir(out,{recursive:true});const browser=await chromium.launch(),results=[],queue=config.tools.filter(t=>!process.env.NCN_TOOL_AUDIT_FILTER||t.href.includes(process.env.NCN_TOOL_AUDIT_FILTER));
+await mkdir(out,{recursive:true});const browser=await chromium.launch(),results=[],queue=withMergedPopup(config.tools).filter(t=>!process.env.NCN_TOOL_AUDIT_FILTER||t.href.includes(process.env.NCN_TOOL_AUDIT_FILTER));
 async function worker(){while(queue.length){const tool=queue.shift(),context=await browser.newContext({viewport:{width:390,height:844}}),page=await context.newPage(),errors=[];
  try{
   page.on('pageerror',error=>errors.push(error.message));await page.addInitScript(()=>{window.__ncnLongTasks=[];new PerformanceObserver(list=>{window.__ncnLongTasks.push(...list.getEntries().map(x=>({start:x.startTime,duration:x.duration})));}).observe({type:'longtask',buffered:true});});

@@ -1,4 +1,4 @@
-import {withAudioTool} from '../../public/assets/ncn-audio/shared.js';
+import {publicToolConfig} from '../../netlify/lib/ncn-public-copy.mjs';
 import {arcadeEngineFixture} from '../fixtures/arcade-store.mjs';
 import {chromium} from 'playwright';
 import {readFile,mkdir,writeFile,stat} from 'node:fs/promises';
@@ -63,7 +63,7 @@ try{
   const record=await page.locator('#rl-best').innerText();await screenshot('result-desktop');await page.locator('#rl-retry').click();assert.equal(await state(),'playing');await page.keyboard.press('p');await page.locator('#rl-home-paused').click();await page.reload();await page.clock.runFor(100);assert.equal(await page.locator('#rl-best').innerText(),record);
  });
  await check('home and global search both open the game with the complete initial card count',async()=>{
-  await page.goto(base+'/');await page.clock.runFor(100);const cfg=JSON.parse(await readFile('public/assets/ncn-theme/config.json','utf8'));assert.equal(await page.locator('#ncn-tool-grid .ncn-tool-card').count(),withAudioTool(cfg.tools).filter(t=>!['event','gvgs'].includes(t.id)).length);assert.equal(await page.locator('#ncn-tool-grid a[href="/ran-luot/"]').count(),1);await page.locator('[data-ncn-search-open]').first().click();await page.locator('#ncn-global-query').fill('ran luot');assert.ok(await page.locator('#ncn-global-results a[href="/ran-luot/"]').count()>=1);
+  await page.goto(base+'/');await page.clock.runFor(100);const cfg=JSON.parse(await readFile('public/assets/ncn-theme/config.json','utf8'));assert.equal(await page.locator('#ncn-tool-grid .ncn-tool-card').count(),publicToolConfig(cfg).tools.filter(t=>!['event','gvgs'].includes(t.id)).length);assert.equal(await page.locator('#ncn-tool-grid a[href="/ran-luot/"]').count(),1);await page.locator('[data-ncn-search-open]').first().click();await page.locator('#ncn-global-query').fill('ran luot');assert.ok(await page.locator('#ncn-global-results a[href="/ran-luot/"]').count()>=1);
  });
  await page.close();
  const touch=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});page=await touch.newPage();page.on('pageerror',e=>errors.push(e.message));await page.clock.install();await page.goto(base+'/ran-luot/');await page.clock.runFor(100);

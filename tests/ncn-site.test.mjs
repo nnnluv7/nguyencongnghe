@@ -34,8 +34,8 @@ test('local script, stylesheet and image references resolve',()=>{
   }
 });
 test('retired editor URLs redirect to a single existing editor',()=>{
-  for(const [from,to] of [['/p/sticker.html','/sticker/'],['/p/popup-a7.html','/popup-a7/'],['/p/popup-a4-a5-a6.html','/popup-a4-a5-a6/']]){
-    assert.equal(existsSync(join(root,from)),false);
+  for(const [from,to] of [['/p/sticker.html','/sticker/'],['/p/popup-a7.html','/popup-a7/'],['/p/popup-a4-a5-a6.html','/popup-a7/'],['/popup-a4-a5-a6/','/popup-a7/'],['/popup-a4-a5-a6/index.html','/popup-a7/'],['/popup-a4-a5-a6','/popup-a7/']]){
+    assert.equal(pages.includes(join(root,from))||existsSync(join(root,from,'index.html')),false,from);
     assert.ok(existsSync(join(root,to,'index.html')));
     assert.ok(redirects.some(([a,b,status])=>a===from&&b===to&&status==='301'));
   }
