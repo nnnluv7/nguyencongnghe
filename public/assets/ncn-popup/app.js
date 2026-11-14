@@ -1,13 +1,15 @@
-import {catalogueCard} from '../ncn-theme/cards.js?v=20261016-easy-2';
+import {catalogueCard,installCataloguePreview} from '../ncn-theme/cards.js?v=20261016-easy-2';
 import {defaultRow,normalize,normalizeRows,validateForPrint,renderDocument,parseCSV,importTable,sampleCSV,escapeHTML,withHeader,paperSize} from './core.js?v=20261015-direct-1';
 import {createDirectEditor} from '../ncn-direct/editor.js?v=20261024-selection-1';
 import {rowsForValidation} from '../ncn-direct/preview.js?v=20261015-direct-1';
 import {catalogueURL,loadSpreadsheet} from '../ncn-tool-resources.js';
+import {createCatalogueNavigation} from '../ncn-direct/catalogue-navigation.js';
 
 export function createPopupApp({app,data,doc=document,win=window,fetcher=fetch}) {
   const $=id=>doc.getElementById(id);
   let model=null,layout=null,rows=[],selected=0,group='all',paper='A4',counter=0,timer=null,previewIndex=0;
-  let sizeGroup=win.location.pathname.includes('popup-a7')?'small':'large',header='grq';
+  const defaultSize=win.location.pathname.includes('popup-a7')?'small':'large';
+  let sizeGroup=defaultSize,header='grq';
   const industries=new Set(data.industries.map(i=>i.id));
   const printLayout=()=>withHeader(layout,data.titles,header);
   const drafts=new Map();
@@ -19,16 +21,16 @@ export function createPopupApp({app,data,doc=document,win=window,fetcher=fetch})
   const total=()=>rows.reduce((sum,r)=>sum+Number(r.qty||0),0);
   const safe=fn=>event=>{try{fn(event);}catch(error){status(error.message,true);}};
   const currentRow=()=>rows[selected];
-  const scrollTo=el=>{if(typeof el?.scrollIntoView==='function')el.scrollIntoView({behavior:'smooth',block:'start'});};
   const groupName=id=>data.groups.find(g=>g.id===id)?.name||'';
 
-  function showCatalogue() {
+  function showCatalogue(selectedId) {
+    cataloguePreview.clear();
     const query=normalize($('st-search').value);
     const matches=data.models.filter(m=>(sizeGroup==='all'||m.small===(sizeGroup==='small'))&&industries.has(m.industry)&&(group==='all'||m.group===group)&&normalize(m.name+' '+groupName(m.group)).includes(query));
     $('pp-size-groups').innerHTML=[{id:'small',name:'Popup A7 / LED'},{id:'large',name:'Popup A4 / A5 / A6'},{id:'all',name:'Tất cả cỡ'}].map(g=>`<button type="button" data-size-group="${g.id}" aria-pressed="${g.id===sizeGroup}">${g.name}</button>`).join('');
     $('st-groups').innerHTML=[{id:'all',name:'Tất cả'},...data.groups].map(g=>`<button type="button" data-group="${g.id}" aria-pressed="${g.id===group}">${escapeHTML(g.name)}</button>`).join('');
     $('st-result-count').textContent=`${matches.length} mẫu${group==='all'?'':' · '+groupName(group)}`;
-    $('st-cards').innerHTML=matches.map(m=>catalogueCard(m,data.layouts,model?.id)).join('')||'<p>Không tìm thấy mẫu. Anh thử từ khóa khác.</p>';
+    $('st-cards').innerHTML=matches.map(m=>catalogueCard(m,data.layouts,selectedId)).join('')||'<p>Không tìm thấy mẫu. Anh thử từ khóa khác.</p>';
   }
 
   function showRowList() {
@@ -66,17 +68,19 @@ export function createPopupApp({app,data,doc=document,win=window,fetcher=fetch})
   }
 
   function saveDraft() {
-    if(model&&layout)drafts.set(model.id,{layout:layout.id,rows:structuredClone(rows),selected,previewIndex});
+    if(model&&layout)drafts.set(model.id,{layout:layout.id,rows:structuredClone(rows),selected,previewIndex,paper});
   }
 
-  function setURL() {
-    try {
-      const url=new URL(win.location.href);url.searchParams.set('mau',model.id);url.searchParams.set('tieude',header);url.searchParams.delete('nhom');
-      win.history.replaceState(null,'',url);
-    }catch{}
+  function setURL(source) {
+    const url=new URL(win.location.href);
+    url.searchParams.set('mau',model.id);url.searchParams.set('tieude',header);
+    if(model.variants.length>1)url.searchParams.set('co',String(model.variants.findIndex(v=>v.layout===layout.id)+1));
+    else url.searchParams.delete('co');
+    url.searchParams.delete('nhom');
+    navigation.select(url,source);
   }
 
-  function chooseModel(id,variantIndex=null,{scroll=true}={}) {
+  function chooseModel(id,variantIndex=null,{scroll=true,source=null}={}) {
     const chosen=data.models.find(m=>m.id===id);if(!chosen)throw new Error('Mẫu popup không tồn tại.');
     saveDraft();model=chosen;
     const previous=drafts.get(id);
@@ -85,16 +89,17 @@ export function createPopupApp({app,data,doc=document,win=window,fetcher=fetch})
     if(layout.titleSlot&&data.titles.find(t=>t.id===header)?.available?.[layout.titleSlot]===false)header='grq';
     for(const option of $('pp-title').options)option.disabled=!!layout.titleSlot&&data.titles.find(t=>t.id===option.value)?.available?.[layout.titleSlot]===false;
     $('pp-title').value=header;
-    paper=layout.defaultPaper;$('st-paper').value=paper;
+    paper=previous?.paper||layout.defaultPaper;$('st-paper').value=paper;
     if(previous){rows=structuredClone(previous.rows);selected=Math.min(previous.selected,rows.length-1);previewIndex=previous.previewIndex||0;}
     else{rows=[defaultRow(layout,`row-${++counter}`)];selected=0;previewIndex=0;}
-    $('st-workspace').hidden=false;
+    setURL(source);
+    cataloguePreview.clear();
     $('st-model-title').textContent=model.name;
     $('st-model-group').textContent=groupName(model.group);
     $('st-size').innerHTML=model.variants.map(v=>`<option value="${v.layout}">${escapeHTML(v.size)}</option>`).join('');
     $('st-size').value=layout.id;$('st-size').disabled=model.variants.length===1;
-    showCatalogue();showFields();updatePreview();setURL();status('');
     direct.open({scroll});
+    showFields();updatePreview();status('');
   }
 
   function download(contents,type,name) {
@@ -158,14 +163,47 @@ export function createPopupApp({app,data,doc=document,win=window,fetcher=fetch})
     onSelect:index=>{win.clearTimeout(timer);selected=index;showFields();},
     onPage:index=>{previewIndex=index;updatePreview();},onPrint:()=>output({print:true}),onError:message=>status(message,true)
   });
+  const cataloguePreview=installCataloguePreview($('st-cards'),{
+    win,
+    renderPreview:id=>{
+      const sample=data.layouts.find(item=>item.id===id);
+      return renderDocument(sample,[{...defaultRow(sample),qty:1}],{
+        fontCSS:data.fontCSS,paper:sample.defaultPaper,preview:true,pageLimit:1
+      }).replace('</head>','<style>html,body{overflow:hidden}.ncn-sheet{margin:0;overflow:visible}</style></head>');
+    }
+  });
+  const navigation=createCatalogueNavigation({
+    app,win,cards:$('st-cards'),workspace:$('st-workspace'),change:$('st-change-model'),search:$('st-search'),
+    filters:()=>({group,sizeGroup,industries:[...industries]}),
+    restoreFilters:filters=>{
+      ({group,sizeGroup}=filters);
+      industries.clear();filters.industries.forEach(id=>industries.add(id));
+      $('pp-industries').querySelectorAll('input').forEach(input=>{input.checked=industries.has(input.value);});
+    },
+    renderCatalogue:showCatalogue,
+    openFromURL:(url,options)=>{
+      const id=url.searchParams.get('mau'),chosen=data.models.find(item=>item.id===id);
+      const title=url.searchParams.get('tieude');
+      header=data.titles.some(item=>item.id===title)?title:'grq';
+      if(!chosen){
+        const initialGroup=url.searchParams.get('nhom');
+        group=data.groups.some(item=>item.id===initialGroup)?initialGroup:'all';sizeGroup=defaultSize;
+        return false;
+      }
+      if(!options.fromCatalogue)sizeGroup=chosen.small?'small':'large';
+      chooseModel(id,Number(url.searchParams.get('co')||1)-1,options);
+      return true;
+    },
+    closeModel:()=>{direct.flush();saveDraft();win.clearTimeout(timer);model=null;layout=null;status('');}
+  });
   $('st-groups').addEventListener('click',safe(event=>{const button=event.target.closest('[data-group]');if(button){group=button.dataset.group;showCatalogue();}}));
   $('pp-size-groups').addEventListener('click',safe(event=>{const button=event.target.closest('[data-size-group]');if(button){sizeGroup=button.dataset.sizeGroup;showCatalogue();}}));
   $('pp-industries').innerHTML=data.industries.map(i=>`<label><input type="checkbox" value="${i.id}" checked>${i.name}</label>`).join('');
   $('pp-industries').addEventListener('change',safe(event=>{event.target.checked?industries.add(event.target.value):industries.delete(event.target.value);showCatalogue();}));
   $('pp-title').innerHTML=data.titles.map(t=>`<option value="${t.id}">${escapeHTML(t.label)}</option>`).join('');
   $('pp-title').addEventListener('change',safe(()=>{header=$('pp-title').value;updatePreview();if(model)setURL();}));
-  $('st-search').addEventListener('input',showCatalogue);
-  $('st-cards').addEventListener('click',safe(event=>{const button=event.target.closest('[data-model]');if(button)chooseModel(button.dataset.model,button.dataset.variant===undefined?null:Number(button.dataset.variant));}));
+  $('st-search').addEventListener('input',()=>showCatalogue());
+  $('st-cards').addEventListener('click',safe(event=>{const button=event.target.closest('[data-model]');if(button)chooseModel(button.dataset.model,button.dataset.variant===undefined?null:Number(button.dataset.variant),{source:button});}));
   $('st-row-list').addEventListener('click',safe(event=>{const button=event.target.closest('[data-row]');if(button){selected=Number(button.dataset.row);previewIndex=Math.floor(rows.slice(0,selected).reduce((n,r)=>n+Number(r.qty),0)/layout.perPage);showFields();updatePreview();}}));
   $('st-fields').addEventListener('input',safe(event=>{
     const input=event.target;
@@ -179,7 +217,6 @@ export function createPopupApp({app,data,doc=document,win=window,fetcher=fetch})
   $('st-add-row').addEventListener('click',safe(()=>{const row=defaultRow(layout,`row-${++counter}`);row.qty=1;rows.push(row);selected=rows.length-1;previewIndex=Math.floor((total()-1)/layout.perPage);showFields();updatePreview();}));
   $('st-duplicate').addEventListener('click',safe(()=>{rows.push({...structuredClone(currentRow()),id:`row-${++counter}`});selected=rows.length-1;previewIndex=Math.floor((total()-Number(currentRow().qty))/layout.perPage);showFields();updatePreview();}));
   $('st-delete-row').addEventListener('click',safe(()=>{if(rows.length>1){rows.splice(selected,1);selected=Math.max(0,selected-1);showFields();updatePreview();}}));
-  $('st-change-model').addEventListener('click',()=>scrollTo($('st-groups')));
   $('st-sample').addEventListener('click',safe(()=>download(sampleCSV(layout),'text/csv;charset=utf-8',`mau-${model.id}.csv`)));
   $('st-print').addEventListener('click',()=>output({print:true}));
   $('st-download').addEventListener('click',()=>output());
@@ -198,27 +235,15 @@ export function createPopupApp({app,data,doc=document,win=window,fetcher=fetch})
         table=/\.tsv$/i.test(file.name)?text.replace(/^\ufeff/,'').split(/\r?\n/).filter(line=>line.trim()).map(line=>line.split('\t')):parseCSV(text);
       }
       const imported=importTable(importLayout,table);
-      if(layout.id!==importLayout.id)throw new Error('Anh đã đổi mẫu trong lúc đọc tệp. Anh chọn lại tệp cho mẫu đang dùng.');
+      if(layout!==importLayout)throw new Error('Anh đã đổi mẫu trong lúc đọc tệp. Anh chọn lại tệp cho mẫu đang dùng.');
       rows=imported;selected=0;previewIndex=0;showFields();updatePreview();status(`Đã nhập ${rows.length} nội dung. Anh kiểm tra xem trước trước khi in.`);
     }catch(error){status(error.message,true);}finally{event.target.value='';}
   });
   if(win.ResizeObserver)new win.ResizeObserver(scalePreview).observe($('st-preview-stage'));
   else win.addEventListener('resize',scalePreview);
-  const initialURL=new URL(win.location.href);
-  if(data.titles.some(t=>t.id===initialURL.searchParams.get('tieude')))header=initialURL.searchParams.get('tieude');
-  $('pp-title').value=header;
-  const initialGroup=initialURL.searchParams.get('nhom');
-  if(data.groups.some(g=>g.id===initialGroup)||initialGroup==='all')group=initialGroup;
-  const initialModel=initialURL.searchParams.get('mau');
-  const initialVariant=Number(initialURL.searchParams.get('co')||1)-1;
-  showCatalogue();
-  if(initialModel&&data.models.some(m=>m.id===initialModel)){
-    group=data.models.find(m=>m.id===initialModel).group;
-    sizeGroup=data.models.find(m=>m.id===initialModel).small?'small':'large';
-    chooseModel(initialModel,initialVariant,{scroll:false});
-  }
+  navigation.start();
   app.dataset.ready='true';
-  return {chooseModel,updatePreview,output,direct,destroy:()=>{direct.destroy();win.clearTimeout(timer);},getState:()=>({model,layout,rows,selected,group,paper,header,sizeGroup,previewIndex}),setRows:next=>{rows=normalizeRows(layout,next);selected=0;previewIndex=0;showFields();updatePreview();}};
+  return {chooseModel,updatePreview,output,direct,destroy:()=>{cataloguePreview.destroy();navigation.destroy();direct.destroy();win.clearTimeout(timer);},getState:()=>({model,layout,rows,selected,group,paper,header,sizeGroup,previewIndex}),setRows:next=>{rows=normalizeRows(layout,next);selected=0;previewIndex=0;showFields();updatePreview();}};
 }
 
 if(typeof document!=='undefined'&&document.getElementById('ncn-popup-app')) {

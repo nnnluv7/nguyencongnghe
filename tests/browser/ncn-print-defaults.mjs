@@ -95,5 +95,99 @@ try{
     await page.screenshot({path:out+'/'+app+'-'+width+'.jpg',type:'jpeg',quality:75});await page.close();
     console.log('PASS editor '+path+' at '+width+'px: caret, hints, clearing, copies, grouped edits and download');
   }
+  const catalogues=[
+    ['/popup-a7/','btn-giam','st','giam-gia','BÀN TRẢI NGHIỆM'],
+    ['/popup-a4-a5-a6/','ml-giam','st','giam-gia','MÁY LẠNH'],
+    ['/sticker/','gg2','st','thong-tin','Gạch giá'],
+    ['/ban-hang/','sales-bh-giao-hang','nt','ban-hang','BẢO HÀNH'],
+    ['/trang-tri/','decor-buom-2','nt','buom','BƯỚM']
+  ];
+  const desktop=await browser.newPage({viewport:{width:1280,height:900},reducedMotion:'reduce'});
+  const catalogueErrors=[];
+  desktop.on('pageerror',error=>catalogueErrors.push(error.message));
+  await desktop.route('**/*',route=>new URL(route.request().url()).origin===base?route.continue():route.abort());
+  for(const [path,id,prefix,group,query] of catalogues){
+    await desktop.goto(base+'/');
+    await desktop.goto(base+path);
+    await desktop.locator('[data-ready=true] .st-cards .st-card').first().waitFor();
+    await desktop.locator('#'+prefix+'-groups [data-group="'+group+'"]').click();
+    const search=desktop.locator('#'+prefix+'-search'),card=desktop.locator('[data-card-model="'+id+'"]');
+    const image=card.locator('.st-card-thumbnail'),primary=card.locator('.st-card-preview');
+    await search.fill(query);
+    await primary.scrollIntoViewIfNeeded();
+    await desktop.mouse.move(0,0);
+    assert.equal(await image.evaluate(el=>getComputedStyle(el).opacity),'0');
+    await primary.hover();
+    await desktop.waitForFunction(id=>{
+      const image=document.querySelector('[data-card-model="'+id+'"] .st-card-thumbnail');
+      return getComputedStyle(image).opacity==='1'&&image.complete&&image.naturalWidth>0;
+    },id);
+    assert.equal(await image.evaluate(img=>img.complete&&img.naturalWidth>0),true);
+    assert.ok(await image.evaluate(img=>img.getBoundingClientRect().bottom<=img.parentElement.getBoundingClientRect().bottom));
+    if(path==='/popup-a7/')await desktop.screenshot({path:out+'/popup-a7-hover.jpg',type:'jpeg',quality:79});
+    const variant=card.locator('[data-variant]').last();
+    await variant.click();
+    const selectedURL=new URL(desktop.url());
+    assert.equal(selectedURL.searchParams.get('mau'),id);
+    if(path==='/popup-a7/')assert.equal(selectedURL.searchParams.get('tieude'),'grq');
+    if(path==='/sticker/')assert.equal(selectedURL.searchParams.get('co'),'3');
+    await desktop.goBack();
+    await desktop.waitForURL(base+path);
+    await card.waitFor();
+    assert.equal(await card.getAttribute('data-current'),'true');
+    assert.ok(await card.evaluate(el=>{
+      const box=el.getBoundingClientRect();
+      return box.top<innerHeight&&box.bottom>0;
+    }));
+    assert.equal(await search.inputValue(),query);
+    assert.equal(await desktop.locator('#'+prefix+'-groups [aria-pressed=true]').getAttribute('data-group'),group);
+    assert.equal(await variant.evaluate(el=>el===document.activeElement),true);
+    await desktop.goForward();
+    await desktop.waitForURL(selectedURL.href);
+    await desktop.locator('#'+prefix+'-workspace').waitFor();
+    await desktop.locator('#'+prefix+'-change-model').click();
+    await desktop.waitForURL(base+path);
+    await card.waitFor();
+    assert.equal(await variant.evaluate(el=>el===document.activeElement),true);
+    console.log('PASS '+path+' previews actual template and returns to selected card with filters');
+  }
+  await desktop.goto(base+'/popup-a7/?mau=btn-giam&tieude=grq');
+  const direct=desktop.locator('#st-workspace');
+  await direct.waitFor();
+  await desktop.frameLocator('#st-preview').locator('input[data-ncn-copy="0"][data-field="0"]').fill('MẪU THỬ QUAY LẠI');
+  await desktop.locator('#st-change-model').click();
+  await desktop.waitForURL(base+'/popup-a7/');
+  const reopened=desktop.locator('[data-card-model=btn-giam] .st-card-preview');
+  await reopened.waitFor();
+  assert.equal(await reopened.evaluate(el=>el===document.activeElement),true);
+  await reopened.click();
+  assert.equal(await desktop.locator('#st-field-0').inputValue(),'MẪU THỬ QUAY LẠI');
+  assert.deepEqual(catalogueErrors,[]);
+  await desktop.close();
+
+  const phone=await browser.newPage({viewport:{width:390,height:844},hasTouch:true,isMobile:true,reducedMotion:'reduce'});
+  phone.on('pageerror',error=>catalogueErrors.push(error.message));
+  await phone.route('**/*',route=>new URL(route.request().url()).origin===base?route.continue():route.abort());
+  await phone.goto(base+'/popup-a7/');
+  await phone.locator('[data-ready=true] #st-groups [data-group=tra-cham]').tap();
+  const model=phone.locator('[data-card-model=btn-tc]');
+  const peek=model.getByRole('button',{name:'Xem mẫu in '+await model.locator('strong').textContent(),exact:true});
+  await peek.tap();
+  assert.equal(phone.url(),base+'/popup-a7/');
+  assert.equal(await peek.getAttribute('aria-pressed'),'true');
+  await model.frameLocator('iframe.st-card-live').locator('input[data-field="0"]').waitFor();
+  await phone.waitForSelector('[data-card-model=btn-tc][data-preview-ready]');
+  assert.equal(await phone.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+  await phone.screenshot({path:out+'/popup-a7-touch-preview.jpg',type:'jpeg',quality:79});
+  await peek.tap();
+  await model.locator('iframe.st-card-live').waitFor({state:'detached'});
+  await model.locator('.st-card-preview').tap();
+  await phone.waitForURL(/mau=btn-tc/);
+  await phone.locator('#st-change-model').tap();
+  await phone.waitForURL(base+'/popup-a7/');
+  await model.waitFor();
+  assert.deepEqual(catalogueErrors,[]);
+  console.log('PASS Popup A7 touch preview uses the real installment layout and returns to its card');
+  await phone.close();
   console.log('PASS '+checkedFields+' real numeric defaults across '+cases.length+' layouts; source '+root);
 }finally{await browser.close();await new Promise(done=>server.close(done));}
