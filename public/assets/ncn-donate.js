@@ -64,7 +64,7 @@ export function mountDonate({doc,win,account,api,say}){
   listen($('donate-qr'),'error',()=>{$('donate-qr-error').hidden=false;});
   listen(doc,'visibilitychange',()=>{if(doc.visibilityState==='visible'&&state.order?.status==='pending')check().catch(()=>schedule());});
   const ready=api('plans').then(result=>{
-    if(state.disposed)return;state.plans=result.plans;state.enabled=result.enabled===true;
+    if(state.disposed)return;state.plans=Array.isArray(result.plans)?result.plans:[];state.enabled=result.enabled===true&&state.plans.length>0;
     $('donate-setup').textContent=state.enabled?'Donate tự động đã sẵn sàng. Đăng nhập đúng tài khoản trước khi tạo QR.':'Donate tự động đang chờ Admin kết nối SePay. Chưa chuyển khoản lúc này.';
     controls();
   }).catch(error=>{$('donate-setup').textContent=error.message;controls();});
