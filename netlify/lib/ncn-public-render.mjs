@@ -1,13 +1,13 @@
 import {escapeHTML} from '../../public/assets/ncn-library/content.js';
 import {articleCardHTML,libraryLabelName,libraryLabels,latestArticles,featuredArticles} from '../../public/assets/ncn-theme/catalogue.js';
 import {isVipToolURL} from '../../public/assets/ncn-vip-access.js';
-import {addAudioTool} from './ncn-public-copy.mjs';
+import {preparePublicTools} from './ncn-public-copy.mjs';
 
 const json=value=>JSON.stringify(value).replace(/</g,'\\u003c').replace(/\u2028/g,'\\u2028').replace(/\u2029/g,'\\u2029');
 const fold=value=>String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/gi,'d').toLowerCase();
 const region=(html,name,content)=>html.replace(new RegExp('(<!-- NCN:'+name+':start -->)[\\s\\S]*?(<!-- NCN:'+name+':end -->)'),(_,start,end)=>start+content+end);
 export function renderPublicHTML(html,catalog,{notices=[],stories=null,now=Date.now(),query=new URLSearchParams()}={}){
-  html=addAudioTool(html);
+  html=preparePublicTools(html);
   html=html.replace(/site\.css\?v=[^"']+/g,'site.css?v=20261025-sync-1').replace(/theme\.js\?v=[^"']+/g,'theme.js?v=20261025-sync-1');
   html=html.replace(/<link rel="modulepreload" href="\/assets\/ncn-theme\/(?:theme|catalogue)\.js[^"<>]*">\n?/g,'');
   if(/<script[^>]*src="\/assets\/ncn-theme\/theme\.js/.test(html)){

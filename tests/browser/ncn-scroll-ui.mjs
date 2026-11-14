@@ -117,7 +117,7 @@ try{
     await page.waitForFunction(previous=>document.querySelector('#ncn-toolbar-clock time').dateTime!==previous,previous);
     await shot('toolbar-clock-'+(path==='/'?'home':'game')+'-'+width);
   });
-  for(const width of [1280,390])for(const path of ['/sticker/','/popup-a7/','/popup-a4-a5-a6/','/ban-hang/','/trang-tri/']){
+  for(const width of [1280,390])for(const path of ['/sticker/','/popup-a7/','/ban-hang/','/trang-tri/']){
     await check('model selection starts at the editor: '+path+' '+width,async()=>{
       await fresh(width,900);await open(path);await page.waitForSelector('[data-model]');
       const prefix=path==='/ban-hang/'||path==='/trang-tri/'?'nt':'st';

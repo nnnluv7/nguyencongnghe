@@ -16,7 +16,7 @@ const state={catalog,notices:[{id:'fixture',text:'NCN · Thông báo kiểm tra 
 const common={production:()=>true,seed,store:()=>({getWithMetadata:async()=>null}),state:async()=>state};
 const library=createLibraryPageHandler({...common,homeShell:()=>read('public/index.html'),indexShell:()=>read('public/thu-vien/index.html'),articleShell:()=>read('netlify/lib/ncn-library/article-shell.html'),original:path=>read('public/'+path)});
 const shell=createSitePageHandler({pages,html:path=>read('public/'+path),state:async({catalog=true}={})=>catalog?state:{...state,catalog:[],catalogDeferred:true},inject:injectCatalog});
-const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml','.woff2':'font/woff2','.ttf':'font/ttf'};
+const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.png':'image/png','.jpg':'image/jpeg','.webp':'image/webp','.svg':'image/svg+xml','.woff2':'font/woff2','.ttf':'font/ttf'};
 const browser=await chromium.launch(),results=[],controlAudit=[];let page,blocked=false,pending=[];
 const logo=await readFile('public/assets/ncn-theme/logo.png');
 async function context(){
@@ -62,7 +62,15 @@ try{
   const ids=path==='/'?['ncn-home-latest','ncn-tools']:['ncn-library-featured','ncn-stories','ncn-library-count'];
   const before=await page.evaluate(ids=>Object.fromEntries(ids.map(id=>[id,document.getElementById(id).getBoundingClientRect().toJSON()])),ids);
   assert.equal(await page.locator(path==='/'?'#ncn-articles a':'#ncn-library-results a').count(),path==='/'?4:12);
-  assert.equal(await page.locator('#ncn-announcement').isVisible(),true);if(path==='/thu-vien/')assert.equal(await page.locator('[data-story-id]').count(),1);
+  assert.equal(await page.locator('#ncn-announcement').isVisible(),true);
+  if(path==='/thu-vien/')assert.equal(await page.locator('[data-story-id]').count(),1);
+  else{
+   const cards=page.locator('#ncn-tool-grid .ncn-tool-card:visible');
+   assert.ok(await cards.count()>0);
+   assert.equal(await cards.locator('.ncn-tool-art').count(),await cards.count());
+   assert.equal(await cards.locator('a[href="/popup-a7/"]').count(),1);
+   assert.equal(await cards.locator('a[href="/popup-a4-a5-a6/"]').count(),0);
+  }
   blocked=false;pending.splice(0).forEach(resolve=>resolve());await page.waitForFunction(()=>window.NCNAccount?.state.ready);await paint(page);
   const after=await page.evaluate(ids=>Object.fromEntries(ids.map(id=>[id,document.getElementById(id).getBoundingClientRect().toJSON()])),ids);
   for(const id of ids)for(const key of ['x','y','width','height'])assert.ok(Math.abs(before[id][key]-after[id][key])<1.1,id+' '+key+' moved: '+before[id][key]+' → '+after[id][key]);

@@ -11,7 +11,7 @@ const production=process.env.NCN_UI_BASE_URL==='https://nguyencongnghe.com';
 const root=resolve('public'),out=resolve('artifacts/library/'+(production?'production':'source'));
 await mkdir(out,{recursive:true});
 const catalogue=JSON.parse((await readFile(root+'/assets/catalog.js','utf8')).replace(/^window.CG_CATALOG\s*=\s*/,'').trim().replace(/;$/,''));
-const aliases={'/p/sticker.html':'/sticker/','/p/popup-a7.html':'/popup-a7/','/p/popup-a4-a5-a6.html':'/popup-a4-a5-a6/'};
+const aliases={'/p/sticker.html':'/sticker/','/p/popup-a7.html':'/popup-a7/','/p/popup-a4-a5-a6.html':'/popup-a7/'};
 function catalogueRows(items){
   const seen=new Set();return items.map(row=>({...row,link:aliases[row.link]||row.link})).filter(row=>{
     const path=new URL(row.link,'https://nguyencongnghe.com').pathname.replace(/\/index\.html$/,'/');

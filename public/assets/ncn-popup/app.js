@@ -8,9 +8,8 @@ import {createCatalogueNavigation} from '../ncn-direct/catalogue-navigation.js';
 export function createPopupApp({app,data,doc=document,win=window,fetcher=fetch}) {
   const $=id=>doc.getElementById(id);
   let model=null,layout=null,rows=[],selected=0,group='all',paper='A4',counter=0,timer=null,previewIndex=0;
-  const defaultSize=win.location.pathname.includes('popup-a7')?'small':'large';
-  let sizeGroup=defaultSize,header='grq';
-  const industries=new Set(data.industries.map(i=>i.id));
+  let industry='',header='grq',catalogueTitle='grq';
+  const industryNames={ICT:'Thế Giới Di Động',CHUNG:'Chương trình chung'};
   const printLayout=()=>withHeader(layout,data.titles,header);
   const drafts=new Map();
   const assetCache=new Map();
@@ -24,13 +23,26 @@ export function createPopupApp({app,data,doc=document,win=window,fetcher=fetch})
   const groupName=id=>data.groups.find(g=>g.id===id)?.name||'';
 
   function showCatalogue(selectedId) {
-    cataloguePreview.clear();
-    const query=normalize($('st-search').value);
-    const matches=data.models.filter(m=>(sizeGroup==='all'||m.small===(sizeGroup==='small'))&&industries.has(m.industry)&&(group==='all'||m.group===group)&&normalize(m.name+' '+groupName(m.group)).includes(query));
-    $('pp-size-groups').innerHTML=[{id:'small',name:'Popup A7 / LED'},{id:'large',name:'Popup A4 / A5 / A6'},{id:'all',name:'Tất cả cỡ'}].map(g=>`<button type="button" data-size-group="${g.id}" aria-pressed="${g.id===sizeGroup}">${g.name}</button>`).join('');
-    $('st-groups').innerHTML=[{id:'all',name:'Tất cả'},...data.groups].map(g=>`<button type="button" data-group="${g.id}" aria-pressed="${g.id===group}">${escapeHTML(g.name)}</button>`).join('');
+    const words=normalize($('st-search').value).split(/\s+/).filter(Boolean);
+    const matches=data.models.filter(m=>{
+      if((industry&&m.industry!==industry)||(group!=='all'&&m.group!==group))return false;
+      const category=data.industries.find(item=>item.id===m.industry);
+      const text=normalize([m.name,m.size,groupName(m.group),category?.name,industryNames[m.industry],...m.variants.map(variant=>variant.size)].join(' '));
+      return words.every(word=>text.includes(word));
+    });
+    for(const button of $('st-groups').children)button.setAttribute('aria-pressed',String(button.dataset.group===group));
+    for(const button of $('pp-industries').children)button.setAttribute('aria-pressed',String(button.dataset.industry===industry));
+    $('pp-catalogue-title').value=catalogueTitle;
     $('st-result-count').textContent=`${matches.length} mẫu${group==='all'?'':' · '+groupName(group)}`;
-    $('st-cards').innerHTML=matches.map(m=>catalogueCard(m,data.layouts,selectedId)).join('')||'<p>Không tìm thấy mẫu. Anh thử từ khóa khác.</p>';
+    $('st-cards').innerHTML=data.industries.map(item=>{
+      const models=matches.filter(m=>m.industry===item.id);
+      if(!models.length)return '';
+      return `<section class="pp-industry" aria-labelledby="pp-industry-${item.id}">
+        <h3 id="pp-industry-${item.id}">${escapeHTML(industryNames[item.id]||item.name)}</h3>
+        <div class="st-cards">${models.map(m=>catalogueCard(m,data.layouts,selectedId)).join('')}</div>
+      </section>`;
+    }).join('')||'<p>Không tìm thấy mẫu. Thử chọn một ngành hàng khác hoặc đổi từ khóa.</p>';
+    cataloguePreview.refresh();
   }
 
   function showRowList() {
@@ -163,22 +175,14 @@ export function createPopupApp({app,data,doc=document,win=window,fetcher=fetch})
     onSelect:index=>{win.clearTimeout(timer);selected=index;showFields();},
     onPage:index=>{previewIndex=index;updatePreview();},onPrint:()=>output({print:true}),onError:message=>status(message,true)
   });
-  const cataloguePreview=installCataloguePreview($('st-cards'),{
-    win,
-    renderPreview:id=>{
-      const sample=data.layouts.find(item=>item.id===id);
-      return renderDocument(sample,[{...defaultRow(sample),qty:1}],{
-        fontCSS:data.fontCSS,paper:sample.defaultPaper,preview:true,pageLimit:1
-      }).replace('</head>','<style>html,body{overflow:hidden}.ncn-sheet{margin:0;overflow:visible}</style></head>');
-    }
-  });
+  const cataloguePreview=installCataloguePreview($('st-cards'),{win});
   const navigation=createCatalogueNavigation({
     app,win,cards:$('st-cards'),workspace:$('st-workspace'),change:$('st-change-model'),search:$('st-search'),
-    filters:()=>({group,sizeGroup,industries:[...industries]}),
+    filters:()=>({group,industry,header:catalogueTitle}),
     restoreFilters:filters=>{
-      ({group,sizeGroup}=filters);
-      industries.clear();filters.industries.forEach(id=>industries.add(id));
-      $('pp-industries').querySelectorAll('input').forEach(input=>{input.checked=industries.has(input.value);});
+      group=filters.group;
+      industry=filters.industry??'';
+      catalogueTitle=filters.header??catalogueTitle;
     },
     renderCatalogue:showCatalogue,
     openFromURL:(url,options)=>{
@@ -187,23 +191,28 @@ export function createPopupApp({app,data,doc=document,win=window,fetcher=fetch})
       header=data.titles.some(item=>item.id===title)?title:'grq';
       if(!chosen){
         const initialGroup=url.searchParams.get('nhom');
-        group=data.groups.some(item=>item.id===initialGroup)?initialGroup:'all';sizeGroup=defaultSize;
+        group=data.groups.some(item=>item.id===initialGroup)?initialGroup:'all';
+        industry='';
+        catalogueTitle=header;
         return false;
       }
-      if(!options.fromCatalogue)sizeGroup=chosen.small?'small':'large';
+      if(!options.fromCatalogue)catalogueTitle=header;
       chooseModel(id,Number(url.searchParams.get('co')||1)-1,options);
       return true;
     },
     closeModel:()=>{direct.flush();saveDraft();win.clearTimeout(timer);model=null;layout=null;status('');}
   });
+  $('st-groups').innerHTML=[{id:'all',name:'Tất cả'},...data.groups].map(g=>`<button type="button" data-group="${g.id}">${escapeHTML(g.name)}</button>`).join('');
   $('st-groups').addEventListener('click',safe(event=>{const button=event.target.closest('[data-group]');if(button){group=button.dataset.group;showCatalogue();}}));
-  $('pp-size-groups').addEventListener('click',safe(event=>{const button=event.target.closest('[data-size-group]');if(button){sizeGroup=button.dataset.sizeGroup;showCatalogue();}}));
-  $('pp-industries').innerHTML=data.industries.map(i=>`<label><input type="checkbox" value="${i.id}" checked>${i.name}</label>`).join('');
-  $('pp-industries').addEventListener('change',safe(event=>{event.target.checked?industries.add(event.target.value):industries.delete(event.target.value);showCatalogue();}));
-  $('pp-title').innerHTML=data.titles.map(t=>`<option value="${t.id}">${escapeHTML(t.label)}</option>`).join('');
+  $('pp-industries').innerHTML=[{id:'',name:'Tất cả ngành hàng'},...data.industries].map(item=>`<button type="button" data-industry="${item.id}">${escapeHTML(item.id==='ICT'?'ICT':industryNames[item.id]||item.name)}</button>`).join('');
+  $('pp-industries').addEventListener('click',safe(event=>{const button=event.target.closest('[data-industry]');if(button){industry=button.dataset.industry;showCatalogue();}}));
+  const titleOptions=data.titles.map(t=>`<option value="${t.id}">${escapeHTML(t.label)}</option>`).join('');
+  $('pp-title').innerHTML=titleOptions;
+  $('pp-catalogue-title').innerHTML=titleOptions;
+  $('pp-catalogue-title').addEventListener('change',()=>{catalogueTitle=$('pp-catalogue-title').value;});
   $('pp-title').addEventListener('change',safe(()=>{header=$('pp-title').value;updatePreview();if(model)setURL();}));
   $('st-search').addEventListener('input',()=>showCatalogue());
-  $('st-cards').addEventListener('click',safe(event=>{const button=event.target.closest('[data-model]');if(button)chooseModel(button.dataset.model,button.dataset.variant===undefined?null:Number(button.dataset.variant),{source:button});}));
+  $('st-cards').addEventListener('click',safe(event=>{const button=event.target.closest('[data-model]');if(button){header=catalogueTitle;chooseModel(button.dataset.model,button.dataset.variant===undefined?null:Number(button.dataset.variant),{source:button});}}));
   $('st-row-list').addEventListener('click',safe(event=>{const button=event.target.closest('[data-row]');if(button){selected=Number(button.dataset.row);previewIndex=Math.floor(rows.slice(0,selected).reduce((n,r)=>n+Number(r.qty),0)/layout.perPage);showFields();updatePreview();}}));
   $('st-fields').addEventListener('input',safe(event=>{
     const input=event.target;
@@ -243,7 +252,7 @@ export function createPopupApp({app,data,doc=document,win=window,fetcher=fetch})
   else win.addEventListener('resize',scalePreview);
   navigation.start();
   app.dataset.ready='true';
-  return {chooseModel,updatePreview,output,direct,destroy:()=>{cataloguePreview.destroy();navigation.destroy();direct.destroy();win.clearTimeout(timer);},getState:()=>({model,layout,rows,selected,group,paper,header,sizeGroup,previewIndex}),setRows:next=>{rows=normalizeRows(layout,next);selected=0;previewIndex=0;showFields();updatePreview();}};
+  return {chooseModel,updatePreview,output,direct,destroy:()=>{cataloguePreview.destroy();navigation.destroy();direct.destroy();win.clearTimeout(timer);},getState:()=>({model,layout,rows,selected,group,paper,header,industry,previewIndex}),setRows:next=>{rows=normalizeRows(layout,next);selected=0;previewIndex=0;showFields();updatePreview();}};
 }
 
 if(typeof document!=='undefined'&&document.getElementById('ncn-popup-app')) {

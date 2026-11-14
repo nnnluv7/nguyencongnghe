@@ -28,7 +28,10 @@ for(const [source,resource]of Object.entries(manifest.catalogues||{})){
  const original=JSON.parse(await readFile('public'+source,'utf8')),optimized=JSON.parse(await readFile(root+resource.href,'utf8'));
  for(const key of Object.keys(original).filter(x=>x!=='models'))assert.deepEqual(optimized[key],original[key],source+': full print data must stay intact');
  for(let i=0;i<original.models.length;i++){
-  const {thumbnail:before,...model}=original.models[i],{thumbnail:after,...next}=optimized.models[i];assert.deepEqual(next,model);assert.ok((await stat(root+after)).size<(await stat('public'+before)).size||before.endsWith('.svg'),before+': preview should be smaller');
+  const {thumbnail:before,...model}=original.models[i],{thumbnail:after,...next}=optimized.models[i];assert.deepEqual(next,model);
+  const optimizedSize=(await stat(root+after)).size,originalSize=(await stat('public'+before)).size;
+  assert.ok(optimizedSize<originalSize||before.endsWith('.svg')||
+    (before.endsWith('.webp')&&optimizedSize===originalSize),before+': preview should be smaller or already optimized');
  }
 }
 const themeSets=[];

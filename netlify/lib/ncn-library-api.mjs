@@ -3,7 +3,7 @@ import {safeURL,slugify} from '../../public/assets/ncn-library/content.js';
 
 const KEY='index',MAX_CUSTOM=200;
 // Retired tools must not reappear from older saved Library metadata.
-const deletedLegacyIds=new Set(['legacy-70d5bee4a542c9c6']);
+const deletedLegacyIds=new Set(['legacy-70d5bee4a542c9c6','legacy-fac3cad0b0e6d1f9']);
 const headers={'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','Netlify-CDN-Cache-Control':'no-store','Vary':'Cookie','X-Content-Type-Options':'nosniff'};
 const reply=(data,status=200)=>new Response(JSON.stringify(data),{status,headers});
 export function libraryError(status,message){throw Object.assign(new Error(message),{status});}

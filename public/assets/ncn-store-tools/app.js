@@ -17,7 +17,8 @@ export function createStoreApp({app,data,doc=document,win=window,fetcher=fetch})
   const query=normalize($('nt-search').value),matches=models.filter(m=>(group==='all'||m.group===group)&&normalize(m.name+' '+groupName(m.group)).includes(query));
   $('nt-groups').innerHTML=[{id:'all',name:'Tất cả'},...groups].map(g=>`<button type="button" data-group="${escapeHTML(g.id)}" aria-pressed="${g.id===group}">${escapeHTML(g.name)}</button>`).join('');
   $('nt-result-count').textContent=`${matches.length} / ${models.length} mẫu`;
-  $('nt-cards').innerHTML=matches.map(m=>catalogueCard(m,data.layouts,selectedId)).join('')||'<p>Không tìm thấy mẫu. Anh thử từ khóa khác.</p>';
+  $('nt-cards').innerHTML=matches.map(m=>catalogueCard(m,data.layouts,selectedId,{illustrated:section==='decor'})).join('')||'<p>Không tìm thấy mẫu. Anh thử từ khóa khác.</p>';
+  cataloguePreview?.refresh();
  }
  function showFields() {
   const row=selectedRow();if(!row)return;
@@ -98,7 +99,7 @@ export function createStoreApp({app,data,doc=document,win=window,fetcher=fetch})
   },
   closeModel:()=>{direct.flush();saveDraft();win.clearTimeout(timer);model=null;layout=null;status('');}
  });
- const cataloguePreview=installCataloguePreview($('nt-cards'),{win});
+ const cataloguePreview=section==='decor'?installCataloguePreview($('nt-cards'),{win}):null;
  listen($('nt-groups'),'click',safe(e=>{const b=e.target.closest('[data-group]');if(b){group=b.dataset.group;showCatalogue();}}));listen($('nt-search'),'input',()=>showCatalogue());listen($('nt-cards'),'click',safe(e=>{const b=e.target.closest('[data-model]');if(b)chooseModel(b.dataset.model,{source:b});}));
  listen($('nt-row-list'),'click',safe(e=>{const b=e.target.closest('[data-row]');if(b){selected=Number(b.dataset.row);previewIndex=Math.floor(rows.slice(0,selected).reduce((n,r)=>n+Number(r.qty),0)/layout.perPage);showFields();updatePreview();}}));
  listen($('nt-fields'),'input',safe(e=>{const input=e.target;if(input.dataset.fieldIndex!==undefined){const i=Number(input.dataset.fieldIndex);selectedRow().values[i]=input.type==='checkbox'?(input.checked?'1':''):input.value;}else if(input.dataset.scaleIndex!==undefined)selectedRow().scales[Number(input.dataset.scaleIndex)]=Number(input.value);if(model.letters)$('nt-letter-text').value=selectedRow().values.join('');win.clearTimeout(timer);timer=win.setTimeout(updatePreview,100);}));
@@ -113,6 +114,6 @@ export function createStoreApp({app,data,doc=document,win=window,fetcher=fetch})
  }catch(error){status(error.message,true);}finally{e.target.value='';}});
  const observer=win.ResizeObserver?new win.ResizeObserver(scalePreview):null;if(observer)observer.observe($('nt-preview-stage'));else listen(win,'resize',scalePreview);
  navigation.start();app.dataset.ready='true';
- return {chooseModel,updatePreview,output,direct,getState:()=>({model,layout,rows,selected,group,paper,previewIndex}),setRows:next=>{rows=normalizeRows(layout,next);selected=0;previewIndex=0;showFields();updatePreview();},destroy:()=>{cataloguePreview.destroy();navigation.destroy();direct.destroy();listeners.forEach(fn=>fn());observer?.disconnect();win.clearTimeout(timer);}};
+ return {chooseModel,updatePreview,output,direct,getState:()=>({model,layout,rows,selected,group,paper,previewIndex}),setRows:next=>{rows=normalizeRows(layout,next);selected=0;previewIndex=0;showFields();updatePreview();},destroy:()=>{cataloguePreview?.destroy();navigation.destroy();direct.destroy();listeners.forEach(fn=>fn());observer?.disconnect();win.clearTimeout(timer);}};
 }
 if(typeof document!=='undefined'&&document.getElementById('ncn-store-app')&&!window.NCN_STORE_TEST){const app=document.getElementById('ncn-store-app');fetch(catalogueURL('/assets/ncn-store-tools/catalogue.json?v=20261025-print-text-1')).then(r=>{if(!r.ok)throw new Error('Chưa tải được danh mục mẫu.');return r.json();}).then(data=>createStoreApp({app,data:app.dataset.section==='sales'?withReturnsTemplate(withDeliveryTemplate(data)):data})).catch(error=>{const s=document.getElementById('nt-status');s.hidden=false;s.classList.add('st-error');s.textContent=error.message+' Anh tải lại trang bằng Cmd+Shift+R hoặc Ctrl+Shift+R.';});}
