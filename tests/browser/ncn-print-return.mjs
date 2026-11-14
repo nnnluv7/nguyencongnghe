@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 
 export const iPhoneUserAgent='Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1';
+const safariUserAgent='Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Safari/605.1.15';
 
 // Replace only the native print dialog in these fixtures. Exercise the actual
 // editor, embedded assets, print document and return-event handlers.
@@ -42,8 +43,9 @@ export async function verifyPrintReturns({browser,base,out}){
     ['/ban-hang/?mau=sales-doi-tra-bao-hanh','nt',null,'CHÍNH SÁCH ĐỔI TRẢ'],
     ['/trang-tri/?mau=decor-buom-2','nt',null,null]
   ];
-  for(const ios of [false,true])for(const [path,prefix,index,value]of cases){
-    const page=await browser.newPage({viewport:{width:ios?390:1280,height:900},isMobile:ios,hasTouch:ios,...(ios?{userAgent:iPhoneUserAgent}:{})}),errors=[];
+  for(const profile of [{name:'desktop',ios:false,asynchronous:false},{name:'iphone',ios:true,asynchronous:true,userAgent:iPhoneUserAgent},{name:'safari',ios:false,asynchronous:true,userAgent:safariUserAgent}])for(const [path,prefix,index,value]of cases){
+    const {ios,asynchronous}=profile;
+    const page=await browser.newPage({viewport:{width:ios?390:1280,height:900},isMobile:ios,hasTouch:ios,...(profile.userAgent?{userAgent:profile.userAgent}:{})}),errors=[];
     page.on('pageerror',error=>errors.push(error.message));
     await page.addInitScript(instrumentPrintFrames);
     await page.route('**/*',route=>new URL(route.request().url()).origin===base?route.continue():route.abort());
@@ -57,16 +59,20 @@ export async function verifyPrintReturns({browser,base,out}){
       const scale=await page.locator('#'+prefix+'-preview').evaluate(frame=>frame.style.transform);
       for(const event of ['afterprint','focus','visibility']){
         const previous=await page.evaluate(()=>window.__ncnPrints.length);
-        if(!ios)await page.evaluate(config=>{window.__ncnPrintReturn=config;},{selector:'#'+prefix+'-preview',event});
+        if(!asynchronous)await page.evaluate(config=>{window.__ncnPrintReturn=config;},{selector:'#'+prefix+'-preview',event});
         await page.getByRole('button',{name:'In ngay',exact:true}).click();
         await page.waitForFunction(count=>window.__ncnPrints.length===count+1,previous);
         const printed=await page.evaluate(()=>window.__ncnPrints.at(-1));
         if(value)assert.ok(printed.text.includes(value),path+': entered text reaches the passive print document');
         assert.equal(printed.fonts,'loaded');assert.equal(printed.images,true);
         // Simulate a lost preview surface on return from the system print view.
-        if(ios){
+        if(asynchronous){
           assert.equal(await page.locator('iframe[data-ncn-print-job]').count(),1);
           await page.evaluate(config=>window.__ncnEndPrint(config),{selector:'#'+prefix+'-preview',event});
+          if(event==='afterprint'){
+            assert.equal(await page.locator('iframe[data-ncn-print-job]').count(),1,'an early Safari afterprint must not destroy the source while its dialog is open');
+            await page.evaluate(()=>window.dispatchEvent(new FocusEvent('focus')));
+          }
         }
         await page.locator('iframe[data-ncn-print-job]').waitFor({state:'detached'});
         await preview.locator('.ncn-sheet').first().waitFor({state:'attached'});
@@ -84,8 +90,8 @@ export async function verifyPrintReturns({browser,base,out}){
       if(index!==null)assert.equal(await preview.locator('[data-ncn-copy="0"][data-field="'+index+'"]').inputValue(),value);
       assert.equal(await page.evaluate(()=>window.__ncnPrintFocus),0,'off-screen print frames never take focus');
       assert.deepEqual(errors,[]);
-      await page.screenshot({path:out+'/return-'+prefix+'-'+cases.findIndex(item=>item[0]===path)+'-'+(ios?'iphone':'desktop')+'.jpg',type:'jpeg',quality:75});
-      console.log('PASS print returns '+path+' ('+(ios?'iPhone events':'desktop')+'): repeated cancel, focus, visibility, BFCache, state and zoom');
+      await page.screenshot({path:out+'/return-'+prefix+'-'+cases.findIndex(item=>item[0]===path)+'-'+profile.name+'.jpg',type:'jpeg',quality:75});
+      console.log('PASS print returns '+path+' ('+profile.name+'): repeated cancel, early afterprint, focus, visibility, BFCache, state and zoom');
     }finally{await page.close();}
   }
 }

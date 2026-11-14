@@ -1,6 +1,7 @@
 /* One passive print frame per page. The visible editor is never printed or cleared. */
 const controllers=new WeakMap();
 export const isIOS=win=>/iPad|iPhone|iPod/.test(win.navigator?.userAgent||'')||(/Macintosh/.test(win.navigator?.userAgent||'')&&win.navigator?.maxTouchPoints>1);
+const mayPrintAsynchronously=win=>isIOS(win)||(/Safari\//.test(win.navigator?.userAgent||'')&&!/Chrome|Chromium|Edg\//.test(win.navigator?.userAgent||''));
 
 function controller(doc,win){
   if(controllers.has(doc))return controllers.get(doc);
@@ -17,21 +18,28 @@ function controller(doc,win){
     // Safari can retain the print iframe as its focused view after closing AirPrint.
     // Restore the parent without focusing or navigating the preview document.
     if(focused)win.focus?.();
-    if(job.origin?.isConnected&&job.origin!==job.frame)job.origin.focus?.({preventScroll:true});
+    if(reason!=='interaction'&&job.origin?.isConnected&&job.origin!==job.frame)job.origin.focus?.({preventScroll:true});
     notify(reason);
   }
   const before=()=>{if(current)current.started=true;};
-  const after=()=>finish('afterprint');
+  const after=()=>{
+    // Safari may fire afterprint as AirPrint opens. Keep its source document
+    // alive until the page actually regains focus/visibility or is used again.
+    if(current?.retain){notify('afterprint');return;}
+    finish('afterprint');
+  };
   const focus=()=>{if(current?.started)finish('focus');};
   const visible=()=>{if(doc.hidden){if(current?.started)current.hidden=true;}else if(current?.hidden)finish('visible');};
   const show=event=>{if(current?.started)finish('pageshow');else if(event.persisted)notify('pageshow');};
+  const interaction=()=>{if(current?.started)finish('interaction');};
   win.addEventListener('beforeprint',before);win.addEventListener('afterprint',after);
   win.addEventListener('focus',focus);win.addEventListener('pageshow',show);doc.addEventListener('visibilitychange',visible);
+  doc.addEventListener('pointerdown',interaction,{capture:true,passive:true});doc.addEventListener('keydown',interaction,true);
   const api={
     subscribe(callback){subscribers.add(callback);return ()=>subscribers.delete(callback);},
     replace(job){if(current){current.cleanup();current=null;}current=job;},
     discard(job){if(current===job)current=null;job.cleanup();},
-    finish,notify
+    finish,after,notify
   };
   controllers.set(doc,api);return api;
 }
@@ -52,10 +60,10 @@ export async function printDocument(html,{title='Bản in nguyencongnghe.com',do
   frame.title=title;frame.dataset.ncnPrintJob='true';frame.tabIndex=-1;frame.setAttribute('aria-hidden','true');
   frame.setAttribute('sandbox','allow-same-origin allow-modals');
   Object.assign(frame.style,{position:'fixed',left:'-10000px',top:'0',width:'800px',height:'1125px',border:'0',pointerEvents:'none'});
-  let child=null,fallback=0,removed=false,loaded;
-  const after=()=>lifecycle.finish('afterprint');
-  const job={frame,origin,started:false,hidden:false,cleanup(){
-    if(removed)return;removed=true;win.clearTimeout(fallback);frame.removeEventListener('load',loaded);
+  let child=null,removed=false,loaded;
+  const after=()=>lifecycle.after();
+  const job={frame,origin,started:false,hidden:false,retain:mayPrintAsynchronously(win),cleanup(){
+    if(removed)return;removed=true;frame.removeEventListener('load',loaded);
     child?.removeEventListener('afterprint',after);frame.remove();
   }};
   lifecycle.replace(job);
@@ -78,11 +86,8 @@ export async function printDocument(html,{title='Bản in nguyencongnghe.com',do
     // Do not focus an off-screen iframe: on iPhone this can leave the visible
     // scaled preview blank when the native print view returns to the editor.
     child.print();
-    // Desktop print() blocks until the dialog closes; iOS may return earlier.
-    if(!isIOS(win))lifecycle.finish('returned');
-    else{
-      const release=()=>{if(removed)return;if(doc.hidden){fallback=win.setTimeout(release,60000);return;}lifecycle.finish('fallback');};
-      if(!removed)fallback=win.setTimeout(release,60000);
-    }
+    // A nonblocking Safari print must also survive an early afterprint event.
+    // There is at most one frame; the next print replaces any retained source.
+    if(!job.retain)lifecycle.finish('returned');
   }catch(error){lifecycle.discard(job);throw error;}
 }

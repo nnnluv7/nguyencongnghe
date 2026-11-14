@@ -122,7 +122,13 @@ try{
    if(width>=600)await page.evaluate(config=>{window.__ncnPrintReturn=config;},{selector:'#ev-preview-frame',event});
    await dialog.locator('#ev-print').click();
    await page.waitForFunction(count=>window.__ncnPrints.length===count+1,count);
-   if(width<600)await page.evaluate(config=>window.__ncnEndPrint(config),{selector:'#ev-preview-frame',event});
+   if(width<600){
+    await page.evaluate(config=>window.__ncnEndPrint(config),{selector:'#ev-preview-frame',event});
+    if(event==='afterprint'){
+     assert.equal(await page.locator('iframe[data-ncn-print-job]').count(),1,'retain the AirPrint source after an early Safari event');
+     await page.evaluate(()=>window.dispatchEvent(new FocusEvent('focus')));
+    }
+   }
    await page.locator('iframe[data-ncn-print-job]').waitFor({state:'detached'});
    await printedProduct.first().waitFor({state:'attached'});
    assert.equal(await printedProduct.count(),2);
