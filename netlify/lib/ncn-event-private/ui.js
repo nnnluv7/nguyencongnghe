@@ -7,7 +7,7 @@
     var VIP=window.NCN_VIP, isAdmin=VIP.user.admin, publishedId='', publishedVersion='', publishedName='';
     var pending=new Map(),bridge=false,results=[];
     function el(id){return document.getElementById('ev-'+id);}
-    function message(text,bad){var e=el('status');e.hidden=false;e.classList.toggle('ev-error',!!bad);e.textContent=text;}
+    function message(text,bad){var e=el('status');e.hidden=!text;e.classList.toggle('ev-error',!!bad);e.textContent=text;}
     function guarded(fn){return function(e){if(e&&e.type==='submit')e.preventDefault();Promise.resolve().then(function(){return fn(e);}).catch(function(error){message(error.message||'Không thực hiện được thao tác.',true);});};}
     function cleanName(value){return String(value||'event-ncn').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[đĐ]/g,'d').replace(/[^\w.-]+/g,'-').slice(0,100);}
     function spreadsheet(){return window.XLSX?Promise.resolve(window.XLSX):import('/assets/ncn-tool-resources.js').then(function(module){return module.loadSpreadsheet();});}
@@ -63,7 +63,7 @@
     function showResults(){
       results=C.search(state.catalog,el('search').value);
       if(!el('search').value.trim()){closeResults();return;}
-      el('results').innerHTML=results.length?results.map(function(p,i){return '<button role="option" type="button" data-result="'+i+'"><span><strong>'+C.esc(p.name)+'</strong><small>'+C.esc(p.code)+'</small></span><span><del>'+C.money(p.originalPrice)+'</del><b>'+C.money(p.eventPrice)+'₫</b></span></button>';}).join(''):'<p>'+(!state.catalog.length?'Nhập bảng giá hoặc lấy giá Miền Tây 2 trước.':'Không tìm thấy sản phẩm trong chương trình này.')+'</p>';
+      el('results').innerHTML=results.length?results.map(function(p,i){return '<button role="option" type="button" data-result="'+i+'"><span><strong>'+C.esc(p.name)+'</strong><small>'+C.esc(p.code)+'</small></span><span><del>'+C.money(p.originalPrice)+'</del><b>'+C.money(p.eventPrice)+'₫</b></span></button>';}).join(''):'<p>'+(!state.catalog.length?'Chọn bảng giá trước khi tìm sản phẩm.':'Không tìm thấy sản phẩm trong chương trình này.')+'</p>';
       el('results').hidden=false;el('search').setAttribute('aria-expanded','true');
     }
     function request(action,campaign){
@@ -148,7 +148,7 @@
       }finally{el('stock-file').value='';}
     }));
     el('process-stock').addEventListener('click',guarded(function(){
-      if(!state.catalog.length)throw new Error('Lấy giá hoặc nhập bảng giá event ở bước 1 trước.');
+      if(!state.catalog.length)throw new Error('Chọn bảng giá trước khi xử lý tồn kho.');
       if(!state.stock.length)throw new Error('Chọn file tồn kho trước.');
       var result=C.matchStock(state.stock,state.catalog,el('max').value);
       state.undo=state.selected.length?state.selected.map(function(p){return Object.assign({},p);}):null;
@@ -181,7 +181,7 @@
     el('list-file').addEventListener('change',guarded(async function(){
       var file=el('list-file').files[0];if(!file)return;
       try{
-        if(!state.catalog.length)throw new Error('Chọn bảng giá ở bước 1 trước khi nhập ERP.');
+        if(!state.catalog.length)throw new Error('Chọn bảng giá trước khi nhập ERP.');
         var parsed=await readFile(file,'list'),result=C.matchStock(parsed.items,state.catalog,0);
         add(result.items);state.missing=result.missing.concat(parsed.rejected);render();
         message('Đã thêm '+result.items.length+' mã từ ERP. '+result.missing.length+' mã chưa áp dụng.');
@@ -197,7 +197,7 @@
     el('size').addEventListener('change',function(){var v=el('size').value;if(v==='custom')return;var p=v.split('x');el('width').value=p[0];el('height').value=p[1];updateEstimate();});
     ['width','height'].forEach(function(id){el(id).addEventListener('input',function(){el('size').value='custom';updateEstimate();});});
     function historyRender(){
-      el('history').innerHTML=state.history.length?state.history.map(function(h,i){return '<div class="ev-history-item"><div><strong>'+C.esc(h.settings.name)+'</strong><small>'+C.esc(new Date(h.createdAt).toLocaleString('vi-VN'))+' · '+h.labels+' nhãn · '+h.pages+' trang</small></div><button type="button" data-history="'+i+'" class="ev-button ev-secondary ev-small">Mở lại</button><button type="button" data-delete-history="'+i+'" class="ev-remove" aria-label="Bỏ lịch sử '+C.esc(h.settings.name)+'">×</button></div>';}).join(''):'<p class="ev-note">Chưa có bản in. Lịch sử sẽ xuất hiện sau khi tạo mẫu.</p>';
+      el('history').innerHTML=state.history.length?state.history.map(function(h,i){return '<div class="ev-history-item"><div><strong>'+C.esc(h.settings.name)+'</strong><small>'+C.esc(new Date(h.createdAt).toLocaleString('vi-VN'))+' · '+h.labels+' nhãn · '+h.pages+' trang</small></div><button type="button" data-history="'+i+'" class="ev-button ev-secondary ev-small">Mở lại</button><button type="button" data-delete-history="'+i+'" class="ev-remove" aria-label="Bỏ lịch sử '+C.esc(h.settings.name)+'">×</button></div>';}).join(''):'<p class="ev-note">Chưa có bản in trên thiết bị này.</p>';
     }
     function persistHistory(){try{localStorage.setItem(HISTORY,JSON.stringify(state.history));}catch(error){message('Đã tạo mẫu in. Thiết bị không đủ dung lượng lưu lịch sử; tải bản in để giữ lại.',true);}historyRender();}
     async function preview(record){
@@ -240,7 +240,7 @@
     }
     async function savedList(pick){
       var data=await VIP.call('catalogues');
-      el('saved-campaign').innerHTML='<option value="">Chọn chương trình đã được ADMIN lưu</option>'+data.catalogues.map(function(p){return '<option value="'+C.esc(p.id)+'">'+C.esc(p.name)+' · '+p.count+' sản phẩm</option>';}).join('');
+      el('saved-campaign').innerHTML='<option value="">Chọn chương trình</option>'+data.catalogues.map(function(p){return '<option value="'+C.esc(p.id)+'">'+C.esc(p.name)+' · '+p.count+' sản phẩm</option>';}).join('');
       if(publishedId&&!data.catalogues.some(function(p){return p.id===publishedId;}))clearCatalogue();
       if(pick&&data.catalogues.some(function(p){return p.id===pick;})){el('saved-campaign').value=pick;await loadSaved(pick);}
       else if(data.catalogues.length&&!state.catalog.length){el('saved-campaign').value=data.catalogues[0].id;await loadSaved(data.catalogues[0].id);}
@@ -253,9 +253,9 @@
       var data=await VIP.call('catalogue&id='+encodeURIComponent(id));
       useCatalog(data.items,data.name,'saved','');
       publishedId=data.id;publishedVersion=data.version;publishedName=data.name;
-      el('shared-info').textContent=data.name+' · '+data.items.length+' sản phẩm · Cập nhật '+new Date(data.updatedAt).toLocaleString('vi-VN');
+      el('shared-info').textContent='Cập nhật '+new Date(data.updatedAt).toLocaleString('vi-VN');
       if(isAdmin){el('publish-id').value=data.id;el('publish-name').value=data.name;}
-      message('Đã tải bảng giá do ADMIN cập nhật. Nhập tồn kho hoặc tìm model để in.');
+      message('');
       }finally{catalogueActions(false);}
     }
     el('saved-campaign').addEventListener('change',guarded(function(){return loadSaved(el('saved-campaign').value);}));

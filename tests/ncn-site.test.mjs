@@ -65,7 +65,8 @@ test('cash and private editor layouts are compact before any script executes',()
   assert.ok(cash.includes('class="cq-compact"'));assert.ok(cash.includes('class="cq-compact-grid"'));assert.equal(cash.includes('class="cq-workspace"'),false);
   for(const tool of ['event','gvgs'])for(const name of ['admin','vip']){
     const template=readFileSync(resolve(root,'../netlify/lib/ncn-'+tool+'-private/'+name+'.html'),'utf8');
-    assert.ok(template.includes('class="ncn-stock-import"'));assert.ok(template.includes('ncn-workspace-compact'));
+    assert.match(template,/class="ev-print-workspace"[\s\S]+class="ev-toolbar"[\s\S]+class="ev-print-settings"[\s\S]+class="ev-panel ev-history"/);
+    assert.ok(template.includes('class="ncn-stock-import"'));
   }
 });
 test('initial page configuration matches the latest shared catalogue',()=>{
