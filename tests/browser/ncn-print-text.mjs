@@ -228,6 +228,39 @@ try{
     console.log('PASS delivery '+paper+' · '+count+' full-size '+(count===1?'slip':'slips'));
   }
   await delivery.close();
+  const draft=await browser.newPage({viewport:{width:390,height:844},acceptDownloads:true});
+  await draft.route('**/*',route=>new URL(route.request().url()).origin===base?route.continue():route.abort());
+  await draft.addInitScript(()=>Object.defineProperty(navigator,'clipboard',{value:{writeText:async()=>{throw Error('Clipboard is unavailable');}}}));
+  const draftURL=base+'/ban-hang/?mau=sales-bh-giao-hang&nhap=1',title='.delivery-slip h1 [data-delivery-text]';
+  await draft.goto(draftURL);
+  const paper=draft.frameLocator('#nt-preview'),titleBox=paper.locator(title).first();
+  await titleBox.waitFor();
+  assert.equal(await draft.locator('#nt-paper').inputValue(),'A5');
+  const custom='PHIẾU THỬ <giữ nguyên chữ>';
+  await titleBox.fill(custom);
+  await draft.getByRole('button',{name:'Sao chép phần đã sửa'}).click();
+  assert.ok((await draft.getByRole('textbox',{name:'Phần nội dung đã sửa'}).inputValue()).includes(custom));
+  await draft.locator('#nt-paper').selectOption('A4');
+  await draft.waitForFunction(({title,custom})=>{
+    const fields=[...document.getElementById('nt-preview')?.contentDocument?.querySelectorAll(title)??[]];
+    return fields.length===2&&fields.every(el=>el.textContent===custom);
+  },{title,custom});
+  await draft.getByRole('button',{name:'Xem bản in'}).click();
+  await paper.getByRole('heading',{name:custom,exact:true}).first().waitFor();
+  assert.equal(await paper.locator('[contenteditable]').count(),0);
+  await draft.locator('.ncn-workspace-bar [data-ncn-pane=fields]').click();
+  const [draftFile]=await Promise.all([draft.waitForEvent('download'),draft.locator('#nt-download').click()]);
+  const draftHTML=await readFile(await draftFile.path(),'utf8');
+  assert.equal(draftHTML.split('PHIẾU THỬ &lt;giữ nguyên chữ&gt;').length-1,2);
+  assert.doesNotMatch(draftHTML,/contenteditable|data-delivery-text/);
+  await draft.reload();
+  await paper.getByRole('heading',{name:custom,exact:true}).waitFor();
+  await draft.goto(base+'/ban-hang/?mau=sales-bh-giao-hang');
+  await paper.getByRole('heading',{name:'CHÍNH SÁCH BẢO HÀNH VÀ PHIẾU HẸN GIAO HÀNG',exact:true}).first().waitFor();
+  assert.equal(await draft.locator('.delivery-draft-tools').count(),0);
+  assert.equal(await paper.locator('[data-delivery-text]').count(),0);
+  await draft.close();
+  console.log('PASS delivery draft stays local, mirrors the A4 copies and exports passive text');
   // Exercise the actual entry points and downloads too: the app must use the
   // corrected catalogue, and its offline HTML must keep the same typography.
   for(const width of [1280,390])for(const [id,count] of [['sales-tv-tc',5],['sales-tv-bh',6],['sales-the-tt',5]]){
