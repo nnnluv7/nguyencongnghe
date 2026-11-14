@@ -138,7 +138,7 @@ const layout={
 .returns-table thead th{text-align:center}
 /* Keep the Word line breaks and character width when printing at either size. */
 .returns-table p{margin:0;white-space:pre}
-.returns-table td p{transform:scaleX(.93);transform-origin:left center}
+.returns-table td p{transform:scaleX(.90);transform-origin:left center}
 .returns-table tfoot,.returns-watch{font-size:9pt;line-height:10.15pt}
 .returns-table a{color:inherit;text-decoration:underline}
 `
