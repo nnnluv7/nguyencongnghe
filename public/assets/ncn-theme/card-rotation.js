@@ -1,4 +1,4 @@
-export function installCardRotation(host,{selector,win=window}){
+export function installCardRotation(host,{selector,onVisible,win=window}){
   if(!host||!win.IntersectionObserver)return {refresh(){},destroy(){}};
   const doc=host.ownerDocument;
   const reduced=win.matchMedia('(prefers-reduced-motion: reduce)');
@@ -27,7 +27,9 @@ export function installCardRotation(host,{selector,win=window}){
       if(inView)visible.add(target);
       else visible.delete(target);
     }
-    if(wasVisible!==(visible.size>0))reset();
+    if(wasVisible===(visible.size>0))return;
+    if(visible.size)onVisible?.();
+    reset();
   },{threshold:.1});
 
   function refresh(){

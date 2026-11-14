@@ -8,7 +8,7 @@ import {installToolUI} from './tool-ui.js?v=20261025-home-latest-1';
 import {installFloatingMenu,orderTools,navigationHTML} from './menu.js?v=20261017-mobile-dark-1';
 import {AUDIO_MIC,withAudioTool} from '../ncn-audio/shared.js';
 import {withMergedPopup,mergedPopupId} from './popup-tool.js';
-import {homeCardArt} from './home-card-art.js';
+import {HOME_TOOL_PREVIEWS,homeCardArt} from './home-card-art.js';
 import {installCardRotation} from './card-rotation.js';
 /* NCN portal: navigation and local display preferences. VIP authorization stays on the server. */
 const ICONS = {
@@ -162,7 +162,19 @@ export function createTheme({doc=document,win=window,config,catalog=win.CG_CATAL
     if(e.key==='Escape'){if(dialog?.open)closeSearch();if(doc.body.classList.contains('ncn-menu-open'))setMenu(false);if(!$('ncn-page-tools')?.hidden)setDrawer(false);}
   });
   let homeGroup='',homeQuery='';
-  const homeRotation=installCardRotation($('ncn-home'),{selector:'.ncn-tool-card',win});
+  const homePanel=$('ncn-home');
+  let loadingToolPreviews=false;
+  function loadToolPreviews(){
+    if(loadingToolPreviews||homePanel.hasAttribute('data-preview-ready'))return;
+    loadingToolPreviews=true;
+    const image=new win.Image();
+    image.src=HOME_TOOL_PREVIEWS;
+    image.decode().then(()=>{
+      homePanel.style.setProperty('--ncn-home-preview-atlas','url("'+HOME_TOOL_PREVIEWS+'")');
+      homePanel.setAttribute('data-preview-ready','');
+    }).catch(()=>{}).finally(()=>{loadingToolPreviews=false;});
+  }
+  const homeRotation=installCardRotation(homePanel,{selector:'.ncn-tool-card',onVisible:loadToolPreviews,win});
   function toolCard(t) {
     const pinned=favorites.has(t.id),tone=['blue','violet','teal','amber','coral','navy'].includes(t.tone)?t.tone:'blue';
     const action=`<span class="ncn-card-open"><span>Mở công cụ</span>${svg('arrow')}</span>`;

@@ -68,6 +68,8 @@ try{
    const cards=page.locator('#ncn-tool-grid .ncn-tool-card:visible');
    assert.ok(await cards.count()>0);
    assert.equal(await cards.locator('.ncn-tool-art').count(),await cards.count());
+   const positions=await cards.locator('.ncn-tool-art').evaluateAll(nodes=>nodes.map(node=>node.style.getPropertyValue('--ncn-tool-art-position')));
+   assert.equal(new Set(positions).size,positions.length);
    assert.equal(await cards.locator('a[href="/popup-a7/"]').count(),1);
    assert.equal(await cards.locator('a[href="/popup-a4-a5-a6/"]').count(),0);
   }
@@ -82,7 +84,8 @@ try{
   const current=art('audio'),neighbor=art('cash');
   await current.scrollIntoViewIfNeeded();
   await page.mouse.move(0,0);
-  await page.locator('#ncn-tool-grid [data-ncn-tool=cash][data-card-visible]').waitFor();
+  await page.locator('#ncn-home[data-preview-ready] #ncn-tool-grid [data-ncn-tool=cash][data-card-visible]').waitFor();
+  const stableBox=await neighbor.boundingBox();
   const samples=async(id,opacity)=>page.waitForFunction(({id,opacity})=>{
    const el=document.querySelector('#ncn-tool-grid [data-ncn-tool="'+id+'"] .ncn-tool-art');
    const sample=getComputedStyle(el,'::after');
@@ -95,8 +98,19 @@ try{
   await samples('cash','0');
   assert.equal(await current.evaluate(el=>getComputedStyle(el,'::after').opacity),'1');
   assert.equal(await neighbor.evaluate(el=>getComputedStyle(el,'::after').opacity),'0');
+  assert.deepEqual(await neighbor.boundingBox(),stableBox);
   await page.mouse.move(0,0);
   await samples('audio','0');
+  assert.deepEqual(await current.evaluate(el=>{
+    const preview=getComputedStyle(el,'::after');
+    return {cover:getComputedStyle(el,'::before').opacity,property:preview.transitionProperty,duration:preview.transitionDuration};
+  }),{cover:'1',property:'opacity',duration:'0.42s'});
+  await page.emulateMedia({reducedMotion:'reduce'});
+  await current.hover();
+  assert.equal(await current.evaluate(el=>getComputedStyle(el,'::after').transitionDuration),'0s');
+  assert.equal(await current.evaluate(el=>getComputedStyle(el,'::after').opacity),'1');
+  await page.mouse.move(0,0);
+  await page.emulateMedia({reducedMotion:'no-preference'});
  });
  await check('heading sizes and inline search icon, input and card edges align at every breakpoint',async()=>{
   for(const width of [1920,1280,820,640,390,320]){
