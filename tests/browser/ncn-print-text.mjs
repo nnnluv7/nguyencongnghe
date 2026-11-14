@@ -183,23 +183,27 @@ try{
   await delivery.locator('[data-card-model="sales-bh-giao-hang"] .st-card-preview').click();
   await delivery.locator('.ncn-print-settings').evaluate(el=>el.open=true);
   await delivery.locator('.ncn-print-fields').evaluate(el=>el.open=true);
-  await delivery.locator('#nt-field-2').fill('Nguyễn Thị Mai');
+  const customer=delivery.locator('#nt-field-2');
   for(const [paper,count,width,height] of [['A4',2,297,210],['A5',1,148,210]]){
+    const name=paper==='A4'?'Nguyễn Thị Mai':'';
+    await customer.fill(name);
     await delivery.locator('#nt-paper').selectOption(paper);
-    await delivery.waitForFunction(({paper,count})=>{
+    await delivery.waitForFunction(({paper,count,name})=>{
       const doc=document.getElementById('nt-preview')?.contentDocument;
       if(!doc?.head?.textContent.includes('@page{size:'+paper))return false;
       const slips=[...doc.querySelectorAll('.delivery-slip')];
-      return slips.length===count&&slips.every(el=>el.querySelector('[data-field="2"]').value==='Nguyễn Thị Mai');
-    },{paper,count});
+      return slips.length===count&&slips.every(el=>el.querySelector('[data-field="2"]').value===name);
+    },{paper,count,name});
     const [download]=await Promise.all([delivery.waitForEvent('download'),delivery.locator('#nt-download').click()]);
     const filename='bao-hanh-giao-hang-'+paper.toLowerCase();
     const path='/__print-text/'+filename+'.html',html=await readFile(await download.path(),'utf8');
-    assert.match(html,/data:image\/jpeg;base64,/);
+    assert.match(html,/data:image\/png;base64,/);
+    assert.equal((html.match(/data:font\/woff2;base64,/g)||[]).length,2);
     assert.doesNotMatch(html,/data-ncn-copy/);
     generated.set(path,html);
     const sheet=await browser.newPage({viewport:{width:1200,height:850}});
     await sheet.goto(base+path);
+    await sheet.evaluate(()=>document.fonts.ready);
     await sheet.emulateMedia({media:'print'});
     const layout=await sheet.evaluate(()=>{
       const rect=el=>el?.getBoundingClientRect().toJSON();
@@ -210,6 +214,9 @@ try{
     assert.equal(layout.panels.length,count);
     assert.equal(await sheet.locator('.delivery-fees').count(),count);
     assert.equal(await sheet.locator('.delivery-slip').first().evaluate(el=>getComputedStyle(el).borderTopStyle),'double');
+    assert.ok(await sheet.locator('.delivery-header img').evaluateAll(images=>images.every(img=>
+      img.naturalWidth===1227&&getComputedStyle(img).objectPosition==='100% 50%')));
+    assert.match(await sheet.locator('.delivery-header strong').first().evaluate(el=>getComputedStyle(el).fontFamily),/Returns Serif/);
     const near=(a,b)=>assert.ok(Math.abs(a-b)<.8,JSON.stringify({a,b}));
     const px=mm=>mm*96/25.4;
     near(layout.sheet.width,px(width));near(layout.sheet.height,px(height));

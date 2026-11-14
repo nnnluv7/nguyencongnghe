@@ -1,3 +1,5 @@
+import {insuranceLogo, warrantyFontCSS, warrantyFontFamily, withWarrantyFonts} from './warranty-assets.js';
+
 const id='sales-doi-tra-bao-hanh';
 const model={
  id,name:'ĐỔI TRẢ · BẢO HÀNH',section:'sales',group:'ban-hang',
@@ -7,11 +9,11 @@ const model={
 };
 
 const layout={
- id,defaultPaper:'A4',defaultOrientation:'portrait',perPage:1,a5Cut:true,fields:[],fontCSS:'',
+ id,defaultPaper:'A4',defaultOrientation:'portrait',perPage:1,a5Cut:true,fields:[],fontCSS:warrantyFontCSS,
  prototype:`
 <article class="returns-slip">
   <header class="returns-header">
-    <img src="/assets/ncn-store-tools/sales/18003b4df479008ad390.png" width="1227" height="148" alt="Thế Giới Di Động và Điện Máy Xanh">
+    <img src="${insuranceLogo}" width="1227" height="148" alt="Thế Giới Di Động và Điện Máy Xanh">
     <h1>CHÍNH SÁCH ĐỔI TRẢ VÀ BẢO HÀNH SẢN PHẨM</h1>
   </header>
   <table class="returns-table">
@@ -123,9 +125,7 @@ const layout={
 </article>
 `,
  css:`
-@font-face{font-family:"Returns Serif";src:url("/assets/ncn-store-tools/sales/returns-serif-regular.woff2") format("woff2");font-weight:400}
-@font-face{font-family:"Returns Serif";src:url("/assets/ncn-store-tools/sales/returns-serif-bold.woff2") format("woff2");font-weight:700}
-.returns-slip{width:100%;background:#fff;color:#000;font:8.5pt/9.25pt "Returns Serif","Times New Roman",serif}
+.returns-slip{width:100%;background:#fff;color:#000;font:8.5pt/9.25pt ${warrantyFontFamily}}
 .returns-header{position:relative;display:flex;align-items:center;justify-content:center;height:6.65mm}
 .returns-header img{position:absolute;left:0;width:36mm;height:auto}
 .returns-header h1{margin:0;font-size:14pt;line-height:1.15;text-align:center}
@@ -144,11 +144,6 @@ const layout={
 `
 };
 
-const assets=[
- {path:'/assets/ncn-store-tools/sales/returns-serif-regular.woff2',mime:'font/woff2',sha256:'5418a7ab0104f14f5e451b8ed1e8d74eece5a3e830c29b951aeeaf7002220902',bytes:15600},
- {path:'/assets/ncn-store-tools/sales/returns-serif-bold.woff2',mime:'font/woff2',sha256:'81da761bc06c8167ef855ffee029493e8f7309513c60915fffcdb55c9e1652d4',bytes:14668}
-];
-
 export function withReturnsTemplate(catalogue){
- return {...catalogue,models:[model,...catalogue.models],layouts:[layout,...catalogue.layouts],assets:[...assets,...catalogue.assets]};
+ return {...catalogue,models:[model,...catalogue.models],layouts:[layout,...catalogue.layouts],assets:withWarrantyFonts(catalogue.assets)};
 }
