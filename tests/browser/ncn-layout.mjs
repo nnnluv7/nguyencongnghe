@@ -77,6 +77,27 @@ try{
   await fits(page);await page.screenshot({path:out+(path==='/'?'/home-desktop.jpg':'/library-desktop.jpg'),fullPage:true,type:'jpeg',quality:80});await page.close();
  });
  page=await ctx.newPage();await page.goto(origin+'/',{waitUntil:'domcontentloaded'});
+ await check('hover keeps the real tool preview visible while nearby cards keep rotating',async()=>{
+  const art=id=>page.locator('#ncn-tool-grid [data-ncn-tool="'+id+'"] .ncn-tool-art');
+  const current=art('audio'),neighbor=art('cash');
+  await current.scrollIntoViewIfNeeded();
+  await page.mouse.move(0,0);
+  await page.locator('#ncn-tool-grid [data-ncn-tool=cash][data-card-visible]').waitFor();
+  const samples=async(id,opacity)=>page.waitForFunction(({id,opacity})=>{
+   const el=document.querySelector('#ncn-tool-grid [data-ncn-tool="'+id+'"] .ncn-tool-art');
+   const sample=getComputedStyle(el,'::after');
+   return sample.opacity===opacity&&(opacity==='0'||sample.backgroundImage.includes('home-tool-previews'));
+  },{id,opacity},{timeout:7000});
+  await samples('cash','0');
+  await current.hover();
+  await samples('audio','1');
+  await samples('cash','1');
+  await samples('cash','0');
+  assert.equal(await current.evaluate(el=>getComputedStyle(el,'::after').opacity),'1');
+  assert.equal(await neighbor.evaluate(el=>getComputedStyle(el,'::after').opacity),'0');
+  await page.mouse.move(0,0);
+  await samples('audio','0');
+ });
  await check('heading sizes and inline search icon, input and card edges align at every breakpoint',async()=>{
   for(const width of [1920,1280,820,640,390,320]){
    await page.setViewportSize({width,height:900});await paint(page);await fits(page);

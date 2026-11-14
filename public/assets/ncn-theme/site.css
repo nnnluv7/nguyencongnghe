@@ -1353,6 +1353,7 @@ body.ncn-modern .st-card-sizes button:focus-visible{outline: 3px solid #2563b8; 
 /* END NCN GLASS HAIRLINE 20261029 */
 
 @media screen{
+  #ncn-home{--ncn-home-preview-atlas:url('/assets/ncn-theme/home-tool-previews-60e4123072c0.webp')}
   #ncn-home .ncn-tool-art{
     --ncn-tool-art-size:132px;
     display:grid;grid-template:minmax(0,1fr)/minmax(0,1fr);place-items:center;
@@ -1369,12 +1370,14 @@ body.ncn-modern .st-card-sizes button:focus-visible{outline: 3px solid #2563b8; 
     opacity:var(--ncn-cover-opacity,1);
   }
   #ncn-home .ncn-tool-art::after{
+    background-image:var(--ncn-sample-image,none);
     opacity:var(--ncn-sample-opacity,0);
   }
-  #ncn-home .ncn-tool-card[data-card-visible] .ncn-tool-art::after{
-    background-image:url('/assets/ncn-theme/home-tool-previews-60e4123072c0.webp');
+  #ncn-home .ncn-tool-card:is([data-card-visible],:has(:focus-visible)){
+    --ncn-sample-image:var(--ncn-home-preview-atlas);
   }
-  #ncn-home[data-preview-phase] .ncn-tool-card[data-card-visible]{
+  #ncn-home[data-preview-phase] .ncn-tool-card[data-card-visible],
+  #ncn-home .ncn-tool-card:has(:focus-visible){
     --ncn-sample-opacity:1;--ncn-cover-opacity:0;
   }
   #ncn-home .ncn-tool-art+.ncn-tool-top{
@@ -1385,6 +1388,12 @@ body.ncn-modern .st-card-sizes button:focus-visible{outline: 3px solid #2563b8; 
     top:3px;right:3px;background:var(--ncn-surface);
   }
   #ncn-home .ncn-tool-card:has(.ncn-tool-art)>.ncn-pin[aria-pressed=true]{background:#fff0ce}
+}
+@media screen and (hover:hover) and (pointer:fine){
+  #ncn-home .ncn-tool-card:hover{
+    --ncn-sample-image:var(--ncn-home-preview-atlas);
+    --ncn-sample-opacity:1;--ncn-cover-opacity:0;
+  }
 }
 @media screen and (max-width:620px){
   #ncn-home .ncn-tool-art{--ncn-tool-art-size:104px;margin-bottom:10px;border-radius:10px}
