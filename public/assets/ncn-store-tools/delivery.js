@@ -119,7 +119,7 @@ const layout={
 .delivery-copper{text-indent:2mm}
 .delivery-materials .delivery-material-item{padding-left:5mm}
 .delivery-confirm{display:flex;align-items:baseline;gap:2.5mm;margin-top:.2mm}
-.delivery-confirm strong{font-size:7.25pt;color:#0000a8;text-decoration:underline}
+.delivery-confirm strong{font-size:7.25pt;text-decoration:underline}
 .delivery-appointment{margin-top:1.2mm;font-weight:700}
 .delivery-appointment label{white-space:nowrap}
 .delivery-line{margin-bottom:.45mm}
