@@ -4,6 +4,7 @@ import {createDirectEditor} from '../ncn-direct/editor.js?v=20261024-selection-1
 import {rowsForValidation} from '../ncn-direct/preview.js?v=20261015-direct-1';
 import {catalogueURL,loadSpreadsheet} from '../ncn-tool-resources.js';
 import {withDeliveryTemplate} from './delivery.js';
+import {withReturnsTemplate} from './returns.js';
 export function createStoreApp({app,data,doc=document,win=window,fetcher=fetch}) {
  const $=id=>doc.getElementById(id),section=app.dataset.section||'sales',models=data.models.filter(m=>m.section===section),groups=data.groups.filter(g=>models.some(m=>m.group===g.id));
  let model=null,layout=null,rows=[],selected=0,group='all',paper='A4',counter=0,previewIndex=0,printing=false,timer=null;
@@ -26,15 +27,18 @@ export function createStoreApp({app,data,doc=document,win=window,fetcher=fetch})
   if(model.letters){$('nt-letter-text').value=row.values.join('');$('nt-letter-text').maxLength=layout.fields.length;}
  }
  function scalePreview() { direct.scale(); }
+ function paperLabel(paper){
+  return layout.a5Cut?paper+' '+(paperSize(layout,paper).orientation==='landscape'?'ngang':'dọc'):paper;
+ }
 
  function updatePreview() {
   if(!layout)return;try{
    const checked=normalizeRows(layout,rows),count=paginate(layout,checked).length;previewIndex=Math.max(0,Math.min(previewIndex,count-1));
    const html=renderDocument(layout,checked,{fontCSS:data.fontCSS,paper,preview:true,editable:true,pageIndex:previewIndex,pageLimit:1,assets:win.NCN_STORE_PREVIEW_ASSETS||{},title:model.name+' · NCN'});
-   const paperLabel=layout.a5Cut?(paper==='A4'?'A4 ngang':'A5 dọc'):paper;
    const copies=layout.a5Cut?`${total()*(paper==='A4'?2:1)} phiếu`:`${total()} ${layout.perPage===1?'tờ mẫu':'bản'}`;
-   direct.render(html,{paperSize:paperSize(layout,paper),pageIndex:previewIndex,pages:count,editable:layout.fields.length>0,editHint:layout.a5Cut&&paper==='A4'?'Hai phiếu trên cùng một tờ dùng chung nội dung.':undefined});
-   $('nt-summary').textContent=`${copies} · ${count} tờ ${paperLabel}`;$('nt-preview-size').textContent=`Tờ ${previewIndex+1}/${count} · ${paperLabel}`;$('nt-prev').disabled=previewIndex===0;$('nt-next').disabled=previewIndex>=count-1;scalePreview();if($('nt-status').classList.contains('st-error'))status('');
+   const label=paperLabel(paper),editable=layout.fields.length>0;
+   direct.render(html,{paperSize:paperSize(layout,paper),pageIndex:previewIndex,pages:count,editable,editHint:editable&&layout.a5Cut&&paper==='A4'?'Hai phiếu trên cùng một tờ dùng chung nội dung.':undefined});
+   $('nt-summary').textContent=`${copies} · ${count} tờ ${label}`;$('nt-preview-size').textContent=`Tờ ${previewIndex+1}/${count} · ${label}`;$('nt-prev').disabled=previewIndex===0;$('nt-next').disabled=previewIndex>=count-1;scalePreview();if($('nt-status').classList.contains('st-error'))status('');
   }catch(error){status(error.message,true);}
  }
  function chooseModel(id,{scroll=true}={}) {
@@ -42,8 +46,8 @@ export function createStoreApp({app,data,doc=document,win=window,fetcher=fetch})
   model=chosen;layout=data.layouts.find(l=>l.id===model.variants[0].layout);if(!layout)throw new Error('Thiếu bố cục in của mẫu.');const previous=drafts.get(model.id);
   rows=previous?structuredClone(previous.rows):[defaultRow(layout,`row-${++counter}`)];selected=previous?.selected||0;paper=previous?.paper||layout.defaultPaper||'A4';previewIndex=previous?.previewIndex||0;
   const paperSelect=$('nt-paper');paperSelect.value=paper;
-  paperSelect.options[0].textContent=layout.a5Cut?'A4 ngang · 2 phiếu':'A4';
-  paperSelect.options[1].textContent=layout.a5Cut?'A5 dọc · 1 phiếu':'A5 · thu nhỏ theo tỷ lệ';
+  paperSelect.options[0].textContent=layout.a5Cut?paperLabel('A4')+' · 2 phiếu':'A4';
+  paperSelect.options[1].textContent=layout.a5Cut?paperLabel('A5')+' · 1 phiếu':'A5 · thu nhỏ theo tỷ lệ';
   $('nt-model-title').textContent=model.name;$('nt-model-group').textContent=groupName(model.group);$('nt-workspace').hidden=false;showFields();showCatalogue();updatePreview();status('');
   try{const url=new URL(win.location.href);url.searchParams.set('mau',model.id);win.history.replaceState(null,'',url);}catch{}direct.open({scroll});
  }
@@ -94,4 +98,4 @@ export function createStoreApp({app,data,doc=document,win=window,fetcher=fetch})
  showCatalogue();const initial=new URL(win.location.href).searchParams.get('mau');if(initial&&models.some(m=>m.id===initial))chooseModel(initial,{scroll:false});app.dataset.ready='true';
  return {chooseModel,updatePreview,output,direct,getState:()=>({model,layout,rows,selected,group,paper,previewIndex}),setRows:next=>{rows=normalizeRows(layout,next);selected=0;previewIndex=0;showFields();updatePreview();},destroy:()=>{direct.destroy();listeners.forEach(fn=>fn());observer?.disconnect();win.clearTimeout(timer);}};
 }
-if(typeof document!=='undefined'&&document.getElementById('ncn-store-app')&&!window.NCN_STORE_TEST){const app=document.getElementById('ncn-store-app');fetch(catalogueURL('/assets/ncn-store-tools/catalogue.json?v=20261025-print-text-1')).then(r=>{if(!r.ok)throw new Error('Chưa tải được danh mục mẫu.');return r.json();}).then(data=>createStoreApp({app,data:app.dataset.section==='sales'?withDeliveryTemplate(data):data})).catch(error=>{const s=document.getElementById('nt-status');s.hidden=false;s.classList.add('st-error');s.textContent=error.message+' Anh tải lại trang bằng Cmd+Shift+R hoặc Ctrl+Shift+R.';});}
+if(typeof document!=='undefined'&&document.getElementById('ncn-store-app')&&!window.NCN_STORE_TEST){const app=document.getElementById('ncn-store-app');fetch(catalogueURL('/assets/ncn-store-tools/catalogue.json?v=20261025-print-text-1')).then(r=>{if(!r.ok)throw new Error('Chưa tải được danh mục mẫu.');return r.json();}).then(data=>createStoreApp({app,data:app.dataset.section==='sales'?withReturnsTemplate(withDeliveryTemplate(data)):data})).catch(error=>{const s=document.getElementById('nt-status');s.hidden=false;s.classList.add('st-error');s.textContent=error.message+' Anh tải lại trang bằng Cmd+Shift+R hoặc Ctrl+Shift+R.';});}
