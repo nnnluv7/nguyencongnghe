@@ -1,6 +1,5 @@
 // Layout and installation prices follow the supplied Điện Máy Xanh form.
 const id='sales-bh-giao-hang',logo='/assets/ncn-store-tools/sales/delivery-logo.jpg';
-const policyURL='https://www.dienmayxanh.com/chinh-sach-bao-hanh-san-pham';
 const model={
  id,name:'BẢO HÀNH · GIAO HÀNG',section:'sales',group:'ban-hang',
  thumbnail:'/assets/ncn-store-tools/sales/delivery-preview.webp',
@@ -26,35 +25,34 @@ const layout={
   </header>
   <h1>CHÍNH SÁCH BẢO HÀNH VÀ PHIẾU HẸN GIAO HÀNG</h1>
   <div class="delivery-dashes" aria-hidden="true">-------------------</div>
-  <p class="delivery-products">@Tivi, Tủ Lạnh, Máy Giặt, Máy Lạnh, Máy Nước Nóng (Mới)</p>
+  <p class="delivery-products">✍️Tivi, Loa, Tủ Lạnh, Máy Giặt, Máy Sấy, Máy Rửa Chén, Máy Lạnh, Máy Lọc Nước, Máy Nước Nóng (Mới)</p>
   <div class="delivery-warranty">
     <label>Bảo hành <input type="text" data-field="0"> <strong>năm.</strong></label>
     <label><strong>REMOTE BH</strong> <input type="text" data-field="1"></label>
   </div>
   <div class="delivery-remote">
-    <p><strong>▸ LƯU Ý: KIỂM TRA PIN, TRÁNH REMOTE RỈ SÉT.</strong></p>
+    <p><strong>▸ LƯU Ý: REMOTE RỈ SÉT KHÔNG ÁP DỤNG BẢO HÀNH.</strong></p>
     <p>(Quý khách nên sử dụng pin tốt và kiểm tra thay pin thường xuyên)</p>
   </div>
-  <div class="delivery-invoice"><strong class="delivery-box">HÓA ĐƠN CÔNG TY · VUI LÒNG BÁO TRONG NGÀY</strong></div>
+  <div class="delivery-invoice"><strong class="delivery-box">HÓA ĐƠN CÔNG TY CHỈ XUẤT TRONG NGÀY</strong></div>
 
   <section class="delivery-defect">
     <h2>TRƯỜNG HỢP SẢN PHẨM BỊ LỖI</h2>
-    <p><strong>Tháng 1.</strong> Sản phẩm chính lỗi do nhà sản xuất được đổi miễn phí máy mới cùng model, màu sắc và thông số nếu đủ điều kiện.</p>
-    <p>*** Điều kiện đổi: Máy còn nguyên vẹn, đủ điều kiện bảo hành của hãng.</p>
-    <p class="delivery-options"><strong>Tháng 2 đến tháng 12.</strong> Anh/chị <span class="delivery-name">{{field:2}}</span> có 3 lựa chọn</p>
+    <p><strong>Tháng 1.</strong> Sản phẩm chính lỗi do nhà sản xuất được đổi miễn phí máy mới cùng hàng, cùng model, màu sắc và thông số nếu đủ điều kiện.</p>
+    <p>*Điều kiện đổi: Máy không trầy xước, cấn móp còn nguyên vẹn đủ điều kiện bảo hành của hãng.</p>
+    <p class="delivery-options"><strong>Tháng 2 đến tháng ....</strong> Anh/chị <span class="delivery-name">{{field:2}}</span> có 3 lựa chọn</p>
     <ol>
       <li>Bảo hành cam kết 15 ngày cho sản phẩm chính đủ điều kiện. Nếu quá hạn hoặc phải bảo hành lại trong 30 ngày, giảm 50% phí đổi hoặc hoàn tiền theo chính sách.</li>
       <li>Đổi sản phẩm <strong>CÙNG MODEL</strong>, phí 10% giá trị hóa đơn/tháng từ tháng 2.</li>
-      <li>Hoàn tiền, phí 20% tháng đầu và cộng 10% mỗi tháng tiếp theo theo chính sách.</li>
+      <li>Hoàn tiền, mất phí 20% tháng đầu và cộng 10% mỗi tháng tiếp theo theo chính sách.</li>
     </ol>
-    <p class="delivery-accessories"><strong>ĐỐI VỚI PHỤ KIỆN ĐI KÈM.</strong> Phụ kiện lỗi đủ điều kiện được đổi miễn phí bằng loại tương đương trong 12 tháng.</p>
-    <p class="delivery-source">Từ tháng 13 áp dụng bảo hành hãng nếu còn hạn. <a href="${policyURL}">Xem chính sách theo mã hàng</a>.</p>
+    <p class="delivery-accessories"><strong>ĐỐI VỚI PHỤ KIỆN ĐI KÈM.</strong> Phụ kiện lỗi sẽ gửi hãng bảo hành cam kết 15 ngày hoặc đủ điều kiện được đổi miễn phí bằng loại tương đương TGDĐ/ĐMX kinh doanh trong 12 tháng.</p>
   </section>
 
   <section class="delivery-return">
     <h2>NẾU SẢN PHẨM KHÔNG LỖI NHƯNG KHÁCH MUỐN ĐỔI HOẶC TRẢ</h2>
     <p class="delivery-first-month"><strong>▸ Tháng 1. Phí hoàn tiền <b>20%</b> giá trị hóa đơn.</strong></p>
-    <p class="delivery-policy-note">(Mốc tháng tính từ ngày mua. Áp dụng theo điều kiện của từng mã hàng.)</p>
+    <p class="delivery-policy-note">(Thời gian sử dụng sản phẩm tính từ lúc xuất hàng. Quá 1 giờ vẫn tính là 1 tháng.)</p>
     <div class="delivery-fee-row">
       <strong>▸ Từ tháng 2</strong>
       <table class="delivery-fees" aria-label="Ví dụ phí hoàn tiền theo tháng">
@@ -69,7 +67,7 @@ const layout={
   <section class="delivery-materials">
     <p>▸ VẬT TƯ PHÁT SINH khách thanh toán riêng khi có nhu cầu sử dụng.</p>
     <p>+ CB Panasonic 90.000đ/cái. + EKE 100.000đ/cặp. + Dây điện nguồn Ø 2,5 mm 30.000đ/mét. + Chân đế cao su máy lạnh (4 cái) 40.000đ/bộ.</p>
-    <p class="delivery-copper">*** Phí ống đồng tùy công suất máy. 236.000đ, 270.000đ, 320.000đ hoặc 420.000đ/mét (ĐÃ GỒM DÂY ĐIỆN, ỐNG NƯỚC MỀM, QUẤN SI, ĐÓNG MÓC ỐNG).</p>
+    <p class="delivery-copper">*** Phí ống đồng tùy công suất máy. 236.000đ, 270.000đ, 320.000đ hoặc 420.000đ/mét (ĐÃ GỒM DÂY ĐIỆN, ỐNG NƯỚC MỀM, QUẤN SIMILI, ĐÓNG MÓC ỐNG).</p>
     <p>* Phí lắp âm ống đồng trong tường/la phông cố định 70.000đ/mét.</p>
     <p class="delivery-material-item">➢ Khung treo tivi dưới 40 inch (200.000–300.000đ), 37–65 inch (350.000–400.000đ), 60–80 inch (450.000đ).</p>
     <div class="delivery-material-item delivery-confirm"><span>➢ Chân đế máy giặt 350.000–550.000đ</span><strong>XÁC NHẬN ĐÃ TƯ VẤN VẬT TƯ PHÁT SINH</strong></div>
@@ -107,9 +105,7 @@ const layout={
 .delivery-defect .delivery-options{font-weight:700;margin:.85mm 0 .35mm;text-indent:8mm;overflow-wrap:anywhere}
 .delivery-name{display:inline-block;min-width:20mm;max-width:100%;border-bottom:.22mm dotted #000}
 .delivery-defect ol{margin:0 0 .7mm;padding-left:7.5mm}
-.delivery-accessories{text-indent:8mm}
-.delivery-defect .delivery-source{font-size:8.4pt;margin:.45mm 0 1.3mm}
-.delivery-source a{color:inherit}
+.delivery-defect .delivery-accessories{margin-bottom:1.3mm;text-indent:8mm}
 .delivery-return h2{font-size:9pt;text-decoration:underline;line-height:1.09;margin:0 0 .6mm}
 .delivery-first-month,.delivery-policy-note{text-align:center;font-size:9pt}
 .delivery-first-month b{font-size:11pt}
