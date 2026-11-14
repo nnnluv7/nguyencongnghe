@@ -1,3 +1,5 @@
+export const HOME_TOOL_PREVIEWS='/assets/ncn-theme/home-tool-previews-67f26e949a2a.webp';
+
 // Each cell has the same position in the illustration and preview images.
 const positions={
   audio:[0,0],cash:[1,0],insurance:[2,0],'lucky-wheel':[3,0],sticker:[4,0],

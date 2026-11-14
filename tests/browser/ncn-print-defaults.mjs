@@ -196,6 +196,18 @@ try{
   await phone.locator('#st-change-model').tap();
   await phone.waitForURL(base+'/popup-a7/');
   await model.waitFor();
+  await phone.locator('#pp-industries [data-industry=CHUNG]').tap();
+  await phone.locator('#st-groups [data-group=giam-gia]').tap();
+  const golden=phone.locator('[data-card-model=gv-2]');
+  const goldenCover=golden.locator('.st-card-cover');
+  await goldenCover.scrollIntoViewIfNeeded();
+  assert.match(await goldenCover.getAttribute('src'),/\/gv-2-cover-[a-f0-9]+\.webp$/);
+  await phone.waitForFunction(img=>img.complete&&img.naturalWidth===416,await goldenCover.elementHandle());
+  const goldenSample=golden.locator('.st-card-thumbnail');
+  assert.notEqual(await goldenSample.getAttribute('src'),await goldenCover.getAttribute('src'));
+  assert.equal(await goldenSample.evaluate(img=>getComputedStyle(img).opacity),'0');
+  await golden.locator('.st-card-peek').tap();
+  await phone.waitForFunction(img=>img.naturalWidth>0&&getComputedStyle(img).opacity==='1',await goldenSample.elementHandle());
   assert.deepEqual(catalogueErrors,[]);
   console.log('PASS Popup A7 touch preview uses the real installment layout and returns to its card');
   await phone.close();

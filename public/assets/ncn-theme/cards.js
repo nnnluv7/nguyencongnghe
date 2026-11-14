@@ -30,7 +30,8 @@ export function catalogueCard(model,layouts,selectedId,{illustrated=true}={}){
   }).join('');
   const thumbnail=`<img class="st-card-thumbnail" src="${escape(model.thumbnail)}" alt="Mẫu ${name}" loading="lazy" decoding="async" width="220" height="205">`;
   const [column,row]=illustrated?coverPosition(model):[];
-  const visual=illustrated?`<span class="st-card-visual" style="--st-cover-position:${column*atlasSize}% ${row*atlasSize}%">${thumbnail}</span>`:thumbnail;
+  const cover=illustrated&&model.cover?`<img class="st-card-cover" src="${escape(model.cover)}" alt="" loading="lazy" decoding="async" width="416" height="416">`:'';
+  const visual=illustrated?`<span class="st-card-visual" style="--st-cover-position:${column*atlasSize}% ${row*atlasSize}%">${cover}${thumbnail}</span>`:thumbnail;
   return `<article class="st-card" data-card-model="${id}" data-current="${model.id===selectedId}">
   <button type="button" class="st-card-preview" data-model="${id}" aria-label="${name}: chọn mẫu">
     ${visual}
@@ -63,7 +64,9 @@ export function installCataloguePreview(cards,{win=window}={}){
     button.textContent=showSample?'Hiện minh họa':'Xem mẫu in';
   }
   function markLoaded(image){
-    if(image.complete&&image.naturalWidth)image.closest('.st-card').setAttribute('data-sample-ready','');
+    if(!image.complete||!image.naturalWidth)return;
+    const card=image.closest('.st-card');
+    image.decode().then(()=>card.setAttribute('data-sample-ready','')).catch(()=>{});
   }
   function loaded(event){
     if(event.target.matches('.st-card-thumbnail'))markLoaded(event.target);
