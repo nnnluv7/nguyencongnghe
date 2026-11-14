@@ -59,13 +59,13 @@ const homeArt=p=>p.locator('#ncn-tool-grid .ncn-tool-card').evaluateAll(cards=>O
 ])));
 const ctx=await context();
 try{
- await check('tool search loads articles once on demand and still hides VIP entries from a guest',async()=>{
+ await check('tool search loads articles once on demand and shows VIP tools to guests',async()=>{
   page=await ctx.newPage();let requests=0;const errors=[];
   page.on('request',request=>{if(new URL(request.url()).pathname==='/.netlify/functions/ncn-library')requests++;});page.on('pageerror',error=>errors.push(error.message));
   await page.goto(origin+'/2024/02/kiem-quy.html',{waitUntil:'networkidle'});await page.waitForFunction(()=>window.NCNAccount?.state.ready);
   assert.equal(requests,0);assert.equal(await page.evaluate(()=>window.CG_CATALOG.length),0);
   const search=page.locator('[data-ncn-search-open]').first();await search.click();await page.waitForFunction(()=>window.NCN_LIBRARY_DEFERRED===false);
-  for(const href of ['/in-event/','/in-gvgs/'])assert.equal(await page.locator('#ncn-global-results a[href="'+href+'"]').count(),0);
+  for(const href of ['/in-event/','/in-gvgs/'])assert.equal(await page.locator('#ncn-global-results a[href="'+href+'"]').count(),1);
   const title=seed.find(x=>x.managedPage).title;await page.locator('#ncn-global-query').fill(title);
   assert.ok((await page.locator('#ncn-global-results').innerText()).includes(title));assert.equal(requests,1);
   await page.keyboard.press('Escape');await search.click();assert.equal(requests,1);await page.keyboard.press('Escape');assert.deepEqual(errors,[]);await page.close();
