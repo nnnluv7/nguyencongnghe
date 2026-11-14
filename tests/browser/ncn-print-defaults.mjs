@@ -225,12 +225,14 @@ try{
   assert.equal(await preview.evaluate(img=>getComputedStyle(img).opacity),'0');
   await rotating.clock.runFor(3250);
   assert.equal(await host.getAttribute('data-preview-phase'),'');
+  assert.equal(await preview.evaluate(img=>getComputedStyle(img).transitionDuration),'1s');
   await rotating.waitForFunction(img=>getComputedStyle(img).opacity==='1',await preview.elementHandle());
   await rotating.clock.runFor(3000);
   assert.equal(await host.getAttribute('data-preview-phase'),null);
+  assert.equal(await preview.evaluate(img=>getComputedStyle(img).transitionDuration),'0.5s');
   await rotating.waitForFunction(img=>getComputedStyle(img).opacity==='0',await preview.elementHandle());
   assert.deepEqual(await preview.boundingBox(),initial);
   await rotating.close();
-  console.log('PASS Popup switches both ways every 3 seconds without touch and holds its layout');
+  console.log('PASS Popup switches every 3 seconds with gradual fades and holds its layout');
   console.log('PASS '+checkedFields+' real numeric defaults across '+cases.length+' layouts; source '+root);
 }finally{await browser.close();await new Promise(done=>server.close(done));}
