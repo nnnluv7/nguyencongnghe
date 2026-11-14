@@ -6,6 +6,8 @@ import * as Sticker from '../public/assets/ncn-sticker/core.js';
 import * as Popup from '../public/assets/ncn-popup/core.js';
 import * as Store from '../public/assets/ncn-store-tools/core.js';
 import {withDeliveryTemplate} from '../public/assets/ncn-store-tools/delivery.js';
+import {withReturnsTemplate} from '../public/assets/ncn-store-tools/returns.js';
+import {insuranceLogo} from '../public/assets/ncn-store-tools/warranty-assets.js';
 import {editableInput,editCopy,copyAt,rowsForValidation} from '../public/assets/ncn-direct/preview.js';
 
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
@@ -102,8 +104,15 @@ test('delivery slips impose an identical pair on A4 and one full-size slip on A5
   const layout=layouts[0];
   assert.equal(models[0].name,'BẢO HÀNH · GIAO HÀNG');
   assert.equal(models[0].variants[0].layout,layout.id);
-  const logo=assets[0];
-  assert.equal(hash(readFileSync(new URL('../public'+logo.path,import.meta.url))),logo.sha256);
+  const combined=withReturnsTemplate({models,layouts,assets});
+  assert.equal(combined.layouts[0].fontCSS,layout.fontCSS);
+  const paths=[insuranceLogo,...new Set(layout.fontCSS.match(/\/assets\/ncn-store-tools\/[a-zA-Z0-9/_.-]+/g))];
+  assert.equal(paths.length,3);
+  for(const path of paths){
+    const entries=combined.assets.filter(asset=>asset.path===path);
+    assert.equal(entries.length,1,path);
+    assert.equal(hash(readFileSync(new URL('../public'+path,import.meta.url))),entries[0].sha256);
+  }
   const row=Store.defaultRow(layout);
   assert.equal(row.qty,1);
   row.values[2]='Nguyễn & Mai';

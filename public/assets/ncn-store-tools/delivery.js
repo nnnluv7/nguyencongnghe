@@ -1,14 +1,16 @@
+import {insuranceLogo, warrantyFontCSS, warrantyFontFamily, withWarrantyFonts} from './warranty-assets.js';
+
 // Layout and installation prices follow the supplied Điện Máy Xanh form.
-const id='sales-bh-giao-hang',logo='/assets/ncn-store-tools/sales/delivery-logo.jpg';
+const id='sales-bh-giao-hang';
 const model={
  id,name:'BẢO HÀNH · GIAO HÀNG',section:'sales',group:'ban-hang',
- thumbnail:'/assets/ncn-store-tools/sales/delivery-preview.webp',
+ thumbnail:'/assets/ncn-store-tools/sales/delivery-preview-6c0595504f.webp',
  note:'2 phiếu trên A4 ngang hoặc 1 phiếu trên A5 dọc',variants:[{layout:id,size:'A4 / A5'}]
 };
 
 const field=(label,maxLength,example)=>({label,type:'text',fontSize:12.5,maxLength,example,placeholder:''});
 const layout={
- id,defaultPaper:'A4',defaultOrientation:'landscape',perPage:1,a5Cut:true,fontCSS:'',
+ id,defaultPaper:'A4',defaultOrientation:'landscape',perPage:1,a5Cut:true,fontCSS:warrantyFontCSS,
  fields:[
   field('Bảo hành (năm)',6,'2'),
   field('Bảo hành remote',26,'12 tháng'),
@@ -20,7 +22,7 @@ const layout={
  prototype:`
 <article class="delivery-slip">
   <header class="delivery-header">
-    <img src="${logo}" alt="Điện Máy Xanh" width="383" height="91">
+    <img src="${insuranceLogo}" alt="Điện Máy Xanh" width="1227" height="148">
     <strong>TỔNG ĐÀI BẢO HÀNH: 1900232465</strong>
   </header>
   <h1>CHÍNH SÁCH BẢO HÀNH VÀ PHIẾU HẸN GIAO HÀNG</h1>
@@ -83,11 +85,12 @@ const layout={
 </article>
 `.trim(),
  css:`
-.delivery-slip{min-width:0;width:100%;min-height:100%;padding:4mm 2mm 2mm;border:1mm double #000;background:#fff;color:#000;font:9.35pt/1.08 "Times New Roman","Liberation Serif",serif}
+.delivery-slip{min-width:0;width:100%;min-height:100%;padding:4mm 2mm 2mm;border:1mm double #000;background:#fff;color:#000;font:9.35pt/1.08 ${warrantyFontFamily}}
 .delivery-slip p,.delivery-slip h2{margin:0}
 .delivery-header{display:flex;align-items:center;justify-content:space-between;gap:1.2mm;margin:.2mm .7mm 4mm}
-.delivery-header img{display:block;width:33mm;height:auto}
-.delivery-header strong{font:700 14.8pt/1.05 Calibri,Carlito,Arial,sans-serif;white-space:nowrap}
+/* Show the Điện Máy Xanh half of the shared insurance logo. */
+.delivery-header img{display:block;flex:none;width:33mm;height:8.1mm;object-fit:cover;object-position:right}
+.delivery-header strong{font-size:14.8pt;line-height:1.05;white-space:nowrap}
 .delivery-slip h1{margin:0;text-align:center;font-size:13.2pt;line-height:1.13}
 .delivery-dashes{text-align:center;font-size:12pt;font-weight:700;line-height:1.04;margin:0 0 1.5mm}
 .delivery-slip .delivery-products{font-size:12pt;font-weight:700;line-height:1.1}
@@ -130,8 +133,6 @@ const layout={
 .delivery-hotline strong{font-size:15.5pt;line-height:1.05}
 `.trim()
 };
-const asset={path:logo,mime:'image/jpeg',sha256:'9bf60b0eb3b9c10003a7941b4cea39de1aebabc86f9c6a093816fd9d4e625945',bytes:9277};
-
 export function withDeliveryTemplate(catalogue){
- return {...catalogue,models:[model,...catalogue.models],layouts:[layout,...catalogue.layouts],assets:[asset,...catalogue.assets]};
+ return {...catalogue,models:[model,...catalogue.models],layouts:[layout,...catalogue.layouts],assets:withWarrantyFonts(catalogue.assets)};
 }
