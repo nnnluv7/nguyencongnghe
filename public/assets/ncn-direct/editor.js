@@ -1,5 +1,6 @@
 import {copyAt,editCopy} from './preview.js?v=20261015-direct-1';
 import {printHelp,enhancePrintWorkspace} from './workspace.js?v=20261024-selection-1';
+import {watchPrintReturn} from './print.js';
 
 export function createDirectEditor({app,frame,stage,getState,onChange,onSelect,onPage,onPrint,onError,doc=document,win=window}) {
   app.classList.add('ncn-direct-editor');
@@ -14,7 +15,7 @@ export function createDirectEditor({app,frame,stage,getState,onChange,onSelect,o
   const heading=make('div','ncn-direct-heading');heading.append(make('strong','','Bấm vào chữ trên mẫu để nhập'),make('span','','Mỗi mẫu trên tờ được điền riêng.'));
   const tools=make('div','ncn-direct-controls');
   function button(text,label,fn){const b=make('button','',text);b.type='button';b.setAttribute('aria-label',label||text);listen(b,'click',fn);tools.append(b);return b;}
-  let zoom=1,size=null,count=1,page=0,child=null,childCleanup=()=>{},generation=0,linked=false,composing=false,activeCopy=null,activeField=null;
+  let zoom=1,size=null,count=1,page=0,child=null,childCleanup=()=>{},generation=0,linked=false,composing=false,activeCopy=null,activeField=null,lastPreview=null;
   const previous=button('←','Tờ trước',()=>onPage?.(page-1)),pageLabel=make('span','ncn-direct-page-count','Tờ 1/1');tools.append(pageLabel);
   const next=button('→','Tờ sau',()=>onPage?.(page+1));
   button('−','Thu nhỏ',()=>{zoom=Math.max(1,zoom-.25);scale();});
@@ -120,6 +121,7 @@ export function createDirectEditor({app,frame,stage,getState,onChange,onSelect,o
   const commonPrint=doc.getElementById('ncn-page-print');
   listen(commonPrint,'click',e=>{if(getState().layout){e.preventDefault();e.stopImmediatePropagation();flush();onPrint?.();}},true);
   function render(html,{paperSize,pageIndex=0,pages=1,editable=true,editHint}={}){
+    lastPreview={html,options:{paperSize,pageIndex,pages,editable,editHint}};
     childCleanup();size=paperSize;page=pageIndex;count=pages;generation++;
     previous.disabled=page===0;next.disabled=page>=count-1;pageLabel.textContent=`Tờ ${page+1}/${count}`;
     heading.firstChild.textContent=editable?'Bấm vào chữ trên mẫu để nhập':'Mẫu in sẵn';
@@ -129,6 +131,12 @@ export function createDirectEditor({app,frame,stage,getState,onChange,onSelect,o
     frame.srcdoc=html.replace('</head>',screenRules+'</head>').replace('<html ',`<html data-ncn-direct-generation="${generation}" `);
     scale();
   }
+  const stopRecovery=watchPrintReturn(({ios,reason})=>{
+    if(!lastPreview||!getState().layout||app.querySelector('.st-workspace')?.hidden)return;
+    if(ios||reason==='pageshow'||!frame.contentDocument?.body?.firstElementChild){
+      flush();const saved=lastPreview;render(saved.html,saved.options);
+    }else scale();
+  },{doc,win});
   function open({scroll=true}={}){
     const workspace=app.querySelector('.st-workspace');if(!workspace)return;
     // Collapse the catalogue synchronously before calculating the scroll target.
@@ -145,5 +153,5 @@ export function createDirectEditor({app,frame,stage,getState,onChange,onSelect,o
       win.scrollTo({top:Math.max(0,win.scrollY+rect.top-space-12),behavior:'instant'});
     }
   }
-  return {render,open,scale,flush,bindDocument,syncValues,getZoom:()=>zoom,destroy:()=>{childCleanup();stageObserver?.disconnect();navigation?.destroy();listeners.forEach(fn=>fn());toolbar.remove();}};
+  return {render,open,scale,flush,bindDocument,syncValues,getZoom:()=>zoom,destroy:()=>{stopRecovery();childCleanup();stageObserver?.disconnect();navigation?.destroy();listeners.forEach(fn=>fn());toolbar.remove();}};
 }

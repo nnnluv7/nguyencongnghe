@@ -33,6 +33,14 @@ for(const [source,resource]of Object.entries(manifest.catalogues||{})){
   assert.ok(optimizedSize<originalSize||before.endsWith('.svg')||
     (before.endsWith('.webp')&&optimizedSize===originalSize),before+': preview should be smaller or already optimized');
  }
+ for(const [section,href]of Object.entries(resource.sections||{})){
+  const bytes=await readFile(root+href),subset=JSON.parse(bytes),page=section==='sales'?'ban-hang':'trang-tri';
+  assert.deepEqual(subset.models,optimized.models.filter(model=>model.section===section));
+  for(const layout of subset.layouts)assert.deepEqual(layout,original.layouts.find(source=>source.id===layout.id));
+  for(const asset of subset.assets)assert.deepEqual(asset,original.assets.find(source=>source.path===asset.path));
+  assert.ok(bytes.length<(await stat(root+resource.href)).size*.65,'section payload omits unrelated templates');
+  assert.ok((await readFile(root+'/'+page+'/index.html','utf8')).includes('href="'+href+'"'),page+': preload and app use the section catalogue');
+ }
 }
 const themeSets=[];
 for(const path of ['/index.html','/thu-vien/index.html','/sticker/index.html','/arcade/index.html','/pikachu/index.html']){

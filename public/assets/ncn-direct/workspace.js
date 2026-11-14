@@ -1,4 +1,5 @@
 /* Shared screen-only workspaces. Print documents and their artwork stay untouched. */
+import {printDocument,watchPrintReturn} from './print.js';
 export function printHelp(doc=document,{margin='Không',open=false}={}){
   const details=doc.createElement('details');details.className='ncn-print-help';details.open=open;
   const summary=doc.createElement('summary');summary.textContent='Hướng dẫn in';details.append(summary);
@@ -54,12 +55,30 @@ export function attachPrintViewport({stage,frame,sheet,controls,doc=document,win
   const more=add('+','Phóng to bản in',()=>{zoom=Math.min(4,zoom+.25);scale();});
   const fit=add('Vừa trang','Xem vừa trang',()=>{zoom=1;scale();});
   if(!controls)stage.before(toolbar);
-  const loaded=()=>{naturalWidth=0;measureFrame();scale();try{frame.contentDocument?.fonts?.ready.then(schedule);}catch{}};
+  let position={x:0,y:0},restoring=false,scrollWindow=null;
+  const remember=()=>{if(!restoring&&scrollWindow)position={x:scrollWindow.scrollX,y:scrollWindow.scrollY};};
+  const loaded=()=>{
+    naturalWidth=0;measureFrame();scale();
+    try{
+      scrollWindow?.removeEventListener('scroll',remember);scrollWindow=frame.contentWindow;
+      scrollWindow.addEventListener('scroll',remember,{passive:true});
+      Promise.resolve(frame.contentDocument?.fonts?.ready).then(()=>{
+        if(destroyed)return;schedule();
+        if(restoring){scrollWindow.scrollTo(position.x,position.y);restoring=false;}else remember();
+      });
+    }catch{}
+  };
   if(frame)frame.addEventListener('load',loaded);
+  const stopRecovery=frame?watchPrintReturn(({ios,reason})=>{
+    if(!stage.isConnected||!frame.srcdoc||stage.closest('dialog')?.open===false)return;
+    if(ios||reason==='pageshow'||!frame.contentDocument?.body?.firstElementChild){
+      remember();restoring=true;frame.srcdoc=frame.srcdoc;
+    }else schedule();
+  },{doc,win}):()=>{};
   const observer=win.ResizeObserver?new win.ResizeObserver(schedule):null;
   observer?.observe(stage);if(sheet)observer?.observe(sheet);
   win.addEventListener('resize',schedule);doc.fonts?.ready.then(schedule);schedule();
-  return {scale,destroy(){destroyed=true;observer?.disconnect();win.cancelAnimationFrame(resizeFrame);win.removeEventListener('resize',schedule);if(frame)frame.removeEventListener('load',loaded);handlers.forEach(remove=>remove());}};
+  return {scale,destroy(){destroyed=true;stopRecovery();scrollWindow?.removeEventListener('scroll',remember);observer?.disconnect();win.cancelAnimationFrame(resizeFrame);win.removeEventListener('resize',schedule);if(frame)frame.removeEventListener('load',loaded);handlers.forEach(remove=>remove());}};
 }
 
 export function openPrintPreview(html,{title='Xem trước bản in',margin='Không',doc=document,win=window}={}){
@@ -70,13 +89,19 @@ export function openPrintPreview(html,{title='Xem trước bản in',margin='Kh�
   const rail=doc.createElement('aside');rail.className='ncn-print-sidebar';
   const heading=doc.createElement('h2');heading.textContent=title;rail.append(heading);
   const print=doc.createElement('button');print.type='button';print.className='ncn-print-primary';print.textContent='In ngay / Lưu PDF';print.disabled=true;rail.append(print);
+  const message=doc.createElement('p');message.setAttribute('role','status');message.hidden=true;rail.append(message);
   const zoom=doc.createElement('div');rail.append(zoom);rail.append(printHelp(doc,{margin,open:win.innerWidth>=960}));
   const close=doc.createElement('button');close.type='button';close.className='ncn-print-secondary';close.textContent='← Quay lại chỉnh sửa';rail.append(close);
   dialog.append(stage,rail);doc.body.append(dialog);
   const viewport=attachPrintViewport({stage,frame,controls:zoom,doc,win});
   let ready=Promise.resolve();
   frame.addEventListener('load',()=>{if(!frame.contentDocument?.body?.firstElementChild)return;ready=Promise.resolve(frame.contentDocument?.fonts?.ready).then(()=>{print.disabled=false;});});
-  print.addEventListener('click',async()=>{await ready;frame.contentWindow?.focus();frame.contentWindow?.print();});
+  print.addEventListener('click',async()=>{
+    print.disabled=true;message.hidden=true;
+    try{await ready;await printDocument(html,{title,doc,win});}
+    catch(error){message.textContent=error.message;message.hidden=false;}
+    finally{print.disabled=false;}
+  });
   const origin=doc.activeElement;
   let cleaned=false;
   const cleanup=()=>{if(cleaned)return;cleaned=true;viewport?.destroy();dialog.remove();origin?.focus?.();};
@@ -87,7 +112,9 @@ export function openPrintPreview(html,{title='Xem trước bản in',margin='Kh�
 }
 
 export function installPrintWorkspaces({doc=document,win=window}={}){
+  const dialogs=new Map();
   function enhance(){
+    for(const [dialog,viewport] of dialogs)if(!dialog.isConnected){viewport?.destroy();dialogs.delete(dialog);}
     const fifo=doc.querySelector('.ncn-fifo-workbench');
     if(fifo&&fifo.dataset.layout!=='classic'&&!fifo.dataset.ncnPrintReady){
       fifo.dataset.ncnPrintReady='true';
@@ -99,7 +126,7 @@ export function installPrintWorkspaces({doc=document,win=window}={}){
       if(dialog.dataset.ncnPrintReady)return;dialog.dataset.ncnPrintReady='true';
       const stage=dialog.querySelector('.ncn-print-stage'),frame=stage?.querySelector('iframe'),rail=dialog.querySelector('.ncn-print-sidebar'),zoom=rail?.querySelector('.ncn-print-zoom');
       rail?.querySelector('#ev-save-html')?.classList.add('ncn-print-secondary');
-      attachPrintViewport({stage,frame,controls:zoom,doc,win});
+      dialogs.set(dialog,attachPrintViewport({stage,frame,controls:zoom,doc,win}));
       if(rail&&!rail.querySelector('.ncn-print-help'))rail.append(printHelp(doc,{open:win.innerWidth>=960}));
       dialog.addEventListener('toggle',()=>win.requestAnimationFrame(()=>win.dispatchEvent(new Event('resize'))));
     });

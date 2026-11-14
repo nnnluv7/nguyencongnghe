@@ -10,6 +10,7 @@ on:
       - 'netlify/lib/ncn-*-private/**'
       - 'tests/browser/ncn-print-text.mjs'
       - 'tests/browser/ncn-print-defaults.mjs'
+      - 'tests/browser/ncn-print-return.mjs'
       - '.github/workflows/ncn-print-text.yml'
   push:
     branches: [main]
@@ -22,6 +23,7 @@ on:
       - 'netlify/lib/ncn-*-private/**'
       - 'tests/browser/ncn-print-text.mjs'
       - 'tests/browser/ncn-print-defaults.mjs'
+      - 'tests/browser/ncn-print-return.mjs'
       - '.github/workflows/ncn-print-text.yml'
   workflow_dispatch:
 permissions:

@@ -4,6 +4,7 @@ import {createDirectEditor} from '../ncn-direct/editor.js?v=20261024-selection-1
 import {rowsForValidation} from '../ncn-direct/preview.js?v=20261015-direct-1';
 import {catalogueURL,loadSpreadsheet} from '../ncn-tool-resources.js';
 import {createCatalogueNavigation} from '../ncn-direct/catalogue-navigation.js';
+import {printDocument} from '../ncn-direct/print.js';
 import {withDeliveryTemplate} from './delivery.js';
 import {withReturnsTemplate} from './returns.js';
 export function createStoreApp({app,data,doc=document,win=window,fetcher=fetch}) {
@@ -77,9 +78,7 @@ export function createStoreApp({app,data,doc=document,win=window,fetcher=fetch})
    printing=true;$('nt-print').disabled=true;$('nt-download').disabled=true;status('Đang chuẩn bị hình và phông chữ cho bản in…');const assets=await inlineAssets(printLayout),html=renderDocument(printLayout,checked,{paper:printPaper,fontCSS:data.fontCSS,assets,title:printModel.name+' · nguyencongnghe.com'});
    if(!print){download(html,'text/html;charset=utf-8',`ncn-${printModel.id}-${printPaper.toLowerCase()}.html`);status('Đã tạo tệp in kèm hình và phông chữ. Mở bằng trình duyệt rồi nhấn Ctrl+P.');}
    else{
-    const frame=doc.createElement('iframe');frame.title='Bản in NCN';frame.setAttribute('sandbox','allow-same-origin allow-modals');Object.assign(frame.style,{position:'fixed',left:'-10000px',top:'0',width:'800px',height:'1125px',border:'0'});
-    let timeout;const ready=new Promise((resolve,reject)=>{frame.addEventListener('load',()=>{win.clearTimeout(timeout);resolve();},{once:true});timeout=win.setTimeout(()=>reject(new Error('Bản in tải chậm. Anh dùng Tải bản in HTML để mở và in.')),20000);});frame.srcdoc=html;doc.body.append(frame);
-    try{await ready;if(frame.contentDocument.fonts)await frame.contentDocument.fonts.ready;await Promise.all([...frame.contentDocument.images].map(img=>img.complete?Promise.resolve():new Promise(resolve=>{img.onload=resolve;img.onerror=resolve;})));frame.contentWindow.focus();frame.contentWindow.print();status('Chọn đúng khổ giấy, lề Không, tỷ lệ 100% và bật Đồ họa nền.');}finally{win.clearTimeout(timeout);win.setTimeout(()=>frame.remove(),60000);}
+    await printDocument(html,{title:'Bản in NCN',doc,win});status('Chọn đúng khổ giấy, lề Không, tỷ lệ 100% và bật Đồ họa nền.');
    }return html;
   }catch(error){status(error.message,true);return null;}finally{printing=false;$('nt-print').disabled=false;$('nt-download').disabled=false;}
  }
