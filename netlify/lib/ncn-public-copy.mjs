@@ -51,6 +51,9 @@ export function addAudioTool(html){
 
 export function preparePublicTools(html){
   html=addAudioTool(html);
+  // Keep the first paint and every retained public shell linked to Donate.
+  html=html.replace(/(<nav id="ncn-(?:navigation|game-nav)"[^>]*>)([\s\S]*?)(<\/nav>)/g,(_,open,inside,close)=>open+inside+(inside.includes('href="/donate/#reg"')?'':'<a class="ncn-nav-link" href="/donate/#reg"><span>Donate · Thành viên ủng hộ</span></a>')+close);
+  html=html.replace(/(<footer id="ncn-footer"[^>]*>)([\s\S]*?)(<\/footer>)/g,(_,open,inside,close)=>open+inside+(inside.includes('href="/donate/#reg"')?'':'<a class="ncn-footer-donate" href="/donate/#reg">Ủng hộ nguyencongnghe.com ♡</a>')+close);
   html=html.replace(/<a class="ncn-nav-link"[^>]*data-ncn-tool="(popup-large|popup-a7)"[^>]*>[\s\S]*?<\/a>/g,(link,id)=>
     id==='popup-large'?'':link.replace(/<span>Popup A7 \/ LED<\/span>/,'<span>'+POPUP_TOOL.title+'</span>'));
   let removedCard=false;

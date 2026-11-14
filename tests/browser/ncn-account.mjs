@@ -103,8 +103,8 @@ try{
   const initial=await context.newPage();await initial.goto(origin,{waitUntil:'domcontentloaded'});
   await initial.evaluate(()=>document.documentElement.dataset.ncnAccountState='authenticated');
   for(const id of ['event','gvgs']){
-    assert.equal(await initial.locator('#ncn-tool-grid [data-ncn-tool="'+id+'"]').isVisible(),false,'Member cards must be hidden before scripts run');
-    assert.equal(await initial.locator('#ncn-navigation [data-ncn-tool="'+id+'"]').evaluate(el=>getComputedStyle(el).display),'none','Static menu links must be hidden before scripts run');
+    assert.equal(await initial.locator('#ncn-tool-grid [data-ncn-tool="'+id+'"]').isVisible(),true,'VIP cards must be discoverable before scripts run');
+    assert.equal(await initial.locator('#ncn-navigation [data-ncn-tool="'+id+'"]').evaluate(el=>getComputedStyle(el).display),'flex','Static menu links must be discoverable before scripts run');
   }
   await context.close();
   context=await fixtureContext();
@@ -113,10 +113,10 @@ try{
   await check('old browser profile is a prefill hint and cannot sign in or grant roles',async()=>{
     assert.equal(await home.evaluate(()=>NCNAccount.state.user),null);assert.equal(await home.evaluate(()=>QuizSystem.user),null);
     assert.equal(await home.locator('.ncn-account-intro').textContent(),'1 tài khoản dùng chung website');
-    assert.equal(await home.locator('#ncn-tool-grid [data-ncn-tool="event"],#ncn-tool-grid [data-ncn-tool="gvgs"],#ncn-navigation [data-ncn-tool="event"],#ncn-navigation [data-ncn-tool="gvgs"]').count(),0);
-    assert.equal(await home.locator('#ncn-favorites-section').isVisible(),false);
+    assert.equal(await home.locator('#ncn-tool-grid [data-ncn-tool="event"],#ncn-tool-grid [data-ncn-tool="gvgs"],#ncn-navigation [data-ncn-tool="event"],#ncn-navigation [data-ncn-tool="gvgs"]').count(),4);
+    assert.equal(await home.locator('#ncn-favorites-section').isVisible(),true);
     await home.locator('[data-ncn-search-open]').first().click();await home.locator('#ncn-global-query').fill('VIP');
-    assert.equal(await home.locator('#ncn-global-results a[href="/in-event/"],#ncn-global-results a[href="/in-gvgs/"]').count(),0);await home.locator('#ncn-search-close').click();
+    assert.equal(await home.locator('#ncn-global-results a[href="/in-event/"],#ncn-global-results a[href="/in-gvgs/"]').count(),2);await home.locator('#ncn-search-close').click();
     await home.evaluate(()=>openModal('reg'));
     assert.equal(await home.locator('[data-account-form=register] [name=email]').inputValue(),'old@example.test');
     assert.equal(await home.locator('.auth-modal').count(),0);assert.equal(await home.locator('#ncn-account-dialog').count(),1);
@@ -131,12 +131,12 @@ try{
     assert.equal(await home.evaluate(()=>NCNAccount.state.user.admin),false);
     assert.equal(await home.evaluate(()=>NCNAccount.state.user.vip),false);
     for(const id of ['event','gvgs']){
-      assert.equal(await home.locator('#ncn-tool-grid [data-ncn-tool="'+id+'"]').count(),0);
-      assert.equal(await home.locator('#ncn-navigation [data-ncn-tool="'+id+'"]').count(),0);
-      assert.equal(await home.locator('#ncn-favorites [data-ncn-tool="'+id+'"]').count(),0);
+      assert.equal(await home.locator('#ncn-tool-grid [data-ncn-tool="'+id+'"]').count(),1);
+      assert.equal(await home.locator('#ncn-navigation [data-ncn-tool="'+id+'"]').count(),1);
+      assert.equal(await home.locator('#ncn-favorites [data-ncn-tool="'+id+'"]').count(),1);
     }
     await home.locator('[data-ncn-search-open]').first().click();await home.locator('#ncn-global-query').fill('VIP');
-    assert.equal(await home.locator('#ncn-global-results a[href="/in-event/"],#ncn-global-results a[href="/in-gvgs/"]').count(),0);await home.locator('#ncn-search-close').click();
+    assert.equal(await home.locator('#ncn-global-results a[href="/in-event/"],#ncn-global-results a[href="/in-gvgs/"]').count(),2);await home.locator('#ncn-search-close').click();
   });
   const premium=await open(context,'/premium/');
   await check('the retained account page uses the shared session without donation or a paid plan',async()=>{
@@ -155,9 +155,9 @@ try{
     await gvgs.waitForFunction(()=>document.getElementById('vip-gate').dataset.ncnGateState==='member');assert.equal(await gvgs.locator('[data-private-fixture]').count(),0);
   });
   const library=await open(context,'/thu-vien/?q=VIP');
-  await check('ordinary accounts cannot find VIP tools in the library',async()=>{
+  await check('ordinary accounts can discover VIP tools in the library',async()=>{
     await library.waitForFunction(()=>document.getElementById('ncn-library-query').value==='VIP');
-    assert.equal(await library.locator('#ncn-library-results a[href="/in-event/"],#ncn-library-results a[href="/in-gvgs/"]').count(),0);
+    assert.equal(await library.locator('#ncn-library-results a[href="/in-event/"],#ncn-library-results a[href="/in-gvgs/"]').count(),2);
   });
   await check('a manually assigned Netlify VIP role reveals both tools without signing in again',async()=>{
     registered.vip=true;
@@ -173,14 +173,14 @@ try{
     assert.equal(await home.locator('#ncn-global-results a[href="/in-event/"],#ncn-global-results a[href="/in-gvgs/"]').count(),2);await home.locator('#ncn-search-close').click();
     assert.equal(await library.locator('#ncn-library-results a[href="/in-event/"],#ncn-library-results a[href="/in-gvgs/"]').count(),2);
   });
-  await check('removing the Netlify VIP role hides links and clears both private tools for the same account',async()=>{
+  await check('removing the Netlify VIP role preserves discovery and clears protected tools without trial in this fixture',async()=>{
     registered.vip=false;
     for(const page of [home,premium,library])await page.evaluate(()=>NCNAccount.refresh({force:true}));
     for(const page of [event,gvgs])await page.evaluate(()=>{NCNAccount.refresh({force:true}).catch(()=>{});});
     for(const page of [event,gvgs])await page.waitForFunction(()=>window.NCNAccount?.state.ready&&NCNAccount.state.user&&!NCNAccount.state.user.vip&&document.getElementById('vip-gate').dataset.ncnGateState==='member'&&!document.querySelector('[data-private-fixture]'));
     assert.equal(await premium.locator('#pay-tools').isVisible(),false);
-    assert.equal(await home.locator('#ncn-tool-grid [data-ncn-tool="event"],#ncn-tool-grid [data-ncn-tool="gvgs"],#ncn-navigation [data-ncn-tool="event"],#ncn-navigation [data-ncn-tool="gvgs"]').count(),0);
-    assert.equal(await library.locator('#ncn-library-results a[href="/in-event/"],#ncn-library-results a[href="/in-gvgs/"]').count(),0);
+    assert.equal(await home.locator('#ncn-tool-grid [data-ncn-tool="event"],#ncn-tool-grid [data-ncn-tool="gvgs"],#ncn-navigation [data-ncn-tool="event"],#ncn-navigation [data-ncn-tool="gvgs"]').count(),4);
+    assert.equal(await library.locator('#ncn-library-results a[href="/in-event/"],#ncn-library-results a[href="/in-gvgs/"]').count(),2);
     registered.vip=true;
     for(const page of [home,premium,event,gvgs,library])await page.evaluate(()=>NCNAccount.refresh({force:true}));
     await event.locator('[data-private-fixture=ncn-event]').waitFor();await gvgs.locator('[data-private-fixture=ncn-gvgs]').waitFor();
@@ -191,8 +191,8 @@ try{
     await event.waitForFunction(()=>window.NCNAccount?.state.ready&&!document.querySelector('[data-private-fixture]'));
     await gvgs.waitForFunction(()=>window.NCNAccount?.state.ready&&!document.querySelector('[data-private-fixture]'));
     assert.equal(await home.evaluate(()=>QuizSystem.user),null);
-    assert.equal(await home.locator('#ncn-tool-grid [data-ncn-tool="event"],#ncn-tool-grid [data-ncn-tool="gvgs"],#ncn-navigation [data-ncn-tool="event"],#ncn-navigation [data-ncn-tool="gvgs"]').count(),0);
-    assert.equal(await home.locator('#ncn-favorites-section').isVisible(),false);
+    assert.equal(await home.locator('#ncn-tool-grid [data-ncn-tool="event"],#ncn-tool-grid [data-ncn-tool="gvgs"],#ncn-navigation [data-ncn-tool="event"],#ncn-navigation [data-ncn-tool="gvgs"]').count(),4);
+    assert.equal(await home.locator('#ncn-favorites-section').isVisible(),true);
     assert.deepEqual(await home.evaluate(()=>JSON.parse(localStorage.getItem('ncn-favorites'))),['event','gvgs']);
     assert.equal(await premium.locator('#donate-form,#donate-qr,[data-donate-amount]').count(),0);
     assert.equal(await premium.locator('#ncn-account-dialog').isVisible(),false);
@@ -215,7 +215,7 @@ try{
     const navigation=home.goto(origin+'/premium/',{waitUntil:'domcontentloaded'});await requested;await navigation;
     await home.waitForFunction(()=>NCNAccount.state.profile?.email==='vip@example.test'&&!NCNAccount.state.ready);
     assert.equal(await home.evaluate(()=>NCNAccount.state.user),null);
-    assert.equal(await home.locator('#ncn-navigation [data-ncn-tool="event"],#ncn-navigation [data-ncn-tool="gvgs"]').count(),0,'Cached display text must not reveal member tools');
+    assert.equal(await home.locator('#ncn-navigation [data-ncn-tool="event"],#ncn-navigation [data-ncn-tool="gvgs"]').count(),2,'Tool discovery does not depend on cached account text');
     assert.equal(await home.locator('#auth-header-desktop [data-ncn-account-open]').count(),0);
     assert.match(await home.locator('#auth-header-desktop').textContent(),/vip@example.test/);
     assert.equal(await home.locator('#pay-auth').isVisible(),false);

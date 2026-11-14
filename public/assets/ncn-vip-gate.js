@@ -1,82 +1,77 @@
 import * as identity from './ncn-identity-client.js';
 import {getAccount} from './ncn-account.js?v=20261027-photo-save-1';
-import {canUseVip} from './ncn-vip-access.js';
 
-// Cached profile text never opens this gate. The private app response is verified
-// by the server on every page; shared account refreshes handle later role changes.
+// Every mount and print is authorized by the server, including guest trials.
 export function mountVipGate(endpoint,{doc=document,win=window,fetcher=fetch}={}){
   const gate=doc.getElementById('vip-gate');if(!gate)return;
   const account=getAccount(doc),app=doc.getElementById('vip-app'),listeners=[];
-  let loadedUser=null,mountingUser=null,loadedAdmin=false,pending=null,again=false,forceNext=false,started=false,disposed=false,reloadPending=false;
+  let loaded=null,pending=null,disposed=false,started=false,lastPrint=null,reloadPending=false,again=false;
   const listen=(node,type,fn)=>{node?.addEventListener(type,fn);listeners.push(()=>node?.removeEventListener(type,fn));};
-  const waiting=doc.createElement('div');waiting.className='ncn-gate-loading';
-  waiting.innerHTML='<p>Mở công cụ của bạn</p><span></span><span></span><span></span>';gate.append(waiting);
-  const phase=value=>{gate.dataset.ncnGateState=value;gate.setAttribute('aria-busy',String(value==='loading'));};phase('loading');
-  const say=(text,error=false)=>{const el=doc.getElementById('vip-message');el.hidden=!text;el.textContent=text;el.classList.toggle('ev-error',error);};
-  const allowed=canUseVip;
+  const phase=value=>{gate.dataset.ncnGateState=value;gate.setAttribute('aria-busy',String(value==='loading'));};
+  const waiting=doc.createElement('p');waiting.className='ncn-gate-loading';waiting.textContent='Mở công cụ của bạn';gate.append(waiting);phase('loading');
+  const banner=doc.createElement('div');banner.className='ncn-trial-banner';banner.hidden=true;app.before(banner);
+  function balance(trial,user){
+    banner.replaceChildren();banner.hidden=false;
+    const text=doc.createElement('span');text.textContent=trial?`Dùng thử: còn ${trial.remaining}/${trial.limit} lượt chung cho Event VIP và Giờ vàng VIP.`:user.vipSource==='payment'?'Thành viên ủng hộ · Không giới hạn lượt trong thời hạn VIP.':'VIP · Không giới hạn lượt.';banner.append(text);
+    const link=doc.createElement('a');link.href='/donate/#reg';link.textContent='Donate · Gia hạn VIP';banner.append(link);
+  }
+  function message(text,error=false){const el=doc.getElementById('vip-message');el.hidden=!text;el.textContent=text;el.classList.toggle('ev-error',error);}
+  function showGate(user,error){
+    gate.hidden=false;phase(user&&!user.guest?'member':'guest');banner.hidden=true;
+    const member=user&&!user.guest;doc.getElementById('vip-account').hidden=!member;doc.getElementById('vip-account').textContent=member?user.email:'';
+    doc.getElementById('vip-signout').hidden=!member;doc.querySelector('[data-vip-auth]').hidden=!!member;
+    message(error||'Bạn đã dùng hết 3 lượt. Donate để mở Event VIP và Giờ vàng VIP không giới hạn.');
+  }
   async function call(route,body){
     await identity.ensureSession();
-    const response=await fetcher(endpoint+'?route='+route,{credentials:'same-origin',cache:'no-store',method:body?'POST':'GET',headers:body?{'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):undefined,signal:AbortSignal.timeout(15000)});
-    const result=await response.json();if(!response.ok)throw Object.assign(new Error(result.error||'Chưa kết nối được máy chủ.'),{status:response.status});return result;
+    if(route==='print'){
+      const signature=JSON.stringify(body);
+      if(!lastPrint||lastPrint.signature!==signature)lastPrint={signature,id:win.crypto.randomUUID()};
+      body={...body,requestId:lastPrint.id};
+    }
+    const response=await fetcher(endpoint+'?route='+route,{credentials:'same-origin',cache:'no-store',method:body?'POST':'GET',headers:body?{'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):undefined,signal:AbortSignal.timeout(20000)});
+    const result=await response.json();
+    if(!response.ok){if(response.status<500)lastPrint=null;if(response.status===403&&loaded)balance({limit:3,remaining:0},loaded.user);throw Object.assign(new Error(result.error||'Chưa kết nối được máy chủ.'),{status:response.status});}
+    if(route==='print'){lastPrint=null;if(result.trial){loaded.user.trial=result.trial;balance(result.trial,loaded.user);}}
+    return result;
   }
-  function clearPrivate(){
-    if(!loadedUser&&!mountingUser)return;
-    loadedUser=null;mountingUser=null;win.NCN_VIP=null;app.replaceChildren();gate.hidden=false;
-    if(account.state.signingOut){reloadPending=true;showGate(null);return;}
-    phase('loading');win.location.reload();
-  }
-  function showGate(user){
-    gate.hidden=false;phase(user?'member':'guest');doc.getElementById('vip-account').hidden=!user;
-    doc.getElementById('vip-account').textContent=user?.email||'';doc.getElementById('vip-signout').hidden=!user;
-    doc.querySelector('[data-vip-auth]').hidden=!!user;
-    say(user?'Tài khoản chưa được cấp quyền VIP. Vui lòng liên hệ quản trị viên.':'Đăng nhập bằng tài khoản đã được cấp quyền VIP để sử dụng công cụ.');
-  }
+  function reset(){loaded=null;lastPrint=null;win.NCN_VIP=null;app.replaceChildren();banner.hidden=true;gate.hidden=false;phase('loading');if(account.state.signingOut){reloadPending=true;showGate(null);return;}win.location.reload();}
   function check({refresh=true}={}){
-    forceNext=forceNext||refresh;
-    if(pending){again=true;return pending;}
-    pending=(async()=>{do{
-      again=false;const force=forceNext;forceNext=false;
-      if(force||account.state.error)await account.refresh({force});
+    if(pending)return pending;
+    pending=(async()=>{
+      if(refresh)await account.refresh({force:true});
       if(disposed)return;
-      if(account.state.error&&!account.state.user)throw account.state.error;
-      const user=account.state.user;
-      if(loadedUser){
-        if(!allowed(user)||user.id!==loadedUser||!!user.admin!==loadedAdmin)clearPrivate();
-        else win.NCN_VIP.user=user;
-        continue;
+      const currentId=account.state.user?.id||null;
+      const status=await call('me');
+      if(disposed||currentId!==(account.state.user?.id||null))return;
+      if(loaded){
+        if(!status.user||status.user.id!==loaded.user.id||status.user.admin!==loaded.user.admin||status.user.paidVipBlocked||(loaded.user.vipSource==='manual'&&!status.user.vip)){reset();return;}
+        loaded.user=status.user;win.NCN_VIP.user=status.user;balance(status.trial,status.user);return;
       }
-      if(!allowed(user)){showGate(user);continue;}
+      if(!status.allowed){showGate(status.user);return;}
       phase('loading');
-      const content=await call('app'),current=account.state.user;
-      if(disposed)return;
-      if(!allowed(current)||content.user?.id!==current.id||!!content.user.admin!==!!current.admin)return;
-      mountingUser=content.user.id;loadedAdmin=!!content.user.admin;
-      win.NCN_VIP={user:content.user,call};app.innerHTML=content.html;
+      const content=await call('app');
+      if(disposed||currentId!==(account.state.user?.id||null))return;
+      loaded=content;win.NCN_VIP={user:content.user,call};app.innerHTML=content.html;
       for(const name of ['core','ui']){
         const script=doc.createElement('script');script.src=endpoint+'?route=asset&name='+name;
         await new Promise((resolve,reject)=>{script.onload=resolve;script.onerror=()=>reject(new Error('Không tải được công cụ. Bấm kiểm tra lại hoặc tải lại trang.'));doc.body.append(script);});
       }
-      if(disposed||account.state.user?.id!==content.user.id||!allowed(account.state.user)){app.replaceChildren();win.NCN_VIP=null;return;}
-      loadedUser=content.user.id;mountingUser=null;loadedAdmin=!!content.user.admin;gate.hidden=true;phase('ready');
-      listen(doc.getElementById('ev-vip-logout'),'click',()=>account.signOut().catch(error=>say(error.message,true)));
-    }while(again);})().catch(error=>{
-      if(disposed)return;
-      if(loadedUser&&(error.status===401||error.status===403))clearPrivate();
-      else{if(!loadedUser){mountingUser=null;app.replaceChildren();win.NCN_VIP=null;}gate.hidden=false;phase('error');say(error.message,true);}
-    }).finally(()=>{pending=null;if(again&&!disposed)check({refresh:false});});
+      if(disposed)return;gate.hidden=true;phase('ready');balance(content.trial,content.user);
+      const out=doc.getElementById('ev-vip-logout');if(out){out.hidden=!!content.user.guest;listen(out,'click',()=>account.signOut().catch(error=>message(error.message,true)));}
+    })().catch(error=>{if(disposed)return;if(!loaded){app.replaceChildren();win.NCN_VIP=null;gate.hidden=false;phase('error');}message(error.message,true);}).finally(()=>{pending=null;if(again&&!disposed){again=false;check({refresh:false});}});
     return pending;
   }
-  listen(doc,'ncn-account-signed-out',()=>{if(reloadPending&&!disposed)win.location.reload();});
   listen(doc.getElementById('vip-check'),'click',()=>check());
-  listen(doc.getElementById('vip-signout'),'click',()=>account.signOut().catch(error=>say(error.message,true)));
-  listen(doc,'ncn-account-change',event=>{
+  listen(doc.getElementById('vip-signout'),'click',()=>account.signOut().catch(error=>message(error.message,true)));
+  listen(doc,'ncn-account-signed-out',()=>{if(reloadPending&&!disposed)win.location.reload();});
+  listen(doc,'ncn-account-change',()=>{
     if(!started)return;
-    const user=event.detail.user;
-    if((loadedUser||mountingUser)&&(!allowed(user)||user.id!==(loadedUser||mountingUser)||!!user.admin!==loadedAdmin))clearPrivate();
+    if(pending){again=true;return;}
+    const user=account.state.user;
+    if(loaded&&((user?.id||null)!==(loaded.user.guest?null:loaded.user.id)||!!user?.admin!==!!loaded.user.admin))reset();
     else check({refresh:false});
   });
-  // One account controller owns visibility/timer refreshes. Repainting the same
-  // verified user no longer starts another round of permission requests.
   const ready=account.ready.then(()=>{started=true;return check({refresh:false});});
-  return {ready,check,dispose(){disposed=true;listeners.forEach(remove=>remove());waiting.remove();}};
+  return {ready,check,dispose(){disposed=true;listeners.forEach(remove=>remove());waiting.remove();banner.remove();}};
 }

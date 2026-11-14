@@ -1,5 +1,7 @@
 import {getAccount} from './ncn-account.js?v=20261027-photo-save-1';
 import {canUseVip} from './ncn-vip-access.js';
+import {vipSummary} from './ncn-member-profile.js';
+import {mountDonate} from './ncn-donate.js';
 
 const ENDPOINT='/.netlify/functions/ncn-billing';
 const money=value=>Number(value).toLocaleString('vi-VN')+'đ';
@@ -9,6 +11,7 @@ const labels={pending:'Chờ chuyển khoản',paid:'Đã ghi nhận',expired:'M
 export function mountBilling({doc=document,win=window,fetcher=fetch,account=getAccount(doc)}={}){
   const $=id=>doc.getElementById(id),listeners=[];
   const state={user:null,epoch:0,transactions:[],members:[],nextTransaction:null,nextMember:null,reconcile:null,disposed:false};
+  let donate=null;
   const listen=(node,type,fn)=>{node?.addEventListener(type,fn);listeners.push(()=>node?.removeEventListener(type,fn));};
   const text=(tag,value,cls)=>{const node=doc.createElement(tag);node.textContent=value;if(cls)node.className=cls;return node;};
   function say(value,error=false,id='pay-message'){const node=$(id);node.textContent=value;node.hidden=!value;node.classList.toggle('pay-error',error);}
@@ -28,8 +31,9 @@ export function mountBilling({doc=document,win=window,fetcher=fetch,account=getA
     if(changed){state.epoch++;state.transactions=[];state.members=[];$('pay-history').replaceChildren();$('pay-admin-transactions').replaceChildren();$('pay-admin-members').replaceChildren();$('pay-history-panel').open=false;$('pay-admin').open=false;clearPreview();}
     $('pay-email').textContent=user?.email||'Đăng nhập tài khoản';
     const allowed=canUseVip(user);
-    $('pay-entitlement').textContent=allowed?'Tài khoản đã được cấp quyền VIP.':user?'Tài khoản đang sử dụng quyền thành viên thông thường.':'Đăng nhập hoặc tạo tài khoản để sử dụng website.';
+    $('pay-entitlement').textContent=vipSummary(user,Date.now()+Number(account.state.serverOffset||0)).note;
     $('pay-auth').hidden=!!user;$('pay-tools').hidden=!allowed;$('pay-history-panel').hidden=!user;$('pay-admin').hidden=!user?.admin;
+    donate?.render(user);
   }
   function table(headers,rows){const node=doc.createElement('table'),head=doc.createElement('thead'),tr=doc.createElement('tr');for(const title of headers)tr.append(text('th',title));head.append(tr);node.append(head);const body=doc.createElement('tbody');for(const cells of rows){const row=doc.createElement('tr');for(const value of cells){const cell=doc.createElement('td');if(typeof value==='string')cell.textContent=value;else cell.append(value);row.append(cell);}body.append(row);}node.append(body);return node;}
   async function history(){
@@ -44,7 +48,7 @@ export function mountBilling({doc=document,win=window,fetcher=fetch,account=getA
       const outcome=doc.createElement('div');outcome.append(text('strong',labels[t.status]||t.status),text('small',t.reason||t.orderId||''));
       return [t.id+' · '+date(t.transaction.occurredAt),info,outcome,['applied','donated'].includes(t.status)?text('span','Đã ghi nhận'):button('Đối chiếu đơn cũ',()=>{const form=$('pay-reconcile');form.elements.transactionId.value=t.id;form.elements.orderId.value=t.orderId||(t.transaction.content.match(/\bNCN[A-Fa-f0-9]{20}\b/)||[])[0]||'';clearPreview();form.elements.orderId.focus();})];
     })));
-    $('pay-admin-members').replaceChildren(table(['Thành viên','Hạn gói cũ','Hồ sơ gói cũ'],state.members.map(m=>[m.email||m.userId,date(m.expiresAt),m.blocked?'Đã tạm khóa gói cũ':'Đã lưu'])));
+    $('pay-admin-members').replaceChildren(table(['Thành viên','Hạn VIP','Trạng thái'],state.members.map(m=>[m.email||m.userId,date(m.expiresAt),m.blocked?'Đã tạm khóa':'Đã lưu'])));
     $('pay-admin-more-tx').hidden=!state.nextTransaction;$('pay-admin-more-members').hidden=!state.nextMember;
   }
   async function loadAdmin(more=''){
@@ -73,7 +77,8 @@ export function mountBilling({doc=document,win=window,fetcher=fetch,account=getA
     if(!state.reconcile||!state.user?.admin)return;const epoch=state.epoch,result=await api('reconcile',state.reconcile);if(epoch!==state.epoch)return;clearPreview();say(result.review?'Giao dịch vẫn cần đối chiếu.':'Đã ghi nhận giao dịch của đơn cũ.',!!result.review,'pay-admin-message');await loadAdmin();
   },$('pay-reconcile-apply')));
   listen(doc,'ncn-account-change',event=>renderUser(event.detail.user));
-  const ready=account.ready.then(()=>{if(!state.disposed)renderUser(account.state.user);});
-  return {state,ready,dispose(){state.disposed=true;listeners.forEach(remove=>remove());}};
+  donate=mountDonate({doc,win,account,api,say});
+  const ready=account.ready.then(async()=>{if(!state.disposed)renderUser(account.state.user);await donate?.ready;});
+  return {state,ready,donate,dispose(){state.disposed=true;donate?.dispose();listeners.forEach(remove=>remove());}};
 }
 if(typeof document!=='undefined'&&document.getElementById('ncn-billing-app'))mountBilling();

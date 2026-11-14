@@ -7,15 +7,14 @@ export function emptyMember(user){
   return {schema:1,userId:user.id,email:user.email,name:user.name,expiresAt:null,blocked:false,grants:{},requests:{},updatedAt:null};
 }
 
-// Call only with fresh Identity verification. Only server-owned Netlify roles
-// grant tool access; old account-wide or payment-based grants never do.
+// Call only with fresh Identity verification; never trust browser role claims.
 export function withMemberVip(user){
   if(!user)return null;
   const admin=user.admin===true,manual=user.vip===true&&!['account','payment'].includes(user.vipSource);
   return {...user,vip:admin||manual,vipSource:admin?'admin':manual?'manual':'none',vipExpiresAt:null,paidVipBlocked:false};
 }
 
-// Historical receipts still use this view; it no longer authorizes tool access.
+// Membership expiry and blocks are stored only in the server-owned ledger.
 export async function withPaidVip(user,storeFactory,now=Date.now()){
   if(!user)return null;
   if(user.admin||user.vip)return {...user,vipSource:user.admin?'admin':'manual',vipExpiresAt:null};

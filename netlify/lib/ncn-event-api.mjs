@@ -1,6 +1,7 @@
 // All access decisions use a fresh, authenticated Identity /user response.
 import { randomUUID } from 'node:crypto';
 import {withMemberVip} from './ncn-membership.mjs';
+import {resolveVipAccess,consumeVipTrial} from './ncn-vip-trial.mjs';
 
 const headers = {'Cache-Control':'private, no-store, max-age=0','Netlify-CDN-Cache-Control':'no-store','Vary':'Cookie','X-Content-Type-Options':'nosniff'};
 function fail(status,message){const e=new Error(message);e.status=status;throw e;}
@@ -49,17 +50,23 @@ async function catalogues(store){
   return (await Promise.all(listing.blobs.map(b=>store.get(b.key,{type:'json'})))).filter(activeCatalogue);
 }
 export function createHandler(deps){return async function(req){
+  let access;
+  const respond=(data,status=200)=>{const res=reply(data,status);if(access?.cookie)res.headers.set('Set-Cookie',access.cookie);return res;};
   try{
     if(!deps.production())fail(503,'Chức năng VIP chỉ hoạt động ở bản web chính thức.');
     const method=req.method,route=new URL(req.url).searchParams.get('route')||'me';
     if(!['GET','POST'].includes(method))fail(405,'Phương thức không hỗ trợ.');
     if(method==='POST'&&req.headers.get('origin')!==new URL(req.url).origin)fail(403,'Yêu cầu phải gửi từ chính trang web.');
-    const user=withMemberVip(await deps.verify(req));
-    if(route==='me'&&method==='GET')return reply({user,allowed:!!(user&&(user.admin||user.vip))});
+    const identity=await deps.verify(req);
+    access=deps.memberStore?await resolveVipAccess(req,identity,deps.memberStore,deps.now?.()??Date.now()):{user:withMemberVip(identity),unlimited:true};
+    const user=access.user;
+    const allowed=!!(user&&(user.admin||user.vip||access.trial?.remaining>0));
+    if(route==='me'&&method==='GET')return respond({user,allowed,trial:access.trial||null});
     if(!user)fail(401,'Đăng nhập và xác nhận email tài khoản NCN để sử dụng công cụ VIP.');
-    if(!user.admin&&!user.vip)fail(403,'Tài khoản chưa được cấp quyền VIP. Vui lòng liên hệ quản trị viên.');
+    // An idempotent print retry is checked against the stored request ID below.
+    if(!allowed&&!(route==='print'&&method==='POST'&&access.trial))fail(403,user.paidVipBlocked?'Quyền thành viên đang tạm khóa. Vui lòng liên hệ Admin.':'Bạn đã dùng hết 3 lượt. Donate để sử dụng Event VIP và Giờ vàng VIP không giới hạn.');
     const store=deps.store();
-    if(route==='app'&&method==='GET')return reply({html:await deps.asset(user.admin?'admin.html':'vip.html'),user});
+    if(route==='app'&&method==='GET')return respond({html:await deps.asset(user.admin?'admin.html':'vip.html'),user,trial:access.trial||null});
     if(route==='asset'&&method==='GET'){
       const name=new URL(req.url).searchParams.get('name');
       const names={core:['core.cjs','text/javascript'],ui:['ui.js','text/javascript'],bridge:['bridge.user.js','text/javascript']};
@@ -120,8 +127,9 @@ export function createHandler(deps){return async function(req){
       if(items.reduce((sum,p)=>sum+p.qty,0)>1500)fail(400,'Một lần tạo tối đa 1.500 nhãn. Chia danh sách hoặc giới hạn số lượng mỗi mã.');
       let printed;try{printed=deps.print(items,settings);}catch(e){fail(400,e.message);}
       if(Buffer.byteLength(printed.html)>5_000_000)fail(400,'Bản in quá lớn. Chia thành nhiều lần in nhỏ hơn.');
-      return reply(printed);
+      const trial=await consumeVipTrial(access,d.requestId,JSON.stringify([new URL(req.url).pathname,d.items,settings]),deps.now?.()??Date.now());
+      return respond({...printed,trial});
     }
     fail(404,'Không tìm thấy chức năng.');
-  }catch(e){return reply({error:e.status?e.message:'Chưa thực hiện được thao tác. Tải lại trang hoặc kiểm tra Functions trong Netlify.'},e.status||503);}
+  }catch(e){return respond({error:e.status?e.message:'Chưa thực hiện được thao tác. Tải lại trang hoặc kiểm tra Functions trong Netlify.'},e.status||503);}
 };}

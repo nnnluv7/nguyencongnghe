@@ -271,5 +271,8 @@
   "/search/label/Tắt đầu bài": "search/label/Tắt đầu bài/index.html",
   "/thu-audio/": "thu-audio/index.html",
   "/thu-audio": "thu-audio/index.html",
-  "/thu-audio/index.html": "thu-audio/index.html"
+  "/thu-audio/index.html": "thu-audio/index.html",
+  "/donate": "donate/index.html",
+  "/donate/": "donate/index.html",
+  "/donate/index.html": "donate/index.html"
 }
