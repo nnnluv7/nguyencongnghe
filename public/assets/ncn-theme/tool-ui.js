@@ -29,16 +29,7 @@ export function installToolUI({doc=document,win=window,config={},preview=false}=
     const title=$('pp-title');if(title&&app.contains(title)&&settings){const label=title.closest('label'),filter=app.querySelector('.pp-filter-bar'),note=$('pp-title-note');if(label)settings.prepend(label);if(note){note.classList.add('ncn-popup-title-note');settings.after(note);}if(filter)filter.hidden=true;}
     if(prefix==='nt'){const quick=$('nt-letter-control');if(quick&&!quick.hidden)quick.classList.add('ncn-letter-quick');}
   }
-  function enhanceVip(){
-    const app=$('ncn-event-app');if(!app||app.dataset.easy)return;app.dataset.easy='true';
-    const source=app.querySelector('.ev-source');if(source)disclosure(source,'ADMIN · Cập nhật / lưu bảng giá','ncn-vip-source');
-    const stock=app.querySelector('.ev-stock');if(stock)disclosure(stock,'Nhập danh sách từ file tồn kho / ERP','ncn-stock-import');
-    const workspace=app.querySelector('.ev-workspace');if(workspace)workspace.classList.add('ncn-workspace-compact');
-    const hero=app.querySelector('.ev-hero p');if(hero)hero.textContent='Chọn bảng giá → thêm sản phẩm → chọn mẫu và in.';
-  }
   for(const id of ['ncn-sticker-app','ncn-popup-app','ncn-store-app'])enhanceEditor($(id));
-  enhanceVip();
-  if($('vip-app')&&win.MutationObserver){const o=new win.MutationObserver(enhanceVip);o.observe($('vip-app'),{childList:true});observers.push(o);}
 
   const cash=$('ncn-cash-app');
   if(cash&&!cash.dataset.easy){
