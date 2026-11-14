@@ -7,12 +7,14 @@ import QRCode from 'qrcode/lib/core/qrcode.js';
 import Core from '../lib/ncn-gvgs-private/core.cjs';
 import loadGV2Assets from '../lib/ncn-gvgs-private/gv2-assets.cjs';
 import {createHandler,verifyIdentity} from '../lib/ncn-event-api.mjs';
+import {PAYMENT_STORE} from '../lib/ncn-membership.mjs';
 
 const base=path.join(process.cwd(),'netlify/lib/ncn-gvgs-private');
 const shared=path.join(process.cwd(),'netlify/lib/ncn-event-private');
 let gv2Assets;
 const dependencies={
   verify:request=>verifyIdentity(request,getIdentityConfig()),
+  memberStore:()=>getStore({name:PAYMENT_STORE,consistency:'strong'}),
   store:()=>getStore({name:'ncn-gvgs-vip-v1',consistency:'strong'}),
   asset:name=>readFileSync(path.join(base,name),'utf8'),
   print:(items,settings)=>Core.printable(items,settings,{

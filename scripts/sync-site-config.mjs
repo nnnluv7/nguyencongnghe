@@ -37,7 +37,7 @@ for(const path of [...await pages('public'),'netlify/lib/ncn-library/article-she
    // The count node precedes the grid in some retained shells.
    if(!html.includes('data-ncn-pin="'+tool.id+'"'))html=html.replace(card,card+next);
   }
-  const guestCount=config.tools.filter(tool=>!['event','gvgs'].includes(tool.id)).length;
+  const guestCount=config.tools.length;
   html=html.replace(/\d+ \/ \d+ công cụ · Chọn ngôi sao để ghim lối tắt\./,guestCount+' / '+guestCount+' công cụ · Chọn ngôi sao để ghim lối tắt.');
   // Cloned cards must follow the hydrated catalogue's order. A new, taller
   // arcade card in a different row otherwise shifts the homepage on hydration.

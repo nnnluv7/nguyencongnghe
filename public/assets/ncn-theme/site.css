@@ -7,8 +7,7 @@
 @media(min-width:800px){.ncn-inline-ad-unit{width:728px;height:90px}}
 @media(max-width:351px){.ncn-inline-ad{display:none!important}}
 @media print{.ncn-inline-ad{display:none!important}}
-/* VIP tools stay hidden until the server verifies a directly assigned role. */
-html:not([data-ncn-vip-access="allowed"]) :is([data-ncn-tool="event"],[data-ncn-tool="gvgs"],a[href="/in-event"],a[href^="/in-event/"],a[href="/in-gvgs"],a[href^="/in-gvgs/"]){display:none!important}
+/* Both VIP tools are discoverable by everyone; the server enforces usage. */
 .ncn-account-social{margin:15px 0}.ncn-account-social[hidden]{display:none!important}.ncn-account-social button{width:100%;min-height:45px;border:1px solid #1b63bb;border-radius:12px;padding:12px;background:#2368c4;color:white;font:inherit;font-weight:750;cursor:pointer}.ncn-account-social small{display:block;font-size:10px;line-height:1.7;color:var(--ncn-muted);margin:8px 0 13px}
 @media screen {
 /* Appearance lives here; page heads only set the saved light/dark preference. */
@@ -1407,3 +1406,5 @@ body.ncn-modern .st-card-sizes button:focus-visible{outline: 3px solid #2563b8; 
   body.ncn-modern #ncn-popup-app .st-tabs{flex-wrap:wrap;overflow:visible}
   body.ncn-modern #ncn-popup-app .st-tabs button{min-width:0;padding-inline:11px}
 }
+@media screen{.ncn-trial-banner{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:14px 18px;margin:0 0 18px;border:1px solid var(--ncn-rim,#dce5ef);border-radius:18px;background:var(--ncn-glass-soft,#f3f7fd);font-size:12px;color:var(--ncn-ink,#22324b)}.ncn-trial-banner[hidden]{display:none}.ncn-trial-banner a,.ncn-footer-donate{color:var(--ncn-accent,#2861b4);font-size:11px;text-decoration:none}.ncn-trial-banner a{font-weight:700;white-space:nowrap}.ncn-footer-donate{opacity:.85}}
+@media print{.ncn-trial-banner{display:none!important}}

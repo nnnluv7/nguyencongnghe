@@ -1,6 +1,5 @@
 import {articleCardHTML,libraryLabelName,libraryLabels,latestArticles,featuredArticles} from './catalogue.js?v=20261025-sync-1';
 import '../ncn-account.js?v=20261027-photo-save-1';
-import {canUseVip,isVipToolURL} from '../ncn-vip-access.js';
 import {installAppearance} from './appearance.js?v=20261017-mobile-dark-1';
 // A metrics request must never delay or prevent the actual interface.
 if(typeof window!=='undefined')import('./visitor-counter.js?v=20261016-easy-2').catch(()=>{});
@@ -78,10 +77,9 @@ export function createTheme({doc=document,win=window,config,catalog=win.CG_CATAL
   const groups=(Array.isArray(cfg.groups)?cfg.groups:[]).filter(g=>g&&typeof g.id==='string'&&g.name);
   const tools=orderTools(withMergedPopup(withAudioTool(cfg.tools)).filter(t=>t&&/^[a-z0-9-]+$/i.test(t.id)&&t.title&&safeHref(t.href)).map(t=>({...t,href:safeHref(t.href)})));
   const toolIds=new Set(tools.map(t=>t.id));
-  let vipAccess=canUseVip(win.NCNAccount?.state.user);
-  const visibleTools=()=>tools.filter(t=>vipAccess||!['event','gvgs'].includes(t.id));
+  const visibleTools=()=>tools;
   let rows=normalizeCatalog(catalog);
-  const visibleRows=(items=rows)=>vipAccess?items:items.filter(row=>!isVipToolURL(row.link));
+  const visibleRows=(items=rows)=>items;
   function readFavorites(raw){
     try {
       const value=JSON.parse(raw||'[]');
@@ -241,10 +239,6 @@ export function createTheme({doc=document,win=window,config,catalog=win.CG_CATAL
     if(dialog?.open)renderSearch();
   }
   listen(win,'storage',e=>{if(e.key==='ncn-favorites'){favorites=readFavorites(e.newValue);renderTools();}});
-  listen(doc,'ncn-account-change',()=>{
-    const next=canUseVip(win.NCNAccount?.state.user);if(next===vipAccess)return;vipAccess=next;
-    renderNavigation();renderTools();replaceCatalogue(rows);renderSearch();
-  });
   if(preview){
     // The preview uses the same UI, and opens existing website routes in the browser.
     previewLinks();

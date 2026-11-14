@@ -4,7 +4,7 @@ export const MENU_LABELS={event:'Event VIP',gvgs:'Giờ Vàng VIP',cash:'Kiểm 
 export function orderTools(tools=[]){return [...PRIORITY.flatMap(id=>tools.filter(t=>t.id===id)),...tools.filter(t=>!PRIORITY.includes(t.id))];}
 export function navigationHTML(tools,link){
  const ordered=orderTools(tools),first=ordered.filter(t=>PRIORITY.includes(t.id)),rest=ordered.filter(t=>!PRIORITY.includes(t.id));
- return '<p class="ncn-nav-label">Mở nhanh</p>'+first.map(t=>link(t.href,MENU_LABELS[t.id]||t.title,t.icon,t.access==='vip'?'VIP':t.badge,t.id)).join('')+'<p class="ncn-nav-label">Tất cả công cụ</p>'+link('/','Trang chủ','home')+rest.map(t=>link(t.href,t.title,t.icon,t.access==='vip'?'VIP':t.badge,t.id)).join('')+link('/thu-vien/','Thư viện bài viết','book');
+ return '<p class="ncn-nav-label">Mở nhanh</p>'+first.map(t=>link(t.href,MENU_LABELS[t.id]||t.title,t.icon,t.access==='vip'?'VIP':t.badge,t.id)).join('')+'<p class="ncn-nav-label">Tất cả công cụ</p>'+link('/','Trang chủ','home')+rest.map(t=>link(t.href,t.title,t.icon,t.access==='vip'?'VIP':t.badge,t.id)).join('')+link('/thu-vien/','Thư viện bài viết','book')+link('/donate/#reg','Donate · Thành viên ủng hộ','heart');
 }
 const controllers=new WeakMap();
 export function installFloatingMenu({doc=document,win=window}={}){
