@@ -4,7 +4,7 @@ import {insuranceLogo, warrantyFontCSS, warrantyFontFamily, withWarrantyFonts} f
 const id='sales-bh-giao-hang';
 const model={
  id,name:'BẢO HÀNH · GIAO HÀNG',section:'sales',group:'ban-hang',
- thumbnail:'/assets/ncn-store-tools/sales/delivery-preview.webp',
+ thumbnail:'/assets/ncn-store-tools/sales/delivery-preview-6c0595504f.webp',
  note:'2 phiếu trên A4 ngang hoặc 1 phiếu trên A5 dọc',variants:[{layout:id,size:'A4 / A5'}]
 };
 

@@ -180,7 +180,15 @@ try{
   const first=delivery.locator('#nt-cards .st-card').first();
   await first.waitFor();
   assert.equal(await first.locator('strong').innerText(),'ĐỔI TRẢ · BẢO HÀNH');
-  await delivery.locator('[data-card-model="sales-bh-giao-hang"] .st-card-preview').click();
+  const deliveryCard=delivery.locator('[data-card-model="sales-bh-giao-hang"] .st-card-preview');
+  const thumbnail=deliveryCard.locator('img');
+  await thumbnail.scrollIntoViewIfNeeded();
+  assert.match(await thumbnail.getAttribute('src'),/delivery-preview-[a-f0-9]{10}\.webp$/);
+  await delivery.waitForFunction(()=>{
+    const image=document.querySelector('[data-card-model="sales-bh-giao-hang"] img');
+    return image?.complete&&image.naturalWidth>0;
+  });
+  await deliveryCard.click();
   await delivery.locator('.ncn-print-settings').evaluate(el=>el.open=true);
   await delivery.locator('.ncn-print-fields').evaluate(el=>el.open=true);
   const customer=delivery.locator('#nt-field-2');
@@ -249,7 +257,7 @@ try{
     await returns.locator('#nt-paper').selectOption(paper);
     await returns.waitForFunction(({paper,orientation,count})=>{
       const doc=document.getElementById('nt-preview')?.contentDocument;
-      return doc?.head.textContent.includes('@page{size:'+paper+' '+orientation)&&doc.querySelectorAll('.returns-slip').length===count;
+      return doc?.head?.textContent.includes('@page{size:'+paper+' '+orientation)&&doc.querySelectorAll('.returns-slip').length===count;
     },{paper,orientation,count});
     const [download]=await Promise.all([returns.waitForEvent('download'),returns.locator('#nt-download').click()]);
     const filename='doi-tra-bao-hanh-'+paper.toLowerCase(),path='/__print-text/'+filename+'.html';
