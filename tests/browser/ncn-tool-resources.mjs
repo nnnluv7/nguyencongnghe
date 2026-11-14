@@ -33,7 +33,7 @@ const handlers=Object.fromEntries(Object.keys(printCores).map(name=>[name,create
 })]));
 async function fixture({role,width=1280}={}){
  if(context)await context.close();
- signedUser=role?{...actor,admin:role==='admin'}:null;
+ signedUser=role?{...actor,admin:role==='admin',vipSource:role==='admin'?'admin':'manual'}:null;
  context=await browser.newContext({viewport:{width,height:width<600?844:960}});
  if(signedUser)await context.addCookies([{name:'nf_jwt',value:jwt,url:origin}]);
  await context.route('**/*',async route=>{
@@ -81,6 +81,8 @@ try{
   await opened('/in-'+name+'/');
   await page.locator('#ev-shared-info').filter({hasText:'Cập nhật'}).waitFor();
   assert.equal(await page.locator('.ncn-vip-source').count(),role==='admin'?1:0);
+  const printToggle=page.locator(name==='gvgs'?'#ev-color':'#ev-cut');
+  assert.equal(await printToggle.evaluate(input=>getComputedStyle(input).appearance),'auto');
   const campaign=await page.locator('#ev-saved-campaign').boundingBox(),search=await page.locator('#ev-search').boundingBox();
   const products=await page.locator('.ev-products').boundingBox(),history=await page.locator('.ev-history').boundingBox();
   if(width===1280){
