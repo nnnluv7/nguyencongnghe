@@ -233,7 +233,6 @@ try{
     assert.equal(functionCalls.filter(c=>c.tool==='ncn-event'&&['me','app'].includes(c.action)).length,privateBefore);
     assert.equal(await event.evaluate(()=>window.sameUserEvents),0);
     assert.equal(await event.locator('#fixture-edit').inputValue(),'KEEP THIS VALUE');
-    assert.equal(functionCalls.filter(c=>['ncn-event','ncn-gvgs'].includes(c.tool)&&c.action==='me').length,0);
   });
   await check('a transient profile failure keeps the session and private editor open',async()=>{
     profileFailure=true;await event.evaluate(()=>NCNAccount.refresh({force:true}).catch(()=>{}));

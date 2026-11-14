@@ -56,6 +56,7 @@ export function mountVipGate(endpoint,{doc=document,win=window,fetcher=fetch}={}
       for(const name of ['core','ui']){
         const script=doc.createElement('script');script.src=endpoint+'?route=asset&name='+name;
         await new Promise((resolve,reject)=>{script.onload=resolve;script.onerror=()=>reject(new Error('Không tải được công cụ. Bấm kiểm tra lại hoặc tải lại trang.'));doc.body.append(script);});
+        if(disposed||loaded!==content||currentId!==(account.state.user?.id||null))return;
       }
       if(disposed)return;gate.hidden=true;phase('ready');balance(content.trial,content.user);
       const out=doc.getElementById('ev-vip-logout');if(out){out.hidden=!!content.user.guest;listen(out,'click',()=>account.signOut().catch(error=>message(error.message,true)));}
@@ -67,9 +68,9 @@ export function mountVipGate(endpoint,{doc=document,win=window,fetcher=fetch}={}
   listen(doc,'ncn-account-signed-out',()=>{if(reloadPending&&!disposed)win.location.reload();});
   listen(doc,'ncn-account-change',()=>{
     if(!started)return;
-    if(pending){again=true;return;}
     const user=account.state.user;
     if(loaded&&((user?.id||null)!==(loaded.user.guest?null:loaded.user.id)||!!user?.admin!==!!loaded.user.admin))reset();
+    else if(pending)again=true;
     else check({refresh:false});
   });
   const ready=account.ready.then(()=>{started=true;return check({refresh:false});});
