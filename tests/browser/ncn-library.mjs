@@ -1,6 +1,5 @@
 const seedLibraryForFixture=JSON.parse(await readFile('netlify/lib/ncn-library/seed.json','utf8'));
 import {publicCatalog} from '../../netlify/lib/ncn-library-api.mjs';
-import {isVipToolURL} from '../../public/assets/ncn-vip-access.js';
 import {chromium} from 'playwright';
 import {createServer} from 'node:http';
 import {readFile,mkdir,stat,writeFile} from 'node:fs/promises';
@@ -15,7 +14,7 @@ const aliases={'/p/sticker.html':'/sticker/','/p/popup-a7.html':'/popup-a7/','/p
 function catalogueRows(items){
   const seen=new Set();return items.map(row=>({...row,link:aliases[row.link]||row.link})).filter(row=>{
     const path=new URL(row.link,'https://nguyencongnghe.com').pathname.replace(/\/index\.html$/,'/');
-    const key=(aliases[path]||path).replace(/\/$/,'');if(seen.has(key)||key==='/thu-vien'||isVipToolURL(row.link))return false;seen.add(key);return true;
+    const key=(aliases[path]||path).replace(/\/$/,'');if(seen.has(key)||key==='/thu-vien')return false;seen.add(key);return true;
   });
 }
 const baselineRows=catalogueRows(catalogue);

@@ -95,8 +95,7 @@ try{
   const art=id=>page.locator('#ncn-tool-grid [data-ncn-tool="'+id+'"] .ncn-tool-art');
   const current=art('audio'),neighbor=art('cash');
   await page.locator('#ncn-tool-grid [data-ncn-tool=ghep-khoi]').waitFor();
-  const {event,gvgs,...guestArt}=expectedHomeArt;
-  assert.deepEqual(await homeArt(page),guestArt);
+  assert.deepEqual(await homeArt(page),expectedHomeArt);
   await current.scrollIntoViewIfNeeded();
   await page.mouse.move(0,0);
   await page.locator('#ncn-home[data-preview-ready] #ncn-tool-grid [data-ncn-tool=cash][data-card-visible]').waitFor();
