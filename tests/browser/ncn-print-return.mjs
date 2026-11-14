@@ -7,6 +7,15 @@ export const iPhoneUserAgent='Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac O
 export function instrumentPrintFrames(){
   if(window!==window.top)return;
   window.__ncnPrints=[];window.__ncnPrintFocus=0;
+  window.__ncnEndPrint=({selector,event})=>{
+    document.querySelector(selector).contentDocument.body.replaceChildren();
+    if(event==='afterprint')window.__ncnPrintFrame.contentWindow.dispatchEvent(new Event('afterprint'));
+    else if(event==='focus')window.dispatchEvent(new FocusEvent('focus'));
+    else{
+      Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'));
+      Object.defineProperty(document,'hidden',{configurable:true,value:false});document.dispatchEvent(new Event('visibilitychange'));delete document.hidden;
+    }
+  };
   const create=Document.prototype.createElement;
   Document.prototype.createElement=function(...args){
     const node=create.apply(this,args);
@@ -15,9 +24,10 @@ export function instrumentPrintFrames(){
       node.contentWindow.focus=()=>{window.__ncnPrintFocus++;};
       node.contentWindow.print=()=>{
         window.__ncnPrintFrame=node;
-        window.__ncnPrints.push({text:node.contentDocument.body.textContent,
+        window.__ncnPrints.push({text:node.contentDocument.body.textContent+' '+[...node.contentDocument.querySelectorAll('input')].map(input=>input.value).join(' '),
           fonts:node.contentDocument.fonts.status,
           images:[...node.contentDocument.images].every(image=>image.complete&&image.naturalWidth>0)});
+        if(window.__ncnPrintReturn)window.__ncnEndPrint(window.__ncnPrintReturn);
       };
     });
     return node;
@@ -41,27 +51,23 @@ export async function verifyPrintReturns({browser,base,out}){
       await page.goto(base+path,{waitUntil:'domcontentloaded'});
       const preview=page.frameLocator('#'+prefix+'-preview');
       await preview.locator('.ncn-sheet').first().waitFor({state:'attached'});
+      await page.waitForFunction(prefix=>document.getElementById(prefix+'-preview').contentDocument.readyState==='complete',prefix);
       if(index!==null)await preview.locator('[data-ncn-copy="0"][data-field="'+index+'"]').fill(value);
       await page.locator('.ncn-direct-controls').getByRole('button',{name:'Phóng to',exact:true}).click();
       const scale=await page.locator('#'+prefix+'-preview').evaluate(frame=>frame.style.transform);
       for(const event of ['afterprint','focus','visibility']){
         const previous=await page.evaluate(()=>window.__ncnPrints.length);
+        if(!ios)await page.evaluate(config=>{window.__ncnPrintReturn=config;},{selector:'#'+prefix+'-preview',event});
         await page.getByRole('button',{name:'In ngay',exact:true}).click();
         await page.waitForFunction(count=>window.__ncnPrints.length===count+1,previous);
         const printed=await page.evaluate(()=>window.__ncnPrints.at(-1));
         if(value)assert.ok(printed.text.includes(value),path+': entered text reaches the passive print document');
         assert.equal(printed.fonts,'loaded');assert.equal(printed.images,true);
-        assert.equal(await page.locator('iframe[data-ncn-print-job]').count(),1);
         // Simulate a lost preview surface on return from the system print view.
-        await page.evaluate(({prefix,event})=>{
-          document.getElementById(prefix+'-preview').contentDocument.body.replaceChildren();
-          if(event==='afterprint')window.__ncnPrintFrame.contentWindow.dispatchEvent(new Event('afterprint'));
-          else if(event==='focus')window.dispatchEvent(new FocusEvent('focus'));
-          else{
-            Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'));
-            Object.defineProperty(document,'hidden',{configurable:true,value:false});document.dispatchEvent(new Event('visibilitychange'));delete document.hidden;
-          }
-        },{prefix,event});
+        if(ios){
+          assert.equal(await page.locator('iframe[data-ncn-print-job]').count(),1);
+          await page.evaluate(config=>window.__ncnEndPrint(config),{selector:'#'+prefix+'-preview',event});
+        }
         await page.locator('iframe[data-ncn-print-job]').waitFor({state:'detached'});
         await preview.locator('.ncn-sheet').first().waitFor({state:'attached'});
         if(index!==null)await page.waitForFunction(({prefix,index,value})=>document.getElementById(prefix+'-preview').contentDocument.querySelector('[data-ncn-copy="0"][data-field="'+index+'"]')?.value===value,{prefix,index,value});

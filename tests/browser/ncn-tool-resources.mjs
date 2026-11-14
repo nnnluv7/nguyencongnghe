@@ -119,13 +119,10 @@ try{
   const calls=printRequests;
   for(const event of ['afterprint','focus']){
    const count=await page.evaluate(()=>window.__ncnPrints.length);
+   if(width>=600)await page.evaluate(config=>{window.__ncnPrintReturn=config;},{selector:'#ev-preview-frame',event});
    await dialog.locator('#ev-print').click();
    await page.waitForFunction(count=>window.__ncnPrints.length===count+1,count);
-   await page.evaluate(event=>{
-    document.getElementById('ev-preview-frame').contentDocument.body.replaceChildren();
-    if(event==='afterprint')window.__ncnPrintFrame.contentWindow.dispatchEvent(new Event('afterprint'));
-    else window.dispatchEvent(new FocusEvent('focus'));
-   },event);
+   if(width<600)await page.evaluate(config=>window.__ncnEndPrint(config),{selector:'#ev-preview-frame',event});
    await page.locator('iframe[data-ncn-print-job]').waitFor({state:'detached'});
    await printedProduct.first().waitFor({state:'attached'});
    assert.equal(await printedProduct.count(),2);
