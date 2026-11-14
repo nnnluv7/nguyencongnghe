@@ -54,7 +54,7 @@ export async function verifyPrintReturns({browser,base,out}){
       const preview=page.frameLocator('#'+prefix+'-preview');
       await preview.locator('.ncn-sheet').first().waitFor({state:'attached'});
       await page.waitForFunction(prefix=>document.getElementById(prefix+'-preview').contentDocument.readyState==='complete',prefix);
-      if(index!==null)await preview.locator('[data-ncn-copy="0"][data-field="'+index+'"]').fill(value);
+      if(index!==null)await preview.locator('[data-ncn-copy="0"][data-field="'+index+'"]').first().fill(value);
       await page.locator('.ncn-direct-controls').getByRole('button',{name:'Phóng to',exact:true}).click();
       const scale=await page.locator('#'+prefix+'-preview').evaluate(frame=>frame.style.transform);
       for(const event of ['afterprint','focus','visibility']){
@@ -77,7 +77,7 @@ export async function verifyPrintReturns({browser,base,out}){
         await page.locator('iframe[data-ncn-print-job]').waitFor({state:'detached'});
         await preview.locator('.ncn-sheet').first().waitFor({state:'attached'});
         if(index!==null)await page.waitForFunction(({prefix,index,value})=>document.getElementById(prefix+'-preview').contentDocument.querySelector('[data-ncn-copy="0"][data-field="'+index+'"]')?.value===value,{prefix,index,value});
-        if(index!==null)assert.equal(await preview.locator('[data-ncn-copy="0"][data-field="'+index+'"]').inputValue(),value);
+        if(index!==null)assert.equal(await preview.locator('[data-ncn-copy="0"][data-field="'+index+'"]').first().inputValue(),value);
         assert.equal(await page.locator('#'+prefix+'-preview').evaluate(frame=>frame.style.transform),scale,'zoom survives returning from print');
       }
       // Safari can also restore this page from its back/forward cache.
@@ -87,7 +87,7 @@ export async function verifyPrintReturns({browser,base,out}){
       },prefix);
       await preview.locator('.ncn-sheet').first().waitFor({state:'attached'});
       if(index!==null)await page.waitForFunction(({prefix,index,value})=>document.getElementById(prefix+'-preview').contentDocument.querySelector('[data-ncn-copy="0"][data-field="'+index+'"]')?.value===value,{prefix,index,value});
-      if(index!==null)assert.equal(await preview.locator('[data-ncn-copy="0"][data-field="'+index+'"]').inputValue(),value);
+      if(index!==null)assert.equal(await preview.locator('[data-ncn-copy="0"][data-field="'+index+'"]').first().inputValue(),value);
       assert.equal(await page.evaluate(()=>window.__ncnPrintFocus),0,'off-screen print frames never take focus');
       assert.deepEqual(errors,[]);
       await page.screenshot({path:out+'/return-'+prefix+'-'+cases.findIndex(item=>item[0]===path)+'-'+profile.name+'.jpg',type:'jpeg',quality:75});
