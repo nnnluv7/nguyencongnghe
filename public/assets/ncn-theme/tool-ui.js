@@ -1,7 +1,7 @@
 /* Simple NCN navigation and task-focused forms. Existing controls retain their handlers. */
 const VERSION='20261024-first-paint-1';
 export function installToolUI({doc=document,win=window,config={},preview=false}={}){
-  const $=id=>doc.getElementById(id),listeners=[],observers=[];
+  const $=id=>doc.getElementById(id),listeners=[];
   const listen=(node,event,fn)=>{node?.addEventListener(event,fn);listeners.push(()=>node?.removeEventListener(event,fn));};
   const make=(tag,cls,value)=>{const n=doc.createElement(tag);if(cls)n.className=cls;if(value)n.textContent=value;return n;};
   doc.body.classList.add('ncn-modern');
@@ -14,13 +14,7 @@ export function installToolUI({doc=document,win=window,config={},preview=false}=
   }
   function enhanceEditor(app){
     if(!app||app.dataset.easy)return;app.dataset.easy='true';
-    const prefix=app.id==='ncn-store-app'?'nt':'st',workspace=$(prefix+'-workspace'),catalogue=app.querySelector('.st-catalogue');
-    if(workspace&&catalogue){
-      const change=$(prefix+'-change-model');if(change)change.textContent='← Chọn mẫu khác';
-      function sync(){const editing=!workspace.hidden;catalogue.hidden=editing;app.classList.toggle('ncn-editing',editing);}
-      sync();if(win.MutationObserver){const o=new win.MutationObserver(sync);o.observe(workspace,{attributes:true,attributeFilter:['hidden']});observers.push(o);}
-      listen(change,'click',()=>{workspace.hidden=true;catalogue.hidden=false;app.classList.remove('ncn-editing');catalogue.scrollIntoView?.({behavior:'smooth',block:'start'});const first=catalogue.querySelector('input,button');first?.focus({preventScroll:true});});
-    }
+    const prefix=app.id==='ncn-store-app'?'nt':'st';
     const settings=app.querySelector('.st-settings,.nt-settings'),imports=app.querySelector('.st-import-actions');
     if(settings)settings.classList.add('st-settings');
     if(imports)disclosure(imports,'Nhập danh sách từ Excel / CSV');
@@ -46,7 +40,7 @@ export function installToolUI({doc=document,win=window,config={},preview=false}=
       grid.append(dashboard,table);workspace.remove();cash.classList.add('cq-compact');
     }
   }
-  return {destroy(){listeners.forEach(remove=>remove());observers.forEach(o=>o.disconnect());}};
+  return {destroy(){listeners.forEach(remove=>remove());}};
 }
 
 // Compatibility for already-open pages importing the former helper URL.

@@ -3,6 +3,7 @@ import {defaultRow,normalize,normalizeRows,validateForPrint,paginate,renderDocum
 import {createDirectEditor} from '../ncn-direct/editor.js?v=20261024-selection-1';
 import {rowsForValidation} from '../ncn-direct/preview.js?v=20261015-direct-1';
 import {catalogueURL,loadSpreadsheet} from '../ncn-tool-resources.js';
+import {createCatalogueNavigation} from '../ncn-direct/catalogue-navigation.js';
 
 export function createStickerApp({app,data,doc=document,win=window,fetcher=fetch}) {
   const $=id=>doc.getElementById(id);
@@ -16,7 +17,6 @@ export function createStickerApp({app,data,doc=document,win=window,fetcher=fetch
   const total=()=>rows.reduce((sum,r)=>sum+Number(r.qty||0),0);
   const safe=fn=>event=>{try{fn(event);}catch(error){status(error.message,true);}};
   const currentRow=()=>rows[selected];
-  const scrollTo=el=>{if(typeof el?.scrollIntoView==='function')el.scrollIntoView({behavior:'smooth',block:'start'});};
   const groupName=id=>data.groups.find(g=>g.id===id)?.name||'';
 
   function showCatalogue() {
@@ -24,7 +24,7 @@ export function createStickerApp({app,data,doc=document,win=window,fetcher=fetch
     const matches=data.models.filter(m=>(group==='all'||m.group===group)&&normalize(m.name+' '+groupName(m.group)).includes(query));
     $('st-groups').innerHTML=[{id:'all',name:'Tất cả'},...data.groups].map(g=>`<button type="button" data-group="${g.id}" aria-pressed="${g.id===group}">${escapeHTML(g.name)}</button>`).join('');
     $('st-result-count').textContent=`${matches.length} mẫu${group==='all'?'':' · '+groupName(group)}`;
-    $('st-cards').innerHTML=matches.map(m=>catalogueCard(m,data.layouts,model?.id)).join('')||'<p>Không tìm thấy mẫu. Anh thử từ khóa khác.</p>';
+    $('st-cards').innerHTML=matches.map(m=>catalogueCard(m,data.layouts)).join('')||'<p>Không tìm thấy mẫu. Anh thử từ khóa khác.</p>';
   }
 
   function showRowList() {
@@ -59,17 +59,18 @@ export function createStickerApp({app,data,doc=document,win=window,fetcher=fetch
   }
 
   function saveDraft() {
-    if(model&&layout)drafts.set(model.id,{layout:layout.id,rows:structuredClone(rows),selected,previewIndex});
+    if(model&&layout)drafts.set(model.id,{layout:layout.id,rows:structuredClone(rows),selected,previewIndex,paper});
   }
 
-  function setURL() {
-    try {
-      const url=new URL(win.location.href);url.searchParams.set('mau',model.id);url.searchParams.set('co',String(model.variants.findIndex(v=>v.layout===layout.id)+1));url.searchParams.delete('nhom');
-      win.history.replaceState(null,'',url);
-    }catch{}
+  function setURL(source) {
+    const url=new URL(win.location.href);
+    url.searchParams.set('mau',model.id);
+    url.searchParams.set('co',String(model.variants.findIndex(v=>v.layout===layout.id)+1));
+    url.searchParams.delete('nhom');
+    navigation.select(url,source);
   }
 
-  function chooseModel(id,variantIndex=null,{scroll=true}={}) {
+  function chooseModel(id,variantIndex=null,{scroll=true,source=null}={}) {
     const chosen=data.models.find(m=>m.id===id);if(!chosen)throw new Error('Mẫu sticker không tồn tại.');
     saveDraft();model=chosen;
     const previous=drafts.get(id);
@@ -77,13 +78,14 @@ export function createStickerApp({app,data,doc=document,win=window,fetcher=fetch
     if(!layout)layout=data.layouts.find(l=>l.id===model.variants[0].layout);
     if(previous){rows=structuredClone(previous.rows);selected=Math.min(previous.selected,rows.length-1);previewIndex=previous.previewIndex||0;}
     else{rows=[defaultRow(layout,`row-${++counter}`)];selected=0;previewIndex=0;}
-    $('st-workspace').hidden=false;
+    paper=previous?.paper||paper;$('st-paper').value=paper;
+    setURL(source);
     $('st-model-title').textContent=model.name;
     $('st-model-group').textContent=groupName(model.group);
     $('st-size').innerHTML=model.variants.map(v=>`<option value="${v.layout}">${escapeHTML(v.size)}</option>`).join('');
     $('st-size').value=layout.id;$('st-size').disabled=model.variants.length===1;
-    showCatalogue();showFields();updatePreview();setURL();status('');
     direct.open({scroll});
+    showFields();updatePreview();status('');
   }
 
   function download(contents,type,name) {
@@ -147,9 +149,25 @@ export function createStickerApp({app,data,doc=document,win=window,fetcher=fetch
     onSelect:index=>{win.clearTimeout(timer);selected=index;showFields();},
     onPage:index=>{previewIndex=index;updatePreview();},onPrint:()=>output({print:true}),onError:message=>status(message,true)
   });
+  const navigation=createCatalogueNavigation({
+    app,win,cards:$('st-cards'),workspace:$('st-workspace'),change:$('st-change-model'),search:$('st-search'),
+    filters:()=>group,restoreFilters:value=>{group=value;},renderCatalogue:showCatalogue,
+    openFromURL:(url,options)=>{
+      const id=url.searchParams.get('mau'),chosen=data.models.find(item=>item.id===id);
+      if(!chosen){
+        const initialGroup=url.searchParams.get('nhom');
+        group=initialGroup==='all'||data.groups.some(item=>item.id===initialGroup)?initialGroup:'thong-tin';
+        return false;
+      }
+      if(!options.fromCatalogue)group=chosen.group;
+      chooseModel(id,Number(url.searchParams.get('co')||1)-1,options);
+      return true;
+    },
+    closeModel:()=>{direct.flush();saveDraft();win.clearTimeout(timer);model=null;layout=null;status('');}
+  });
   $('st-groups').addEventListener('click',safe(event=>{const button=event.target.closest('[data-group]');if(button){group=button.dataset.group;showCatalogue();}}));
   $('st-search').addEventListener('input',showCatalogue);
-  $('st-cards').addEventListener('click',safe(event=>{const button=event.target.closest('[data-model]');if(button)chooseModel(button.dataset.model,button.dataset.variant===undefined?null:Number(button.dataset.variant));}));
+  $('st-cards').addEventListener('click',safe(event=>{const button=event.target.closest('[data-model]');if(button)chooseModel(button.dataset.model,button.dataset.variant===undefined?null:Number(button.dataset.variant),{source:button});}));
   $('st-row-list').addEventListener('click',safe(event=>{const button=event.target.closest('[data-row]');if(button){selected=Number(button.dataset.row);previewIndex=Math.floor(rows.slice(0,selected).reduce((n,r)=>n+Number(r.qty),0)/layout.perPage);showFields();updatePreview();}}));
   $('st-fields').addEventListener('input',safe(event=>{
     const input=event.target;
@@ -163,7 +181,6 @@ export function createStickerApp({app,data,doc=document,win=window,fetcher=fetch
   $('st-add-row').addEventListener('click',safe(()=>{const row=defaultRow(layout,`row-${++counter}`);row.qty=1;rows.push(row);selected=rows.length-1;previewIndex=Math.floor((total()-1)/layout.perPage);showFields();updatePreview();}));
   $('st-duplicate').addEventListener('click',safe(()=>{rows.push({...structuredClone(currentRow()),id:`row-${++counter}`});selected=rows.length-1;previewIndex=Math.floor((total()-Number(currentRow().qty))/layout.perPage);showFields();updatePreview();}));
   $('st-delete-row').addEventListener('click',safe(()=>{if(rows.length>1){rows.splice(selected,1);selected=Math.max(0,selected-1);showFields();updatePreview();}}));
-  $('st-change-model').addEventListener('click',()=>scrollTo($('st-groups')));
   $('st-sample').addEventListener('click',safe(()=>download(sampleCSV(layout),'text/csv;charset=utf-8',`mau-${model.id}.csv`)));
   $('st-print').addEventListener('click',()=>output({print:true}));
   $('st-download').addEventListener('click',()=>output());
@@ -182,24 +199,15 @@ export function createStickerApp({app,data,doc=document,win=window,fetcher=fetch
         table=/\.tsv$/i.test(file.name)?text.replace(/^\ufeff/,'').split(/\r?\n/).filter(line=>line.trim()).map(line=>line.split('\t')):parseCSV(text);
       }
       const imported=importTable(importLayout,table);
-      if(layout.id!==importLayout.id)throw new Error('Anh đã đổi mẫu trong lúc đọc tệp. Anh chọn lại tệp cho mẫu đang dùng.');
+      if(layout!==importLayout)throw new Error('Anh đã đổi mẫu trong lúc đọc tệp. Anh chọn lại tệp cho mẫu đang dùng.');
       rows=imported;selected=0;previewIndex=0;showFields();updatePreview();status(`Đã nhập ${rows.length} nội dung. Anh kiểm tra xem trước trước khi in.`);
     }catch(error){status(error.message,true);}finally{event.target.value='';}
   });
   if(win.ResizeObserver)new win.ResizeObserver(scalePreview).observe($('st-preview-stage'));
   else win.addEventListener('resize',scalePreview);
-  const initialURL=new URL(win.location.href);
-  const initialGroup=initialURL.searchParams.get('nhom');
-  if(data.groups.some(g=>g.id===initialGroup)||initialGroup==='all')group=initialGroup;
-  const initialModel=initialURL.searchParams.get('mau');
-  const initialVariant=Number(initialURL.searchParams.get('co')||1)-1;
-  showCatalogue();
-  if(initialModel&&data.models.some(m=>m.id===initialModel)){
-    group=data.models.find(m=>m.id===initialModel).group;
-    chooseModel(initialModel,initialVariant,{scroll:false});
-  }
+  navigation.start();
   app.dataset.ready='true';
-  return {chooseModel,updatePreview,output,direct,destroy:()=>{direct.destroy();win.clearTimeout(timer);},getState:()=>({model,layout,rows,selected,group,paper,previewIndex}),setRows:next=>{rows=normalizeRows(layout,next);selected=0;previewIndex=0;showFields();updatePreview();}};
+  return {chooseModel,updatePreview,output,direct,destroy:()=>{navigation.destroy();direct.destroy();win.clearTimeout(timer);},getState:()=>({model,layout,rows,selected,group,paper,previewIndex}),setRows:next=>{rows=normalizeRows(layout,next);selected=0;previewIndex=0;showFields();updatePreview();}};
 }
 
 if(typeof document!=='undefined'&&document.getElementById('ncn-sticker-app')) {
