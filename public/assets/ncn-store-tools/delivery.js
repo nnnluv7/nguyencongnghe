@@ -105,7 +105,7 @@ const layout={
 .delivery-defect .delivery-options{font-weight:700;margin:.85mm 0 .35mm;text-indent:8mm;overflow-wrap:anywhere}
 .delivery-name{display:inline-block;min-width:20mm;max-width:100%;border-bottom:.22mm dotted #000}
 .delivery-defect ol{margin:0 0 .7mm;padding-left:7.5mm}
-.delivery-defect .delivery-accessories{margin-bottom:1.3mm;text-indent:8mm}
+.delivery-defect .delivery-accessories{margin-bottom:.9mm;text-indent:8mm}
 .delivery-return h2{font-size:9pt;text-decoration:underline;line-height:1.09;margin:0 0 .6mm}
 .delivery-first-month,.delivery-policy-note{text-align:center;font-size:9pt}
 .delivery-first-month b{font-size:11pt}
@@ -114,7 +114,7 @@ const layout={
 .delivery-fees{width:100%;border-collapse:collapse;text-align:center;font-size:9pt;font-weight:700;table-layout:fixed}
 .delivery-fees th,.delivery-fees td{border:.22mm solid #000;padding:.17mm 0}
 .delivery-fees th{background:#eee}
-.delivery-return .delivery-condition{text-align:center;font-size:8.85pt;font-weight:700;line-height:1.13;margin:3.2mm 0 1.2mm}
+.delivery-return .delivery-condition{text-align:center;font-size:8.85pt;font-weight:700;line-height:1.13;margin:1.4mm 0 1.2mm}
 .delivery-materials{font-size:9.1pt;font-weight:700;line-height:1.08}
 .delivery-copper{text-indent:2mm}
 .delivery-materials .delivery-material-item{padding-left:5mm}
