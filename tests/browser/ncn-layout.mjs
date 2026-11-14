@@ -44,6 +44,19 @@ async function context(){
 async function check(name,fn){try{await fn();results.push({name,ok:true});console.log('PASS '+name);}catch(error){results.push({name,ok:false,error:error.message});await page?.screenshot({path:out+'/failure-'+results.length+'.jpg',type:'jpeg',quality:80}).catch(()=>{});throw error;}}
 const paint=p=>p.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
 const fits=async p=>{const size=await p.evaluate(()=>({w:innerWidth,actual:document.documentElement.scrollWidth}));assert.ok(size.actual<=size.w+1,JSON.stringify(size));};
+// Coordinates taken from the actual artwork sheets. Check unpublished VIP card
+// markup as well as the visible tools so the display order never shifts a pair.
+const expectedHomeArt={
+ audio:'0% 0%',cash:'25% 0%',insurance:'50% 0%','lucky-wheel':'75% 0%',sticker:'100% 0%',
+ 'popup-a7':'0% 25%',sales:'50% 25%',fifo:'75% 25%',inventory:'100% 25%',
+ qr:'0% 50%',decor:'25% 50%','ncn-arcade':'50% 50%','flappy-bird':'75% 50%',event:'100% 50%',
+ gvgs:'0% 75%','ran-luot':'25% 75%','ca-lon-nuot-ca-be':'50% 75%',pikachu:'75% 75%','xep-hinh':'100% 75%',
+ 'ban-bong':'0% 100%','dao-vang':'25% 100%','ghep-khoi':'50% 100%'
+};
+const homeArt=p=>p.locator('#ncn-tool-grid .ncn-tool-card').evaluateAll(cards=>Object.fromEntries(cards.map(card=>[
+ card.querySelector('[data-ncn-pin]').dataset.ncnPin,
+ card.querySelector('.ncn-tool-art')?.style.getPropertyValue('--ncn-tool-art-position')
+])));
 const ctx=await context();
 try{
  await check('tool search loads articles once on demand and still hides VIP entries from a guest',async()=>{
@@ -68,8 +81,7 @@ try{
    const cards=page.locator('#ncn-tool-grid .ncn-tool-card:visible');
    assert.ok(await cards.count()>0);
    assert.equal(await cards.locator('.ncn-tool-art').count(),await cards.count());
-   const positions=await cards.locator('.ncn-tool-art').evaluateAll(nodes=>nodes.map(node=>node.style.getPropertyValue('--ncn-tool-art-position')));
-   assert.equal(new Set(positions).size,positions.length);
+   assert.deepEqual(await homeArt(page),expectedHomeArt);
    assert.equal(await cards.locator('a[href="/popup-a7/"]').count(),1);
    assert.equal(await cards.locator('a[href="/popup-a4-a5-a6/"]').count(),0);
   }
@@ -82,6 +94,9 @@ try{
  await check('hover keeps the real tool preview visible while nearby cards keep rotating',async()=>{
   const art=id=>page.locator('#ncn-tool-grid [data-ncn-tool="'+id+'"] .ncn-tool-art');
   const current=art('audio'),neighbor=art('cash');
+  await page.locator('#ncn-tool-grid [data-ncn-tool=ghep-khoi]').waitFor();
+  const {event,gvgs,...guestArt}=expectedHomeArt;
+  assert.deepEqual(await homeArt(page),guestArt);
   await current.scrollIntoViewIfNeeded();
   await page.mouse.move(0,0);
   await page.locator('#ncn-home[data-preview-ready] #ncn-tool-grid [data-ncn-tool=cash][data-card-visible]').waitFor();
@@ -94,7 +109,9 @@ try{
   await samples('cash','0');
   await current.hover();
   await samples('audio','1');
+  assert.equal(await current.evaluate(el=>getComputedStyle(el,'::after').transitionDuration),'0.4s');
   await samples('cash','1');
+  assert.equal(await neighbor.evaluate(el=>getComputedStyle(el,'::after').transitionDuration),'1s');
   await samples('cash','0');
   assert.equal(await current.evaluate(el=>getComputedStyle(el,'::after').opacity),'1');
   assert.equal(await neighbor.evaluate(el=>getComputedStyle(el,'::after').opacity),'0');
@@ -104,7 +121,7 @@ try{
   assert.deepEqual(await current.evaluate(el=>{
     const preview=getComputedStyle(el,'::after');
     return {cover:getComputedStyle(el,'::before').opacity,property:preview.transitionProperty,duration:preview.transitionDuration};
-  }),{cover:'1',property:'opacity',duration:'0.42s'});
+  }),{cover:'1',property:'opacity',duration:'0.5s'});
   await page.emulateMedia({reducedMotion:'reduce'});
   await current.hover();
   assert.equal(await current.evaluate(el=>getComputedStyle(el,'::after').transitionDuration),'0s');
