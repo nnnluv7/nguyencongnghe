@@ -202,7 +202,7 @@
     function persistHistory(){try{localStorage.setItem(HISTORY,JSON.stringify(state.history));}catch(error){message('Đã tạo mẫu in. Thiết bị không đủ dung lượng lưu lịch sử; tải bản in để giữ lại.',true);}historyRender();}
     async function preview(record){
       var s=record?record.settings:settings(),items=record?record.items:state.selected;
-      state.print=await VIP.call('print',{items:items,settings:s});el('preview-frame').srcdoc=state.print.html;
+      state.print=await VIP.call('print',{items:items,settings:s});VIP.preview(el('preview-frame'),state.print.html);
       el('dialog-title').textContent=s.name;el('preview-info').textContent=state.print.labels+' nhãn · '+state.print.pages+' trang A4 · '+s.width+' × '+s.height+' mm';
       if(typeof el('dialog').showModal==='function')el('dialog').showModal();else el('dialog').setAttribute('open','');
       if(!record){state.history.unshift({createdAt:new Date().toISOString(),settings:s,items:items.map(function(p){return Object.assign({},p);}),labels:state.print.labels,pages:state.print.pages});state.history=state.history.slice(0,15);persistHistory();}

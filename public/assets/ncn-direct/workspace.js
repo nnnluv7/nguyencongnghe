@@ -1,5 +1,6 @@
 /* Shared screen-only workspaces. Print documents and their artwork stay untouched. */
 import {printDocument,watchPrintReturn} from './print.js';
+import {writeFrame,frameHTML} from './frame.js';
 export function printHelp(doc=document,{margin='Không',open=false}={}){
   const details=doc.createElement('details');details.className='ncn-print-help';details.open=open;
   const summary=doc.createElement('summary');summary.textContent='Hướng dẫn in';details.append(summary);
@@ -70,9 +71,10 @@ export function attachPrintViewport({stage,frame,sheet,controls,doc=document,win
   };
   if(frame)frame.addEventListener('load',loaded);
   const stopRecovery=frame?watchPrintReturn(({ios,reason})=>{
-    if(!stage.isConnected||!frame.srcdoc||stage.closest('dialog')?.open===false)return;
+    const html=frameHTML(frame);
+    if(!stage.isConnected||!html||stage.closest('dialog')?.open===false)return;
     if(ios||reason==='pageshow'||!frame.contentDocument?.body?.firstElementChild){
-      remember();restoring=true;frame.srcdoc=frame.srcdoc;
+      remember();restoring=true;writeFrame(frame,html);
     }else schedule();
   },{doc,win}):()=>{};
   const observer=win.ResizeObserver?new win.ResizeObserver(schedule):null;
@@ -108,7 +110,7 @@ export function openPrintPreview(html,{title='Xem trước bản in',margin='Kh�
   close.addEventListener('click',()=>{dialog.close();cleanup();});
   dialog.addEventListener('close',cleanup,{once:true});
   if(dialog.showModal)dialog.showModal();else dialog.setAttribute('open','');
-  frame.srcdoc=html;return dialog;
+  writeFrame(frame,html);return dialog;
 }
 
 export function installPrintWorkspaces({doc=document,win=window}={}){

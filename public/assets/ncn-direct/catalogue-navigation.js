@@ -3,7 +3,7 @@ export function createCatalogueNavigation({app,cards,workspace,change,search,fil
   const {history,location}=win;
   const key='ncnPrintCatalogue';
   const initialRestoration=history.scrollRestoration;
-  let returning=false;
+  let returning=false,returnTimer=0,lastList=null;
   change.textContent='← Chọn mẫu khác';
 
   function currentEntry(){
@@ -32,11 +32,12 @@ export function createCatalogueNavigation({app,cards,workspace,change,search,fil
       choiceTop,
       cardY:cardTop+win.scrollY
     };
+    lastList=list;
     // Save the catalogue separately so browser traversal and the editor button
     // share the same history entry and restore the same filters and position.
     history.scrollRestoration='manual';
     write('replaceState',location.href,{list});
-    write('pushState',url,{fromCatalogue:true});
+    write('pushState',url,{fromCatalogue:true,list});
     history.scrollRestoration='manual';
   }
 
@@ -74,14 +75,26 @@ export function createCatalogueNavigation({app,cards,workspace,change,search,fil
   }
 
   function onPopState(){
+    if(returning&&new URL(location.href).searchParams.has('mau')){finishReturn();return;}
+    win.clearTimeout(returnTimer);
     returning=false;
     sync(true);
+  }
+
+  function finishReturn(){
+    win.clearTimeout(returnTimer);returning=false;
+    const url=new URL(location.href),previousModel=url.searchParams.get('mau'),list=currentEntry()?.list||lastList;
+    for(const param of ['mau','co','tieude'])url.searchParams.delete(param);
+    write('replaceState',url,{list});showList(list,previousModel);
   }
 
   function onChangeModel(){
     if(returning)return;
     if(currentEntry()?.fromCatalogue){
       returning=true;
+      // A restored old tab may still have iframe history from an earlier build.
+      // Never leave the button locked while waiting for a parent popstate.
+      returnTimer=win.setTimeout(finishReturn,400);
       history.back();
       return;
     }
@@ -97,6 +110,7 @@ export function createCatalogueNavigation({app,cards,workspace,change,search,fil
     select,
     start:()=>sync(false),
     destroy(){
+      win.clearTimeout(returnTimer);
       change.removeEventListener('click',onChangeModel);
       win.removeEventListener('popstate',onPopState);
       history.scrollRestoration=initialRestoration;

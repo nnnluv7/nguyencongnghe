@@ -225,7 +225,7 @@
     function persistHistory(){try{localStorage.setItem(HISTORY,JSON.stringify(state.history));}catch(error){message('Đã tạo mẫu in. Thiết bị không đủ dung lượng lưu lịch sử; tải bản in để giữ lại.',true);}historyRender();}
     async function preview(record){
       var s=record?record.settings:settings(),items=record?record.items:state.selected;var layout=C.formatLayout(s.format);el('preview').disabled=true;try{
-      state.print=await VIP.call('print',{items:items,settings:s});el('preview-frame').srcdoc=state.print.html;
+      state.print=await VIP.call('print',{items:items,settings:s});VIP.preview(el('preview-frame'),state.print.html);
       var paper=state.print.paper||layout.paper||'A4';
       el('dialog-title').textContent=s.name;el('preview-info').textContent=state.print.labels+' bản · '+state.print.pages+' trang '+paper+' · '+layout.name;
       el('print-tip').textContent='Chọn giấy '+paper+', tỷ lệ 100%, lề Không, tắt đầu/chân trang; bật Đồ họa nền. Mẫu in có sẵn hình nền và font. Cuộn ngang để xem cả tờ trên điện thoại.';

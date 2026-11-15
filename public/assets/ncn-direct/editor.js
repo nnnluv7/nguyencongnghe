@@ -1,6 +1,7 @@
 import {copyAt,editCopy} from './preview.js?v=20261015-direct-1';
 import {printHelp,enhancePrintWorkspace} from './workspace.js?v=20261024-selection-1';
 import {watchPrintReturn} from './print.js';
+import {writeFrame} from './frame.js';
 
 export function createDirectEditor({app,frame,stage,getState,onChange,onSelect,onPage,onPrint,onError,doc=document,win=window}) {
   app.classList.add('ncn-direct-editor');
@@ -128,7 +129,7 @@ export function createDirectEditor({app,frame,stage,getState,onChange,onSelect,o
     heading.lastChild.textContent=editHint??(editable?'Mỗi mẫu trên tờ được điền riêng. Ô chưa nhập hiện chữ gợi ý.':'Anh chọn số lượng và khổ giấy rồi bấm In.');
     linkLabel.hidden=!editable;
     const screenRules='<style data-ncn-preview-viewport>@media screen{html,body{overflow:hidden!important}.ncn-sheet{margin:0!important}input[data-ncn-active]{outline:2px solid #2769b3!important;outline-offset:-2px;background-color:#eaf0ff!important}}</style>';
-    frame.srcdoc=html.replace('</head>',screenRules+'</head>').replace('<html ',`<html data-ncn-direct-generation="${generation}" `);
+    writeFrame(frame,html.replace('</head>',screenRules+'</head>').replace('<html ',`<html data-ncn-direct-generation="${generation}" `));
     scale();
   }
   const stopRecovery=watchPrintReturn(({ios,reason})=>{
