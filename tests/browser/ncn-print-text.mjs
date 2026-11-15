@@ -313,13 +313,12 @@ try{
     if(width<960)await editor.locator('.ncn-workspace-bar [data-ncn-pane=fields]').click();
     await editor.locator('.ncn-print-settings').evaluate(n=>n.open=true);
     for(const paper of ['A4','A5']){
-      const navigated=editor.waitForEvent('framenavigated',frame=>frame.parentFrame()===editor.mainFrame()&&frame.url()==='about:srcdoc');
+      const generation=await editor.locator('#nt-preview').evaluate(frame=>frame.contentDocument.documentElement.getAttribute('data-ncn-direct-generation'));
       await editor.locator('#nt-paper').selectOption(paper);
-      await navigated;
-      await editor.waitForFunction(paper=>{
+      await editor.waitForFunction(({paper,generation})=>{
         const d=document.getElementById('nt-preview')?.contentDocument;
-        return d?.querySelector('.ncn-sheet')&&d.head.textContent.includes('@page{size:'+paper);
-      },paper);
+        return d?.readyState==='complete'&&d.documentElement.getAttribute('data-ncn-direct-generation')!==generation&&d.querySelector('.ncn-sheet')&&d.head.textContent.includes('@page{size:'+paper);
+      },{paper,generation});
       const frame=await (await editor.locator('#nt-preview').elementHandle()).contentFrame();
       await frame.evaluate(()=>document.fonts.ready);
       const screen=await frame.evaluate(inspectText);
