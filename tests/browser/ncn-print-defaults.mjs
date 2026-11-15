@@ -105,11 +105,13 @@ try{
     ['/trang-tri/','decor-buom-2','nt','buom','BƯỚM']
   ];
   const desktop=await browser.newPage({viewport:{width:1280,height:900},reducedMotion:'reduce'});
-  const catalogueErrors=[];
+  const catalogueErrors=[],catalogueRequests=[];
   desktop.on('pageerror',error=>catalogueErrors.push(error.message));
+  desktop.on('request',request=>catalogueRequests.push(new URL(request.url()).pathname));
   await desktop.route('**/*',route=>new URL(route.request().url()).origin===base?route.continue():route.abort());
   for(const [path,id,prefix,group,query,industry] of catalogues){
     await desktop.goto(base+'/');
+    catalogueRequests.length=0;
     await desktop.goto(base+path);
     await desktop.locator('[data-ready=true] .st-cards .st-card').first().waitFor();
     if(path==='/popup-a7/'){
@@ -123,7 +125,12 @@ try{
     await search.fill(query);
     await primary.scrollIntoViewIfNeeded();
     await desktop.mouse.move(0,0);
-    const illustrated=path==='/popup-a7/'||path==='/trang-tri/';
+    const illustrated=path==='/popup-a7/';
+    if(path==='/trang-tri/'){
+      assert.equal(await desktop.locator('#ncn-store-app .ncn-card-motion').count(),0);
+      assert.equal(await desktop.locator('#nt-cards .st-card-peek').count(),0);
+      assert.ok(!catalogueRequests.some(path=>path.includes('print-card-covers-')));
+    }
     assert.equal(await card.locator('.st-card-visual').count(),illustrated?1:0);
     assert.equal(await image.evaluate(el=>getComputedStyle(el).opacity),illustrated?'0':'1');
     if(illustrated)await primary.hover();
@@ -133,6 +140,7 @@ try{
     },id);
     assert.equal(await image.evaluate(img=>img.complete&&img.naturalWidth>0),true);
     assert.ok(await image.evaluate(img=>img.getBoundingClientRect().bottom<=img.parentElement.getBoundingClientRect().bottom));
+    if(path==='/trang-tri/')await desktop.screenshot({path:out+'/trang-tri-mau-in.jpg',type:'jpeg',quality:79});
     if(path==='/popup-a7/')await desktop.screenshot({path:out+'/popup-a7-hover.jpg',type:'jpeg',quality:79});
     const variant=card.locator('[data-variant]').last();
     await variant.click();
