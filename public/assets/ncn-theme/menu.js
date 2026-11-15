@@ -1,5 +1,5 @@
 /* One floating menu on desktop and mobile. It works before the config request completes. */
-export const PRIORITY=['audio','event','gvgs','cash','insurance'];
+export const PRIORITY=['audio','event','gvgs','cash','cash-fund','insurance'];
 export const MENU_LABELS={event:'Event VIP',gvgs:'Giờ Vàng VIP',cash:'Kiểm quỹ',insurance:'Bảo Hiểm & Trả Chậm'};
 export function orderTools(tools=[]){return [...PRIORITY.flatMap(id=>tools.filter(t=>t.id===id)),...tools.filter(t=>!PRIORITY.includes(t.id))];}
 export function navigationHTML(tools,link){
