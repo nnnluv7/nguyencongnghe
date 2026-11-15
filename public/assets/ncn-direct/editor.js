@@ -129,8 +129,11 @@ export function createDirectEditor({app,frame,stage,getState,onChange,onSelect,o
     heading.firstChild.textContent=editable?'Bấm vào chữ trên mẫu để nhập':'Mẫu in sẵn';
     heading.lastChild.textContent=editHint??(editable?'Mỗi mẫu trên tờ được điền riêng. Ô chưa nhập hiện chữ gợi ý.':'Anh chọn số lượng và khổ giấy rồi bấm In.');
     linkLabel.hidden=!editable;
+    // WebKit requires allow-scripts for parent-owned input listeners. The
+    // preview itself stays passive: no inline or external scripts may execute.
+    const passivePolicy=`<meta http-equiv="Content-Security-Policy" content="script-src 'none'; object-src 'none'">`;
     const screenRules='<style data-ncn-preview-viewport>@media screen{html,body{overflow:hidden!important}.ncn-sheet{margin:0!important}input[data-ncn-active]{outline:2px solid #2769b3!important;outline-offset:-2px;background-color:#eaf0ff!important}}</style>';
-    writeFrame(frame,html.replace('</head>',screenRules+'</head>').replace('<html ',`<html data-ncn-direct-generation="${generation}" `));
+    writeFrame(frame,html.replace(/<head\b[^>]*>/i,tag=>tag+passivePolicy).replace('</head>',screenRules+'</head>').replace('<html ',`<html data-ncn-direct-generation="${generation}" `));
     scale();
   }
   const stopRecovery=watchPrintReturn(({ios,reason})=>{
