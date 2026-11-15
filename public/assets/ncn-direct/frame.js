@@ -9,5 +9,6 @@ export function writeFrame(frame,html){
   documents.set(frame,html);
   child.open();child.write(html);child.close();
   child.documentElement?.getBoundingClientRect();
+  frame.dispatchEvent(new frame.ownerDocument.defaultView.Event('ncn-frame-rendered'));
   return child;
 }

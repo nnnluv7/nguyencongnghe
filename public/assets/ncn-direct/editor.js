@@ -117,7 +117,8 @@ export function createDirectEditor({app,frame,stage,getState,onChange,onSelect,o
     childCleanup=()=>{bindings.forEach(fn=>fn());child=null;};
     syncValues();return true;
   }
-  listen(frame,'load',()=>{try{const target=frame.contentDocument;if(target?.documentElement?.hasAttribute('data-ncn-direct-generation'))bindDocument(target);}catch{onError?.('Chưa mở được ô nhập trên mẫu. Anh có thể nhập ở phần Ô nhập.');}});
+  const frameRendered=()=>{try{const target=frame.contentDocument;if(target?.documentElement?.hasAttribute('data-ncn-direct-generation'))bindDocument(target);}catch{onError?.('Chưa mở được ô nhập trên mẫu. Anh có thể nhập ở phần Ô nhập.');}};
+  listen(frame,'load',frameRendered);listen(frame,'ncn-frame-rendered',frameRendered);
   listen(win,'keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='p'&&getState().layout){e.preventDefault();flush();onPrint?.();}});
   const commonPrint=doc.getElementById('ncn-page-print');
   listen(commonPrint,'click',e=>{if(getState().layout){e.preventDefault();e.stopImmediatePropagation();flush();onPrint?.();}},true);

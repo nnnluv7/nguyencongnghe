@@ -69,7 +69,7 @@ export function attachPrintViewport({stage,frame,sheet,controls,doc=document,win
       });
     }catch{}
   };
-  if(frame)frame.addEventListener('load',loaded);
+  if(frame){frame.addEventListener('load',loaded);frame.addEventListener('ncn-frame-rendered',loaded);}
   const stopRecovery=frame?watchPrintReturn(({ios,reason})=>{
     const html=frameHTML(frame);
     if(!stage.isConnected||!html||stage.closest('dialog')?.open===false)return;
@@ -80,7 +80,7 @@ export function attachPrintViewport({stage,frame,sheet,controls,doc=document,win
   const observer=win.ResizeObserver?new win.ResizeObserver(schedule):null;
   observer?.observe(stage);if(sheet)observer?.observe(sheet);
   win.addEventListener('resize',schedule);doc.fonts?.ready.then(schedule);schedule();
-  return {scale,destroy(){destroyed=true;stopRecovery();scrollWindow?.removeEventListener('scroll',remember);observer?.disconnect();win.cancelAnimationFrame(resizeFrame);win.removeEventListener('resize',schedule);if(frame)frame.removeEventListener('load',loaded);handlers.forEach(remove=>remove());}};
+  return {scale,destroy(){destroyed=true;stopRecovery();scrollWindow?.removeEventListener('scroll',remember);observer?.disconnect();win.cancelAnimationFrame(resizeFrame);win.removeEventListener('resize',schedule);if(frame){frame.removeEventListener('load',loaded);frame.removeEventListener('ncn-frame-rendered',loaded);}handlers.forEach(remove=>remove());}};
 }
 
 export function openPrintPreview(html,{title='Xem trước bản in',margin='Không',doc=document,win=window}={}){
