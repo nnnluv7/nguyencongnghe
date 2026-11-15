@@ -1377,6 +1377,14 @@ body.ncn-modern .st-card-sizes button:focus-visible{outline: 3px solid #2563b8; 
     background-image:var(--ncn-home-preview-atlas,none);
     opacity:var(--ncn-sample-opacity,0);transition:var(--ncn-preview-fade);
   }
+  #ncn-home .ncn-tool-art-cash-fund::before,
+  #ncn-home[data-preview-ready] .ncn-tool-art-cash-fund::after{
+    background-image:url('/assets/ncn-theme/home-cash-fund-ce10a8d3c9c8.webp');
+    background-size:200% 100%;
+  }
+  #ncn-home[data-preview-ready] .ncn-tool-art-cash-fund::after{
+    background-position:100% 0%;
+  }
   #ncn-home[data-preview-ready]:where([data-preview-phase]) .ncn-tool-card[data-card-visible]{
     --ncn-sample-opacity:1;--ncn-preview-duration:1s;
   }

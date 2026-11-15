@@ -47,7 +47,7 @@ const fits=async p=>{const size=await p.evaluate(()=>({w:innerWidth,actual:docum
 // Coordinates taken from the actual artwork sheets. Check unpublished VIP card
 // markup as well as the visible tools so the display order never shifts a pair.
 const expectedHomeArt={
- audio:'0% 0%',cash:'25% 0%',insurance:'50% 0%','lucky-wheel':'75% 0%',sticker:'100% 0%',
+ audio:'0% 0%',cash:'25% 0%','cash-fund':'0% 0%',insurance:'50% 0%','lucky-wheel':'75% 0%',sticker:'100% 0%',
  'popup-a7':'0% 25%',sales:'50% 25%',fifo:'75% 25%',inventory:'100% 25%',
  qr:'0% 50%',decor:'25% 50%','ncn-arcade':'50% 50%','flappy-bird':'75% 50%',event:'100% 50%',
  gvgs:'0% 75%','ran-luot':'25% 75%','ca-lon-nuot-ca-be':'50% 75%',pikachu:'75% 75%','xep-hinh':'100% 75%',
@@ -96,6 +96,7 @@ try{
   const current=art('audio'),neighbor=art('cash');
   await page.locator('#ncn-tool-grid [data-ncn-tool=ghep-khoi]').waitFor();
   assert.deepEqual(await homeArt(page),expectedHomeArt);
+  assert.match(await art('cash-fund').evaluate(el=>getComputedStyle(el,'::before').backgroundImage),/home-cash-fund-/);
   await current.scrollIntoViewIfNeeded();
   await page.mouse.move(0,0);
   await page.locator('#ncn-home[data-preview-ready] #ncn-tool-grid [data-ncn-tool=cash][data-card-visible]').waitFor();

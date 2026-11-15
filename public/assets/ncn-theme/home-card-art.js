@@ -11,6 +11,7 @@ const slots={
 };
 
 export function homeCardArt(id){
+  if(id==='cash-fund')return '<div class="ncn-tool-art ncn-tool-art-cash-fund" aria-hidden="true" style="--ncn-tool-art-position:0% 0%"></div>';
   if(!Object.hasOwn(slots,id))return '';
   const slot=slots[id],column=slot%5,row=Math.floor(slot/5);
   return '<div class="ncn-tool-art" aria-hidden="true" style="--ncn-tool-art-position:'+

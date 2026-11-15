@@ -151,6 +151,7 @@ try {
   assert.equal(await mobile.locator('#cf-entries tr').count(), 1);
   assert.match(await mobile.locator('#cf-entries .cf-entry-balance').textContent(), /2\.500\.000.*2\.250\.000/);
   await fits(mobile);
+  await mobile.evaluate(() => window.scrollTo(0, 0));
   await mobile.locator('.ncn-account-menu summary').click();
   await mobile.locator('#ncn-account-host [data-ncn-account-signout]').click();
   await mobile.locator('#cf-login').waitFor();
