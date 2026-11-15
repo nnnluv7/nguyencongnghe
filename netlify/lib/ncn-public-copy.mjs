@@ -86,7 +86,7 @@ export function preparePublicTools(html){
     if(id===POPUP_TOOL.id){
       card=card.replaceAll('Popup A7 / LED',POPUP_TOOL.title).replace(/(<\/h3><p>)[^<]*/,'$1'+POPUP_TOOL.description);
     }
-    if(card.includes('class="ncn-tool-art"'))return card;
+    if(/\bclass="ncn-tool-art(?:\s|")/.test(card))return card;
     return card.replace('<div class="ncn-tool-top">',homeCardArt(id)+'<div class="ncn-tool-top">');
   });
   if(removedCard){

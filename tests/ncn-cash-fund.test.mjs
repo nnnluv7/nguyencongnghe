@@ -137,6 +137,8 @@ test('Tiền quỹ Siêu Thị follows Kiểm quỹ in the initial and hydrated 
   const home = preparePublicTools(await load('public/index.html'));
   assert.match(home, /data-ncn-tool="cash"[^>]*>[\s\S]*?<\/a>\s*<a class="ncn-nav-link" href="\/tien-quy-sieu-thi\/" data-ncn-tool="cash-fund"/);
   assert.match(home, /data-ncn-pin="cash"[\s\S]*?<\/article>\s*<article[^>]*data-ncn-tool="cash-fund"/);
+  const repeated = preparePublicTools(home);
+  assert.equal([...repeated.matchAll(/ncn-tool-art-cash-fund/g)].length, 1);
   const page = preparePublicTools(await load('public/tien-quy-sieu-thi/index.html'));
   assert.match(page, /data-ncn-tool="cash-fund" aria-current="page"/);
 });
