@@ -48,7 +48,7 @@ try{
         }
         if(width===390)await page.locator('.ncn-workspace-bar [data-ncn-pane=fields]').click();
         const settings=page.locator('.ncn-print-settings');
-        if(!await settings.evaluate(node=>node.open))await settings.locator('summary').click();
+        if(!await settings.evaluate(node=>node.open))await settings.locator('summary').first().click();
         for(const paper of ['A5','A4']){
           const generation=await page.locator('#'+prefix+'-preview').evaluate(frame=>frame.contentDocument.documentElement.getAttribute('data-ncn-direct-generation'));
           await page.locator('#'+prefix+'-paper').selectOption(paper);
@@ -66,6 +66,18 @@ try{
         await card.waitFor({state:'visible'});
         assert.equal(await page.locator('#'+prefix+'-workspace').evaluate(node=>node.hidden),true,'one Back/Choose click must return to the catalogue');
       }
+      // An already-open tab can retain child history made by an older build.
+      // A swallowed traversal must never leave Choose locked indefinitely.
+      await card.locator('[data-variant]').first().click();
+      await page.waitForFunction(prefix=>document.getElementById(prefix+'-preview').contentDocument.querySelector('.ncn-sheet')?.childElementCount>0,prefix);
+      for(let i=0;i<2;i++)await page.evaluate(({prefix,i})=>new Promise(resolve=>{
+        const frame=document.getElementById(prefix+'-preview');frame.addEventListener('load',resolve,{once:true});
+        frame.srcdoc='<!doctype html><html><body><p>Old cached preview '+i+'</p></body></html>';
+      }),{prefix,i});
+      await page.locator('#'+prefix+'-change-model').click();
+      await page.waitForURL(base+path,{timeout:5000});await card.waitFor({state:'visible'});
+      await card.locator('[data-variant]').first().click();
+      await page.waitForFunction(prefix=>document.getElementById(prefix+'-preview').contentDocument.querySelector('.ncn-sheet')?.childElementCount>0,prefix);
       assert.deepEqual(errors,[]);results.push({path,id,width,ok:true});
       await page.screenshot({path:out+'/'+id+'-'+width+'.jpg',type:'jpeg',quality:75});
       console.log('PASS '+engine+' '+path+id+' '+width+'px: one Back, one Choose, repeated reopen, paper changes and draft');
