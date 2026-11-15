@@ -34,6 +34,17 @@ test('only spreadsheet importers receive an on-demand resource without an eager 
     const result=optimizePublicHTML(html+marker+script,manifest);assert.ok(result.includes('data-ncn-spreadsheet'));assert.equal(/<script[^>]*src="[^"]*125962/.test(result),false);
   }
 });
+test('shared favicons appear once per role while page-specific icons remain',()=>{
+  const logo='https://i.ibb.co/vg5gwhS/Bie-u-tru-ng-NCN-co-ng-nghe-to-i-gia-n.png';
+  const links='<link rel="icon" href="'+logo+'"><link rel="icon" sizes="32x32" href="'+logo+'">'+
+    '<link rel="icon" sizes="100x100" href="'+logo+'"><link rel="apple-touch-icon" href="'+logo+'">'+
+    '<link rel="icon" type="image/svg+xml" href="/game-icon.svg">';
+  const optimized=optimizePublicHTML(html.replace('</head>',links+'</head>'),{...manifest,icon:'/built-icon.png'});
+  assert.equal(optimized.includes(logo),false);
+  assert.equal((optimized.match(/rel="icon"[^>]*href="\/built-icon\.png"/g)||[]).length,1);
+  assert.equal((optimized.match(/rel="apple-touch-icon"[^>]*href="\/built-icon\.png"/g)||[]).length,1);
+  assert.match(optimized,/<link rel="icon" type="image\/svg\+xml" href="\/game-icon\.svg">/);
+});
 test('relative game resources use the canonical directory and foreign scripts are never rewritten as local assets',()=>{
   const page='<head><link rel="canonical" href="https://nguyencongnghe.com/flappy-bird/"></head>';
   assert.equal(localAssetPath('game.js?v=1',page),'/flappy-bird/game.js');assert.equal(localAssetPath('core.js',page),'/flappy-bird/core.js');assert.equal(localAssetPath('https://foreign.test/game.js',page),'');

@@ -76,9 +76,16 @@ export function optimizePublicHTML(html,manifest=deployed){
   // old quiz scripts, so every page shares exactly one account/Identity module.
   const charset=/<meta\b[^>]*\bcharset\s*=\s*["']?utf-8["']?[^>]*>/i;
   html=charset.test(html)?html.replace(charset,tag=>tag+'\n'+head):html.replace(/<head([^>]*)>/i,(_,attrs)=>'<head'+attrs+'>\n'+head);
-  html=html.replace(/href="https:\/\/i\.ibb\.co\/vg5gwhS\/Bie-u-tru-ng-NCN-co-ng-nghe-to-i-gia-n\.png"/g,'href="/assets/ncn-theme/logo.png"');
+  const seenIcons=new Set(),sharedLogo='/assets/ncn-theme/logo.png';
+  html=html.replace(/<link\b[^>]*>\n?/gi,tag=>{
+    const rel=attr(tag,'rel'),href=attr(tag,'href');
+    if(!['icon','apple-touch-icon'].includes(rel)||
+      ![sharedLogo,'https://i.ibb.co/vg5gwhS/Bie-u-tru-ng-NCN-co-ng-nghe-to-i-gia-n.png'].includes(href))return tag;
+    if(seenIcons.has(rel))return '';
+    seenIcons.add(rel);
+    return '<link rel="'+rel+'" type="image/png" href="'+(manifest.icon||sharedLogo)+'"'+(manifest.icon?' sizes="192x192"':'')+'>\n';
+  });
   if(manifest.logo)html=html.replace(/(<img\b[^>]*src=")\/assets\/ncn-theme\/logo\.png(")/g,'$1'+manifest.logo+'$2');
-  if(manifest.icon)html=html.replace(/<link\b[^>]*>/gi,tag=>/(?:^|\s)(?:icon|apple-touch-icon)(?:\s|$)/.test(attr(tag,'rel'))&&attr(tag,'href')==='/assets/ncn-theme/logo.png'?tag.replace('/assets/ncn-theme/logo.png',manifest.icon):tag);
   html=html.replace(/<img\b[^>]*class="[^"]*\bhuongdan\b[^"]*"[^>]*>/g,tag=>/\bloading=/.test(tag)?tag:tag.replace('<img','<img loading="lazy" decoding="async"'));
   if(article)html=html.replace(/<iframe\b[^>]*>/gi,tag=>!attr(tag,'loading')&&/^https:\/\/(?:www\.)?youtube(?:-nocookie)?\.com\/embed\//i.test(attr(tag,'src'))?tag.replace('<iframe','<iframe loading="lazy"'):tag);
   return html;

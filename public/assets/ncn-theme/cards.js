@@ -5,19 +5,16 @@ const escape=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<'
 
 // Coordinates in the shared 4 × 4 catalogue illustration.
 const categoryCovers={
-  ML:[0,1],TVTL:[1,1],MG:[2,1],MLN:[3,1],GD:[0,2],
-  'tra-cham':[3,2],'bao-hiem':[0,3],'cong-viec':[1,3]
+  ML:[0,1],TVTL:[1,1],MG:[2,1],MLN:[3,1],GD:[0,2]
 };
 const modelCovers={
-  pk:[2,0],'laptop-hssv':[3,0],qdh:[1,2],
-  'tk-ht':[3,2],'tk-tc':[3,2]
+  pk:[2,0],'laptop-hssv':[3,0],qdh:[1,2]
 };
 function coverPosition(model){
-  if(model.section==='decor')return [3,3];
   return modelCovers[model.id]||
     categoryCovers[model.industry]||
     (model.industry==='ICT'?(model.id.startsWith('led-')?[1,0]:[0,0]):null)||
-    categoryCovers[model.group]||[2,2];
+    [2,2];
 }
 
 export function catalogueCard(model,layouts,selectedId,{illustrated=true}={}){
