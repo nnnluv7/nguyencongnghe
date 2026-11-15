@@ -75,6 +75,10 @@
 [functions."ncn-audio"]
   node_bundler = "esbuild"
   external_node_modules = ["@netlify/identity", "@netlify/blobs"]
+
+[functions."ncn-cash-fund"]
+  node_bundler = "esbuild"
+  external_node_modules = ["@netlify/identity", "@netlify/blobs"]
 # END NCN VIP PAYMENT
 
 # BEGIN NCN LIBRARY ADMIN

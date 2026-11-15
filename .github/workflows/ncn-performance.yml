@@ -25,6 +25,8 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - name: Verify Audio booking, SePay confirmation, staff permissions and public playback
         run: node tests/browser/ncn-audio.mjs
+      - name: Verify cash fund permissions, receipts, filters and phone layout
+        run: node tests/browser/ncn-cash-fund.mjs
       - name: Compare cold and repeated frontend loads on the same simulated mobile connection
         run: node tests/browser/ncn-performance.mjs
       - name: Verify on-demand Excel, actual private editor imports, font metrics and every primary tool route

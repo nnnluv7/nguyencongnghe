@@ -6,6 +6,7 @@ if(typeof window!=='undefined')import('./visitor-counter.js?v=20261016-easy-2').
 import {installToolUI} from './tool-ui.js?v=20261025-home-latest-1';
 import {installFloatingMenu,orderTools,navigationHTML} from './menu.js?v=20261017-mobile-dark-1';
 import {AUDIO_MIC,withAudioTool} from '../ncn-audio/shared.js';
+import {CASH_FUND_ICON,withCashFundTool} from './cash-fund-tool.js';
 import {withMergedPopup,mergedPopupId} from './popup-tool.js';
 import {HOME_TOOL_PREVIEWS,homeCardArt} from './home-card-art.js';
 import {installCardRotation} from './card-rotation.js';
@@ -25,6 +26,7 @@ const ICONS = {
   shield:'<path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6ZM8 12l3 3 5-6"/>',
   tag:'<path d="M3 3h9l9 9-9 9-9-9ZM7 7h.01"/>',
   wallet:'<path d="M20 7H5a2 2 0 0 1 0-4h14v4M3 5v14a2 2 0 0 0 2 2h15V7M20 11h-5v6h5M17 14h.01"/>',
+  receipt:CASH_FUND_ICON,
   qr:'<path d="M3 3h6v6H3ZM15 3h6v6h-6ZM3 15h6v6H3ZM15 15h3v3h3v3h-6ZM21 12v3M12 3v3M12 9v3H9M12 18v3M3 12h3"/>',
   book:'<path d="M12 5c-3-2-7-2-10-1v15c3-1 7-1 10 1 3-2 7-2 10-1V4c-3-1-7-1-10 1ZM12 5v15"/>',
   help:'<circle cx="12" cy="12" r="9"/><path d="M9 9a3 3 0 0 1 6 0c0 2-3 2-3 4M12 17h.01"/>',
@@ -75,7 +77,7 @@ export function createTheme({doc=document,win=window,config,catalog=win.CG_CATAL
   const imageURL=value=>preview&&win.NCN_THEME_PREVIEW_ASSETS?.[value]||(value==='/assets/ncn-theme/logo.png'?doc.querySelector('link[data-ncn-logo-asset]')?.getAttribute('href'):null)||safeHref(value);
   const previewLinks=root=>{if(preview)(root||doc).querySelectorAll('.ncn-ui a[href^="/"],a.ncn-search-result[href^="/"],a.ncn-search-all[href^="/"]').forEach(a=>{a.href='https://nguyencongnghe.com'+a.getAttribute('href');a.target='_blank';a.rel='noopener';});};
   const groups=(Array.isArray(cfg.groups)?cfg.groups:[]).filter(g=>g&&typeof g.id==='string'&&g.name);
-  const tools=orderTools(withMergedPopup(withAudioTool(cfg.tools)).filter(t=>t&&/^[a-z0-9-]+$/i.test(t.id)&&t.title&&safeHref(t.href)).map(t=>({...t,href:safeHref(t.href)})));
+  const tools=orderTools(withMergedPopup(withCashFundTool(withAudioTool(cfg.tools))).filter(t=>t&&/^[a-z0-9-]+$/i.test(t.id)&&t.title&&safeHref(t.href)).map(t=>({...t,href:safeHref(t.href)})));
   const toolIds=new Set(tools.map(t=>t.id));
   const visibleTools=()=>tools;
   let rows=normalizeCatalog(catalog);
