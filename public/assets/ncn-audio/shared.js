@@ -1,4 +1,4 @@
-export const AUDIO_PRICE=100000;
+export const AUDIO_PRICE=99000;
 export const AUDIO_ORIGINAL_PRICE=200000;
 export const MAX_AUDIO_SAMPLE_BYTES=4*1024*1024;
 // Vietnam uses UTC+7. Advance one calendar day before extracting the date.
