@@ -1,4 +1,5 @@
 /* One passive print frame per page. The visible editor is never printed or cleared. */
+import {writeFrame} from './frame.js';
 const controllers=new WeakMap();
 export const isIOS=win=>/iPad|iPhone|iPod/.test(win.navigator?.userAgent||'')||(/Macintosh/.test(win.navigator?.userAgent||'')&&win.navigator?.maxTouchPoints>1);
 const mayPrintAsynchronously=win=>isIOS(win)||(/Safari\//.test(win.navigator?.userAgent||'')&&!/Chrome|Chromium|Edg\//.test(win.navigator?.userAgent||''));
@@ -72,8 +73,8 @@ export async function printDocument(html,{title='Bản in nguyencongnghe.com',do
       loaded=()=>{if(frame.contentDocument?.documentElement?.hasAttribute('data-ncn-print-document'))resolve();};
       frame.addEventListener('load',loaded);
     });
-    frame.srcdoc=/<html\b/i.test(html)?html.replace(/<html\b/i,'<html data-ncn-print-document'):('<!doctype html><html data-ncn-print-document><body>'+html+'</body></html>');
     doc.body.append(frame);
+    writeFrame(frame,/<html\b/i.test(html)?html.replace(/<html\b/i,'<html data-ncn-print-document'):('<!doctype html><html data-ncn-print-document><body>'+html+'</body></html>'));
     const slow='Bản in tải chậm. Anh thử lại hoặc chọn Tải bản in HTML.';
     await bounded(ready,win,slow);
     const paper=frame.contentDocument;
