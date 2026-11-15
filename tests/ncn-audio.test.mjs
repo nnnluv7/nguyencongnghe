@@ -24,7 +24,7 @@ function fixture({user=null,ready=true,production=true,time=now}={}){
  const webhook=createSePayRouter({store:()=>ledger,audioStore:()=>store,bank:bankDetails,production:()=>production,now:()=>time,config:()=>({secret})});
  const bank=(data={},key=secret)=>{
   const transactionDate=new Date(time+7*3600000).toISOString().slice(0,19).replace('T',' ');
-  const transaction={id:991,gateway:bankDetails.bank,accountNumber:bankDetails.account,transferType:'in',transferAmount:100000,content:'',transactionDate,referenceCode:'fixture-991',...data};
+  const transaction={id:991,gateway:bankDetails.bank,accountNumber:bankDetails.account,transferType:'in',transferAmount:AUDIO_PRICE,content:'',transactionDate,referenceCode:'fixture-991',...data};
   const body=JSON.stringify(transaction),stamp=String(time/1000),sig=createHmac('sha256',key).update(stamp+'.'+body).digest('hex');
   return webhook(new Request(origin+'/.netlify/functions/ncn-sepay-webhook',{method:'POST',headers:{'Content-Type':'application/json','x-sepay-timestamp':stamp,'x-sepay-signature':'sha256='+sig},body}));
  };
@@ -46,8 +46,8 @@ test('guest creates one persistent order with a token; public status omits priva
  assert.equal(a.status,201);assert.equal(b.status,201);
  const {order}=await a.json();
  assert.equal(order.code,await codeOf(b));assert.match(order.code,/^NCNAUD[A-F0-9]{16}$/);
- assert.equal(order.amount,100000);assert.equal(order.payment,'pending');
- const qr=new URL(order.qr);assert.equal(qr.searchParams.get('des'),order.code);assert.equal(qr.searchParams.get('amount'),'100000');assert.equal(qr.searchParams.get('acc'),bankDetails.account);
+ assert.equal(order.amount,99000);assert.equal(order.payment,'pending');
+ const qr=new URL(order.qr);assert.equal(qr.searchParams.get('des'),order.code);assert.equal(qr.searchParams.get('amount'),'99000');assert.equal(qr.searchParams.get('acc'),bankDetails.account);
  assert.equal([...f.store.entries.keys()].filter(k=>k.startsWith('history-')).length,1);
  const response=await f.call('status',{token}),payload=await response.text();
  assert.equal(response.status,200);assert.match(response.headers.get('cache-control'),/no-store/);
@@ -99,10 +99,10 @@ test('signed incoming transfer settles the exact Audio amount, with replay-safe 
  assert.equal((await f.bank({content:code},'different-key')).status,401);
  assert.equal((await f.bank({content:code,transferType:'out'})).status,200);
  assert.equal((await f.bank({content:code,accountNumber:'00000'})).status,200);
- assert.equal((await f.bank({content:code,transferAmount:99999})).status,200);
+ assert.equal((await f.bank({content:code,transferAmount:100000})).status,200);
  order=await load();assert.equal(order.payment.state,'review');
  assert.equal((await f.bank({content:'CHUYEN TIEN '+code,id:992,referenceCode:'fixture-992'})).status,200);
- order=await load();assert.equal(order.payment.state,'paid');assert.equal(order.payment.amount,100000);
+ order=await load();assert.equal(order.payment.state,'paid');assert.equal(order.payment.amount,99000);
  const version=order.version;
  assert.equal((await f.bank({content:'CHUYEN TIEN '+code,id:992,referenceCode:'fixture-992'})).status,200);
  assert.equal((await load()).version,version);
@@ -114,6 +114,17 @@ test('signed incoming transfer settles the exact Audio amount, with replay-safe 
  assert.equal((await f.call('update',{code,version:order.version,state:'done',note:'Đã gửi bản thu'})).status,200);
  const state=(await (await f.call('status',{token})).json()).order;
  assert.equal(state.payment,'paid');assert.equal(state.work,'done');assert.equal(state.qr,null);
+});
+test('an existing order keeps its quoted amount on retry and when SePay confirms it',async()=>{
+ const f=fixture(),token=randomUUID(),data={...initial,token};
+ const code=await codeOf(await f.call('create',data)),key='order-'+code;
+ const saved=await f.store.get(key,{type:'json'});
+ await f.store.setJSON(key,{...saved,amount:100000});
+ const {order}=await (await f.call('create',data)).json();
+ assert.equal(order.amount,100000);
+ assert.equal(new URL(order.qr).searchParams.get('amount'),'100000');
+ assert.equal((await f.bank({content:code,transferAmount:100000})).status,200);
+ assert.equal((await (await f.call('status',{token})).json()).order.payment,'paid');
 });
 test('duplicate bank references and mixed order codes cannot settle a second order or grant VIP',async()=>{
  const f=fixture({user:staff});
