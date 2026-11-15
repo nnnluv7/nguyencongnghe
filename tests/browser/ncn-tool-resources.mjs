@@ -5,6 +5,7 @@ import {createRequire} from 'node:module';
 import assert from 'node:assert/strict';
 import {createHandler} from '../../netlify/lib/ncn-event-api.mjs';
 import {memoryStore} from '../fixtures/arcade-store.mjs';
+import {instrumentPrintFrames,iPhoneUserAgent} from './ncn-print-return.mjs';
 
 // Real Excel decoding, workbook downloads and private editor code, using fake
 // local Identity/catalogue services. No account, price list or file is sent out.
@@ -23,7 +24,7 @@ const root=resolve('dist'),origin='https://ncn-tool-resources.test',out=resolve(
 const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.png':'image/png','.webp':'image/webp','.jpg':'image/jpeg','.svg':'image/svg+xml','.woff2':'font/woff2','.ttf':'font/ttf'};
 const actor={id:'fixture-tool-admin',email:'tools@example.test',name:'Kiểm tra công cụ',admin:true,vip:true};
 const jwt=Buffer.from('{"alg":"fixture"}').toString('base64url')+'.'+Buffer.from(JSON.stringify({sub:actor.id,email:actor.email,exp:Math.floor(Date.now()/1000)+3600})).toString('base64url')+'.fixture';
-const stores={event:memoryStore(),gvgs:memoryStore()},browser=await chromium.launch();let context,page,signedUser,excelRequests=0,failOnce=false;
+const stores={event:memoryStore(),gvgs:memoryStore()},browser=await chromium.launch();let context,page,signedUser,excelRequests=0,printRequests=0,failOnce=false;
 const handlers=Object.fromEntries(Object.keys(printCores).map(name=>[name,createHandler({
  production:()=>true,
  verify:async req=>(req.headers.get('cookie')||'').includes('nf_jwt='+jwt)?signedUser:null,
@@ -31,10 +32,10 @@ const handlers=Object.fromEntries(Object.keys(printCores).map(name=>[name,create
  asset:file=>readFile('netlify/lib/ncn-'+name+'-private/'+file,'utf8'),
  print:(items,settings)=>printCores[name].printable(items,settings,printAssets)
 })]));
-async function fixture({role,width=1280}={}){
+async function fixture({role,width=1280,ios=false}={}){
  if(context)await context.close();
  signedUser=role?{...actor,admin:role==='admin',vipSource:role==='admin'?'admin':'manual'}:null;
- context=await browser.newContext({viewport:{width,height:width<600?844:960}});
+ context=await browser.newContext({viewport:{width,height:width<600?844:960},...(ios?{isMobile:true,hasTouch:true,userAgent:iPhoneUserAgent}:{})});
  if(signedUser)await context.addCookies([{name:'nf_jwt',value:jwt,url:origin}]);
  await context.route('**/*',async route=>{
   const request=route.request(),url=new URL(request.url());if(url.origin!==origin){assert.equal(request.method(),'GET');return route.abort();}
@@ -42,7 +43,7 @@ async function fixture({role,width=1280}={}){
   if(url.pathname.startsWith('/.netlify/identity/'))return url.pathname.endsWith('/user')?json(user?{id:user.id,email:user.email,confirmed_at:'2026-01-01T00:00:00Z',app_metadata:{roles:[user.admin?'admin':'vip']},user_metadata:{full_name:user.name}}:{msg:'Unauthorized'},user?200:401):json({disable_signup:false,external:{email:true}});
   if(url.pathname.startsWith('/.netlify/functions/')){
    const name=url.pathname.split('/').at(-1).replace('ncn-','');
-   if(handlers[name]){const response=await handlers[name](new Request(request.url(),{method:request.method(),headers,...(request.method()==='POST'?{body:request.postData()}:{})}));return route.fulfill({status:response.status,headers:Object.fromEntries(response.headers),body:await response.text()});}
+   if(handlers[name]){if(url.searchParams.get('route')==='print')printRequests++;const response=await handlers[name](new Request(request.url(),{method:request.method(),headers,...(request.method()==='POST'?{body:request.postData()}:{})}));return route.fulfill({status:response.status,headers:Object.fromEntries(response.headers),body:await response.text()});}
    return json(url.pathname.endsWith('ncn-billing')?{user}:{items:[],online:1,total:1});
   }
   if(/125962e77eb283b9aa/.test(url.pathname)){excelRequests++;if(failOnce){failOnce=false;return route.abort('failed');}}
@@ -77,7 +78,8 @@ try{
    {code:'001234',name:'Tủ lạnh Inverter 300 lít',originalPrice:10990000,eventPrice:8990000},
    {code:'001235',name:'Máy giặt Inverter 10 kg',originalPrice:8490000,eventPrice:7290000}
   ]});
-  await fixture({role,width});
+  await fixture({role,width,ios:width<600});
+  await context.addInitScript(instrumentPrintFrames);
   await opened('/in-'+name+'/');
   await page.locator('#ev-shared-info').filter({hasText:'Cập nhật'}).waitFor();
   assert.equal(await page.locator('.ncn-vip-source').count(),role==='admin'?1:0);
@@ -114,6 +116,25 @@ try{
   await printedProduct.first().waitFor({state:'attached'});
   assert.equal(await printedProduct.count(),2);
   assert.match(await page.locator('#ev-preview-info').textContent(),name==='gvgs'?/3 bản · 3 trang A5/:/3 nhãn · 2 trang A4/);
+  const calls=printRequests;
+  for(const event of ['afterprint','focus']){
+   const count=await page.evaluate(()=>window.__ncnPrints.length);
+   if(width>=600)await page.evaluate(config=>{window.__ncnPrintReturn=config;},{selector:'#ev-preview-frame',event});
+   await dialog.locator('#ev-print').click();
+   await page.waitForFunction(count=>window.__ncnPrints.length===count+1,count);
+   if(width<600){
+    await page.evaluate(config=>window.__ncnEndPrint(config),{selector:'#ev-preview-frame',event});
+    if(event==='afterprint'){
+     assert.equal(await page.locator('iframe[data-ncn-print-job]').count(),1,'retain the AirPrint source after an early Safari event');
+     await page.evaluate(()=>window.dispatchEvent(new FocusEvent('focus')));
+    }
+   }
+   await page.locator('iframe[data-ncn-print-job]').waitFor({state:'detached'});
+   await printedProduct.first().waitFor({state:'attached'});
+   assert.equal(await printedProduct.count(),2);
+   assert.equal(printRequests,calls,'returning from native print never calls the print API or spends another trial');
+  }
+  assert.equal(await page.evaluate(()=>window.__ncnPrintFocus),0);
   await dialog.locator('#ev-close').click();
   await page.locator('#ev-history').getByRole('button',{name:'Mở lại'}).click();
   await dialog.waitFor();

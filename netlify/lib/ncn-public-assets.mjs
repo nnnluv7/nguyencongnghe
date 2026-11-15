@@ -66,7 +66,11 @@ export function optimizePublicHTML(html,manifest=deployed){
   const preload=new Set();
   const visit=path=>{if(preload.has(path))return;preload.add(path);for(const child of manifest.dependencies[path]||[])visit(child);};
   entries.forEach(visit);
-  const catalogues=Object.entries(manifest.catalogues||{}).filter(([,data])=>html.includes('id="'+data.app+'"')).map(([source,data])=>'<link rel="preload" as="fetch" crossorigin="anonymous" data-ncn-catalogue="'+source+'" href="'+data.href+'">').join('\n');
+  const catalogues=Object.entries(manifest.catalogues||{}).filter(([,data])=>html.includes('id="'+data.app+'"')).map(([source,data])=>{
+    const marker=html.match(new RegExp('<[^>]+\\bid="'+data.app+'"[^>]*>'))?.[0]||'';
+    const href=data.sections?.[attr(marker,'data-section')]||data.href;
+    return '<link rel="preload" as="fetch" crossorigin="anonymous" data-ncn-catalogue="'+source+'" href="'+href+'">';
+  }).join('\n');
   const head='<script id="ncn-built-importmap" type="importmap">'+JSON.stringify({imports}).replace(/</g,'\\u003c')+'</script>\n'+[...preload].map(path=>'<link rel="modulepreload" href="'+path+'">').join('\n')+'\n'+catalogues+'\n'+(manifest.logo?'<link data-ncn-logo-asset href="'+manifest.logo+'">\n':'');
   // Import maps must precede every module/preload, including dynamic imports in
   // old quiz scripts, so every page shares exactly one account/Identity module.

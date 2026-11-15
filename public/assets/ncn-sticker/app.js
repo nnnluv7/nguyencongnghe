@@ -4,6 +4,7 @@ import {createDirectEditor} from '../ncn-direct/editor.js?v=20261024-selection-1
 import {rowsForValidation} from '../ncn-direct/preview.js?v=20261015-direct-1';
 import {catalogueURL,loadSpreadsheet} from '../ncn-tool-resources.js';
 import {createCatalogueNavigation} from '../ncn-direct/catalogue-navigation.js';
+import {printDocument} from '../ncn-direct/print.js';
 
 export function createStickerApp({app,data,doc=document,win=window,fetcher=fetch}) {
   const $=id=>doc.getElementById(id);
@@ -126,18 +127,8 @@ export function createStickerApp({app,data,doc=document,win=window,fetcher=fetch
       const html=renderDocument(printLayout,checked,{fontCSS:data.fontCSS,paper:printPaper,assets,title:printModel.name+' · nguyencongnghe.com'});
       if(!print){download(html,'text/html;charset=utf-8',`sticker-${printModel.id}-${printPaper.toLowerCase()}.html`);status('Đã tạo tệp in. Anh mở tệp bằng trình duyệt rồi nhấn Ctrl+P.');}
       else {
-        const frame=doc.createElement('iframe');frame.title='Bản in sticker';frame.setAttribute('sandbox','allow-same-origin allow-modals');
-        Object.assign(frame.style,{position:'fixed',left:'-10000px',top:'0',width:'800px',height:'1125px',border:'0'});
-        const ready=new Promise((resolve,reject)=>{frame.addEventListener('load',resolve,{once:true});win.setTimeout(()=>reject(new Error('Bản in tải chậm. Anh chọn Tải bản in HTML để in bằng Ctrl+P.')),20000);});
-        frame.srcdoc=html;doc.body.append(frame);
-        try {
-          await ready;
-          const frameDoc=frame.contentDocument;
-          if(frameDoc?.fonts)await frameDoc.fonts.ready;
-          await Promise.all(Object.values(assets).filter(x=>x.startsWith('data:image')).map(src=>new Promise(resolve=>{const img=new win.Image();img.onload=resolve;img.onerror=resolve;img.src=src;})));
-          frame.contentWindow.focus();frame.contentWindow.print();
-          status('Chọn đúng khổ giấy, lề Không, tỷ lệ 100% và bật Đồ họa nền trong hộp thoại in.');
-        }finally{win.setTimeout(()=>frame.remove(),60000);}
+        await printDocument(html,{title:'Bản in sticker',doc,win});
+        status('Chọn đúng khổ giấy, lề Không, tỷ lệ 100% và bật Đồ họa nền trong hộp thoại in.');
       }
     }catch(error){status(error.message,true);}
     finally{printing=false;$('st-print').disabled=false;$('st-download').disabled=false;}

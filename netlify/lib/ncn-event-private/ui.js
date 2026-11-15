@@ -202,14 +202,14 @@
     function persistHistory(){try{localStorage.setItem(HISTORY,JSON.stringify(state.history));}catch(error){message('Đã tạo mẫu in. Thiết bị không đủ dung lượng lưu lịch sử; tải bản in để giữ lại.',true);}historyRender();}
     async function preview(record){
       var s=record?record.settings:settings(),items=record?record.items:state.selected;
-      state.print=await VIP.call('print',{items:items,settings:s});var frame=el('preview-frame');state.printReady=new Promise(function(resolve){frame.onload=function(){Promise.resolve(frame.contentDocument.fonts?frame.contentDocument.fonts.ready:null).then(resolve);};});frame.srcdoc=state.print.html;
+      state.print=await VIP.call('print',{items:items,settings:s});el('preview-frame').srcdoc=state.print.html;
       el('dialog-title').textContent=s.name;el('preview-info').textContent=state.print.labels+' nhãn · '+state.print.pages+' trang A4 · '+s.width+' × '+s.height+' mm';
       if(typeof el('dialog').showModal==='function')el('dialog').showModal();else el('dialog').setAttribute('open','');
       if(!record){state.history.unshift({createdAt:new Date().toISOString(),settings:s,items:items.map(function(p){return Object.assign({},p);}),labels:state.print.labels,pages:state.print.pages});state.history=state.history.slice(0,15);persistHistory();}
     }
     el('preview').addEventListener('click',guarded(async function(){await preview();}));
     el('close').addEventListener('click',function(){if(typeof el('dialog').close==='function')el('dialog').close();else el('dialog').removeAttribute('open');});
-    el('print').addEventListener('click',guarded(async function(){var f=el('preview-frame');if(!state.print||!f.contentWindow)throw new Error('Mở xem trước trước khi in.');await state.printReady;f.contentWindow.focus();f.contentWindow.print();}));
+    el('print').addEventListener('click',guarded(async function(){if(!state.print)throw new Error('Mở xem trước trước khi in.');await VIP.print(state.print.html);}));
     el('save-html').addEventListener('click',guarded(function(){if(!state.print)throw new Error('Chưa có bản in.');var url=URL.createObjectURL(new Blob([state.print.html],{type:'text/html;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download=cleanName(el('dialog-title').textContent)+'.html';a.click();setTimeout(function(){URL.revokeObjectURL(url);},10000);}));
     el('history').addEventListener('click',guarded(async function(e){
       var open=e.target.closest('[data-history]'),del=e.target.closest('[data-delete-history]');

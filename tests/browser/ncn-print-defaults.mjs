@@ -3,6 +3,7 @@ import {createServer} from 'node:http';
 import {readFile,mkdir,stat} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
 import assert from 'node:assert/strict';
+import {verifyPrintReturns} from './ncn-print-return.mjs';
 
 // Only synthetic input on a local server; never opens the system print dialog.
 const root=resolve(process.env.NCN_PRINT_AUDIT_ROOT||'dist'),out=resolve('artifacts/print-defaults');
@@ -95,6 +96,7 @@ try{
     await page.screenshot({path:out+'/'+app+'-'+width+'.jpg',type:'jpeg',quality:75});await page.close();
     console.log('PASS editor '+path+' at '+width+'px: caret, hints, clearing, copies, grouped edits and download');
   }
+  await verifyPrintReturns({browser,base,out});
   const catalogues=[
     ['/popup-a7/','btn-giam','st','giam-gia','BÀN TRẢI NGHIỆM'],
     ['/popup-a7/','ml-giam','st','giam-gia','MÁY LẠNH','ML'],

@@ -1,5 +1,6 @@
 import * as identity from './ncn-identity-client.js';
 import {getAccount} from './ncn-account.js?v=20261027-photo-save-1';
+import {printDocument} from './ncn-direct/print.js';
 
 // Every mount and print is authorized by the server, including guest trials.
 export function mountVipGate(endpoint,{doc=document,win=window,fetcher=fetch}={}){
@@ -52,7 +53,7 @@ export function mountVipGate(endpoint,{doc=document,win=window,fetcher=fetch}={}
       phase('loading');
       const content=await call('app');
       if(disposed||currentId!==(account.state.user?.id||null))return;
-      loaded=content;win.NCN_VIP={user:content.user,call};app.innerHTML=content.html;
+      loaded=content;win.NCN_VIP={user:content.user,call,print:html=>printDocument(html,{doc,win})};app.innerHTML=content.html;
       for(const name of ['core','ui']){
         const script=doc.createElement('script');script.src=endpoint+'?route=asset&name='+name;
         await new Promise((resolve,reject)=>{script.onload=resolve;script.onerror=()=>reject(new Error('Không tải được công cụ. Bấm kiểm tra lại hoặc tải lại trang.'));doc.body.append(script);});

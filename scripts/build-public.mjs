@@ -6,6 +6,7 @@ import {pathToFileURL} from 'node:url';
 import sharp from 'sharp';
 import wawoff2 from 'wawoff2';
 import {buildPikachuArt} from './build-pikachu-art.mjs';
+import {catalogueForSection} from './lib/tool-catalogue.mjs';
 import {assetPath,localAssetPath,stylesheetKey,optimizePublicHTML} from '../netlify/lib/ncn-public-assets.mjs';
 import {preparePublicTools,publicToolConfig,trimPublicCopy} from '../netlify/lib/ncn-public-copy.mjs';
 
@@ -73,6 +74,10 @@ export async function buildPublic(){
     // Only catalogue thumbnails change. Full-resolution print layouts, assets,
     // checksums and font CSS keep their original values.
     manifest.catalogues[source]={app,href:await generatedAsset('catalogues',Buffer.from(JSON.stringify(data)),'json')};
+    if(name==='ncn-store-tools'){
+      manifest.catalogues[source].sections={};
+      for(const section of ['sales','decor'])manifest.catalogues[source].sections[section]=await generatedAsset('catalogues',Buffer.from(JSON.stringify(catalogueForSection(data,section))),'json');
+    }
   }
   const urlOf=path=>'/'+relative(output,resolve(path)).replaceAll('\\','/');
   for(const [path,info] of Object.entries(result.metafile.outputs)){

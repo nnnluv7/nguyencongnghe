@@ -6,6 +6,8 @@ import {publicPageHeaders} from '../netlify/lib/ncn-public-cache.mjs';
 import {createLibraryPageHandler} from '../netlify/lib/ncn-library-page.mjs';
 import {createSitePageHandler} from '../netlify/lib/ncn-site-page.mjs';
 import {createLibraryHandler} from '../netlify/lib/ncn-library-api.mjs';
+import {catalogueForSection} from '../scripts/lib/tool-catalogue.mjs';
+import {defaultRow,renderDocument} from '../public/assets/ncn-store-tools/core.js';
 
 const html='<html><head><link rel="stylesheet" href="/base.css?v=1"><link rel="stylesheet" href="/page.css"><script src="/legacy.js"></script><script type="module" src="/theme.js?v=old"></script></head><body id="page"><div id="editor">Original input</div></body></html>';
 const manifest={styles:{[stylesheetKey(html)]:'/assets/ncn-built/styles/hash.css'},classic:{'/legacy.js':'/assets/ncn-built/legacy-hash.js'},modules:{'/theme.js':'/assets/ncn-built/theme-hash.js'},imports:{'/account.js':'/assets/ncn-built/account-hash.js','/account.js?v=old':'/assets/ncn-built/account-hash.js'},dependencies:{'/assets/ncn-built/theme-hash.js':['/assets/ncn-built/common-hash.js']}};
@@ -64,4 +66,29 @@ test('catalogue metadata and cached news start together without serial network r
   const handler=createLibraryHandler({production:()=>true,seed:[],store:()=>({getWithMetadata:async()=>{indexStarted=true;await gate;return null;}}),news:async()=>{newsStarted=true;await gate;return [];}});
   const pending=handler(new Request('https://ncn.test/.netlify/functions/ncn-library?route=list'));await Promise.resolve();
   assert.equal(indexStarted,true);assert.equal(newsStarted,true);release();assert.deepEqual(await (await pending).json(),{items:[]});
+});
+test('store pages fetch only their section while retaining byte-identical printable documents',async()=>{
+  const original=JSON.parse(await readFile('public/assets/ncn-store-tools/catalogue.json','utf8')),before=JSON.stringify(original);
+  const embedded=data=>Object.fromEntries(data.assets.map(asset=>[asset.path,'data:'+asset.mime+';base64,'+Buffer.from(asset.path).toString('base64')]));
+  for(const section of ['sales','decor']){
+    const subset=catalogueForSection(original,section);
+    assert.deepEqual(subset.models,original.models.filter(model=>model.section===section));
+    assert.ok(Buffer.byteLength(JSON.stringify(subset))<Buffer.byteLength(before)*.65);
+    for(const model of subset.models)for(const variant of model.variants){
+      const layout=subset.layouts.find(layout=>layout.id===variant.layout),source=original.layouts.find(layout=>layout.id===variant.layout);
+      assert.deepEqual(layout,source);
+      const rows=[defaultRow(layout)];
+      assert.equal(renderDocument(layout,rows,{fontCSS:subset.fontCSS,assets:embedded(subset)}),renderDocument(source,rows,{fontCSS:original.fontCSS,assets:embedded(original)}),layout.id+': every print asset remains embedded');
+    }
+  }
+  assert.equal(JSON.stringify(original),before,'preparing one page never mutates the shared catalogue');
+});
+test('each store page preloads the same section catalogue that its app will fetch',()=>{
+  const resource={app:'ncn-store-app',href:'/all.json',sections:{sales:'/sales.json',decor:'/decor.json'}};
+  for(const section of ['sales','decor']){
+    const page=html+'<main id="ncn-store-app" data-section="'+section+'">';
+    const result=optimizePublicHTML(page,{...manifest,catalogues:{'/assets/ncn-store-tools/catalogue.json':resource}});
+    assert.ok(result.includes('data-ncn-catalogue="/assets/ncn-store-tools/catalogue.json" href="/'+section+'.json"'));
+    assert.equal(result.includes('href="/all.json"'),false);
+  }
 });
