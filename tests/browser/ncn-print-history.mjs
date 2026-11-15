@@ -35,6 +35,11 @@ try{
       await page.goto(base+'/');await page.goto(base+path);
       const card=page.locator('[data-card-model="'+id+'"]');await card.waitFor();
       const start=await page.evaluate(()=>history.length),value='THỬ QUAY VỀ';
+      const fieldState=phase=>field===null?Promise.resolve():page.evaluate(({phase,prefix,field})=>{
+        const doc=document.getElementById(prefix+'-preview').contentDocument;
+        console.log(JSON.stringify({phase,preview:doc.querySelector('[data-ncn-copy="0"][data-field="'+field+'"]')?.value,sidebar:document.getElementById(prefix+'-field-'+field)?.value,ready:doc.readyState,frameURL:doc.URL}));
+      },{phase,prefix,field});
+      page.on('console',message=>{if(message.type()==='log')console.log(engine+' '+message.text());});
       for(let cycle=0;cycle<3;cycle++){
         await card.locator('[data-variant]').first().click();
         const frame=page.frameLocator('#'+prefix+'-preview');
@@ -44,7 +49,9 @@ try{
         },prefix);
         if(field!==null){
           const input=frame.locator('[data-ncn-copy="0"][data-field="'+field+'"]').first();
+          await fieldState('opened-'+cycle);
           if(!cycle)await input.fill(value);else assert.equal(await input.inputValue(),value,'return keeps the draft');
+          await fieldState('filled-'+cycle);
         }
         if(width===390)await page.locator('.ncn-workspace-bar [data-ncn-pane=fields]').click();
         const settings=page.locator('.ncn-print-settings');
@@ -58,11 +65,13 @@ try{
           },{prefix,generation});
         }
         if(width===390)await page.locator('.ncn-workspace-bar [data-ncn-pane=paper]').click();
+        await fieldState('before-back-'+cycle);
         const historySize=await page.evaluate(()=>history.length);
         console.log(JSON.stringify({engine,width,path,id,cycle,start,historySize}));
         assert.equal(historySize,start+1,'preview updates must not add child-frame history entries');
         if(cycle===1)await page.locator('#'+prefix+'-change-model').click();else await page.goBack();
         await page.waitForURL(base+path);
+        await fieldState('after-back-'+cycle);
         await card.waitFor({state:'visible'});
         assert.equal(await page.locator('#'+prefix+'-workspace').evaluate(node=>node.hidden),true,'one Back/Choose click must return to the catalogue');
       }
