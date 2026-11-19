@@ -1,6 +1,7 @@
 import {createHash,createHmac,timingSafeEqual} from 'node:crypto';
 import {memberKey,emptyMember,withMemberVip} from './ncn-membership.mjs';
 import {resolveVipAccess} from './ncn-vip-trial.mjs';
+import {sepayDescription,sepayQR} from './ncn-sepay-qr.mjs';
 
 export const BANK=Object.freeze({bank:'VietinBank',account:'105312456789',name:'NGUYEN NGHIA NGUYEN'});
 export const PLANS=Object.freeze([
@@ -77,9 +78,8 @@ async function getMember(store,user){
 function orderView(order,member,now){
   const grant=member?.grants?.[order.id],paid=!!grant;
   const state=paid?'paid':order.status==='review'?'review':Date.parse(order.expiresAt)<=now?'expired':'pending';
-  const qr=new URL('https://vietqr.app/img');
-  qr.search=new URLSearchParams({acc:order.bankAccount,bank:'VietinBank',amount:String(order.amount),des:order.description}).toString();
-  return {id:order.id,planId:order.planId,amount:order.amount,days:order.days,name:order.name,status:state,createdAt:order.createdAt,expiresAt:order.expiresAt,bankAccount:order.bankAccount,bankName:order.bankName,payeeName:order.payeeName,description:order.description,qrUrl:qr.href,paidAt:grant?.paidAt||null,vipExpiresAt:grant?.expiresAt||null,reviewReason:order.reviewReason||null};
+  const {description,qrUrl}=sepayQR({account:order.bankAccount,bank:'VietinBank',amount:order.amount},order.id);
+  return {id:order.id,planId:order.planId,amount:order.amount,days:order.days,name:order.name,status:state,createdAt:order.createdAt,expiresAt:order.expiresAt,bankAccount:order.bankAccount,bankName:order.bankName,payeeName:order.payeeName,description,qrUrl,paidAt:grant?.paidAt||null,vipExpiresAt:grant?.expiresAt||null,reviewReason:order.reviewReason||null};
 }
 
 async function markReview(store,tx,reason,order,now){
@@ -232,7 +232,7 @@ export function createBillingHandler(deps){return async req=>{
         const value={id:code,planId:plan.id,quantity,createdAt:iso(now),expiresAt:iso(now+30*60000)};
         m.requests[requestKey]=value;m.email=user.email;m.name=user.name;return {value};
       });
-      const order={schema:1,id:reservation.id,userId:user.id,userEmail:user.email,planId:plan.id,planVersion:'20261114',quantity,amount:plan.amount*quantity,days:plan.days*quantity,name:plan.name+(quantity>1?' × '+quantity:''),createdAt:reservation.createdAt,expiresAt:reservation.expiresAt,bankAccount:BANK.account,bankName:BANK.bank,payeeName:BANK.name,description:'NCN '+reservation.id,status:'pending'};
+      const order={schema:1,id:reservation.id,userId:user.id,userEmail:user.email,planId:plan.id,planVersion:'20261114',quantity,amount:plan.amount*quantity,days:plan.days*quantity,name:plan.name+(quantity>1?' × '+quantity:''),createdAt:reservation.createdAt,expiresAt:reservation.expiresAt,bankAccount:BANK.account,bankName:BANK.bank,payeeName:BANK.name,description:sepayDescription(reservation.id),status:'pending'};
       await store.setJSON(orderKey(order.id),order,{onlyIfNew:true});
       const saved=await store.get(orderKey(order.id),{type:'json'});
       if(!saved||saved.userId!==user.id)fail(503,'Chưa tạo được mã Donate. Vui lòng thử lại.');

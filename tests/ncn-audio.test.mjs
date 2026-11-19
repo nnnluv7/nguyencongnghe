@@ -47,7 +47,7 @@ test('guest creates one persistent order with a token; public status omits priva
  const {order}=await a.json();
  assert.equal(order.code,await codeOf(b));assert.match(order.code,/^NCNAUD[A-F0-9]{16}$/);
  assert.equal(order.amount,99000);assert.equal(order.payment,'pending');
- const qr=new URL(order.qr);assert.equal(qr.searchParams.get('des'),order.code);assert.equal(qr.searchParams.get('amount'),'99000');assert.equal(qr.searchParams.get('acc'),bankDetails.account);
+ const qr=new URL(order.qr);assert.equal(order.description,'SEVQR '+order.code);assert.equal(qr.searchParams.get('des'),order.description);assert.equal(qr.searchParams.get('amount'),'99000');assert.equal(qr.searchParams.get('acc'),bankDetails.account);
  assert.equal([...f.store.entries.keys()].filter(k=>k.startsWith('history-')).length,1);
  const response=await f.call('status',{token}),payload=await response.text();
  assert.equal(response.status,200);assert.match(response.headers.get('cache-control'),/no-store/);
@@ -123,7 +123,9 @@ test('an existing order keeps its quoted amount on retry and when SePay confirms
  const {order}=await (await f.call('create',data)).json();
  assert.equal(order.amount,100000);
  assert.equal(new URL(order.qr).searchParams.get('amount'),'100000');
- assert.equal((await f.bank({content:code,transferAmount:100000})).status,200);
+ assert.equal(order.description,'SEVQR '+code);
+ assert.equal(new URL(order.qr).searchParams.get('des'),order.description);
+ assert.equal((await f.bank({content:order.description,transferAmount:100000})).status,200);
  assert.equal((await (await f.call('status',{token})).json()).order.payment,'paid');
 });
 test('duplicate bank references and mixed order codes cannot settle a second order or grant VIP',async()=>{
