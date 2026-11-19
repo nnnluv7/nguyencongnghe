@@ -53,7 +53,7 @@ try{
  });
  await check('a 60-day two-pack QR is owned by the logged-in account and uses the server amount',async()=>{
   await page.locator('input[value=vip60]').check();await page.getByLabel('Số gói Donate').selectOption('2');await page.locator('#donate-create').click();
-  await page.locator('#donate-order').waitFor({state:'visible'});assert.equal(await page.locator('#donate-amount').innerText(),'98.000đ');assert.equal(await page.locator('#donate-owner').innerText(),user.email);assert.match(await page.locator('#donate-description').innerText(),/^NCN NCN[A-F0-9]{20}$/);
+  await page.locator('#donate-order').waitFor({state:'visible'});assert.equal(await page.locator('#donate-amount').innerText(),'98.000đ');assert.equal(await page.locator('#donate-owner').innerText(),user.email);assert.match(await page.locator('#donate-description').innerText(),/^SEVQR NCN[A-F0-9]{20}$/);
   assert.equal(calls.filter(c=>c.route==='create-order').length,1);await page.screenshot({path:out+'/donate-desktop.png',fullPage:true});
  });
  await check('a verified receipt updates the same account to supporter and restores unlimited tools',async()=>{

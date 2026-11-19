@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHmac,randomUUID} from 'node:crypto';
 import {readFile} from 'node:fs/promises';
-import {createBillingHandler,createWebhookHandler,BANK,PLANS} from '../netlify/lib/ncn-billing-api.mjs';
+import {createBillingHandler,BANK,PLANS} from '../netlify/lib/ncn-billing-api.mjs';
+import {createSePayRouter} from '../netlify/lib/ncn-sepay-router.mjs';
 import {createHandler,verifyIdentity} from '../netlify/lib/ncn-event-api.mjs';
 import {withMemberVip,memberKey} from '../netlify/lib/ncn-membership.mjs';
 import {preparePublicTools} from '../netlify/lib/ncn-public-copy.mjs';
@@ -13,7 +14,7 @@ const request=(route,data,cookie='',tool='billing')=>new Request(origin+'/.netli
 const transaction=(extra={})=>({id:123,gateway:BANK.bank,accountNumber:BANK.account,transferType:'in',transferAmount:12345,content:'SEVQR NCN DONATE',transactionDate:'2026-11-14 11:00:00',referenceCode:'fixture-reference',...extra});
 function receipt(data,key=secret){const body=JSON.stringify(data),stamp=String(now/1000);return new Request(origin+'/.netlify/functions/ncn-sepay-webhook',{method:'POST',headers:{'Content-Type':'application/json','x-sepay-timestamp':stamp,'x-sepay-signature':'sha256='+createHmac('sha256',key).update(stamp+'.'+body).digest('hex')},body});}
 function billing(user=member,store=memoryStore(),enabled=true){return createBillingHandler({production:()=>true,verify:async()=>user,store:()=>store,now:()=>now,config:()=>({enabled,secret})});}
-function webhook(store){return createWebhookHandler({production:()=>true,store:()=>store,now:()=>now,config:()=>({secret})});}
+function webhook(store){return createSePayRouter({production:()=>true,store:()=>store,now:()=>now,config:()=>({secret})});}
 async function order(store,planId='vip30',quantity=1,user=member,requestId=randomUUID()){
  const response=await billing(user,store)(request('create-order',{planId,quantity,requestId}));assert.equal(response.status,201,await response.clone().text());return (await response.json()).order;
 }
@@ -36,11 +37,31 @@ test('order creation requires login and configured SePay, ignores client price/r
  const requestId=randomUUID(),data={planId:'vip30',requestId,quantity:1,amount:1,days:9999,admin:true,userId:'someone-else'};
  const first=await (await billing(member,store)(request('create-order',data))).json(),second=await (await billing(member,store)(request('create-order',data))).json();
  assert.equal(first.order.id,second.order.id);assert.equal(first.order.amount,29000);assert.equal(first.order.days,30);
+ assert.equal(first.order.description,'SEVQR '+first.order.id);
+ const qr=new URL(first.order.qrUrl);
+ assert.equal(qr.searchParams.get('des'),first.order.description);
+ assert.equal(qr.searchParams.get('amount'),'29000');
  assert.equal((await store.get('order-'+first.order.id)).userId,member.id);
  assert.equal((await billing(member,store)(request('create-order',{...data,planId:'vip60'}))).status,409);
  assert.equal((await billing(member,store)(request('create-order',{...data,requestId:randomUUID(),quantity:-1}))).status,400);
  assert.equal((await billing({...member,id:'other'},store)(request('order&id='+first.order.id))).status,404);
  assert.equal((await billing(member,store)(request('admin'))).status,403);
+});
+test('existing Donate orders return a SePay-compatible memo and still match their original order',async()=>{
+ const store=memoryStore(),requestId=randomUUID(),o=await order(store,'vip30',1,member,requestId);
+ const original=await store.get('order-'+o.id);
+ await store.setJSON('order-'+o.id,{...original,description:'NCN '+o.id});
+ const restored=await (await billing(member,store)(request('order&id='+o.id))).json();
+ assert.equal(restored.order.id,o.id);
+ assert.equal(restored.order.description,'SEVQR '+o.id);
+ assert.equal(new URL(restored.order.qrUrl).searchParams.get('des'),restored.order.description);
+ const retried=await order(store,'vip30',1,member,requestId);
+ assert.equal(retried.description,restored.order.description);
+ const response=await webhook(store)(receipt(transaction({content:restored.order.description,transferAmount:o.amount})));
+ assert.equal(response.status,200);
+ const paid=await (await billing(member,store)(request('order&id='+o.id))).json();
+ assert.equal(paid.order.status,'paid');
+ assert.equal(paid.user.vipSource,'payment');
 });
 test('confirmed SePay receipts grant both tools, extend the remaining term and never apply twice',async()=>{
  const store=memoryStore(),first=await order(store),handle=webhook(store);

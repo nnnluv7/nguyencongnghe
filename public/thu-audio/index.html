@@ -115,11 +115,12 @@ if(typeof window!=='undefined'&&typeof document!=='undefined')installAppearance(
         <div><dt>Chủ tài khoản</dt><dd id="au-payee"></dd></div>
         <div><dt>Số tài khoản</dt><dd id="au-bank-account"></dd></div>
         <div><dt>Số tiền</dt><dd id="au-amount"></dd></div>
+        <div><dt>Nội dung</dt><dd id="au-description"></dd></div>
        </dl>
-       <p>Giữ đúng mã đơn trong nội dung chuyển khoản để SePay ghi nhận tự động.</p>
+       <p>Giữ nguyên nội dung chuyển khoản hiển thị để SePay ghi nhận tự động.</p>
       </div>
      </div>
-     <div class="au-order-code"><span>Mã đơn</span><strong id="au-code"></strong><button type="button" id="au-copy" class="au-secondary">Sao chép mã</button></div>
+     <div class="au-order-code"><span>Mã đơn</span><strong id="au-code"></strong><button type="button" id="au-copy" class="au-secondary">Sao chép nội dung</button></div>
      <div class="au-actions"><button type="button" class="au-secondary" id="au-check">Kiểm tra trạng thái</button><button type="button" class="au-secondary" id="au-reset">Đặt đơn mới</button></div>
     </section>
     <p class="au-message" id="au-booking-message" role="status">Đang kiểm tra kết nối thanh toán…</p>

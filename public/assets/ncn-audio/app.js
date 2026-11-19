@@ -51,6 +51,7 @@ export function mountAudio({doc=document,win=window,fetcher=fetch,identity={ensu
   if(order.bank){
    message('bank',order.bank.bank);message('payee',order.bank.name);
    message('bank-account',order.bank.account);message('amount',currency(order.amount));
+   message('description',order.description);
   }
   if(order.qr){
    $('qr').hidden=false;
@@ -103,8 +104,8 @@ export function mountAudio({doc=document,win=window,fetcher=fetch,identity={ensu
   message('booking-message','');form.elements.name.focus();
  });
  $('copy').addEventListener('click',async()=>{
-  try{await win.navigator.clipboard.writeText(current.code);message('booking-message','Đã sao chép mã đơn.');}
-  catch{message('booking-message','Chọn và sao chép mã đơn hiển thị phía trên.');}
+  try{await win.navigator.clipboard.writeText(current.description);message('booking-message','Đã sao chép nội dung chuyển khoản.');}
+  catch{message('booking-message','Chọn và sao chép nội dung chuyển khoản hiển thị phía trên.');}
  });
  doc.addEventListener('visibilitychange',()=>{
   win.clearTimeout(poll);

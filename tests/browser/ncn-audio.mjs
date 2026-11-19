@@ -136,8 +136,9 @@ try{
  await message(page,'#au-order-status','Chờ SePay');
  const code=await page.locator('#au-code').innerText();
  const qr=new URL(await page.locator('#au-qr').getAttribute('src'));
- assert.equal(qr.searchParams.get('des'),code);assert.equal(qr.searchParams.get('amount'),'99000');
- const body=JSON.stringify({id:1,gateway:bank.bank,accountNumber:bank.account,transferType:'in',transferAmount:99000,content:code,
+ const description=await page.locator('#au-description').innerText();
+ assert.equal(description,'SEVQR '+code);assert.equal(qr.searchParams.get('des'),description);assert.equal(qr.searchParams.get('amount'),'99000');
+ const body=JSON.stringify({id:1,gateway:bank.bank,accountNumber:bank.account,transferType:'in',transferAmount:99000,content:description,
   transactionDate:new Date(now+7*3600000).toISOString().slice(0,19).replace('T',' '),referenceCode:'fixture-audio'});
  const stamp=String(now/1000),signature=createHmac('sha256',secret).update(stamp+'.'+body).digest('hex');
  const received=await webhook(new Request(origin+'/.netlify/functions/ncn-sepay-webhook',{method:'POST',headers:{'Content-Type':'application/json','X-SePay-Timestamp':stamp,'X-SePay-Signature':'sha256='+signature},body}));

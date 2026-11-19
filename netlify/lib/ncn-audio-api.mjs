@@ -1,6 +1,7 @@
 import {randomUUID} from 'node:crypto';
 import {AUDIO_PRICE,AUDIO_ORIGINAL_PRICE,MAX_AUDIO_SAMPLE_BYTES} from '../../public/assets/ncn-audio/shared.js';
 import {audioText,createAudioOrder,failAudio,listAudioOrders,readAudioOrder,updateAudioWork} from './ncn-audio-orders.mjs';
+import {sepayQR} from './ncn-sepay-qr.mjs';
 
 const samplesKey='published-samples';
 const privateHeaders={
@@ -35,9 +36,8 @@ async function jsonBody(req){
 }
 function orderView(order,bank,ready){
  const {code,amount,createdAt,payment,work}=order;
- const qr=new URL('https://vietqr.app/img');
- qr.search=new URLSearchParams({acc:bank.account,bank:bank.bank,amount:String(amount),des:code}).toString();
- return {code,amount,createdAt,payment:payment.state,work:work.state,qr:ready&&payment.state!=='paid'?qr.href:null,bank:ready?bank:null};
+ const {description,qrUrl}=sepayQR({...bank,amount},code);
+ return {code,description,amount,createdAt,payment:payment.state,work:work.state,qr:ready&&payment.state!=='paid'?qrUrl:null,bank:ready?bank:null};
 }
 const audioKey=id=>'sample-'+id;
 async function getSamples(store){return (await store.get(samplesKey,{type:'json'}))?.items||[];}
