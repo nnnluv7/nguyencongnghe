@@ -270,6 +270,19 @@ try{
     await page.locator('#cq-erp').fill('1234567');
     assert.equal(await page.locator('#cq-erp').inputValue(),'1,234,567');
     await page.locator('#cq-qty-500000').fill('2');
+    for(const selector of ['#cq-erp','#cq-qty-500000']){
+      const input=page.locator(selector),before=await input.inputValue();
+      await input.press('End');await input.pressSequentially('abcXYZé-+');
+      assert.equal(await input.inputValue(),before,'Letters and signs must be blocked while typing');
+      await input.fill('abc');
+      assert.equal(await input.inputValue(),before,'Non-cancelable input must restore the last number');
+      const pasted=await input.evaluate(node=>{
+        const data=new DataTransfer();data.setData('text/plain','12abc34');
+        const event=new ClipboardEvent('paste',{bubbles:true,cancelable:true,clipboardData:data});
+        node.dispatchEvent(event);return event.defaultPrevented;
+      });
+      assert.equal(pasted,true);assert.equal(await input.inputValue(),before);
+    }
     assert.equal(await page.locator('#cq-rows tr').count(),9);
     assert.equal(await page.locator('#cq-qty-500').count(),0);
     assert.match(await page.locator('#cq-actual').textContent(),/1.000.000/);

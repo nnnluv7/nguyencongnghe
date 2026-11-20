@@ -12,6 +12,25 @@ export function createCashApp({app,doc=document,win=window,clock=()=>new Date(),
   let checkedAt=clock().toISOString(),result=calculate();
   $('cq-rows').innerHTML=DENOMINATIONS.map(value=>`<tr><td><span class="cq-note-value">${numberText(value)}</span></td><td><input class="cq-qty" id="cq-qty-${value}" data-cq-value="${value}" type="text" inputmode="numeric" autocomplete="off" maxlength="13" placeholder="0" aria-label="Số tờ mệnh giá ${numberText(value)} đồng" aria-describedby="cq-error-${value}"><p id="cq-error-${value}" class="cq-error" hidden></p></td><td><output id="cq-amount-${value}" for="cq-qty-${value}">0 ₫</output></td></tr>`).join('');
   $('cq-actual')?.setAttribute('role','status');$('cq-actual')?.setAttribute('aria-live','polite');
+  const numericSelector='[data-cq-value],#cq-erp';
+  const numericCharacters=/^[0-9., \u00a0\u202f]*$/;
+  const numericState=new WeakMap();
+  function rememberNumber(input){
+    numericState.set(input,{value:input.value,start:input.selectionStart,end:input.selectionEnd});
+  }
+  for(const input of app.querySelectorAll(numericSelector))rememberNumber(input);
+  listen(app,'beforeinput',event=>{
+    const input=event.target;
+    if(!input.matches(numericSelector))return;
+    rememberNumber(input);
+    const inserted=event.data??event.dataTransfer?.getData('text/plain');
+    if(inserted!=null&&!numericCharacters.test(inserted))event.preventDefault();
+  });
+  for(const type of ['paste','drop'])listen(app,type,event=>{
+    if(!event.target.matches(numericSelector))return;
+    const inserted=(event.clipboardData||event.dataTransfer)?.getData('text/plain');
+    if(inserted!=null&&!numericCharacters.test(inserted))event.preventDefault();
+  });
   const rawCounts=()=>Object.fromEntries(DENOMINATIONS.map(value=>[value,$('cq-qty-'+value).value]));
   function message(text,error=false){$('cq-message').textContent=text;$('cq-message').toggleAttribute('data-error',error);}
   function setError(input,errorElement,error){input.setAttribute('aria-invalid',String(Boolean(error)));errorElement.hidden=!error;errorElement.textContent=error||'';}
@@ -56,13 +75,23 @@ export function createCashApp({app,doc=document,win=window,clock=()=>new Date(),
     }catch{/* Keep invalid input visible so the existing validation can explain it. */}
   }
   listen(app,'input',event=>{
-    if(event.target.id==='cq-erp')formatERP(event);
-    if(event.target.matches('[data-cq-value],#cq-erp'))render({changed:true});
+    const input=event.target;
+    if(!input.matches(numericSelector))return;
+    if(!numericCharacters.test(input.value)){
+      const previous=numericState.get(input);
+      input.value=previous?.value??'';
+      if(previous?.start!=null)input.setSelectionRange(previous.start,previous.end);
+      return;
+    }
+    if(input.id==='cq-erp')formatERP(event);
+    rememberNumber(input);
+    render({changed:true});
   });
   listen(app,'focusout',event=>{
     const input=event.target;
     if(input.matches('[data-cq-value]')){const value=result.rows.find(row=>String(row.denomination)===input.dataset.cqValue)?.count;if(value!==null&&value!==undefined&&input.value.trim())input.value=numberText(value);}
     if(input.id==='cq-erp'&&!result.errors.erp&&result.erp!==null)input.value=erpInputText(result.erp);
+    if(input.matches(numericSelector))rememberNumber(input);
   });
   listen($('cq-rows'),'keydown',event=>{
     const input=event.target.closest('[data-cq-value]');if(!input)return;
@@ -79,6 +108,7 @@ export function createCashApp({app,doc=document,win=window,clock=()=>new Date(),
   listen($('cq-reset'),'click',()=>{
     if((DENOMINATIONS.some(value=>$('cq-qty-'+value).value.trim())||$('cq-erp').value.trim())&&!win.confirm('Xóa các số liệu trên bảng kiểm quỹ này?'))return;
     for(const value of DENOMINATIONS)$('cq-qty-'+value).value='';$('cq-erp').value='';render({changed:true});message('Đã xóa số liệu.');$('cq-qty-'+DENOMINATIONS[0]).focus();
+    for(const input of app.querySelectorAll(numericSelector))rememberNumber(input);
   });
   const dialog=$('cq-copy-dialog');
   listen($('cq-copy'),'click',async()=>{

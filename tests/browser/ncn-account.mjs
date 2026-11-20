@@ -224,6 +224,32 @@ try{
     await home.waitForFunction(()=>document.getElementById('pay-email').textContent==='vip@example.test');
     assert.equal(functionCalls.filter(c=>c.tool==='ncn-billing'&&c.action==='me').length-before,1);
   });
+  await check('reopening the browser renews an expired stored session before fetching the account',async()=>{
+    const snapshot=await context.storageState();
+    for(const name of ['nf_jwt','nf_refresh']){
+      const cookie=snapshot.cookies.find(cookie=>cookie.name===name);
+      assert.ok(cookie?.expires>Date.now()/1000+86400,'Sign-in cookies must survive closing the browser');
+    }
+    const saved=snapshot.origins.find(entry=>entry.origin===origin).localStorage.find(entry=>entry.name==='gotrue.user');
+    const rawSession=JSON.parse(saved.value);
+    const expired='fixture.'+Buffer.from(JSON.stringify({sub:existing.id,exp:Math.floor(Date.now()/1000)-3600})).toString('base64url')+'.fixture';
+    rawSession.token.access_token=expired;
+    rawSession.token.expires_at=Date.now()-3600000;
+    saved.value=JSON.stringify(rawSession);
+    const before=calls.filter(call=>call.action==='token'&&new URLSearchParams(call.body).get('grant_type')==='refresh_token').length;
+    const reopened=await fixtureContext({storageState:{...snapshot,cookies:[]}});
+    try{
+      const restored=await open(reopened,'/2024/02/kiem-quy.html');
+      assert.equal(await restored.evaluate(()=>NCNAccount.state.user?.id),existing.id);
+      const after=calls.filter(call=>call.action==='token'&&new URLSearchParams(call.body).get('grant_type')==='refresh_token').length;
+      assert.equal(after-before,1,'One renewal must finish before the verified account request');
+      await restored.reload();await restored.waitForFunction(()=>NCNAccount.state.ready);
+      assert.equal(await restored.evaluate(()=>NCNAccount.state.user?.id),existing.id);
+      await restored.evaluate(()=>NCNAccount.signOut());
+      await restored.reload();await restored.waitForFunction(()=>NCNAccount.state.ready);
+      assert.equal(await restored.evaluate(()=>NCNAccount.state.user),null);
+    }finally{await reopened.close();}
+  });
   await check('parallel refreshes share one request and retain the live private input',async()=>{
     await event.locator('#fixture-edit').fill('KEEP THIS VALUE');
     const before=functionCalls.filter(c=>c.tool==='ncn-billing'&&c.action==='me').length;
