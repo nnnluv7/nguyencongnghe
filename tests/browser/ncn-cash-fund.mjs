@@ -115,7 +115,38 @@ try {
   await desktop.locator('[data-cf-receipt="in"]').click();
   const form = desktop.locator('#cf-receipt-form');
   assert.equal(await form.locator('[name="date"]').inputValue(), vietnamDate());
-  await form.locator('[name="amount"]').fill('2.500.000');
+  const amount = form.locator('[name="amount"]');
+  await amount.pressSequentially('2500000');
+  assert.equal(await amount.inputValue(), '2,500,000');
+  await amount.pressSequentially('abcE-+');
+  assert.equal(await amount.inputValue(), '2,500,000');
+  for (const invalid of ['abc', '1.5', '1,5', '1e6']) {
+    await amount.fill(invalid);
+    assert.equal(await amount.inputValue(), '2,500,000');
+  }
+  const pasted = await amount.evaluate(input => {
+    const data = new DataTransfer(); data.setData('text/plain', '12abc34');
+    const event = new ClipboardEvent('paste', { bubbles: true, cancelable: true, clipboardData: data });
+    input.dispatchEvent(event);
+    return event.defaultPrevented;
+  });
+  assert.equal(pasted, true);
+  await amount.fill('2.500.000');
+  assert.equal(await amount.inputValue(), '2,500,000');
+  await amount.press('Home'); await amount.press('ArrowRight'); await amount.press('3');
+  assert.equal(await amount.inputValue(), '23,500,000');
+  await amount.press('Backspace');
+  assert.equal(await amount.inputValue(), '2,500,000');
+  await amount.press('Home'); await amount.press('ArrowRight');
+  await amount.evaluate(input => {
+    const data = new DataTransfer(); data.setData('text/plain', '3');
+    input.dispatchEvent(new ClipboardEvent('paste', { bubbles: true, cancelable: true, clipboardData: data }));
+  });
+  assert.equal(await amount.inputValue(), '23,500,000');
+  await amount.press('Backspace');
+  await amount.press('Delete'); await amount.press('Delete');
+  assert.equal(await amount.inputValue(), '200,000');
+  await amount.fill('2500000');
   await form.locator('[name="note"]').fill('Nộp đầu kỳ <b>mẫu</b>');
   dropNextSave = true;
   await desktop.locator('#cf-save').click();
@@ -139,6 +170,7 @@ try {
   await mobile.locator('[data-cf-receipt="out"]').click();
   const expense = mobile.locator('#cf-receipt-form');
   await expense.locator('[name="amount"]').fill('250000');
+  assert.equal(await expense.locator('[name="amount"]').inputValue(), '250,000');
   await expense.locator('[name="note"]').fill('Chi vật tư');
   await fits(mobile);
   await mobile.locator('#cf-save').click();
