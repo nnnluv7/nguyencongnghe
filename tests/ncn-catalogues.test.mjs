@@ -34,6 +34,24 @@ async function publish(handler,tool,id='test',version=null){
   const result=await call(handler,tool,'publish',{id,name:'Bảng '+id,items:[product],version});assert.equal(result.status,200);return result.body;
 }
 
+test('one authorized opening request returns the real form, ordered scripts and initial price list',async()=>{
+  for(const tool of ['event','gvgs'])for(const user of [admin,vip]){
+    const store=memoryStore();await publish(endpoint(tool,store),tool);
+    let checks=0;const assets=[];
+    const handler=createHandler({production:()=>true,verify:async()=>{checks++;return user;},store:()=>store,asset:async file=>{assets.push(file);return 'fixture '+file;}});
+    const result=await call(handler,tool,'app&bundle=1');
+    assert.equal(result.status,200);assert.equal(checks,1);
+    assert.equal(result.body.html,'fixture '+(user.admin?'admin.html':'vip.html'));
+    assert.deepEqual(result.body.scripts,{core:'fixture core.cjs',ui:'fixture ui.js'});
+    assert.deepEqual(result.body.initial.catalogues.map(item=>item.id),['test']);
+    assert.deepEqual(result.body.initial.initialCatalogue.items,[product]);
+    assert.deepEqual(assets.sort(),['core.cjs',user.admin?'admin.html':'vip.html','ui.js'].sort());
+    checks=0;assets.length=0;
+    const denied=createHandler({production:()=>true,verify:async()=>null,store:()=>store,asset:async file=>{assets.push(file);return file;}});
+    assert.equal((await call(denied,tool,'app&bundle=1')).status,401);assert.deepEqual(assets,[]);
+  }
+});
+
 for(const tool of ['event','gvgs']){
   test(tool+': ADMIN can publish, delete and recreate a catalogue',async()=>{
     const store=memoryStore(),handler=endpoint(tool,store);

@@ -1,9 +1,10 @@
-# Authenticated tool pages
+# Opening authenticated tools
 
-Show the public tool layout on the first HTML response. Fetch access and data in the background. Do not add a full-page loading gate, spinner or “Mở công cụ của bạn” message.
+Show the real blank form from its canonical template in the initial HTML. Do not build a second placeholder interface, a full-page waiting card or a spinner.
 
-- Use `publicToolFrame` and `setAccessView` from `public/assets/ncn-access-view.js`. Public frames contain no records, prices, roles or private editor code.
-- Pages using `vip-app` and the shared VIP/Admin loaders receive this public layout through `preparePublicTools`, in both static builds and server-rendered responses.
-- Declare a read-only opening endpoint with `data-ncn-access-endpoint` on the tool root. The common head starts it alongside the account request for an existing, unexpired session. Consume it with `takeToolPrefetch`; it is bound to the current cookie and consumed once.
-- Keep controls inert until their authenticated endpoint succeeds. Show the normal sign-in, permission or retry view when appropriate. Clear all private content on logout or account changes.
-- Use an em dash for an unknown balance, rather than zero. Do not cache financial data, authorization or private editor code in the public HTML or browser storage to skip verification.
+- Register the blank VIP form in `manifest.toolTemplates` during the build. The server and static pages use that same template; private data and executable editor code stay behind the authenticated endpoint.
+- Use `setAccessView` to keep controls inert until the tool itself confirms access. The general account menu refresh runs in parallel and must not delay the tool.
+- Declare `data-ncn-access-endpoint` with `?route=app&bundle=1` for the shared print tools. The authenticated opening response contains the form, core, UI and initial catalogue snapshot. Do not re-request each part separately.
+- Reuse the canonical form when its hash matches. Release the consumed boot payload and remove temporary script nodes after execution.
+- Keep writes and prints independently authorized on the server. Clear private content on logout, account changes and permission revocation. Never cache financial records or authorization in public HTML or browser storage.
+- Keep an unknown cash balance as an em dash. Show real permission or connection errors with a retry action.

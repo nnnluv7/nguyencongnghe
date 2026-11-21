@@ -153,7 +153,7 @@ export function mountAccount({doc=document,win=window,identity=identityClient,fe
   }
   function refresh({force=false}={}){
     if(pending)return pending;
-    if(!force&&state.ready&&!state.error&&clock()-state.checkedAt<15000)return Promise.resolve(state.user);
+    if(!force&&(state.ready||state.checkedAt)&&!state.error&&clock()-state.checkedAt<15000)return Promise.resolve(state.user);
     const version=epoch;
     let task;task=(async()=>{
       try{
@@ -235,6 +235,8 @@ export function mountAccount({doc=document,win=window,identity=identityClient,fe
   const unsubscribe=identity.onAuthChange((event,user)=>{
     if(event==='logout'){++epoch;pending=null;state.error=null;state.checkedAt=0;publish(null);}
     else{
+      const owner=(state.user||state.profile)?.id;
+      if(!state.ready&&pending&&['login','token_refresh'].includes(event)&&user?.id&&(!owner||owner===user.id)){state.checkedAt=0;return;}
       if(user?.id&&(state.user||state.profile)?.id!==user.id){++epoch;pending=null;publish(null);}
       state.checkedAt=0;refresh({force:true}).catch(()=>{});
     }
@@ -252,6 +254,7 @@ export function mountAccount({doc=document,win=window,identity=identityClient,fe
       state.redirect=await identity.consumeRedirect();
       state.resetPending=['recovery','invite'].includes(state.redirect?.type);
       await refresh();
+      while(pending)await pending;
       if(state.redirect?.type==='oauth'&&state.user){let path;try{path=sessionStorage?.getItem('ncn-oauth-return');sessionStorage?.removeItem('ncn-oauth-return');}catch{}if(typeof path==='string'&&/^\/ran-luot\/(?:\?room=[\w-]{22})?$/.test(path)&&path!==win.location.pathname+win.location.search)win.location.replace(path);}
       if(state.resetPending){open('reset');message('Nhập mật khẩu mới để hoàn tất tài khoản chung.');}
       else if(state.redirect?.type==='confirmation'){open('login');message('Email đã được xác nhận. Đăng nhập để sử dụng website.');}

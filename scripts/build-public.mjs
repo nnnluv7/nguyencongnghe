@@ -45,6 +45,12 @@ export async function buildPublic(){
     });}
   }]});
   const manifest={modules:{},imports:{},runtimeImports:{},classic:{},styles:{},dependencies:{},catalogues:{},fonts:{}};
+  manifest.toolTemplates={};
+  for(const name of ['event','gvgs']){
+    const html=await readFile('netlify/lib/ncn-'+name+'-private/vip.html','utf8');
+    if(/<script\b/i.test(html))throw Error('Public tool templates must contain only the blank form layout.');
+    manifest.toolTemplates['/.netlify/functions/ncn-'+name]={html,hash:hash(html)};
+  }
   const generatedAsset=async(folder,bytes,ext)=>{const url=assets+folder+'/'+hash(bytes)+'.'+ext;await mkdir(dirname(output+url),{recursive:true});await writeFile(output+url,bytes);return url;};
   manifest.logo=await generatedAsset('images',await sharp(root+'/assets/ncn-theme/logo.png').resize({width:512,height:512,fit:'inside',withoutEnlargement:true}).webp({quality:90}).toBuffer(),'webp');
   manifest.icon=await generatedAsset('images',await sharp(root+'/assets/ncn-theme/logo.png').resize({width:192,height:192,fit:'inside',withoutEnlargement:true}).png({compressionLevel:9}).toBuffer(),'png');

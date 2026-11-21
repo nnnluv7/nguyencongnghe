@@ -1,5 +1,4 @@
 import {ensureSession,onAuthChange} from '../ncn-identity-client.js';
-import {publicToolFrame} from '../ncn-access-view.js';
 import {takeToolPrefetch} from '../ncn-account-prefetch.js';
 
 export function mountAdminGate({host,doc=document,win=window,fetcher=fetch,identity={ensureSession,onAuthChange}}){
@@ -35,7 +34,7 @@ export function mountAdminGate({host,doc=document,win=window,fetcher=fetch,ident
     if(disposed||loadingUser===owner||loadedUser&&user?.admin&&loadedUser===user.id)return;
     loadingUser=owner;
     const generation=++epoch;abort?.abort();const controller=new AbortController();abort=controller;
-    disposeApp();disposeApp=()=>{};loadedUser=null;host.innerHTML=publicToolFrame(host.dataset.view==='library'?'Quản lý Thư viện':'Quản trị Admin','admin');
+    disposeApp();disposeApp=()=>{};loadedUser=null;host.innerHTML='<header class="na-heading"><h1>'+(host.dataset.view==='library'?'Quản lý Thư viện':'Quản trị Admin')+'</h1></header>';
     let timedOut=false;const timer=win.setTimeout(()=>{timedOut=true;controller.abort();},20000);
     try{
       const session=await identity.ensureSession();if(disposed||generation!==epoch)return;
@@ -58,7 +57,7 @@ export function mountAdminGate({host,doc=document,win=window,fetcher=fetch,ident
   const ready=()=>load(),signedOut=()=>clear(),pageshow=event=>{if(event.persisted){loadedUser=null;load();}};
   doc.addEventListener('ncn-account-change',accountChange);doc.addEventListener('ncn-account-ready',ready);doc.addEventListener('ncn-account-signed-out',signedOut);win.addEventListener('pageshow',pageshow);
   const unsubscribe=identity.onAuthChange(event=>{if(event==='logout')clear();});
-  if(win.NCNAccount)win.NCNAccount.ready.then(load);else if(doc.readyState!=='loading')load();
+  load();
   return {load,destroy(){disposed=true;++epoch;abort?.abort();disposeApp();unsubscribe?.();doc.removeEventListener('ncn-account-change',accountChange);doc.removeEventListener('ncn-account-ready',ready);doc.removeEventListener('ncn-account-signed-out',signedOut);win.removeEventListener('pageshow',pageshow);}};
 }
 if(typeof document!=='undefined'){

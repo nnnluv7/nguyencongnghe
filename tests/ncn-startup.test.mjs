@@ -8,11 +8,11 @@ import {injectCatalog} from '../netlify/lib/ncn-library-page.mjs';
 
 const shell='<html><head><meta charset="utf-8"><title>Tiếng Việt</title></head><body><script src="/assets/catalog.js"></script><main id="ncn-cash-app">Original controls</main><footer id="ncn-footer"></footer></body></html>';
 const manifest={styles:{},modules:{},classic:{},imports:{'/unrelated-game.js':'/large-game.js'},runtimeImports:{'/account.js?v=1':'/account-hash.js'},dependencies:{}};
-test('UTF-8 remains early, unused module aliases stay out, and the supplied AdSense loader stays singular',()=>{
+test('UTF-8 remains early and working tools omit unused aliases and advertising scripts',()=>{
   const html=optimizePublicHTML(shell,manifest),charset=html.indexOf('<meta charset="utf-8">');
   assert.ok(charset>=0&&charset<1024);assert.ok(html.includes('Tiếng Việt'));
   assert.deepEqual(JSON.parse(html.match(/type="importmap">(.*?)<\/script>/)[1]).imports,manifest.runtimeImports);
-  assert.equal((html.match(/src="https:\/\/pagead2\.googlesyndication\.com\/pagead\/js\/adsbygoogle\.js/g)||[]).length,1);
+  assert.equal((html.match(/src="https:\/\/pagead2\.googlesyndication\.com\/pagead\/js\/adsbygoogle\.js/g)||[]).length,0);
   assert.equal(optimizePublicHTML(html,manifest),html);assert.equal(html.includes('data-ad-slot='),false);
 });
 test('informational articles shed legacy runtime while print and utility pages keep their dependencies and video geometry',()=>{

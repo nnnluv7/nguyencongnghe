@@ -1,5 +1,5 @@
 // All access decisions use a fresh, authenticated Identity /user response.
-import { randomUUID } from 'node:crypto';
+import { randomUUID, createHash } from 'node:crypto';
 import {withMemberVip} from './ncn-membership.mjs';
 import {resolveVipAccess,consumeVipTrial} from './ncn-vip-trial.mjs';
 
@@ -66,7 +66,12 @@ export function createHandler(deps){return async function(req){
     // An idempotent print retry is checked against the stored request ID below.
     if(!allowed&&!(route==='print'&&method==='POST'&&access.trial))fail(403,user.paidVipBlocked?'Quyền thành viên đang tạm khóa. Vui lòng liên hệ Admin.':'Bạn đã dùng hết 3 lượt. Donate để sử dụng Event VIP và Giờ vàng VIP không giới hạn.');
     const store=deps.store();
-    if(route==='app'&&method==='GET')return respond({html:await deps.asset(user.admin?'admin.html':'vip.html'),user,trial:access.trial||null});
+    if(route==='app'&&method==='GET'){
+      const template=user.admin?'admin.html':'vip.html';
+      if(new URL(req.url).searchParams.get('bundle')!=='1')return respond({html:await deps.asset(template),user,trial:access.trial||null});
+      const [html,core,ui,records]=await Promise.all([deps.asset(template),deps.asset('core.cjs'),deps.asset('ui.js'),catalogues(store)]);
+      return respond({html,user,trial:access.trial||null,templateHash:createHash('sha256').update(html).digest('hex').slice(0,16),scripts:{core,ui},initial:{catalogues:records.map(p=>({id:p.id,name:p.name,updatedAt:p.updatedAt,count:p.items.length,version:p.version})),initialCatalogue:records[0]||null}});
+    }
     if(route==='asset'&&method==='GET'){
       const name=new URL(req.url).searchParams.get('name');
       const names={core:['core.cjs','text/javascript'],ui:['ui.js','text/javascript'],bridge:['bridge.user.js','text/javascript']};

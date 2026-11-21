@@ -229,7 +229,7 @@ try{
       assert.equal(functionCalls.filter(c=>c.tool==='ncn-billing'&&c.action==='me').length-before,1);
     }finally{release();scriptHold=null;sessionHold=null;await isolated.close();}
   });
-  if(process.env.NCN_BUILT_TEST)await check('Event and GVGS paint their public layout while authenticated requests are still pending',async()=>{
+  if(process.env.NCN_BUILT_TEST)await check('Event and GVGS show the canonical form while authenticated requests are pending',async()=>{
     for(const [path,width] of [['/in-event/',1280],['/in-gvgs/',1280],['/in-event/',390],['/in-gvgs/',390]]){
       let release,started;const wait=new Promise(resolve=>release=resolve),requested=new Promise(resolve=>started=resolve);
       sessionHold={wait,started:()=>{}};appHold={wait,started};
@@ -237,7 +237,8 @@ try{
       try{
         await page.goto(origin+path,{waitUntil:'domcontentloaded'});
         await Promise.race([requested,new Promise((_,reject)=>setTimeout(()=>reject(Error('Tool check waited for the account')),10000))]);
-        await page.locator('[data-ncn-public-tool-shell]').waitFor();
+        await page.locator('#ncn-event-app').waitFor();
+        assert.equal(await page.locator('#vip-app').evaluate(el=>el.inert),true);
         assert.equal(await page.locator('#vip-gate').isVisible(),false);
         assert.equal(await page.locator('[data-private-fixture]').count(),0);
         assert.equal(await page.locator('.ncn-gate-loading').count(),0);
@@ -263,6 +264,20 @@ try{
       await page.waitForFunction(()=>document.getElementById('vip-gate').dataset.ncnGateState==='ready');
       assert.equal(await page.locator('#vip-app').evaluate(el=>el.inert),false);
     }finally{assetFailure=false;await isolated.close();}
+  });
+  await check('a verified tool becomes usable while the general account response is still held',async()=>{
+    let release;const wait=new Promise(resolve=>release=resolve);
+    sessionHold={wait,started:()=>{}};
+    const isolated=await fixtureContext({storageState:await context.storageState()});
+    try{
+      const page=await isolated.newPage();await page.goto(origin+'/in-event/',{waitUntil:'domcontentloaded'});
+      await page.locator('#vip-gate[data-ncn-gate-state=ready]').waitFor({state:'attached'});
+      assert.equal(await page.locator('#fixture-edit').isEnabled(),true);
+      assert.equal(await page.evaluate(()=>NCNAccount.state.ready),false);
+      assert.equal(await page.evaluate(()=>NCN_VIP.user.id),existing.id);
+      release();sessionHold=null;
+      await page.waitForFunction(()=>NCNAccount.state.ready&&NCNAccount.state.user?.vip);
+    }finally{release();sessionHold=null;await isolated.close();}
   });
   await check('full navigation keeps profile text while one shared session request is pending',async()=>{
     let release,started;const wait=new Promise(resolve=>release=resolve),requested=new Promise(resolve=>started=resolve);sessionHold={wait,started};

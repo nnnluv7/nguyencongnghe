@@ -11,7 +11,7 @@ export function startAccountPrefetch(win, doc, toolEndpoint = null) {
     });
     response.catch(() => {});
     win.NCNAccountPrefetch = { token, response };
-    if (typeof toolEndpoint === 'string' && /^\/\.netlify\/functions\/ncn-[a-z-]+(?:\?route=app(?:&view=[a-z-]+)?)?$/.test(toolEndpoint)) {
+    if (typeof toolEndpoint === 'string' && /^\/\.netlify\/functions\/ncn-[a-z-]+(?:\?route=app(?:&(?:view=[a-z-]+|bundle=1))?)?$/.test(toolEndpoint)) {
       const response = win.fetch(toolEndpoint, {
         credentials: 'same-origin', cache: 'no-store', signal: win.AbortSignal.timeout(20000)
       });
