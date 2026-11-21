@@ -56,7 +56,9 @@ dialog.ncn-print-dialog>.ncn-print-sidebar{overflow-y:auto;max-height:100%;scrol
 dialog.ncn-print-dialog .ev-dialog-top{display:grid!important;grid-template-columns:minmax(0,1fr);justify-content:stretch;padding:0!important;border:0!important;margin-bottom:14px;gap:10px}
 dialog.ncn-print-dialog .ev-dialog-top strong{font-size:17px}
 dialog.ncn-print-dialog .ev-dialog-top p{font-size:12px;line-height:1.6}
-dialog.ncn-print-dialog #ev-preview-frame{flex:none;min-height:0}
+/* Override the legacy two-ID 300px minimum: it otherwise makes classic
+   scrollbars alternate and continuously resizes the zoomed preview. */
+#ncn-event-app dialog.ncn-print-dialog #ev-preview-frame{flex:none;min-height:0}
 dialog.ncn-print-dialog .ev-print-tip{display:none;padding:0!important;background:none!important;font-size:12px;line-height:1.7;margin:14px 0;color:var(--ncn-muted)}
 dialog.ncn-print-dialog .ev-close{position:absolute;right:24px;top:20px;z-index:2}
 dialog.ncn-print-dialog .ncn-print-sidebar .ev-dialog-top{padding-right:26px!important}
