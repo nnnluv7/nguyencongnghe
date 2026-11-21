@@ -1,7 +1,9 @@
 import {ensureSession,onAuthChange} from '../ncn-identity-client.js';
+import {publicToolFrame} from '../ncn-access-view.js';
+import {takeToolPrefetch} from '../ncn-account-prefetch.js';
 
 export function mountAdminGate({host,doc=document,win=window,fetcher=fetch,identity={ensureSession,onAuthChange}}){
-  let epoch=0,abort=null,disposeApp=()=>{},loadedUser=null,disposed=false;
+  let epoch=0,abort=null,disposeApp=()=>{},loadedUser=null,loadingUser=null,disposed=false;
   function access(message,error=false){
     disposeApp();disposeApp=()=>{};loadedUser=null;host.replaceChildren();
     const panel=doc.createElement('section');panel.className='na-access';panel.id='ncn-admin-access';
@@ -14,7 +16,7 @@ export function mountAdminGate({host,doc=document,win=window,fetcher=fetch,ident
     host.append(panel);
   }
   function clear(message='Đăng nhập tài khoản có quyền ADMIN để mở khu vực quản trị.'){
-    ++epoch;abort?.abort();access(message);
+    ++epoch;loadingUser=null;abort?.abort();access(message);
   }
   async function api(route,data=null,query={}){
     const url=new URL('/.netlify/functions/ncn-library',win.location.origin);url.searchParams.set('route',route);
@@ -29,14 +31,18 @@ export function mountAdminGate({host,doc=document,win=window,fetcher=fetch,ident
   }
   async function load(){
     const user=win.NCNAccount?.state.user;
-    if(disposed||loadedUser&&user?.admin&&loadedUser===user.id)return;
-    const generation=++epoch;abort?.abort();const controller=new AbortController();abort=controller;access('Đang kiểm tra quyền quản trị…');
+    const owner=user?.id||win.NCNAccount?.state.profile?.id||'';
+    if(disposed||loadingUser===owner||loadedUser&&user?.admin&&loadedUser===user.id)return;
+    loadingUser=owner;
+    const generation=++epoch;abort?.abort();const controller=new AbortController();abort=controller;
+    disposeApp();disposeApp=()=>{};loadedUser=null;host.innerHTML=publicToolFrame(host.dataset.view==='library'?'Quản lý Thư viện':'Quản trị Admin','admin');
     let timedOut=false;const timer=win.setTimeout(()=>{timedOut=true;controller.abort();},20000);
     try{
       const session=await identity.ensureSession();if(disposed||generation!==epoch)return;
+      loadingUser=session?.id||owner;
       if(!session){access('Đăng nhập tài khoản có quyền ADMIN để mở khu vực quản trị.');return;}
       const url=new URL('/.netlify/functions/ncn-library',win.location.origin);url.searchParams.set('route','app');url.searchParams.set('view',host.dataset.view||'hub');
-      const response=await fetcher(url.href,{credentials:'same-origin',cache:'no-store',signal:controller.signal});
+      const response=await (takeToolPrefetch(win,doc,url.pathname+url.search)||fetcher(url.href,{credentials:'same-origin',cache:'no-store',signal:controller.signal}));
       const result=await response.json();if(disposed||generation!==epoch)return;
       if(!response.ok){access(result.error||'Chưa kiểm tra được quyền quản trị.',![401,403].includes(response.status));return;}
       if(typeof result.html!=='string')throw Error('Chưa tải được khu vực quản trị.');
@@ -46,7 +52,7 @@ export function mountAdminGate({host,doc=document,win=window,fetcher=fetch,ident
         disposeApp=module.mountLibraryAdmin({host,doc,win,api}).destroy;
       }
     }catch(error){if(!disposed&&generation===epoch&&(error.name!=='AbortError'||timedOut))access(timedOut?'Kết nối quản trị đang chậm. Anh thử lại nhé.':error.message||'Chưa tải được khu vực quản trị.',true);}
-    finally{win.clearTimeout(timer);}
+    finally{win.clearTimeout(timer);if(generation===epoch)loadingUser=null;}
   }
   const accountChange=event=>{if(!event.detail?.user?.admin)clear('Tài khoản hiện tại không có quyền ADMIN.');else load();};
   const ready=()=>load(),signedOut=()=>clear(),pageshow=event=>{if(event.persisted){loadedUser=null;load();}};

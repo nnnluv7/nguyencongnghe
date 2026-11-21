@@ -72,7 +72,8 @@ export function optimizePublicHTML(html,manifest=deployed){
     const href=data.sections?.[attr(marker,'data-section')]||data.href;
     return '<link rel="preload" as="fetch" crossorigin="anonymous" data-ncn-catalogue="'+source+'" href="'+href+'">';
   }).join('\n');
-  const accountCheck='<script id="ncn-account-prefetch">('+startAccountPrefetch.toString()+')(window,document);</script>\n';
+  const accessEndpoint=html.match(/data-ncn-access-endpoint="([^"]+)"/)?.[1]?.replaceAll('&amp;','&')||null;
+  const accountCheck='<script id="ncn-account-prefetch">('+startAccountPrefetch.toString()+')(window,document,'+JSON.stringify(accessEndpoint).replace(/</g,'\\u003c')+');</script>\n';
   const head=accountCheck+'<script id="ncn-built-importmap" type="importmap">'+JSON.stringify({imports}).replace(/</g,'\\u003c')+'</script>\n'+[...preload].map(path=>'<link rel="modulepreload" href="'+path+'">').join('\n')+'\n'+catalogues+'\n'+(manifest.logo?'<link data-ncn-logo-asset href="'+manifest.logo+'">\n':'');
   // Import maps must precede every module/preload, including dynamic imports in
   // old quiz scripts, so every page shares exactly one account/Identity module.

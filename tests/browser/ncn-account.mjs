@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 const origin='https://ncn-account.test',root=resolve(process.env.NCN_BUILT_TEST?'dist':'public');
 const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.png':'image/png','.svg':'image/svg+xml','.jpg':'image/jpeg','.woff2':'font/woff2'};
 const users=new Map(),tokens=new Map(),calls=[];
-let autoconfirm=true,disableSignup=false,confirmedUser=null,sessionHold=null,profileFailure=false,assetHold=null,logoutHold=null,scriptHold=null;
+let autoconfirm=true,disableSignup=false,confirmedUser=null,sessionHold=null,profileFailure=false,assetHold=null,logoutHold=null,scriptHold=null,appHold=null,assetFailure=false;
 const functionCalls=[];
 const member=(email='member@example.test',name='Thành viên')=>({id:'fixture-'+email,email,name,password:'Example123!',confirmed:true,vip:false,admin:false});
 const existing=member('vip@example.test','VIP hiện có');existing.vip=true;users.set(existing.email,existing);
@@ -71,8 +71,8 @@ async function fixtureContext(options={}){
         const verified=view(user),allowed=!!(verified&&(verified.vip||verified.admin));
         if(action==='me')return reply({user:verified,allowed});
         if(!allowed)return reply({error:'VIP required'},403);
-        if(action==='app')return reply({user:verified,html:'<div data-private-fixture="'+tool+'">Công cụ VIP<input id="fixture-edit" aria-label="Ghi chú thử"></div><button id="ev-vip-logout">Đăng xuất</button>'});
-        if(action==='asset'){if(url.searchParams.get('name')==='core'&&assetHold){assetHold.started();await assetHold.wait;}return reply('/* fixture: no private business data */',200,'text/javascript');}
+        if(action==='app'){if(appHold){appHold.started();await appHold.wait;}return reply({user:verified,html:'<div data-private-fixture="'+tool+'">Công cụ VIP<input id="fixture-edit" aria-label="Ghi chú thử"></div><button id="ev-vip-logout">Đăng xuất</button>'});}
+        if(action==='asset'){if(assetFailure)return route.abort();if(url.searchParams.get('name')==='core'&&assetHold){assetHold.started();await assetHold.wait;}return reply('/* fixture: no private business data */',200,'text/javascript');}
       }
       throw new Error('Unmocked function '+tool+' '+action);
     }
@@ -228,6 +228,41 @@ try{
       await page.waitForFunction(()=>window.NCNAccount?.state.ready&&NCNAccount.state.user?.vip);
       assert.equal(functionCalls.filter(c=>c.tool==='ncn-billing'&&c.action==='me').length-before,1);
     }finally{release();scriptHold=null;sessionHold=null;await isolated.close();}
+  });
+  if(process.env.NCN_BUILT_TEST)await check('Event and GVGS paint their public layout while authenticated requests are still pending',async()=>{
+    for(const [path,width] of [['/in-event/',1280],['/in-gvgs/',1280],['/in-event/',390],['/in-gvgs/',390]]){
+      let release,started;const wait=new Promise(resolve=>release=resolve),requested=new Promise(resolve=>started=resolve);
+      sessionHold={wait,started:()=>{}};appHold={wait,started};
+      const isolated=await fixtureContext({viewport:{width,height:900},storageState:await context.storageState()}),page=await isolated.newPage();
+      try{
+        await page.goto(origin+path,{waitUntil:'domcontentloaded'});
+        await Promise.race([requested,new Promise((_,reject)=>setTimeout(()=>reject(Error('Tool check waited for the account')),10000))]);
+        await page.locator('[data-ncn-public-tool-shell]').waitFor();
+        assert.equal(await page.locator('#vip-gate').isVisible(),false);
+        assert.equal(await page.locator('[data-private-fixture]').count(),0);
+        assert.equal(await page.locator('.ncn-gate-loading').count(),0);
+        assert.doesNotMatch(await page.locator('main').innerText(),/Mở công cụ của bạn/);
+        assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),path+' '+width+' must fit before data arrives');
+        release();sessionHold=appHold=null;
+        await page.locator('[data-private-fixture]').waitFor();
+        assert.equal(await page.locator('[data-ncn-public-tool-shell]').count(),0);
+        const requests=await page.evaluate(()=>performance.getEntriesByType('resource').filter(entry=>/\/ncn-(event|gvgs)$/.test(new URL(entry.name).pathname)).map(entry=>new URL(entry.name).searchParams.get('route')));
+        assert.equal(requests.filter(route=>route==='app').length,1);
+      }finally{release();sessionHold=appHold=null;await isolated.close();}
+    }
+  });
+  await check('a failed private script shows a retry action and never leaves an inert editor on screen',async()=>{
+    const isolated=await fixtureContext({storageState:await context.storageState()});
+    assetFailure=true;
+    try{
+      const page=await open(isolated,'/in-event/');
+      await page.waitForFunction(()=>document.getElementById('vip-gate').dataset.ncnGateState==='error');
+      assert.equal(await page.locator('#vip-gate').isVisible(),true);
+      assert.equal(await page.locator('[data-private-fixture]').count(),0);
+      assetFailure=false;await page.locator('#vip-check').click();await page.locator('[data-private-fixture]').waitFor();
+      await page.waitForFunction(()=>document.getElementById('vip-gate').dataset.ncnGateState==='ready');
+      assert.equal(await page.locator('#vip-app').evaluate(el=>el.inert),false);
+    }finally{assetFailure=false;await isolated.close();}
   });
   await check('full navigation keeps profile text while one shared session request is pending',async()=>{
     let release,started;const wait=new Promise(resolve=>release=resolve),requested=new Promise(resolve=>started=resolve);sessionHold={wait,started};

@@ -2,6 +2,8 @@ import * as identity from './ncn-identity-client.js';
 import {getAccount} from './ncn-account.js?v=20261027-photo-save-1';
 import {printDocument} from './ncn-direct/print.js';
 import {writeFrame} from './ncn-direct/frame.js';
+import {publicToolFrame,setAccessView} from './ncn-access-view.js';
+import {takeToolPrefetch} from './ncn-account-prefetch.js';
 
 // Every mount and print is authorized by the server, including guest trials.
 export function mountVipGate(endpoint,{doc=document,win=window,fetcher=fetch}={}){
@@ -9,8 +11,9 @@ export function mountVipGate(endpoint,{doc=document,win=window,fetcher=fetch}={}
   const account=getAccount(doc),app=doc.getElementById('vip-app'),listeners=[];
   let loaded=null,pending=null,disposed=false,started=false,lastPrint=null,reloadPending=false,again=false;
   const listen=(node,type,fn)=>{node?.addEventListener(type,fn);listeners.push(()=>node?.removeEventListener(type,fn));};
-  const phase=value=>{gate.dataset.ncnGateState=value;gate.setAttribute('aria-busy',String(value==='loading'));};
-  const waiting=doc.createElement('p');waiting.className='ncn-gate-loading';waiting.textContent='Mở công cụ của bạn';gate.append(waiting);phase('loading');
+  const phase=value=>{gate.dataset.ncnGateState=value;setAccessView({root:app.parentElement,gate,content:app},value==='loading'?'pending':value);};
+  if(!app.hasChildNodes())app.innerHTML=publicToolFrame(app.dataset.ncnToolTitle||'Công cụ in');
+  phase('loading');
   const banner=doc.createElement('div');banner.className='ncn-trial-banner';banner.hidden=true;app.before(banner);
   function balance(trial,user){
     banner.replaceChildren();banner.hidden=false;
@@ -31,7 +34,8 @@ export function mountVipGate(endpoint,{doc=document,win=window,fetcher=fetch}={}
       if(!lastPrint||lastPrint.signature!==signature)lastPrint={signature,id:win.crypto.randomUUID()};
       body={...body,requestId:lastPrint.id};
     }
-    const response=await fetcher(endpoint+'?route='+route,{credentials:'same-origin',cache:'no-store',method:body?'POST':'GET',headers:body?{'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):undefined,signal:AbortSignal.timeout(20000)});
+    const url=endpoint+'?route='+route;
+    const response=await (route==='app'&&!body&&takeToolPrefetch(win,doc,url)||fetcher(url,{credentials:'same-origin',cache:'no-store',method:body?'POST':'GET',headers:body?{'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):undefined,signal:AbortSignal.timeout(20000)}));
     const result=await response.json();
     if(!response.ok){if(response.status<500)lastPrint=null;if(response.status===403&&loaded)balance({limit:3,remaining:0},loaded.user);throw Object.assign(new Error(result.error||'Chưa kết nối được máy chủ.'),{status:response.status});}
     if(route==='print'){lastPrint=null;if(result.trial){loaded.user.trial=result.trial;balance(result.trial,loaded.user);}}
@@ -40,6 +44,7 @@ export function mountVipGate(endpoint,{doc=document,win=window,fetcher=fetch}={}
   function reset(){loaded=null;lastPrint=null;win.NCN_VIP=null;app.replaceChildren();banner.hidden=true;gate.hidden=false;phase('loading');if(account.state.signingOut){reloadPending=true;showGate(null);return;}win.location.reload();}
   function check({refresh=true}={}){
     if(pending)return pending;
+    if(!loaded){if(!app.querySelector('[data-ncn-public-tool-shell]'))app.innerHTML=publicToolFrame(app.dataset.ncnToolTitle||'Công cụ in');phase('loading');}
     pending=(async()=>{
       if(refresh)await account.refresh({force:true});
       if(disposed)return;
@@ -64,7 +69,7 @@ export function mountVipGate(endpoint,{doc=document,win=window,fetcher=fetch}={}
       }
       if(disposed)return;gate.hidden=true;phase('ready');balance(content.trial,content.user);
       const out=doc.getElementById('ev-vip-logout');if(out){out.hidden=!!content.user.guest;listen(out,'click',()=>account.signOut().catch(error=>message(error.message,true)));}
-    })().catch(error=>{if(disposed)return;if(!loaded){app.replaceChildren();win.NCN_VIP=null;gate.hidden=false;phase('error');}message(error.message,true);}).finally(()=>{pending=null;if(again&&!disposed){again=false;check({refresh:false});}});
+    })().catch(error=>{if(disposed)return;if(!loaded||gate.dataset.ncnGateState!=='ready'){loaded=null;app.replaceChildren();win.NCN_VIP=null;gate.hidden=false;phase('error');}message(error.message,true);}).finally(()=>{pending=null;if(again&&!disposed){again=false;check({refresh:false});}});
     return pending;
   }
   listen(doc.getElementById('vip-check'),'click',()=>check());
@@ -81,5 +86,5 @@ export function mountVipGate(endpoint,{doc=document,win=window,fetcher=fetch}={}
     else check({refresh:false});
   });
   const ready=account.ready.then(()=>{started=true;return check({refresh:false});});
-  return {ready,check,dispose(){disposed=true;listeners.forEach(remove=>remove());waiting.remove();banner.remove();}};
+  return {ready,check,dispose(){disposed=true;listeners.forEach(remove=>remove());banner.remove();}};
 }

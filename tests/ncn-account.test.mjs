@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {quizProfile} from '../public/assets/ncn-account.js';
 import {canUseVip,isVipToolURL} from '../public/assets/ncn-vip-access.js';
-import {startAccountPrefetch,takeAccountPrefetch} from '../public/assets/ncn-account-prefetch.js';
+import {startAccountPrefetch,takeAccountPrefetch,takeToolPrefetch} from '../public/assets/ncn-account-prefetch.js';
+import {publicToolFrame,prepareAccessViews,setAccessView} from '../public/assets/ncn-access-view.js';
 
 test('VIP visibility requires a verified direct grant and excludes old account and payment grants',()=>{
   for(const user of [null,{}, {id:'ordinary'}, {id:'old',vip:true}, {id:'old',vip:true,vipSource:'account'}, {id:'paid',vip:true,vipSource:'payment'}, {vip:true,vipSource:'manual'}, {id:'revoked',vip:false,vipSource:'manual'}])assert.equal(canUseVip(user),false);
@@ -83,4 +84,34 @@ test('logout or a changed session discards the earlier account response',()=>{
     startAccountPrefetch(win,doc);doc.cookie=cookie;
     assert.equal(takeAccountPrefetch(win,doc),null);assert.equal(win.NCNAccountPrefetch,undefined);
   }
+});
+
+test('authenticated tool data starts alongside the account check and is consumed only by the matching session',async()=>{
+  for(const endpoint of ['/.netlify/functions/ncn-event?route=app','/.netlify/functions/ncn-gvgs?route=app','/.netlify/functions/ncn-cash-fund','/.netlify/functions/ncn-library?route=app&view=library']){
+    const urls=[],win=prefetchWindow(url=>{urls.push(url);return Promise.resolve(Response.json({endpoint:url}));}),doc={cookie:currentCookie()};
+    startAccountPrefetch(win,doc,endpoint);assert.deepEqual(urls,['/.netlify/functions/ncn-billing?route=me',endpoint]);
+    assert.equal((await (await takeToolPrefetch(win,doc,endpoint)).json()).endpoint,endpoint);
+    assert.equal(takeToolPrefetch(win,doc,endpoint),null);
+    delete win.NCNAccountPrefetch;startAccountPrefetch(win,doc,endpoint);doc.cookie=currentCookie('other');
+    assert.equal(takeToolPrefetch(win,doc,endpoint),null);
+  }
+});
+test('tool prefetch rejects external URLs and endpoints that are not a read-only opening request',()=>{
+  for(const endpoint of ['https://example.test/collect','/.netlify/functions/ncn-library?route=delete','/.netlify/functions/ncn-event?route=print']){
+    const urls=[],win=prefetchWindow(url=>{urls.push(url);return Promise.resolve(Response.json({}));});
+    startAccountPrefetch(win,{cookie:currentCookie()},endpoint);
+    assert.deepEqual(urls,['/.netlify/functions/ncn-billing?route=me']);assert.equal(win.NCNToolPrefetch,undefined);
+  }
+});
+test('future shared access pages paint a public tool layout without loading text or private content',()=>{
+  const html='<section id="vip-gate"><h2>Restricted tool</h2></section><div id="vip-app" data-ncn-tool-title="New tool"></div>';
+  const prepared=prepareAccessViews(html);
+  assert.match(prepared,/data-ncn-public-tool-shell/);assert.match(prepared,/<h2>New tool<\/h2>/);
+  assert.match(prepared,/<fieldset disabled>/);assert.doesNotMatch(prepared,/Mở công cụ của bạn|ncn-event-private|ncn-event-app/);
+  assert.equal(prepareAccessViews(prepared),prepared);
+  assert.ok(publicToolFrame('<script>unsafe</script>').includes('&lt;script&gt;'));
+  const root={dataset:{},setAttribute(){}},gate={},content={};
+  setAccessView({root,gate,content},'pending');assert.equal(gate.hidden,true);assert.equal(content.hidden,false);assert.equal(content.inert,true);
+  setAccessView({root,gate,content},'ready');assert.equal(content.inert,false);
+  setAccessView({root,gate,content},'blocked');assert.equal(gate.hidden,false);assert.equal(content.hidden,true);
 });
