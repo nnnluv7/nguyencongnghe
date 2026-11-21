@@ -9,7 +9,8 @@ const pages=await files(root);
 for(const page of pages){
  const html=await readFile(page,'utf8');assert.equal((html.match(/id="ncn-built-importmap"/g)||[]).length,1,page);
  if(html.includes('data-ncn-access-endpoint='))assert.doesNotMatch(html,/Đang kiểm tra quyền|Mở công cụ của bạn/,page+': authentication must not replace the public tool layout with a waiting screen');
- if(/id="(?:vip-app|ncn-admin-app)"/.test(html))assert.ok(html.includes('data-ncn-public-tool-shell'),page+': shared authenticated tools must have their public layout before scripts run');
+ if(html.includes('id="vip-app"')){assert.ok(html.includes('id="ncn-event-app"'),page+': show the canonical form before scripts run');assert.ok(html.includes('data-ncn-template='),page+': reuse the same form when the authorized bundle arrives');}
+ assert.equal(html.includes('data-ncn-public-tool-shell'),false,page+': no duplicate temporary tool interface');
  const brand=html.match(/<a class="ncn-brand ncn-header-brand"[^>]*>([\s\S]*?)<\/a>/)?.[1];
  assert.ok(brand?.includes('<img '),page+': the header still has its logo');
  assert.equal(brand.replace(/<[^>]+>/g,'').trim(),'',page+': no text next to the header logo');

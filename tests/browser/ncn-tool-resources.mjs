@@ -25,6 +25,7 @@ const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=u
 const actor={id:'fixture-tool-admin',email:'tools@example.test',name:'Kiểm tra công cụ',admin:true,vip:true};
 const jwt=Buffer.from('{"alg":"fixture"}').toString('base64url')+'.'+Buffer.from(JSON.stringify({sub:actor.id,email:actor.email,exp:Math.floor(Date.now()/1000)+3600})).toString('base64url')+'.fixture';
 const stores={event:memoryStore(),gvgs:memoryStore()},browser=await chromium.launch();let context,page,signedUser,excelRequests=0,printRequests=0,failOnce=false;
+const openingRequests=[];
 const handlers=Object.fromEntries(Object.keys(printCores).map(name=>[name,createHandler({
  production:()=>true,
  verify:async req=>(req.headers.get('cookie')||'').includes('nf_jwt='+jwt)?signedUser:null,
@@ -34,6 +35,7 @@ const handlers=Object.fromEntries(Object.keys(printCores).map(name=>[name,create
 })]));
 async function fixture({role,width=1280,ios=false}={}){
  if(context)await context.close();
+ openingRequests.length=0;
  signedUser=role?{...actor,admin:role==='admin',vipSource:role==='admin'?'admin':'manual'}:null;
  context=await browser.newContext({viewport:{width,height:width<600?844:960},...(ios?{isMobile:true,hasTouch:true,userAgent:iPhoneUserAgent}:{})});
  if(signedUser)await context.addCookies([{name:'nf_jwt',value:jwt,url:origin}]);
@@ -43,7 +45,7 @@ async function fixture({role,width=1280,ios=false}={}){
   if(url.pathname.startsWith('/.netlify/identity/'))return url.pathname.endsWith('/user')?json(user?{id:user.id,email:user.email,confirmed_at:'2026-01-01T00:00:00Z',app_metadata:{roles:[user.admin?'admin':'vip']},user_metadata:{full_name:user.name}}:{msg:'Unauthorized'},user?200:401):json({disable_signup:false,external:{email:true}});
   if(url.pathname.startsWith('/.netlify/functions/')){
    const name=url.pathname.split('/').at(-1).replace('ncn-','');
-   if(handlers[name]){if(url.searchParams.get('route')==='print')printRequests++;const response=await handlers[name](new Request(request.url(),{method:request.method(),headers,...(request.method()==='POST'?{body:request.postData()}:{})}));return route.fulfill({status:response.status,headers:Object.fromEntries(response.headers),body:await response.text()});}
+   if(handlers[name]){openingRequests.push(url.searchParams.get('route'));if(url.searchParams.get('route')==='print')printRequests++;const response=await handlers[name](new Request(request.url(),{method:request.method(),headers,...(request.method()==='POST'?{body:request.postData()}:{})}));return route.fulfill({status:response.status,headers:Object.fromEntries(response.headers),body:await response.text()});}
    return json(url.pathname.endsWith('ncn-billing')?{user}:{items:[],online:1,total:1});
   }
   if(/125962e77eb283b9aa/.test(url.pathname)){excelRequests++;if(failOnce){failOnce=false;return route.abort('failed');}}
@@ -82,6 +84,10 @@ try{
   await context.addInitScript(instrumentPrintFrames);
   await opened('/in-'+name+'/');
   await page.locator('#ev-shared-info').filter({hasText:'Cập nhật'}).waitFor();
+  await page.locator('#vip-gate[data-ncn-gate-state=ready]').waitFor({state:'attached'});
+  assert.deepEqual(openingRequests,['app'],'The real editor, both scripts and the selected catalogue must open in one authenticated request');
+  assert.equal(await page.locator('[data-ncn-public-tool-shell]').count(),0);
+  assert.equal(await page.locator('#ev-search').isEnabled(),true);
   assert.equal(await page.locator('.ncn-vip-source').count(),role==='admin'?1:0);
   const printToggle=page.locator(name==='gvgs'?'#ev-color':'#ev-cut');
   assert.equal(await printToggle.evaluate(input=>getComputedStyle(input).appearance),'auto');

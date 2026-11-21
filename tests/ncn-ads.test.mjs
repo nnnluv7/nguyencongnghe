@@ -19,6 +19,7 @@ test('working tools, private editors, games and account pages have no banner or 
     const html=optimizePublicHTML(page(id));
     assert.equal(html.includes('data-ad-slot='),false,id);
     assert.equal(html.includes('src="/assets/ncn-ads.js"'),false,id);
+    assert.equal(html.includes('pagead2.googlesyndication.com'),false,id+': no unused advertising loader on working tools');
     assert.ok(html.includes('Original content'));
   }
   assert.equal(optimizePublicHTML(page('ncn-library-detail').replace('<body>','<body class="static_page">')).includes('data-ad-slot='),false,'privacy and contact pages');

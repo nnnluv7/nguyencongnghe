@@ -242,15 +242,15 @@
       var data=await VIP.call('catalogues');
       el('saved-campaign').innerHTML='<option value="">Chọn chương trình</option>'+data.catalogues.map(function(p){return '<option value="'+C.esc(p.id)+'">'+C.esc(p.name)+' · '+p.count+' sản phẩm</option>';}).join('');
       if(publishedId&&!data.catalogues.some(function(p){return p.id===publishedId;}))clearCatalogue();
-      if(pick&&data.catalogues.some(function(p){return p.id===pick;})){el('saved-campaign').value=pick;await loadSaved(pick);}
-      else if(data.catalogues.length&&!state.catalog.length){el('saved-campaign').value=data.catalogues[0].id;await loadSaved(data.catalogues[0].id);}
+      if(pick&&data.catalogues.some(function(p){return p.id===pick;})){el('saved-campaign').value=pick;await loadSaved(pick,data.initialCatalogue);}
+      else if(data.catalogues.length&&!state.catalog.length){el('saved-campaign').value=data.catalogues[0].id;await loadSaved(data.catalogues[0].id,data.initialCatalogue);}
       else if(!data.catalogues.length)el('shared-info').textContent='ADMIN chưa lưu bảng giá. Vui lòng quay lại sau.';
     }
-    async function loadSaved(id){
+    async function loadSaved(id,initialCatalogue){
       if(!id){clearCatalogue();return;}
       catalogueActions(true);
       try{
-      var data=await VIP.call('catalogue&id='+encodeURIComponent(id));
+      var data=initialCatalogue&&initialCatalogue.id===id?initialCatalogue:await VIP.call('catalogue&id='+encodeURIComponent(id));
       useCatalog(data.items,data.name,'saved','');
       publishedId=data.id;publishedVersion=data.version;publishedName=data.name;
       el('shared-info').textContent='Cập nhật '+new Date(data.updatedAt).toLocaleString('vi-VN');
@@ -290,7 +290,8 @@
       }));
     }
     catalogueActions(false);
-    savedList().catch(function(error){message(error.message,true);});
+    VIP.ready=savedList().catch(function(error){message(error.message,true);throw error;});
+    VIP.ready.catch(function(){});
 
     historyRender();render();
     if(isAdmin)window.postMessage({channel:CHANNEL,role:'request',action:'ping'},location.origin);

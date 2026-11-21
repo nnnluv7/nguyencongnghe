@@ -19,13 +19,16 @@ export function localAssetPath(value,html){
 export const stylesheetKey=html=>[...html.matchAll(/<link\b[^>]*>/gi)].map(x=>x[0]).filter(tag=>attr(tag,'rel')==='stylesheet'&&localAssetPath(attr(tag,'href'),html)).map(tag=>localAssetPath(attr(tag,'href'),html)+'|'+attr(tag,'media')).join('\n');
 
 export function optimizePublicHTML(html,manifest=deployed){
-  // Static builds and server-rendered articles share the same AdSense head code.
-  if(!html.includes('src="'+ADSENSE_URL+'"'))html=html.replace(/<\/head>/i,ADSENSE_SCRIPT+'\n</head>');
   // One normal-flow banner after reading content. Working tools and games never
   // receive an ad unit; Auto ads and automatic experiments are off in AdSense.
   const readingPage=/id="ncn-(?:home|library|library-detail)"/.test(html)&&!/<body\b[^>]*\bclass=["'][^"']*\bstatic_page\b/.test(html);
+  if(readingPage&&!html.includes('src="'+ADSENSE_URL+'"'))html=html.replace(/<\/head>/i,ADSENSE_SCRIPT+'\n</head>');
+  if(!readingPage)html=html.replaceAll(ADSENSE_SCRIPT,'');
   if(readingPage&&!html.includes('id="ncn-inline-ad"'))html=html.replace(/<footer\b[^>]*\bid="ncn-footer"/i,INLINE_AD+'$&');
   if(!manifest||html.includes('id="ncn-built-importmap"'))return html;
+  const toolEndpoint=html.match(/data-ncn-access-endpoint="([^"]+)"/)?.[1]?.split('?')[0];
+  const template=manifest.toolTemplates?.[toolEndpoint];
+  if(template)html=html.replace(/<div\b([^>]*\bid="vip-app"[^>]*)>\s*<\/div>/g,(_,attrs)=>'<div'+attrs+' data-ncn-template="'+template.hash+'" inert>'+template.html+'</div>');
   const portal=/id="ncn-(?:home|library)"/.test(html);
   const article=/<body\b[^>]*\bclass="[^"]*\bncn-library-(?:article|resource)\b/.test(html);
   const modern=portal||article||/id="(?:ncn-(?:sticker|popup|store|cash)-app|vip-app)"/.test(html);
