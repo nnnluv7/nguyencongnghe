@@ -148,6 +148,34 @@ try{
   await page.evaluate(()=>window.scrollTo(0,0));
   await page.screenshot({path:out+'/'+name+'-'+width+'.jpg',type:'jpeg',fullPage:true,quality:82});
  });
+ for(const width of [1280,390])await check('cash note counts reject punctuation on typing, paste, drop and mobile input at '+width+'px',async()=>{
+  await fixture({width,ios:width<600});await opened('/2024/02/kiem-quy.html');
+  await page.locator('#ncn-cash-app[data-cq-mounted=true]').waitFor();
+  const inputs=page.locator('[data-cq-value]');assert.equal(await inputs.count(),9);
+  for(const input of await inputs.all()){
+   await input.pressSequentially('12.,a-+ e');
+   assert.equal(await input.inputValue(),'12');
+   assert.equal(await input.getAttribute('aria-invalid'),'false');
+   await input.fill('');
+  }
+  const count=inputs.first();await count.fill('1000');await page.locator('#cq-erp').focus();
+  assert.equal(await count.inputValue(),'1000','blurring a count never inserts separators');
+  for(const invalid of ['.',',','1.000','1,000','1 000','-1','1e3']){
+   await count.fill(invalid);assert.equal(await count.inputValue(),'1000');
+   for(const type of ['paste','drop'])assert.equal(await count.evaluate((input,{invalid,type})=>{
+    const data=new DataTransfer();data.setData('text/plain',invalid);
+    const event=type==='paste'?new ClipboardEvent(type,{bubbles:true,cancelable:true,clipboardData:data}):new DragEvent(type,{bubbles:true,cancelable:true,dataTransfer:data});
+    input.dispatchEvent(event);return event.defaultPrevented;
+   },{invalid,type}),true);
+  }
+  await count.press('End');await count.press('Backspace');assert.equal(await count.inputValue(),'100');
+  await count.pressSequentially('.,0');assert.equal(await count.inputValue(),'1000');
+  assert.match(await page.locator('#cq-actual').innerText(),/500\.000\.000/);
+  await page.locator('#cq-erp').fill('1234567');
+  assert.equal(await page.locator('#cq-erp').inputValue(),'1,234,567','money keeps its automatic comma formatting');
+  assert.equal(await page.locator('.cq-error:visible').count(),0);
+  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+ });
  await check('original and optimized UI fonts retain Vietnamese, numbers and other-language text widths',async()=>{
   await fixture();await opened('/2024/02/kiem-quy.html');const index=JSON.parse(await readFile('public/assets/ncn-theme/font-subsets/manifest.json','utf8'));
   const differences=await page.evaluate(async index=>{const original='/assets/vendor/a699af1dea30b79931.ttf',full=new FontFace('NCNOriginal','url('+original+')'),ui=new FontFace('NCNSplit','url('+index.fonts[original].file+')',{unicodeRange:index.unicodeRange}),fallback=new FontFace('NCNSplit','url('+original+')',{unicodeRange:index.complementaryRange});for(const font of [full,ui,fallback])document.fonts.add(await font.load());const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d');return ['Nguyễn Công Nghệ · Bảo Hiểm & Trả Chậm','Ă Â Đ Ê Ô Ơ Ư ă â đ ê ô ơ ư 1.234.567 ₫','Nguyễn'.normalize('NFD'),'Καλημέρα Привет NCN'].map(text=>{ctx.font='24px NCNOriginal';const a=ctx.measureText(text).width;ctx.font='24px NCNSplit';return Math.abs(a-ctx.measureText(text).width);});},index);assert.ok(differences.every(x=>x<.1),JSON.stringify(differences));

@@ -14,6 +14,7 @@ export function createCashApp({app,doc=document,win=window,clock=()=>new Date(),
   $('cq-actual')?.setAttribute('role','status');$('cq-actual')?.setAttribute('aria-live','polite');
   const numericSelector='[data-cq-value],#cq-erp';
   const numericCharacters=/^[0-9., \u00a0\u202f]*$/;
+  const allowedNumber=(input,text)=>(input.matches('[data-cq-value]')?/^[0-9]*$/:numericCharacters).test(text);
   const numericState=new WeakMap();
   function rememberNumber(input){
     numericState.set(input,{value:input.value,start:input.selectionStart,end:input.selectionEnd});
@@ -24,12 +25,12 @@ export function createCashApp({app,doc=document,win=window,clock=()=>new Date(),
     if(!input.matches(numericSelector))return;
     rememberNumber(input);
     const inserted=event.data??event.dataTransfer?.getData('text/plain');
-    if(inserted!=null&&!numericCharacters.test(inserted))event.preventDefault();
+    if(inserted!=null&&!allowedNumber(input,inserted))event.preventDefault();
   });
   for(const type of ['paste','drop'])listen(app,type,event=>{
     if(!event.target.matches(numericSelector))return;
     const inserted=(event.clipboardData||event.dataTransfer)?.getData('text/plain');
-    if(inserted!=null&&!numericCharacters.test(inserted))event.preventDefault();
+    if(inserted!=null&&!allowedNumber(event.target,inserted))event.preventDefault();
   });
   const rawCounts=()=>Object.fromEntries(DENOMINATIONS.map(value=>[value,$('cq-qty-'+value).value]));
   function message(text,error=false){$('cq-message').textContent=text;$('cq-message').toggleAttribute('data-error',error);}
@@ -77,7 +78,7 @@ export function createCashApp({app,doc=document,win=window,clock=()=>new Date(),
   listen(app,'input',event=>{
     const input=event.target;
     if(!input.matches(numericSelector))return;
-    if(!numericCharacters.test(input.value)){
+    if(!allowedNumber(input,input.value)){
       const previous=numericState.get(input);
       input.value=previous?.value??'';
       if(previous?.start!=null)input.setSelectionRange(previous.start,previous.end);
@@ -89,7 +90,7 @@ export function createCashApp({app,doc=document,win=window,clock=()=>new Date(),
   });
   listen(app,'focusout',event=>{
     const input=event.target;
-    if(input.matches('[data-cq-value]')){const value=result.rows.find(row=>String(row.denomination)===input.dataset.cqValue)?.count;if(value!==null&&value!==undefined&&input.value.trim())input.value=numberText(value);}
+    if(input.matches('[data-cq-value]')){const value=result.rows.find(row=>String(row.denomination)===input.dataset.cqValue)?.count;if(value!==null&&value!==undefined&&input.value.trim())input.value=String(value);}
     if(input.id==='cq-erp'&&!result.errors.erp&&result.erp!==null)input.value=erpInputText(result.erp);
     if(input.matches(numericSelector))rememberNumber(input);
   });
