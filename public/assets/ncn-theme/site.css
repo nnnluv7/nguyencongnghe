@@ -1227,33 +1227,35 @@ body.ncn-modern .st-card-sizes button:focus-visible{outline: 3px solid #2563b8; 
  @media(prefers-reduced-motion:reduce){body.ncn-modern :is(#ncn-home-latest,#ncn-library) :is(.ncn-article-card,.ncn-article-image){transition:none!important;transform:none!important}}
 }
 
-/* NCN glass hairline, 20261029: preserve the original glass and rounded shapes.
-   A fractional shadow reveals the shaded edge without drawing a full outline. */
+/* NCN glass hairline, 20261029: restored 20261121 with the original bright glass rim
+   and a visible shaded edge on controls. Screen-only, with no layout changes. */
 @media screen {
  html[data-ncn-theme] body.ncn-modern {
-  --ncn-hairline:rgba(30,38,50,.14);
-  --ncn-hairline-soft:rgba(30,38,50,.085);
-  --ncn-control-rim:rgba(30,38,50,.14);
+  --ncn-hairline:rgba(70,110,145,.28);
+  --ncn-hairline-soft:var(--ncn-rim);
+  --ncn-control-rim:rgba(70,110,145,.28);
   --ncn-control-shadow:inset .5px .5px 0 rgba(255,255,255,.78),.5px .5px .5px rgba(24,44,64,.18),0 2px 5px rgba(40,80,109,.025);
  }
  html[data-ncn-theme=dark] body.ncn-modern {
-  --ncn-hairline:rgba(225,239,250,.19);
-  --ncn-hairline-soft:rgba(225,239,250,.12);
-  --ncn-control-rim:rgba(225,239,250,.19);
+  --ncn-hairline:rgba(211,236,255,.34);
+  --ncn-hairline-soft:var(--ncn-rim);
+  --ncn-control-rim:rgba(211,236,255,.34);
   --ncn-control-shadow:inset .5px .5px 0 rgba(225,245,255,.16),-.5px -.5px .5px rgba(225,245,255,.18),.5px .5px .5px rgba(0,10,23,.34);
  }
  /* These components already own their border width, radius, highlight and shadow.
     Do not frame text actions, nested search inputs, summary rows or game tiles. */
  body.ncn-modern :is(#ncn-topbar,#ncn-game-topbar,#ncn-sidebar,#ncn-page-tools,
   #ncn-search-dialog,#ncn-footer,.ncn-account-dropdown,.ncn-account-dialog,
-  .ncn-tool-card,.ncn-article-card,.ncn-member-hero,.ncn-member-vip-card,.ncn-story-add,
-  .ncn-glass-panel,.ncn-print-sidebar,.ncn-workspace-switch,.st-panel,.st-card,
-  .fifo-card,.ev-panel,.ev-results,.pay-panel,.pay-plan,.pay-reconcile,
+  .ncn-tool-card,.ncn-article-card,.ncn-member-hero,.ncn-member-vip-card,.ncn-story-add,.ncn-story-dialog,
+  .ncn-welcome-panel,.ncn-contact-panel,.ncn-quick-card,
+  .ncn-glass-panel,#ncn-insurance-app,.ncn-print-sidebar,.ncn-workspace-switch,.st-panel,.st-card,
+  .fifo-card,.fifo-import-dialog,.ev-panel,.ev-dialog,.ev-results,#vip-gate,.pay-panel,.pay-plan,.pay-reconcile,
   .na-surface,.na-access,.na-module,.na-dialog,.nl-list-item,.au-panel,.au-order,.cf-panel,#cf-receipt,
-  .cq-screen,.cq-metric,.ncn-arcade-nav,.ncn-arcade-card,.ncn-scoreboard,
-  .ncn-arcade-dialog,.rl-pause-panel,.rl-result-panel,.rl-feature,.rl-help,
+  .cq-screen,.cq-metric,#cq-copy-dialog,.ncn-arcade-nav,.ncn-arcade-card,.ncn-scoreboard,
+  .ncn-arcade-dialog,.rl-pause-panel,.rl-result-panel,.rl-feature,.rl-help,.rl-online-panel,.rl-online-dialog,
   .pk-surface,.pk-score-card,.pk-combo-card,.pk-dialog,.xh-dialog,
-  .ff-panel,.ff-help,.ff-features article,.bb-side-card,.bb-dialog,.bb-features article
+  .ff-panel,.ff-help,.ff-features article,.bb-side-card,.bb-dialog,.bb-features article,
+  .bn-side-card,.bn-dialog,.gm-dialog,.lw-panel,.lw-modal,.modal-card
  ):not(:where(#printMe *,.row-container *,.sheet *,.ncn-sheet *,.fifo-sheet *,
   .ncn-print-stage *,.ncn-direct-stage *,.pk-board *)) {
   border-color:var(--ncn-hairline-soft);
@@ -1266,8 +1268,8 @@ body.ncn-modern .st-card-sizes button:focus-visible{outline: 3px solid #2563b8; 
     It follows each real border radius without a pseudo layer or extra outline. */
  body.ncn-modern :is(
   .ncn-top-search,.ncn-inline-search,.ncn-library-search,.ncn-account-menu>summary,
-  .auth-input,.ncn-account-dialog input,.ncn-story-dialog :is(input,select,textarea),
-  .ncn-arcade-dialog input,.ncn-scoreboard select,
+  .auth-input,.ncn-account-dialog :is(input,select,textarea),.ncn-story-dialog :is(input,select,textarea),
+  .ncn-arcade-dialog input,.ncn-scoreboard select,.bb-dialog select,
   #ncn-cash-app .cq-simple-erp input,
   .ncn-legacy-print .ncn-print-sidebar :is(input,select,textarea),
   .ncn-direct-editor .ncn-workspace-fields :is(input,select,textarea),
@@ -1318,6 +1320,7 @@ body.ncn-modern .st-card-sizes button:focus-visible{outline: 3px solid #2563b8; 
   .ff-tool,.rl-tool,.pk-tool,.pk-assists button,.pk-dialog header button,.pk-confirm button,
   .xh-toolbar button,.xh-controls button,.xh-dialog header>button,.xh-confirm>div>button,
   .bb-toolbar button,.bb-controls button,.bb-dialog button,.bb-heading-link,.bb-stage-card>button,
+  .bn-toolbar button,.bn-controls button,.bn-dialog button,.gm-toolbar button,.gm-dialog button,
   .ff-help header button,.rl-help header button,
   .ncn-game-tool-actions .icon-button,#ncn-announcement-pause,
   .ncn-notice-manager button:not([type=submit])
@@ -1330,7 +1333,7 @@ body.ncn-modern .st-card-sizes button:focus-visible{outline: 3px solid #2563b8; 
   .na-primary,.na-danger,.ncn-story-primary,.ncn-story-danger,
   .ncn-story-frame *,.ncn-avatar-picker *,.ncn-avatar-image *,
   .ncn-score-avatar-button,.ncn-game-rank-button,
-  .pk-primary,.xh-primary,.bb-primary,
+  .pk-primary,.xh-primary,.bb-primary,.bn-primary,.gm-primary,
   #printMe *,.row-container *,.sheet *,.ncn-sheet *,.fifo-sheet *,
   .ncn-print-stage *,.ncn-direct-stage *,.pk-board *
  )):not(:focus-visible):not(:focus-within),
