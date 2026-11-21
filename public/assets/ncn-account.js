@@ -4,6 +4,7 @@ import {readDisplayProfile,saveDisplayProfile,displayProfile} from './ncn-accoun
 import {canUseVip} from './ncn-vip-access.js';
 import {mountMemberPanel,paintAvatar,profileUpdate} from './ncn-member-profile.js?v=20261103-account-1';
 import {requestJSON} from './ncn-profile-request.js?v=20261027-photo-save-1';
+import {takeAccountPrefetch} from './ncn-account-prefetch.js';
 
 const accounts=new WeakMap();
 const labels={login:'Đăng nhập',register:'Tạo tài khoản',recovery:'Quên mật khẩu',reset:'Đặt mật khẩu mới',profile:'Tài khoản',vip:'Thông tin VIP'};
@@ -159,7 +160,7 @@ export function mountAccount({doc=document,win=window,identity=identityClient,fe
         const session=await identity.ensureSession();if(disposed||version!==epoch)return state.user;
         let user=null;
         if(session){
-          const response=await fetcher('/.netlify/functions/ncn-billing?route=me',{credentials:'same-origin',cache:'no-store',signal:AbortSignal.timeout(12000)});
+          const response=await (takeAccountPrefetch(win,doc)||fetcher('/.netlify/functions/ncn-billing?route=me',{credentials:'same-origin',cache:'no-store',signal:AbortSignal.timeout(12000)}));
           const result=await response.json();if(!response.ok)throw Object.assign(new Error(result.error||'Chưa kiểm tra được tài khoản.'),{status:response.status});
           user=result.user?.id&&result.user?.email?result.user:null;
           if(Number.isFinite(Date.parse(result.serverNow)))state.serverOffset=Date.parse(result.serverNow)-clock();

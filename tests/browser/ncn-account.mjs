@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 const origin='https://ncn-account.test',root=resolve(process.env.NCN_BUILT_TEST?'dist':'public');
 const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.png':'image/png','.svg':'image/svg+xml','.jpg':'image/jpeg','.woff2':'font/woff2'};
 const users=new Map(),tokens=new Map(),calls=[];
-let autoconfirm=true,disableSignup=false,confirmedUser=null,sessionHold=null,profileFailure=false,assetHold=null,logoutHold=null;
+let autoconfirm=true,disableSignup=false,confirmedUser=null,sessionHold=null,profileFailure=false,assetHold=null,logoutHold=null,scriptHold=null;
 const functionCalls=[];
 const member=(email='member@example.test',name='Thành viên')=>({id:'fixture-'+email,email,name,password:'Example123!',confirmed:true,vip:false,admin:false});
 const existing=member('vip@example.test','VIP hiện có');existing.vip=true;users.set(existing.email,existing);
@@ -77,6 +77,7 @@ async function fixtureContext(options={}){
       throw new Error('Unmocked function '+tool+' '+action);
     }
     try{
+      if(scriptHold&&url.pathname.endsWith('.js'))await scriptHold;
       let file=resolve(root,'.'+decodeURIComponent(url.pathname));if(!file.startsWith(root+sep)&&file!==root)throw new Error('Outside public');
       if((await stat(file)).isDirectory())file=resolve(file,'index.html');
       return route.fulfill({status:200,contentType:types[extname(file)]||'application/octet-stream',body:await readFile(file)});
@@ -208,6 +209,25 @@ try{
     assert.ok(publications.length>0);assert.ok(publications.every(Boolean),'A session cookie must exist before cross-tab login publication');
     await home.reload();await home.waitForFunction(()=>window.NCNAccount?.state.ready&&NCNAccount.state.user?.vip);assert.equal(await home.evaluate(()=>NCNAccount.state.user.id),existing.id);
     await event.reload();await event.locator('[data-private-fixture=ncn-event]').waitFor();assert.equal(await event.evaluate(()=>NCN_VIP.user.id),existing.id);
+    // The app endpoint itself performs fresh authorization; an initial me call is redundant.
+    const requests=await event.evaluate(()=>performance.getEntriesByType('resource').filter(entry=>new URL(entry.name).pathname.endsWith('ncn-event')).map(entry=>new URL(entry.name).searchParams.get('route')));
+    assert.equal(requests.filter(route=>route==='me').length,0);assert.equal(requests.filter(route=>route==='app').length,1);
+  });
+  if(process.env.NCN_BUILT_TEST)await check('signed-in navigation starts its one server check before page scripts finish loading',async()=>{
+    let release,started;
+    scriptHold=new Promise(resolve=>release=resolve);
+    const requested=new Promise(resolve=>started=resolve);
+    sessionHold={wait:Promise.resolve(),started};
+    const isolated=await fixtureContext({storageState:await context.storageState()}),page=await isolated.newPage();
+    const before=functionCalls.filter(c=>c.tool==='ncn-billing'&&c.action==='me').length;
+    const navigation=page.goto(origin+'/2024/02/kiem-quy.html',{waitUntil:'domcontentloaded'});
+    try{
+      await Promise.race([requested,new Promise((_,reject)=>setTimeout(()=>reject(Error('Account check waited for blocked page scripts')),10000))]);
+      assert.equal(await page.evaluate(()=>typeof window.NCNAccount),'undefined');
+      release();scriptHold=null;sessionHold=null;await navigation;
+      await page.waitForFunction(()=>window.NCNAccount?.state.ready&&NCNAccount.state.user?.vip);
+      assert.equal(functionCalls.filter(c=>c.tool==='ncn-billing'&&c.action==='me').length-before,1);
+    }finally{release();scriptHold=null;sessionHold=null;await isolated.close();}
   });
   await check('full navigation keeps profile text while one shared session request is pending',async()=>{
     let release,started;const wait=new Promise(resolve=>release=resolve),requested=new Promise(resolve=>started=resolve);sessionHold={wait,started};

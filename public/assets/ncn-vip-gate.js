@@ -44,15 +44,17 @@ export function mountVipGate(endpoint,{doc=document,win=window,fetcher=fetch}={}
       if(refresh)await account.refresh({force:true});
       if(disposed)return;
       const currentId=account.state.user?.id||null;
-      const status=await call('me');
+      let status;
+      try{status=await call(loaded?'me':'app');}
+      catch(error){if(disposed||currentId!==(account.state.user?.id||null))return;if(!loaded&&error.status===403){showGate(account.state.user,error.message);return;}throw error;}
       if(disposed||currentId!==(account.state.user?.id||null))return;
       if(loaded){
         if(!status.user||status.user.id!==loaded.user.id||status.user.admin!==loaded.user.admin||status.user.paidVipBlocked||(loaded.user.vipSource==='manual'&&!status.user.vip)){reset();return;}
         loaded.user=status.user;win.NCN_VIP.user=status.user;balance(status.trial,status.user);return;
       }
-      if(!status.allowed){showGate(status.user);return;}
       phase('loading');
-      const content=await call('app');
+      const content=status;
+      if(typeof content.html!=='string')throw new Error('Không tải được công cụ. Bấm kiểm tra lại hoặc tải lại trang.');
       if(disposed||currentId!==(account.state.user?.id||null))return;
       loaded=content;win.NCN_VIP={user:content.user,call,preview:writeFrame,print:html=>printDocument(html,{doc,win})};app.innerHTML=content.html;
       for(const name of ['core','ui']){
