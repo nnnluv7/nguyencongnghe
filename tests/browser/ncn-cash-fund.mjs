@@ -19,11 +19,11 @@ const mediaTypes = {
   '.json': 'application/json', '.webp': 'image/webp', '.png': 'image/png', '.woff2': 'font/woff2'
 };
 const tokens = new Map();
-const users = new Map(['quy-st', 'vip'].map(role => {
+const users = new Map(['quy-st', 'vip', 'member'].map(role => {
   const email = role + '@example.test';
   return [email, {
-    id: role, email, confirmed_at: '2026-11-01T00:00:00Z', app_metadata: { roles: [role] },
-    user_metadata: { full_name: 'Tài khoản thử nghiệm' }
+    id: role, email, confirmed_at: '2026-11-01T00:00:00Z', app_metadata: { roles: role === 'member' ? [] : [role] },
+    user_metadata: { full_name: 'Tài khoản ' + role }
   }];
 }));
 const userOf = header => tokens.get(header?.replace(/^Bearer /, ''));
@@ -124,6 +124,7 @@ try {
   } finally { release(); ledgerHold = null; }
   await desktop.locator('#ncn-cash-fund-app[data-ncn-access-phase="ready"]').waitFor();
   assert.match(await desktop.locator('#cf-balance').innerText(), /0\s*₫/);
+  assert.equal(await desktop.locator('#cf-owner').innerText(), 'Tài khoản quy-st');
   await desktop.locator('[data-cf-receipt="in"]').click();
   const form = desktop.locator('#cf-receipt-form');
   assert.equal(await form.locator('[name="date"]').inputValue(), vietnamDate());
@@ -200,10 +201,30 @@ try {
   await mobile.locator('#ncn-account-host [data-ncn-account-signout]').click();
   await mobile.locator('#cf-login').waitFor();
   assert.equal(await mobile.locator('#cf-entries tr').count(), 0);
-  await login(mobile, 'vip');
-  await mobile.getByText('Tài khoản này cần được Admin cấp quyền quỹ.', { exact: true }).waitFor();
-  assert.equal(await mobile.locator('#cf-ledger').isVisible(), false);
-  console.log('Verified ordering, permissions, shared balances, a lost response retry, date and type filters, and phone layout.');
+  await login(mobile, 'member');
+  await mobile.locator('#ncn-cash-fund-app[data-ncn-access-phase="ready"]').waitFor();
+  assert.match(await balance.innerText(), /^0\s*₫/);
+  assert.equal(await mobile.locator('#cf-owner').innerText(), 'Tài khoản member');
+  assert.equal(await mobile.locator('#cf-entries tr').count(), 0);
+  await mobile.locator('[data-cf-receipt="in"]').click();
+  await expense.locator('[name="amount"]').fill('75000');
+  await expense.locator('[name="note"]').fill('Phiếu riêng thành viên');
+  await mobile.locator('#cf-save').click();
+  await mobile.getByText('Đã lưu phiếu.', { exact: true }).waitFor();
+  assert.match(await balance.innerText(), /75\.000\s*₫/);
+  await mobile.reload();
+  await mobile.locator('#ncn-cash-fund-app[data-ncn-access-phase="ready"]').waitFor();
+  assert.match(await balance.innerText(), /75\.000\s*₫/);
+  await mobile.locator('.ncn-account-menu summary').click();
+  await mobile.locator('#ncn-account-host [data-ncn-account-signout]').click();
+  await mobile.locator('#cf-login').waitFor();
+  assert.equal(await mobile.locator('#cf-owner').isVisible(), false);
+  await login(mobile, 'quy-st');
+  await mobile.locator('#ncn-cash-fund-app[data-ncn-access-phase="ready"]').waitFor();
+  assert.match(await balance.innerText(), /2\.250\.000\s*₫/);
+  assert.equal(await mobile.locator('#cf-entries').getByText('Phiếu riêng thành viên').count(), 0);
+  await fits(mobile);
+  console.log('Verified all-member access, personal balances across accounts and reloads, logout clearing, lost-response retry, numeric inputs, filters, and mobile dark mode.');
 } finally {
   await browser.close();
 }

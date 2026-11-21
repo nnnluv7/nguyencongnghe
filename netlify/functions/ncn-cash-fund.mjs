@@ -5,6 +5,6 @@ import { createCashFundHandler } from '../lib/ncn-cash-fund-api.mjs';
 
 export default (req, context) => createCashFundHandler({
   production: () => context?.deploy?.context === 'production',
-  verify: request => verifyIdentity(request, getIdentityConfig(), fetch, { includeCashFund: true }),
+  verify: request => verifyIdentity(request, getIdentityConfig(), fetch),
   store: () => getStore({ name: 'ncn-cash-fund-v1', consistency: 'strong' })
 })(req);

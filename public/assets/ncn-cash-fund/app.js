@@ -10,7 +10,7 @@ const clock = new Intl.DateTimeFormat('vi-VN', {
   timeZone: 'Asia/Ho_Chi_Minh', hour: '2-digit', minute: '2-digit', hour12: false
 });
 const connectionError = 'Chưa kết nối được sổ quỹ. Vui lòng thử lại.';
-const loginMessage = 'Đăng nhập tài khoản có quyền quỹ để xem số dư và lập phiếu.';
+const loginMessage = 'Đăng nhập để mở sổ quỹ riêng, xem số dư và lập phiếu.';
 const money = amount => formatter.format(amount) + '\u00a0₫';
 const displayDate = date => date.split('-').reverse().join('/');
 
@@ -98,6 +98,8 @@ function mount() {
     filters.reset();
     entries.replaceChildren();
     $('balance').textContent = '';
+    $('owner').textContent = '';
+    $('owner').hidden = true;
     history.hidden = more.hidden = ledger.hidden = true;
     setAccessView({root,gate:access,content:ledger},'blocked');
     access.hidden = !text;
@@ -128,6 +130,9 @@ function mount() {
     if (!response.ok || !data) {
       throw Object.assign(new Error(data?.error || connectionError), { status: response.status });
     }
+    if (data.owner?.id !== scope.owner) {
+      throw Object.assign(new Error('Phiên đăng nhập đã thay đổi. Mở lại sổ quỹ của bạn.'), { status: 409, changedOwner: true });
+    }
     return data;
   }
 
@@ -152,6 +157,10 @@ function mount() {
   }
 
   function handleAccessError(error) {
+    if (error.changedOwner) {
+      lock(error.message, 'retry');
+      return true;
+    }
     if (error.status === 401) {
       lock(loginMessage, 'login');
       return true;
@@ -173,6 +182,8 @@ function mount() {
       const result = await request(scope, { query });
       if (active !== scope) return;
       const rows = result.entries.map(row);
+      $('owner').textContent = result.owner.name;
+      $('owner').hidden = false;
       $('balance').textContent = money(result.balance);
       if (append) entries.append(...rows);
       else entries.replaceChildren(...rows);
@@ -303,6 +314,7 @@ function mount() {
 
   document.addEventListener('ncn-account-change', event => {
     if (active?.authorized && !event.detail.user) lock(loginMessage, 'login');
+    else if (active?.owner && event.detail.user?.id && event.detail.user.id !== active.owner) start();
   });
   onAuthChange((event, user) => {
     if (event === 'logout') lock(loginMessage, 'login');

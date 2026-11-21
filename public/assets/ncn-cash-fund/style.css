@@ -24,6 +24,8 @@
   font-size: 19px;
   line-height: 1.25;
 }
+.cf-owner-line { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: -5px 0 18px; color: var(--ncn-muted); font-size: 14px; line-height: 1.5; }
+.cf-owner-line strong { color: var(--ncn-ink); overflow-wrap: anywhere; }
 .cf-panel {
   min-width: 0;
   padding: clamp(14px, 2.4vw, 24px);
