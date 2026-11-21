@@ -10,7 +10,7 @@ test('VIP visibility requires a verified direct grant and excludes old account a
   assert.equal(canUseVip({id:'vip',vip:true,vipSource:'manual'}),true);
   assert.equal(canUseVip({id:'admin',admin:true}),true);
   for(const href of ['/in-event','/in-event/','/in-gvgs/index.html','https://nguyencongnghe.com/in-gvgs/?q=1'])assert.equal(isVipToolURL(href),true);
-  for(const href of ['/popup-a7/','/in-eventual/','/thu-vien/?q=in-event'])assert.equal(isVipToolURL(href),false);
+  for(const href of ['/popup-a7/','/in-eventual/','/tin-tuc-cong-nghe/?q=in-event'])assert.equal(isVipToolURL(href),false);
 });
 
 test('legacy profiles cannot authenticate and history requires the verified account email',()=>{

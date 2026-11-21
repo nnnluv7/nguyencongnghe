@@ -85,7 +85,7 @@ try{
   await check('home first paint, hydrated search and Library discover the same game exactly once',async()=>{
     await page.goto(base+'/');await tick(150);const config=JSON.parse(await readFile('public/assets/ncn-theme/config.json','utf8'));assert.equal(await page.locator('#ncn-tool-grid .ncn-tool-card').count(),publicToolConfig(config).tools.length);assert.equal(await page.locator('#ncn-tool-grid a[href="/ca-lon-nuot-ca-be/"]').count(),1);
     await page.locator('[data-ncn-search-open]').first().click();await page.locator('#ncn-global-query').fill('ca lon nuot ca be');assert.ok(await page.locator('#ncn-global-results a[href="/ca-lon-nuot-ca-be/"]').count()>=1);
-    await page.goto(base+'/thu-vien/?q=c%C3%A1+l%E1%BB%9Bn+nu%E1%BB%91t');await tick(150);assert.equal(await page.locator('#ncn-library-results a[href="/ca-lon-nuot-ca-be/"]').count(),1);
+    await page.goto(base+'/tin-tuc-cong-nghe/?q=c%C3%A1+l%E1%BB%9Bn+nu%E1%BB%91t');await tick(150);assert.equal(await page.locator('#ncn-library-results a[href="/ca-lon-nuot-ca-be/"]').count(),1);
     const nojs=await context({javaScriptEnabled:false}),staticPage=await nojs.newPage();await staticPage.goto(base+'/');assert.equal(await staticPage.locator('#ncn-tool-grid a[href="/ca-lon-nuot-ca-be/"]').count(),1);await nojs.close();
   });
   await check('phone joystick steers, stops on release and supports a simultaneous second-finger dash',async()=>{

@@ -30,7 +30,7 @@ test('Admin can feature a published item, preserve the flag with older editors, 
 function fixture({user=admin,production=true,now}={}){
   const store=memoryLibrary();
   const deps={seed,originalBodies,now,store:()=>store,production:()=>production,verify:async()=>user,app:async view=>read('netlify/lib/ncn-library/admin-'+(view==='library'?'library':'hub')+'.html')};
-  return {store,handler:createLibraryHandler(deps),page:createLibraryPageHandler({...deps,homeShell:async()=>read('public/index.html'),indexShell:async()=>read('public/thu-vien/index.html'),articleShell:async()=>read('netlify/lib/ncn-library/article-shell.html'),original:async path=>read('public/'+path)})};
+  return {store,handler:createLibraryHandler(deps),page:createLibraryPageHandler({...deps,homeShell:async()=>read('public/index.html'),indexShell:async()=>read('public/tin-tuc-cong-nghe/index.html'),articleShell:async()=>read('netlify/lib/ncn-library/article-shell.html'),original:async path=>read('public/'+path)})};
 }
 function request(route,data,headers={}){return new Request(origin+'/.netlify/functions/ncn-library?route='+route,{method:data===undefined?'GET':'POST',...(data===undefined?{}:{body:JSON.stringify(data)}),headers:{origin,'content-type':'application/json',...headers}});}
 async function call(f,route,data,headers){const response=await f.handler(request(route,data,headers));return {status:response.status,body:await response.json()};}
@@ -169,7 +169,7 @@ test('homepage and library HTML contain the current published catalogue before r
 });
 test('original public URLs work when the platform retains the pre-rewrite request URL',async()=>{
   const f=fixture(),item=seed.find(x=>x.managedPage);
-  for(const path of ['/','/index.html','/thu-vien/','/thu-vien/index.html',item.href,item.href.replace(/\.html$/,''),item.href.replace(/\.html$/,'/')])assert.equal((await f.page(new Request(origin+path))).status,200,path);
+  for(const path of ['/','/index.html','/tin-tuc-cong-nghe/',item.href,item.href.replace(/\.html$/,''),item.href.replace(/\.html$/,'/')])assert.equal((await f.page(new Request(origin+path))).status,200,path);
   const saved=await call(f,'save',input());assert.equal((await f.page(new Request(origin+saved.body.item.href))).status,200);
 });
 

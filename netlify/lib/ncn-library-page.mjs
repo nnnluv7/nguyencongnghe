@@ -25,19 +25,21 @@ export async function articleHTML(deps,item,body,catalog){
 async function statusHTML(deps,catalog,status){
   const removed=status===410;
   let html=trimPublicCopy(await deps.articleShell());
-  html=html.replace(/@@(TITLE|SUMMARY|BODY|DATE|DATETIME|ID|IMAGE|URL)@@/g,(_,name)=>({TITLE:removed?'Bài viết đã được gỡ':'Chưa tìm thấy bài viết',BODY:'<p>'+(removed?'Bài viết này hiện không còn được công khai.':'Bài viết chưa được đăng hoặc đường dẫn chưa đúng.')+'</p><p><a href="/thu-vien/">← Quay lại Thư viện</a></p>',URL:'https://nguyencongnghe.com/thu-vien/'}[name]||''));
+  html=html.replace(/@@(TITLE|SUMMARY|BODY|DATE|DATETIME|ID|IMAGE|URL)@@/g,(_,name)=>({TITLE:removed?'Bài viết đã được gỡ':'Chưa tìm thấy bài viết',BODY:'<p>'+(removed?'Bài viết này hiện không còn được công khai.':'Bài viết chưa được đăng hoặc đường dẫn chưa đúng.')+'</p><p><a href="/tin-tuc-cong-nghe/">← Quay lại Tin tức công nghệ</a></p>',URL:'https://nguyencongnghe.com/tin-tuc-cong-nghe/'}[name]||''));
   return injectCatalog(html.replace('</head>','<meta name="robots" content="noindex"></head>'),catalog);
 }
 export function createLibraryPageHandler(deps){return async req=>{
   try{
     if(!['GET','HEAD'].includes(req.method))return new Response('Method not allowed',{status:405,headers});
-    const url=new URL(req.url),initial=deps.state?await deps.state({stories:url.pathname.includes('thu-vien')||url.searchParams.get('view')==='index'}):{},old=!deps.state&&deps.production()?await readLibrary(deps.store()):null,index=initial.index||old?.data,catalog=initial.catalog||publicCatalog(deps.seed,index);
+    const url=new URL(req.url);
+    if(['/thu-vien','/thu-vien/','/thu-vien/index.html','/tin-tuc-cong-nghe','/tin-tuc-cong-nghe/index.html'].includes(url.pathname))return new Response(null,{status:301,headers:{...headers,Location:'/tin-tuc-cong-nghe/'+url.search}});
+    const initial=deps.state?await deps.state({stories:url.pathname==='/tin-tuc-cong-nghe/'||url.searchParams.get('view')==='index'}):{},old=!deps.state&&deps.production()?await readLibrary(deps.store()):null,index=initial.index||old?.data,catalog=initial.catalog||publicCatalog(deps.seed,index);
     const render=html=>injectCatalog(renderPublicHTML(trimPublicCopy(html),catalog,{...initial,query:url.searchParams}),catalog);
     const internal=url.pathname==='/.netlify/functions/ncn-library-page';
     const originalRoute=deps.seed.find(x=>x.managedPage&&[x.href,x.href.replace(/\.html$/,''),x.href.replace(/\.html$/,'/')].includes(url.pathname));
     const listingHeaders=publicPageHeaders({seconds:15,stories:initial.stories,now:initial.now});
     if(['/','/index.html'].includes(url.pathname)||internal&&url.searchParams.get('view')==='home')return new Response(req.method==='HEAD'?null:render(await deps.homeShell()),{headers:listingHeaders});
-    if(['/thu-vien','/thu-vien/','/thu-vien/index.html'].includes(url.pathname)||internal&&url.searchParams.get('view')==='index')return new Response(req.method==='HEAD'?null:render(await deps.indexShell()),{headers:listingHeaders});
+    if(url.pathname==='/tin-tuc-cong-nghe/'||internal&&url.searchParams.get('view')==='index')return new Response(req.method==='HEAD'?null:render(await deps.indexShell()),{headers:listingHeaders});
     const legacy=originalRoute?.id||(internal?url.searchParams.get('legacy'):null),slug=url.pathname.match(/^\/bai-viet\/([^/]+)\/?$/)?.[1]||(internal?url.searchParams.get('slug'):null);
     const items=mergedLibrary(deps.seed,index),item=legacy?items.find(x=>x.id===legacy&&x.kind==='legacy'&&x.managedPage):items.find(x=>x.kind==='article'&&x.slug===slug);
     if(!item||item.status==='draft')return new Response(req.method==='HEAD'?null:await statusHTML(deps,catalog,404),{status:404,headers});
@@ -53,5 +55,5 @@ export function createLibraryPageHandler(deps){return async req=>{
       html=await articleHTML(deps,item,content.body,catalog);
     }
     return new Response(req.method==='HEAD'?null:renderPublicHTML(html,catalog,initial),{headers});
-  }catch{return new Response('<!doctype html><html lang="vi"><meta charset="utf-8"><title>Thư viện</title><p>Thư viện đang kết nối lại. Anh tải lại trang sau ít phút nhé.</p><a href="/">Về trang chủ</a></html>',{status:503,headers});}
+  }catch{return new Response('<!doctype html><html lang="vi"><meta charset="utf-8"><title>Tin tức công nghệ</title><p>Tin tức công nghệ đang kết nối lại. Anh tải lại trang sau ít phút nhé.</p><a href="/">Về trang chủ</a></html>',{status:503,headers});}
 };}

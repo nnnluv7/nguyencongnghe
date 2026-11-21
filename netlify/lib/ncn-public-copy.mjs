@@ -30,7 +30,10 @@ export function trimPublicCopy(html){
     .replaceAll('Chào mừng đến với NCN','Chào mừng')
     .replaceAll('góp ý cho NCN','góp ý')
     .replace(/NCN (?:\| |· )| [|·] NCN(?=<|")/g,'')
-    .replace(repeatedLabels,label=>label.replace('NCN','').trim());
+    .replace(repeatedLabels,label=>label.replace('NCN','').trim())
+    // Normalize the retained navigation without touching article text or assets.
+    .replace(/(<a\b[^>]*\shref=["'])(?:https?:\/\/(?:www\.)?nguyencongnghe\.com)?\/thu-vien(?:\/index\.html|\/)?([?#][^"']*)?(["'][^>]*>)([\s\S]*?)(<\/a>)/gi,
+      (_,open,suffix='',attrs,label,close)=>open+'/tin-tuc-cong-nghe/'+suffix+attrs+label.replace(/thư viện(?: bài viết)?/giu,'Tin tức công nghệ')+close);
 }
 
 // Use the same first entry for the initial HTML, fallback config and hydrated menu.

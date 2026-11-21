@@ -61,7 +61,7 @@ const normalizeCatalog=catalog=>{
   const seen=new Set();
   return (Array.isArray(catalog)?catalog:[]).filter(row=>{
     const href=safeHref(row?.link),key=canonicalPath(href);
-    if (!href || !row.title || seen.has(key) || key==='/thu-vien') return false;
+    if (!href || !row.title || seen.has(key) || key==='/tin-tuc-cong-nghe') return false;
     seen.add(key); return true;
   }).map(row=>({...row,link:safeHref(row.link),labels:(Array.isArray(row.labels)?row.labels:[]).filter(x=>typeof x==='string'&&usefulLabel(x))}));
 };
@@ -113,7 +113,7 @@ export function createTheme({doc=document,win=window,config,catalog=win.CG_CATAL
   if($('ncn-page-print')) $('ncn-page-print').hidden=protectedTool;
   // Printing editors uses the existing tool's own print button and dedicated print frame.
   listen($('ncn-page-print'),'click',()=>win.print());
-  text('ncn-page-section',home?'Tổng quan':library?'Thư viện':currentTool?groups.find(g=>g.id===currentTool.group)?.name||'Công cụ':'Nội dung');
+  text('ncn-page-section',home?'Tổng quan':library?'Tin tức công nghệ':currentTool?groups.find(g=>g.id===currentTool.group)?.name||'Công cụ':'Nội dung');
   text('ncn-page-title',home?'Cổng công cụ':library?'Bài viết & hướng dẫn':currentTool?.title||doc.title.replace(/\s*\|\s*nguyencongnghe\.com$/i,''));
   function navLink(href,title,icon,badge='',id='') {
     const active=canonicalPath(href)===path;
@@ -142,7 +142,7 @@ export function createTheme({doc=document,win=window,config,catalog=win.CG_CATAL
   function renderSearch() {
     const query=$('ncn-global-query')?.value||'',result=searchItems.filter(row=>matches(row,query));
     const host=$('ncn-global-results');if(!host)return;
-    host.innerHTML=`<p class="ncn-search-caption">${query?`${result.length} kết quả`:'Mở nhanh công cụ'}</p>`+result.slice(0,12).map(row=>`<a class="ncn-search-result" href="${escapeHTML(row.link)}"><span class="ncn-search-result-icon">${svg(row.icon)}</span><span><strong>${escapeHTML(row.title)}</strong><small>${escapeHTML(row.kind)}</small></span><span aria-hidden="true">↗</span></a>`).join('')+(result.length?'':'<p class="ncn-empty">Chưa có kết quả. Thử tên công cụ hoặc từ khóa khác.</p>')+(result.length>12?`<a class="ncn-search-all" href="/thu-vien/?q=${encodeURIComponent(query)}">Xem thêm trong thư viện →</a>`:'');
+    host.innerHTML=`<p class="ncn-search-caption">${query?`${result.length} kết quả`:'Mở nhanh công cụ'}</p>`+result.slice(0,12).map(row=>`<a class="ncn-search-result" href="${escapeHTML(row.link)}"><span class="ncn-search-result-icon">${svg(row.icon)}</span><span><strong>${escapeHTML(row.title)}</strong><small>${escapeHTML(row.kind)}</small></span><span aria-hidden="true">↗</span></a>`).join('')+(result.length?'':'<p class="ncn-empty">Chưa có kết quả. Thử tên công cụ hoặc từ khóa khác.</p>')+(result.length>12?`<a class="ncn-search-all" href="/tin-tuc-cong-nghe/?q=${encodeURIComponent(query)}">Xem thêm trong tin tức công nghệ →</a>`:'');
     previewLinks();
   }
   let searchFocus=null;
@@ -287,7 +287,7 @@ export async function bootTheme() {
     const destroy=result.destroy;result.destroy=()=>{closed=true;window.removeEventListener('ncn-library-changed',refresh);window.removeEventListener('storage',storage);document.removeEventListener('ncn-search-open',search);destroy();};
     if(!window.NCN_LIBRARY_SNAPSHOT&&!window.NCN_LIBRARY_DEFERRED)refresh();
   }
-  if(configFailed){const host=document.getElementById('ncn-tool-grid');if(host)host.innerHTML='<p class="ncn-empty">Chưa tải được danh mục công cụ. <a href="/thu-vien/">Mở thư viện</a> hoặc tải lại trang.</p>';}
+  if(configFailed){const host=document.getElementById('ncn-tool-grid');if(host)host.innerHTML='<p class="ncn-empty">Chưa tải được danh mục công cụ. <a href="/tin-tuc-cong-nghe/">Mở tin tức công nghệ</a> hoặc tải lại trang.</p>';}
   return result;
 }
 if(typeof window!=='undefined' && typeof document!=='undefined' && !window.NCN_THEME_TEST) {

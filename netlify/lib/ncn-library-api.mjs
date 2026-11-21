@@ -11,13 +11,13 @@ export const emptyLibrary=()=>({items:[]});
 export async function readLibrary(store){
   for(let attempt=0;attempt<3;attempt++){
     const saved=await store.getWithMetadata(KEY,{type:'json'});
-    if(saved&&(!Array.isArray(saved.data?.items)||saved.data.items.length>500))libraryError(503,'Danh sách Thư viện chưa sẵn sàng.');
+    if(saved&&(!Array.isArray(saved.data?.items)||saved.data.items.length>500))libraryError(503,'Danh sách Tin tức công nghệ chưa sẵn sàng.');
     if(!saved?.data.items.some(item=>deletedLegacyIds.has(item.id)))return saved;
     // Remove only the retired record, preserving concurrent edits to other items.
     const data={...saved.data,items:saved.data.items.filter(item=>!deletedLegacyIds.has(item.id))};
     await store.setJSON(KEY,data,{onlyIfMatch:saved.etag});
   }
-  libraryError(503,'Danh sách Thư viện vừa thay đổi. Vui lòng thử lại.');
+  libraryError(503,'Danh sách Tin tức công nghệ vừa thay đổi. Vui lòng thử lại.');
 }
 export function mergedLibrary(seed,index){
   const changes=new Map((index?.items||[]).map(item=>[item.id,item]));
@@ -90,7 +90,7 @@ function validate(input,current,seedItem,now){
   const labels=[...new Set(input.labels.map(v=>text(v,60,'Chuyên mục',true)))];
   let mode=kind==='legacy'?'original':kind==='article'?'markdown':'link';
   if(kind==='legacy'&&input.mode==='markdown'){
-    if(!seedItem?.managedPage)libraryError(400,'Trang công cụ chỉ quản lý lối tắt trong Thư viện.');mode='markdown';
+    if(!seedItem?.managedPage)libraryError(400,'Trang công cụ chỉ quản lý lối tắt trong Tin tức công nghệ.');mode='markdown';
   }
   const content=mode==='markdown'?text(input.body??'',50000,'Nội dung',input.status!=='draft'):'';
   const slug=current?.slug||(kind==='article'?slugify(title)+'-'+input.id.slice(5,13):null);
@@ -139,7 +139,7 @@ export function createLibraryHandler(deps){return async req=>{
       if(current?.status==='trash')libraryError(409,'Khôi phục bài khỏi Thùng rác trước khi sửa.');
       if(!current&&(!id.startsWith('post-')||index.items.filter(x=>x.kind!=='legacy').length>=MAX_CUSTOM))libraryError(400,'Không thể thêm bài. Kiểm tra mã bài hoặc giới hạn 200 bài mới.');
       next=validate(data,current,seedItem,now);
-      if(items.some(x=>x.id!==id&&destination(x.href)===destination(next.href)))libraryError(409,'Đường dẫn này đã có trong Thư viện. Tìm và sửa bài hiện có hoặc khôi phục từ Thùng rác.');
+      if(items.some(x=>x.id!==id&&destination(x.href)===destination(next.href)))libraryError(409,'Đường dẫn này đã có trong Tin tức công nghệ. Tìm và sửa bài hiện có hoặc khôi phục từ Thùng rác.');
       const content=next.content;delete next.content;
       if(next.mode==='markdown'){
         next.bodyKey='body-'+id+'-'+next.version;

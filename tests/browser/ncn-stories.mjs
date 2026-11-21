@@ -28,7 +28,7 @@ const users=new Map([
 const raw=user=>({id:user.id,email:user.email,confirmed_at:'2026-10-01T00:00:00Z',app_metadata:{roles:user.admin?['admin']:user.vip?['vip']:[]},user_metadata:{full_name:user.name,roles:['admin']}});
 const tokenUser=req=>tokens.get(decodeURIComponent((req.headers.get('cookie')||'').match(/(?:^|;\s*)nf_jwt=([^;]+)/)?.[1]||''))||null;
 const deps={seed,originalBodies,production:()=>true,store:()=>store,verify:async req=>tokenUser(req),app:view=>read('netlify/lib/ncn-library/admin-'+(view==='library'?'library':'hub')+'.html')};
-const handler=createLibraryHandler(deps),pageHandler=createLibraryPageHandler({...deps,homeShell:()=>read('public/index.html'),indexShell:()=>read('public/thu-vien/index.html'),articleShell:()=>read('netlify/lib/ncn-library/article-shell.html'),original:path=>read('public/'+path)});
+const handler=createLibraryHandler(deps),pageHandler=createLibraryPageHandler({...deps,homeShell:()=>read('public/index.html'),indexShell:()=>read('public/tin-tuc-cong-nghe/index.html'),articleShell:()=>read('netlify/lib/ncn-library/article-shell.html'),original:path=>read('public/'+path)});
 let storyNow=null;
 const storyStore=memoryStories(),stories=createStoriesHandler({production:()=>true,store:()=>storyStore,verify:async req=>tokenUser(req),now:()=>storyNow??Date.now()});
 const picture=await sharp({create:{width:900,height:1200,channels:3,background:'#689ba8'}}).jpeg().toBuffer();
@@ -65,7 +65,7 @@ async function context(){
     if(url.pathname.startsWith('/.netlify/functions/'))throw Error('Unexpected function '+url.pathname);
     let query=null;
     if(['/','/index.html'].includes(url.pathname))query='view=home';
-    if(['/thu-vien/','/thu-vien/index.html'].includes(url.pathname))query='view=index';
+    if(['/tin-tuc-cong-nghe/','/tin-tuc-cong-nghe/index.html'].includes(url.pathname))query='view=index';
     const article=url.pathname.match(/^\/bai-viet\/([^/]+)\/?$/);if(article)query='slug='+encodeURIComponent(article[1]);
     const original=seed.find(x=>x.managedPage&&[x.href,x.href.replace(/\.html$/,''),x.href.replace(/\.html$/,'/')].includes(url.pathname));if(original)query='legacy='+original.id;
     if(query)return respond(await pageHandler(new Request(origin+'/.netlify/functions/ncn-library-page?'+query,{headers})));
@@ -89,7 +89,7 @@ async function check(name,action){try{await action();results.push({name,ok:true}
 async function saved(p,pattern=/Đã lưu/){await p.waitForFunction(()=>!document.getElementById('nl-refresh').disabled);await p.locator('#nl-status').filter({hasText:pattern}).waitFor();}
 async function choose(p,item){await p.locator('#nl-search').fill(item.title);await p.locator('[data-article-id="'+item.id+'"]').click();await p.waitForFunction(id=>new URL(location.href).searchParams.get('id')===id,item.id);await p.waitForFunction(()=>!document.getElementById('nl-save').disabled);}
 async function fits(p){const size=await p.evaluate(()=>({content:document.documentElement.scrollWidth,viewport:innerWidth}));assert.ok(size.content<=size.viewport+1,JSON.stringify(size));}
-async function library(ctx){const p=await open(ctx,'/thu-vien/');await p.locator('#ncn-stories[data-mounted=true]').waitFor();await p.locator('[data-story-status]').filter({hasText:/khoảnh khắc|xuất hiện/}).waitFor();return p;}
+async function library(ctx){const p=await open(ctx,'/tin-tuc-cong-nghe/');await p.locator('#ncn-stories[data-mounted=true]').waitFor();await p.locator('[data-story-status]').filter({hasText:/khoảnh khắc|xuất hiện/}).waitFor();return p;}
 async function upload(p,text){await p.locator('[data-story-add]').click();await p.locator('#ncn-story-compose input[type=file]').setInputFiles({name:'fixture.jpg',mimeType:'image/jpeg',buffer:picture});await p.locator('#ncn-story-compose [data-message]').filter({hasText:'Ảnh đã sẵn sàng'}).waitFor();await p.locator('#ncn-story-compose [name=caption]').fill(text);await p.locator('#ncn-story-compose [type=submit]').click();await p.locator('#ncn-story-compose').waitFor({state:'hidden'});await p.locator('[data-story-id]').first().waitFor();}
 let guest,member,other,admin;
 try{

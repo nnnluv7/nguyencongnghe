@@ -12,6 +12,6 @@ export default async (req,context)=>optimizePublicResponse(await createLibraryPa
   state:currentPublicState,
   production:()=>context?.deploy?.context==='production',seed,
   store:()=>getStore({name:'ncn-site-library-v1',consistency:'strong'}),
-  homeShell:()=>file('public/index.html'),indexShell:()=>file('public/thu-vien/index.html'),articleShell:()=>file('netlify/lib/ncn-library/article-shell.html'),
+  homeShell:()=>file('public/index.html'),indexShell:()=>file('public/tin-tuc-cong-nghe/index.html'),articleShell:()=>file('netlify/lib/ncn-library/article-shell.html'),
   original:path=>file('public/'+path)
 })(req));

@@ -20,7 +20,7 @@ export function mountLibraryAdmin({host,api,doc=document,win=window}){
     $('nl-purge').disabled=busy;$('nl-purge').hidden=!trash;$('nl-purge').textContent=selected?.status==='purging'?'Thử xoá vĩnh viễn':'Xoá vĩnh viễn';
     $('nl-save').hidden=trash;$('nl-trash').hidden=!selected||trash;
     $('nl-visibility').hidden=!selected||!['published','hidden'].includes(selected.status);
-    $('nl-visibility').textContent=selected?.status==='published'?'Ẩn khỏi Thư viện':'Hiện trong Thư viện';
+    $('nl-visibility').textContent=selected?.status==='published'?'Ẩn khỏi Tin tức công nghệ':'Hiện trong Tin tức công nghệ';
     $('nl-new').disabled=busy;$('nl-refresh').disabled=busy;
     $('nl-list').querySelectorAll('button').forEach(button=>button.disabled=busy);
     const kind=$('nl-kind').value;
@@ -56,7 +56,7 @@ export function mountLibraryAdmin({host,api,doc=document,win=window}){
     $('nl-mode').value=item?.mode==='markdown'?'markdown':'original';$('nl-body').value=body||original;$('nl-href').value=item?.href||'';
     $('nl-editor-title').textContent=!item?'Thêm bài viết':inTrash(item)?'Bài trong Thùng rác':'Chỉnh sửa bài viết';
     $('nl-source').textContent=!item?'Bài mới':item.kind==='legacy'?(item.managedPage?'Bài đã có trên website':'Lối tắt công cụ'):item.kind==='link'?'Bài liên kết':'Bài viết trên website';
-    $('nl-open').href=item?.href||'/thu-vien/';$('nl-preview').hidden=true;$('nl-preview-toggle').setAttribute('aria-expanded','false');
+    $('nl-open').href=item?.href||'/tin-tuc-cong-nghe/';$('nl-preview').hidden=true;$('nl-preview-toggle').setAttribute('aria-expanded','false');
     snapshot=JSON.stringify(collect());dirty=false;list();controls();
   }
   async function edit(id,{force=false}={}){
@@ -82,11 +82,11 @@ export function mountLibraryAdmin({host,api,doc=document,win=window}){
   listen($('nl-new'),'click',()=>{if(busy||!discard())return;++epoch;fill();const url=new URL(win.location.href);url.searchParams.delete('id');win.history.replaceState(null,'',url);$('nl-title').focus();message('Bài mới đang là bản nháp. Anh chọn trạng thái Đang hiện để công khai khi lưu.');});
   listen($('nl-refresh'),'click',()=>run(async()=>{await refresh();message('Đã tải danh sách mới nhất. Nội dung đang soạn được giữ lại.');}));
   listen($('nl-preview-toggle'),'click',()=>{$('nl-preview').hidden=!$('nl-preview').hidden;$('nl-preview-toggle').setAttribute('aria-expanded',String(!$('nl-preview').hidden));preview();});
-  listen($('nl-form'),'submit',event=>{event.preventDefault();run(async()=>{const result=await api('save',collect());await refresh();await edit(result.item.id,{force:true});announce();message(result.item.status==='draft'?'Đã lưu bản nháp. Bài chưa công khai.':result.item.status==='hidden'?'Đã lưu bài và ẩn khỏi danh sách Thư viện.':'Đã lưu và cập nhật bài trong Thư viện.');});});
-  listen($('nl-visibility'),'click',()=>{if(!discard())return;run(async()=>{const result=await api('visibility',{id:selected.id,version:selected.version});await refresh();await edit(result.item.id,{force:true});announce();message(result.item.status==='hidden'?'Đã ẩn khỏi Thư viện. Trang gốc vẫn mở được bằng liên kết.':'Đã hiện bài trong Thư viện.');});});
+  listen($('nl-form'),'submit',event=>{event.preventDefault();run(async()=>{const result=await api('save',collect());await refresh();await edit(result.item.id,{force:true});announce();message(result.item.status==='draft'?'Đã lưu bản nháp. Bài chưa công khai.':result.item.status==='hidden'?'Đã lưu bài và ẩn khỏi danh sách Tin tức công nghệ.':'Đã lưu và cập nhật bài trong Tin tức công nghệ.');});});
+  listen($('nl-visibility'),'click',()=>{if(!discard())return;run(async()=>{const result=await api('visibility',{id:selected.id,version:selected.version});await refresh();await edit(result.item.id,{force:true});announce();message(result.item.status==='hidden'?'Đã ẩn khỏi Tin tức công nghệ. Trang gốc vẫn mở được bằng liên kết.':'Đã hiện bài trong Tin tức công nghệ.');});});
   const trashDialog=$('nl-trash-dialog');
   function trashHelp(){
-    $('nl-trash-help').textContent=selected?.kind==='article'||$('nl-remove-page').checked?'Bài sẽ được gỡ khỏi Thư viện và trang bài viết sẽ tạm ngừng công khai. Anh có thể khôi phục cả hai từ Thùng rác.':'Chỉ gỡ bài khỏi danh sách Thư viện. Liên kết trang gốc vẫn mở được. Anh có thể khôi phục từ Thùng rác.';
+    $('nl-trash-help').textContent=selected?.kind==='article'||$('nl-remove-page').checked?'Bài sẽ được gỡ khỏi Tin tức công nghệ và trang bài viết sẽ tạm ngừng công khai. Anh có thể khôi phục cả hai từ Thùng rác.':'Chỉ gỡ bài khỏi danh sách Tin tức công nghệ. Liên kết trang gốc vẫn mở được. Anh có thể khôi phục từ Thùng rác.';
   }
   listen($('nl-trash'),'click',()=>{if(busy||!discard())return;$('nl-trash-name').textContent=selected.title;$('nl-remove-page-option').hidden=selected.kind!=='legacy'||!selected.managedPage;$('nl-remove-page').checked=selected.kind==='article';trashHelp();trashDialog.showModal();});
   listen($('nl-remove-page'),'change',trashHelp);listen($('nl-trash-cancel'),'click',()=>trashDialog.close());
@@ -96,12 +96,12 @@ export function mountLibraryAdmin({host,api,doc=document,win=window}){
   function finishPurge(target){
     if(disposed)return;++epoch;items=items.filter(x=>x.id!==target.id);fill();
     const url=new URL(win.location.href);url.searchParams.delete('id');win.history.replaceState(null,'',url);
-    announce();message('Đã xoá vĩnh viễn “'+target.title+'” khỏi Thư viện và Thùng rác.');$('nl-search').focus({preventScroll:true});
+    announce();message('Đã xoá vĩnh viễn “'+target.title+'” khỏi Tin tức công nghệ và Thùng rác.');$('nl-search').focus({preventScroll:true});
   }
   listen($('nl-purge'),'click',()=>{
     if(busy||!inTrash(selected)||!discard())return;
     purgeTarget={id:selected.id,version:selected.version,title:selected.title};$('nl-purge-name').textContent=selected.title;
-    $('nl-purge-help').textContent=selected.kind==='article'?'Xoá bài khỏi Thư viện, Thùng rác và toàn bộ các bản nội dung đã lưu trên website.':selected.kind==='link'?'Xoá mục liên kết khỏi Thư viện và Thùng rác. Trang hoặc tệp ở website đích không bị xoá.':selected.managedPage?'Xoá bài khỏi Thư viện và Thùng rác, ngừng phục vụ trang bài viết trên website và xoá các bản nội dung đã sửa tại đây.':'Xoá lối tắt khỏi Thư viện và Thùng rác. Trang công cụ vẫn hoạt động bình thường.';
+    $('nl-purge-help').textContent=selected.kind==='article'?'Xoá bài khỏi Tin tức công nghệ, Thùng rác và toàn bộ các bản nội dung đã lưu trên website.':selected.kind==='link'?'Xoá mục liên kết khỏi Tin tức công nghệ và Thùng rác. Trang hoặc tệp ở website đích không bị xoá.':selected.managedPage?'Xoá bài khỏi Tin tức công nghệ và Thùng rác, ngừng phục vụ trang bài viết trên website và xoá các bản nội dung đã sửa tại đây.':'Xoá lối tắt khỏi Tin tức công nghệ và Thùng rác. Trang công cụ vẫn hoạt động bình thường.';
     purgeDialog.showModal();
   });
   listen($('nl-purge-cancel'),'click',()=>purgeDialog.close());
@@ -129,6 +129,6 @@ export function mountLibraryAdmin({host,api,doc=document,win=window}){
     field.setRangeText(formats[button.dataset.format],start,end,'select');field.focus();changed();
   });
   const beforeUnload=event=>{if(dirty){event.preventDefault();event.returnValue='';}};win.addEventListener('beforeunload',beforeUnload);
-  fill();run(async()=>{await refresh();const id=new URL(win.location.href).searchParams.get('id');if(id)await edit(id,{force:true});else message('Thư viện đã sẵn sàng. Chọn bài để sửa hoặc thêm bài viết mới.');});
+  fill();run(async()=>{await refresh();const id=new URL(win.location.href).searchParams.get('id');if(id)await edit(id,{force:true});else message('Tin tức công nghệ đã sẵn sàng. Chọn bài để sửa hoặc thêm bài viết mới.');});
   return {destroy(){disposed=true;++epoch;listeners.forEach(remove=>remove());win.removeEventListener('beforeunload',beforeUnload);if(trashDialog.open)trashDialog.close();if(purgeDialog.open)purgeDialog.close();}};
 }

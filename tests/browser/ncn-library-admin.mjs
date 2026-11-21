@@ -24,7 +24,7 @@ const users=new Map([
 const raw=user=>({id:user.id,email:user.email,confirmed_at:'2026-10-01T00:00:00Z',app_metadata:{roles:user.admin?['admin']:['vip']},user_metadata:{full_name:user.name,roles:['admin']}});
 const tokenUser=req=>tokens.get(decodeURIComponent((req.headers.get('cookie')||'').match(/(?:^|;\s*)nf_jwt=([^;]+)/)?.[1]||''))||null;
 const deps={seed,originalBodies,production:()=>true,store:()=>store,verify:async req=>tokenUser(req),app:view=>read('netlify/lib/ncn-library/admin-'+(view==='library'?'library':'hub')+'.html')};
-const handler=createLibraryHandler(deps),pageHandler=createLibraryPageHandler({...deps,homeShell:()=>read('public/index.html'),indexShell:()=>read('public/thu-vien/index.html'),articleShell:()=>read('netlify/lib/ncn-library/article-shell.html'),original:path=>read('public/'+path)});
+const handler=createLibraryHandler(deps),pageHandler=createLibraryPageHandler({...deps,homeShell:()=>read('public/index.html'),indexShell:()=>read('public/tin-tuc-cong-nghe/index.html'),articleShell:()=>read('netlify/lib/ncn-library/article-shell.html'),original:path=>read('public/'+path)});
 const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml','.woff2':'font/woff2','.ttf':'font/ttf'};
 const browser=await chromium.launch(),results=[];let page;
 async function context(){
@@ -58,7 +58,7 @@ async function context(){
     if(url.pathname.startsWith('/.netlify/functions/'))throw Error('Unexpected function '+url.pathname);
     let query=null;
     if(['/','/index.html'].includes(url.pathname))query='view=home';
-    if(['/thu-vien/','/thu-vien/index.html'].includes(url.pathname))query='view=index';
+    if(['/tin-tuc-cong-nghe/','/tin-tuc-cong-nghe/index.html'].includes(url.pathname))query='view=index';
     const article=url.pathname.match(/^\/bai-viet\/([^/]+)\/?$/);if(article)query='slug='+encodeURIComponent(article[1]);
     const original=seed.find(x=>x.managedPage&&[x.href,x.href.replace(/\.html$/,''),x.href.replace(/\.html$/,'/')].includes(url.pathname));if(original)query='legacy='+original.id;
     if(query)return respond(await pageHandler(new Request(origin+'/.netlify/functions/ncn-library-page?'+query,{headers})));
@@ -135,11 +135,11 @@ try{
     const response=await reader.goto(origin+newArticle);assert.equal(response.status(),200);await reader.locator('#postBody h2').waitFor();
     assert.match(await reader.locator('#postBody').innerText(),/đầy đủ dấu/);assert.equal(await reader.evaluate(()=>window.ATTACKED),undefined);assert.equal(await reader.locator('#postBody script,a[href^="javascript:"]').count(),0);
     assert.equal(await reader.locator('link[rel=canonical]').getAttribute('href'),'https://nguyencongnghe.com'+newArticle);await fits(reader);
-    await reader.goto(origin+'/thu-vien/?q=Hướng+dẫn+thử+nghiệm+Admin');await reader.locator('#ncn-library-results a').waitFor();assert.equal(await reader.locator('#ncn-library-results a').count(),1);
+    await reader.goto(origin+'/tin-tuc-cong-nghe/?q=Hướng+dẫn+thử+nghiệm+Admin');await reader.locator('#ncn-library-results a').waitFor();assert.equal(await reader.locator('#ncn-library-results a').count(),1);
     await homeReader.locator('#ncn-articles a[href="'+newArticle+'"]').waitFor();assert.equal(await homeReader.locator('#ncn-articles a').count(),4);assert.equal(await homeReader.locator('#ncn-articles a').first().getAttribute('href'),newArticle);
   });
   await check('hiding removes the library entry while retaining its direct public page',async()=>{
-    await editor.locator('#nl-visibility').click();await saved(editor,/Đã ẩn khỏi Thư viện/);
+    await editor.locator('#nl-visibility').click();await saved(editor,/Đã ẩn khỏi Tin tức công nghệ/);
     await reader.reload();await reader.locator('#ncn-library-results .ncn-empty').waitFor();assert.equal((await reader.goto(origin+newArticle)).status(),200);
     await homeReader.locator('#ncn-articles a[href="'+newArticle+'"]').waitFor({state:'detached'});assert.equal(await homeReader.locator('#ncn-articles a').count(),4);
     await editor.locator('#nl-visibility').click();await saved(editor,/Đã hiện bài/);
@@ -205,7 +205,7 @@ try{
   });
   await check('link posts can be added and found in the public library',async()=>{
     await editor.locator('#nl-new').click();await editor.locator('#nl-kind').selectOption('link');await editor.locator('#nl-title').fill('Liên kết hướng dẫn thử nghiệm');await editor.locator('#nl-href').fill('https://example.com/guide');await editor.locator('#nl-state').selectOption('published');await editor.locator('#nl-save').click();await saved(editor,/Đã lưu và cập nhật/);
-    await reader.goto(origin+'/thu-vien/?q=Liên+kết+hướng+dẫn+thử+nghiệm');await reader.locator('#ncn-library-results a').waitFor();assert.equal(await reader.locator('#ncn-library-results a').getAttribute('href'),'https://example.com/guide');
+    await reader.goto(origin+'/tin-tuc-cong-nghe/?q=Liên+kết+hướng+dẫn+thử+nghiệm');await reader.locator('#ncn-library-results a').waitFor();assert.equal(await reader.locator('#ncn-library-results a').getAttribute('href'),'https://example.com/guide');
   });
   await check('phone and dark-mode management remain readable without horizontal overflow',async()=>{
     await editor.setViewportSize({width:390,height:844});await editor.evaluate(()=>window.NCN_APPEARANCE.set('dark',true));await fits(editor);await editor.screenshot({path:out+'/library-admin-phone-dark.jpg',type:'jpeg',quality:80});

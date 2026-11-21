@@ -14,7 +14,7 @@ const read=path=>readFile(path,'utf8'),seed=JSON.parse(await read('netlify/lib/n
 const catalog=mergeNews(publicCatalog(seed),news),now=Date.now(),photo={id:'story-'+'a'.repeat(40),authorKey:'fixture',name:'Thành viên thử nghiệm',caption:'Kiểm tra bố cục Story',createdAt:new Date(now).toISOString(),expiresAt:new Date(now+86400000).toISOString(),width:640,height:480};
 const state={catalog,notices:[{id:'fixture',text:'NCN · Thông báo kiểm tra giao diện đồng bộ'}],stories:[photo],now};
 const common={production:()=>true,seed,store:()=>({getWithMetadata:async()=>null}),state:async()=>state};
-const library=createLibraryPageHandler({...common,homeShell:()=>read('public/index.html'),indexShell:()=>read('public/thu-vien/index.html'),articleShell:()=>read('netlify/lib/ncn-library/article-shell.html'),original:path=>read('public/'+path)});
+const library=createLibraryPageHandler({...common,homeShell:()=>read('public/index.html'),indexShell:()=>read('public/tin-tuc-cong-nghe/index.html'),articleShell:()=>read('netlify/lib/ncn-library/article-shell.html'),original:path=>read('public/'+path)});
 const shell=createSitePageHandler({pages,html:path=>read('public/'+path),state:async({catalog=true}={})=>catalog?state:{...state,catalog:[],catalogDeferred:true},inject:injectCatalog});
 const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.png':'image/png','.jpg':'image/jpeg','.webp':'image/webp','.svg':'image/svg+xml','.woff2':'font/woff2','.ttf':'font/ttf'};
 const browser=await chromium.launch(),results=[],controlAudit=[];let page,blocked=false,pending=[];
@@ -36,7 +36,7 @@ async function context(){
   }
   if(url.pathname.startsWith('/.netlify/identity/'))return json({disable_signup:false,external:{email:true}});
   const req=new Request(request.url()),managed=seed.some(x=>x.managedPage&&x.href===url.pathname);
-  if(['/','/index.html','/thu-vien/','/thu-vien/index.html'].includes(url.pathname)||managed){const response=built?await optimizePublicResponse(await library(req)):await library(req);return route.fulfill({status:response.status,headers:Object.fromEntries(response.headers),body:await response.text()});}
+  if(['/','/index.html','/tin-tuc-cong-nghe/','/tin-tuc-cong-nghe/index.html'].includes(url.pathname)||managed){const response=built?await optimizePublicResponse(await library(req)):await library(req);return route.fulfill({status:response.status,headers:Object.fromEntries(response.headers),body:await response.text()});}
   if(pages[url.pathname]||pages[decodeURIComponent(url.pathname)]){const response=built?await optimizePublicResponse(await shell(req)):await shell(req);return route.fulfill({status:response.status,headers:Object.fromEntries(response.headers),body:await response.text()});}
   try{let path=resolve(root,'.'+decodeURIComponent(url.pathname));if(path!==root&&!path.startsWith(root+sep))throw Error('Outside root');if((await stat(path)).isDirectory())path=resolve(path,'index.html');return route.fulfill({contentType:mime[extname(path)]||'application/octet-stream',body:await readFile(path)});}catch{return route.fulfill({status:404,body:'Not found'});}
  });return ctx;
@@ -70,13 +70,13 @@ try{
   assert.ok((await page.locator('#ncn-global-results').innerText()).includes(title));assert.equal(requests,1);
   await page.keyboard.press('Escape');await search.click();assert.equal(requests,1);await page.keyboard.press('Escape');assert.deepEqual(errors,[]);await page.close();
  });
- for(const path of ['/','/thu-vien/'])await check('complete first paint with delayed modules: '+path,async()=>{
+ for(const path of ['/','/tin-tuc-cong-nghe/'])await check('complete first paint with delayed modules: '+path,async()=>{
   blocked=true;page=await ctx.newPage();await page.goto(origin+path,{waitUntil:'commit'});await page.locator(path==='/'?'#ncn-tool-grid':'#ncn-library-results').waitFor();await paint(page);
   const ids=path==='/'?['ncn-home-latest','ncn-tools']:['ncn-library-featured','ncn-stories','ncn-library-count'];
   const before=await page.evaluate(ids=>Object.fromEntries(ids.map(id=>[id,document.getElementById(id).getBoundingClientRect().toJSON()])),ids);
   assert.equal(await page.locator(path==='/'?'#ncn-articles a':'#ncn-library-results a').count(),path==='/'?4:12);
   assert.equal(await page.locator('#ncn-announcement').isVisible(),true);
-  if(path==='/thu-vien/')assert.equal(await page.locator('[data-story-id]').count(),1);
+  if(path==='/tin-tuc-cong-nghe/')assert.equal(await page.locator('[data-story-id]').count(),1);
   else{
    const cards=page.locator('#ncn-tool-grid .ncn-tool-card:visible');
    assert.ok(await cards.count()>0);
@@ -138,13 +138,13 @@ try{
   }
   await page.evaluate(()=>document.documentElement.dataset.ncnTheme='dark');await page.screenshot({path:out+'/home-phone-dark.jpg',type:'jpeg',quality:85});
  });
- await page.goto(origin+'/thu-vien/',{waitUntil:'domcontentloaded'});
+ await page.goto(origin+'/tin-tuc-cong-nghe/',{waitUntil:'domcontentloaded'});
  await check('GenK entries participate in library source filters, searching and persistent query URLs',async()=>{
   await page.selectOption('#ncn-library-source','genk');assert.match(await page.locator('#ncn-library-count').innerText(),/^40 nội dung/);assert.equal(await page.locator('#ncn-library-results a[data-ncn-source=genk]').count(),12);
   await page.locator('#ncn-library-next').click();assert.ok(page.url().includes('page=2'));await page.reload({waitUntil:'domcontentloaded'});assert.match(await page.locator('#ncn-library-page').innerText(),/Trang 2/);
   const title=news[0].title;await page.locator('#ncn-library-query').fill(title);assert.equal(await page.locator('#ncn-library-results a').count(),1);assert.equal(await page.locator('#ncn-library-results a').getAttribute('href'),news[0].link);assert.equal(await page.locator('#ncn-library-results a').getAttribute('target'),'_blank');
  });
- await page.setViewportSize({width:1280,height:900});await page.goto(origin+'/thu-vien/',{waitUntil:'domcontentloaded'});
+ await page.setViewportSize({width:1280,height:900});await page.goto(origin+'/tin-tuc-cong-nghe/',{waitUntil:'domcontentloaded'});
  await check('library hover eases in and out instead of jumping and respects reduced motion',async()=>{
   const card=page.locator('#ncn-library-results a').first();await card.scrollIntoViewIfNeeded();await page.mouse.move(0,0);await paint(page);const normal=await card.evaluate(el=>el.getBoundingClientRect().top);
   // Freeze the actual CSS transition when it starts, then sample its own
@@ -161,7 +161,8 @@ try{
  async function htmlFiles(dir){const result=[];for(const item of await readdir(dir,{withFileTypes:true})){const path=dir+'/'+item.name;if(item.isDirectory())result.push(...await htmlFiles(path));else if(item.name.endsWith('.html'))result.push(path);}return result;}
  const files=(await htmlFiles('public')).sort();
  for(const [i,file] of [...files.entries()].filter(([i])=>i>=Number(process.env.NCN_LAYOUT_START||0)))await check('shared layout '+(i+1)+'/'+files.length+': '+file.slice(7),async()=>{
-  page=await ctx.newPage();const runtimeErrors=[];page.on('pageerror',error=>runtimeErrors.push(error.message));const response=await page.goto(origin+'/'+file.slice(7),{waitUntil:'domcontentloaded'});const initial=await response.text();assert.ok(initial.includes('window.NCN_NOTICE_SNAPSHOT'),file+' server notice snapshot');assert.ok(initial.includes(built?'/assets/ncn-built/styles/':'site.css?v=20261025-sync-1')||file.includes('flappy-bird'),file+' final stylesheet');await page.waitForFunction(()=>window.NCNAccount?.state.ready);await paint(page);
+  const path=file==='public/tin-tuc-cong-nghe/index.html'?'/tin-tuc-cong-nghe/':'/'+file.slice(7);
+  page=await ctx.newPage();const runtimeErrors=[];page.on('pageerror',error=>runtimeErrors.push(error.message));const response=await page.goto(origin+path,{waitUntil:'domcontentloaded'});const initial=await response.text();assert.ok(initial.includes('window.NCN_NOTICE_SNAPSHOT'),file+' server notice snapshot');assert.ok(initial.includes(built?'/assets/ncn-built/styles/':'site.css?v=20261025-sync-1')||file.includes('flappy-bird'),file+' final stylesheet');await page.waitForFunction(()=>window.NCNAccount?.state.ready);await paint(page);
   for(const width of [1280,390]){await page.setViewportSize({width,height:844});await paint(page);await fits(page);
    if(width===1280&&await page.evaluate(()=>document.body.classList.contains('ncn-scroll-ready')&&
     !document.querySelector('dialog[open]')&&document.documentElement.scrollHeight-innerHeight>80&&

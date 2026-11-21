@@ -40,7 +40,7 @@ const open=async(ctx,path)=>{const p=await ctx.newPage();p.on('pageerror',e=>err
 const paint=p=>p.evaluate(()=>new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done))));
 const check=async(name,fn)=>{await fn();results.push({name,ok:true});console.log('PASS '+name);};
 const style=(p,selector)=>p.locator(selector).first().evaluate(el=>{const s=getComputedStyle(el);return {width:s.outlineWidth,outlineStyle:s.outlineStyle,color:s.borderTopColor,borderWidth:s.borderTopWidth,radius:s.borderTopLeftRadius,offset:s.outlineOffset,blur:s.backdropFilter,shadow:s.boxShadow,background:s.backgroundColor};});
-const routes=[['/','#ncn-topbar'],['/thu-vien/','#ncn-topbar'],['/2024/01/in-fifo.html','.fifo-card'],['/2024/02/kiem-quy.html','#ncn-topbar'],['/arcade/','.ncn-scoreboard'],['/2022/07/phieu-tu-van-tra-gop.html','#ncn-topbar']];
+const routes=[['/','#ncn-topbar'],['/tin-tuc-cong-nghe/','#ncn-topbar'],['/2024/01/in-fifo.html','.fifo-card'],['/2024/02/kiem-quy.html','#ncn-topbar'],['/arcade/','.ncn-scoreboard'],['/2022/07/phieu-tu-van-tra-gop.html','#ncn-topbar']];
 try{
  await check('the original bright glass borders are visible without a second frame in either theme or viewport',async()=>{
   for(const width of [1280,390]){const ctx=await context(width);

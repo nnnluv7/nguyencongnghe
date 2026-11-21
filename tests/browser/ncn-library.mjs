@@ -14,7 +14,7 @@ const aliases={'/p/sticker.html':'/sticker/','/p/popup-a7.html':'/popup-a7/','/p
 function catalogueRows(items){
   const seen=new Set();return items.map(row=>({...row,link:aliases[row.link]||row.link})).filter(row=>{
     const path=new URL(row.link,'https://nguyencongnghe.com').pathname.replace(/\/index\.html$/,'/');
-    const key=(aliases[path]||path).replace(/\/$/,'');if(seen.has(key)||key==='/thu-vien')return false;seen.add(key);return true;
+    const key=(aliases[path]||path).replace(/\/$/,'');if(seen.has(key)||key==='/tin-tuc-cong-nghe')return false;seen.add(key);return true;
   });
 }
 const baselineRows=catalogueRows(catalogue);
@@ -67,7 +67,7 @@ async function fits(){
 const darkExamples=new Set(['/2021/10/wps-office.html','/2020/11/visual-c-aio-v52-bo-thu-vien-day-du-2020.html','/2024/06/leica-lux-ra-mat-tren-iphone-gia-1-trieu-8-cho-nguoi-dung-tan-huong-may-anh-cua-nha-giau.html','/2024/01/word-counter-online-dem-so-tu-trong-mot-doan-van-ban.html','/2024/01/seo-toi-uu-link-bai-viet-va-link-hinh-anh.html','/2022/10/bhrv.html','/2024/05/bao-hiem-1-1.html','/2024/01/be-tap-lam-toan.html','/p/sm.html','/p/privacy-policy.html']);
 try{
   await check('library search, filter and page count retain all publicly visible entries',async()=>{
-    await open('/thu-vien/');
+    await open('/tin-tuc-cong-nghe/');
     if(production){const snapshot=await page.evaluate(()=>window.CG_CATALOG);assert.ok(Array.isArray(snapshot));rows=catalogueRows(snapshot);}
     if(rows.length)await page.waitForSelector('#ncn-library-results a');else await page.locator('#ncn-library-results .ncn-empty').waitFor();
     assert.match(await page.locator('#ncn-library-count').innerText(),new RegExp('^'+rows.length+' nội dung'));
