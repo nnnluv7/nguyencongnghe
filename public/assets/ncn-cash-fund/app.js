@@ -1,5 +1,6 @@
 import { ensureSession, onAuthChange } from '../ncn-identity-client.js';
 import { CASH_FUND_TYPES, NOTE_MAX_LENGTH, vietnamDate } from './shared.js';
+import { erpInputText } from '../ncn-cash/core.js';
 
 const endpoint = '/.netlify/functions/ncn-cash-fund';
 const formatter = new Intl.NumberFormat('vi-VN');
@@ -36,6 +37,41 @@ function mount() {
   let active = null;
   let saving = false;
   let pending = null;
+  const amountInput = fields.amount;
+  const amountCharacters = /^[0-9., \u00a0\u202f]*$/;
+  let acceptedAmount;
+
+  function rememberAmount() {
+    acceptedAmount = {
+      value: amountInput.value, start: amountInput.selectionStart, end: amountInput.selectionEnd
+    };
+  }
+
+  function formatAmountInput(event) {
+    const raw = amountInput.value;
+    try {
+      if (!amountCharacters.test(raw)) throw new Error('Invalid amount characters');
+      const editing = event.inputType?.startsWith('delete') ||
+        event.inputType === 'insertText' && /^\d+$/.test(event.data ?? '');
+      const formatted = erpInputText(editing ? raw.replaceAll(',', '') : raw);
+      const caret = amountInput.selectionStart ?? raw.length;
+      const digitsBeforeCaret = raw.slice(0, caret).replace(/\D/g, '').length;
+      amountInput.value = formatted;
+      let position = 0, digits = 0;
+      while (position < formatted.length && digits < digitsBeforeCaret) {
+        if (/\d/.test(formatted[position])) digits++;
+        position++;
+      }
+      if (event.inputType === 'deleteContentForward' && formatted[position] === ',') position++;
+      amountInput.setSelectionRange(position, position);
+      rememberAmount();
+    } catch {
+      amountInput.value = acceptedAmount.value;
+      amountInput.setSelectionRange(acceptedAmount.start, acceptedAmount.end);
+    }
+  }
+
+  rememberAmount();
 
   function message(id, text, error = false) {
     const node = $(id);
@@ -56,6 +92,7 @@ function mount() {
     if (dialog.open) dialog.close();
     pending = null;
     form.reset();
+    rememberAmount();
     filters.reset();
     entries.replaceChildren();
     $('balance').textContent = '';
@@ -183,6 +220,7 @@ function mount() {
     if (!active?.authorized || active.loading) return;
     pending = null;
     form.reset();
+    rememberAmount();
     fields.type.value = button.dataset.cfReceipt;
     fields.date.max = fields.date.value = vietnamDate();
     message('receipt-message', '');
@@ -200,10 +238,29 @@ function mount() {
   more.addEventListener('click', () => {
     if (active?.authorized && active.next) loadHistory(active, true);
   });
-  fields.amount.addEventListener('change', () => {
-    const amount = readAmount(fields.amount.value);
-    if (amount !== null) fields.amount.value = formatter.format(amount);
+  amountInput.addEventListener('beforeinput', event => {
+    rememberAmount();
+    if (event.data != null && !amountCharacters.test(event.data)) event.preventDefault();
   });
+  for (const type of ['paste', 'drop']) amountInput.addEventListener(type, event => {
+    const text = (event.clipboardData || event.dataTransfer)?.getData('text/plain');
+    if (text == null) return;
+    try {
+      if (!amountCharacters.test(text)) throw new Error('Invalid amount characters');
+      erpInputText(text);
+      if (type === 'paste') {
+        event.preventDefault();
+        rememberAmount();
+        const digits = text.replace(/\D/g, '');
+        amountInput.setRangeText(digits, amountInput.selectionStart, amountInput.selectionEnd, 'end');
+        formatAmountInput({ inputType: 'insertText', data: digits });
+      }
+    } catch {
+      event.preventDefault();
+    }
+  });
+  amountInput.addEventListener('input', formatAmountInput);
+  amountInput.addEventListener('change', formatAmountInput);
 
   form.addEventListener('submit', async event => {
     event.preventDefault();
