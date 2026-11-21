@@ -34,7 +34,7 @@ export function mountAdminGate({host,doc=document,win=window,fetcher=fetch,ident
     if(disposed||loadingUser===owner||loadedUser&&user?.admin&&loadedUser===user.id)return;
     loadingUser=owner;
     const generation=++epoch;abort?.abort();const controller=new AbortController();abort=controller;
-    disposeApp();disposeApp=()=>{};loadedUser=null;host.innerHTML='<header class="na-heading"><h1>'+(host.dataset.view==='library'?'Quản lý Thư viện':'Quản trị Admin')+'</h1></header>';
+    disposeApp();disposeApp=()=>{};loadedUser=null;host.innerHTML='<header class="na-heading"><h1>'+(host.dataset.view==='library'?'Quản lý Tin tức công nghệ':'Quản trị Admin')+'</h1></header>';
     let timedOut=false;const timer=win.setTimeout(()=>{timedOut=true;controller.abort();},20000);
     try{
       const session=await identity.ensureSession();if(disposed||generation!==epoch)return;

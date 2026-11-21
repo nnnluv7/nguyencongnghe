@@ -46,7 +46,7 @@ for(const [source,resource]of Object.entries(manifest.catalogues||{})){
  }
 }
 const themeSets=[];
-for(const path of ['/index.html','/thu-vien/index.html','/sticker/index.html','/arcade/index.html','/pikachu/index.html']){
+for(const path of ['/index.html','/tin-tuc-cong-nghe/index.html','/sticker/index.html','/arcade/index.html','/pikachu/index.html']){
  const html=await readFile(root+path,'utf8');themeSets.push(new Set([...html.matchAll(/href="(\/assets\/ncn-built\/styles\/[^"]+)"/g)].map(x=>x[1])));
 }
 assert.ok([...themeSets[0]].some(path=>themeSets.every(set=>set.has(path))),'Every portal, tool and game must reuse the same immutable NCN CSS');

@@ -89,7 +89,7 @@
 
 [functions."ncn-library-page"]
   node_bundler = "esbuild"
-  included_files = ["netlify/lib/ncn-library/**", "netlify/lib/ncn-news/**", "netlify/lib/ncn-shell/assets.generated.json", "public/index.html", "public/thu-vien/index.html", "public/20*/*/*.html", "public/p/*.html"]
+  included_files = ["netlify/lib/ncn-library/**", "netlify/lib/ncn-news/**", "netlify/lib/ncn-shell/assets.generated.json", "public/index.html", "public/tin-tuc-cong-nghe/index.html", "public/20*/*/*.html", "public/p/*.html"]
   external_node_modules = ["@netlify/blobs"]
 # END NCN LIBRARY ADMIN
 

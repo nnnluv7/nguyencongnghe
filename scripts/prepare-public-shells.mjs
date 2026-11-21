@@ -26,7 +26,7 @@ for(const file of [...await files('public'),'netlify/lib/ncn-library/article-she
  if(html.includes('id="ncn-home"')||html.includes('id="ncn-library"'))html=renderPublicHTML(html,rows).replace(/<script>window\.NCN_NOTICE_SNAPSHOT=[\s\S]*?<\/script>/,'');
 
  const path=relative('public',file).replaceAll('\\','/');
- if(file.startsWith('public/')&&!managed.has(path)&&!['index.html','thu-vien/index.html'].includes(path)){
+ if(file.startsWith('public/')&&!managed.has(path)&&!['index.html','tin-tuc-cong-nghe/index.html'].includes(path)){
   pages['/'+path]=path;
   if(path.endsWith('/index.html')){const route='/'+path.slice(0,-10);pages[route]=path;pages[route.slice(0,-1)]=path;}
   else if(path.endsWith('.html')){const route='/'+path.slice(0,-5);pages[route]=path;pages[route+'/']=path;}

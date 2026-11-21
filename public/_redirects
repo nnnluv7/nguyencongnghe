@@ -1,7 +1,9 @@
 # BEGIN NCN LIBRARY CMS: enforce article state before returning HTML.
 /  /.netlify/functions/ncn-library-page?view=home  200!
 /index.html  /.netlify/functions/ncn-library-page?view=home  200!
-/thu-vien/  /.netlify/functions/ncn-library-page?view=index  200!
+/thu-vien  /tin-tuc-cong-nghe/  301!
+/thu-vien/  /tin-tuc-cong-nghe/  301!
+/tin-tuc-cong-nghe/  /.netlify/functions/ncn-library-page?view=index  200!
 /bai-viet/:slug/  /.netlify/functions/ncn-library-page?slug=:slug  200!
 /bai-viet/:slug  /.netlify/functions/ncn-library-page?slug=:slug  200!
 /2024/06/copilot-plus-cua-windows-11-bi-be-khoa-chay-muot-ma-tren-cac-may-doi-cu.html  /.netlify/functions/ncn-library-page?legacy=legacy-270a53bdf7e9ead6  200!
@@ -44,7 +46,8 @@
 /p/contact-us.html  /.netlify/functions/ncn-library-page?legacy=legacy-6c2dbae3d946518f  200!
 /p/about.html  /.netlify/functions/ncn-library-page?legacy=legacy-fb4086afddc9aa72  200!
 /p/sm.html  /.netlify/functions/ncn-library-page?legacy=legacy-b1a4f4e54bd52f43  200!
-/thu-vien/index.html  /.netlify/functions/ncn-library-page?view=index  200!
+/thu-vien/index.html  /tin-tuc-cong-nghe/  301!
+/tin-tuc-cong-nghe/index.html  /tin-tuc-cong-nghe/  301!
 /2024/06/copilot-plus-cua-windows-11-bi-be-khoa-chay-muot-ma-tren-cac-may-doi-cu  /.netlify/functions/ncn-library-page?legacy=legacy-270a53bdf7e9ead6  200!
 /2024/06/copilot-plus-cua-windows-11-bi-be-khoa-chay-muot-ma-tren-cac-may-doi-cu/  /.netlify/functions/ncn-library-page?legacy=legacy-270a53bdf7e9ead6  200!
 /2024/06/microsoft-tien-gan-den-giai-doan-loai-bo-nhung-thanh-phan-quen-thuoc-tren-windows  /.netlify/functions/ncn-library-page?legacy=legacy-9986ad8449616f9d  200!

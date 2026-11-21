@@ -155,7 +155,7 @@ try{
   await check('the same ordinary account cannot open Giờ Vàng through its direct URL',async()=>{
     await gvgs.waitForFunction(()=>document.getElementById('vip-gate').dataset.ncnGateState==='member');assert.equal(await gvgs.locator('[data-private-fixture]').count(),0);
   });
-  const library=await open(context,'/thu-vien/?q=VIP');
+  const library=await open(context,'/tin-tuc-cong-nghe/?q=VIP');
   await check('ordinary accounts can discover VIP tools in the library',async()=>{
     await library.waitForFunction(()=>document.getElementById('ncn-library-query').value==='VIP');
     assert.equal(await library.locator('#ncn-library-results a[href="/in-event/"],#ncn-library-results a[href="/in-gvgs/"]').count(),2);

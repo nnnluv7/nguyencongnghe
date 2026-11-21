@@ -13,14 +13,14 @@ for(const path of [...await pages('public'),'netlify/lib/ncn-library/article-she
  if(hub)html=html.replace(/NCN Arcade · \d+ game/g,()=>hub.title).replace(/Một khu giải trí, một hồ sơ chung\. Chơi \d+ game và so sánh kỷ lục trên bảng điểm cộng đồng\./g,()=>hub.description);
  // Existing static menus remain complete even before any module downloads.
  html=html.replace(/(<nav id="ncn-(?:navigation|game-nav)"[^>]*>)([\s\S]*?)(<\/nav>)/g,(_,open,content,close)=>{
-  const template=content.match(/<a\b[^>]*href="\/thu-vien\/"[^>]*>[\s\S]*?<\/a>/)?.[0];
+  const template=content.match(/<a\b[^>]*href="\/(?:thu-vien|tin-tuc-cong-nghe)\/"[^>]*>[\s\S]*?<\/a>/)?.[0];
   if(!template)throw Error('Missing library link in '+path);
   let next=content;
   for(const game of games){
    if(next.includes('href="'+game.href+'"'))continue;
    const fish='<ellipse cx="13" cy="12" rx="8" ry="6"/><path d="m5 12-4-5v10ZM17 10h.01M11 6l2-3 3 4M10 17l3 4 3-4"/>';
    const icon=game.icon==='fish'?fish:'<path d="m12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5Z"/>';
-   let link=template.replace('href="/thu-vien/"','href="'+game.href+'"').replace(/Thư viện bài viết/g,game.title).replace(/ aria-current="page"/g,'').replace(/<svg[\s\S]*?<\/svg>/,'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+icon+'</svg>');
+   let link=template.replace(/href="\/(?:thu-vien|tin-tuc-cong-nghe)\/"/,'href="'+game.href+'"').replace(/Thư viện bài viết|Tin tức công nghệ/g,game.title).replace(/ aria-current="page"/g,'').replace(/<svg[\s\S]*?<\/svg>/,'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+icon+'</svg>');
    if(path==='public'+game.href+'index.html')link=link.replace('<a ','<a aria-current="page" ');
    next=next.replace(template,link+template);
   }

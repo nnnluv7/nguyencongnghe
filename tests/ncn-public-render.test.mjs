@@ -5,6 +5,7 @@ import {parseGenkRSS,syncGenkNews,mergeNews,GENK_RSS} from '../netlify/lib/ncn-n
 import {renderPublicHTML} from '../netlify/lib/ncn-public-render.mjs';
 import {createSitePageHandler} from '../netlify/lib/ncn-site-page.mjs';
 import {createLibraryPageHandler} from '../netlify/lib/ncn-library-page.mjs';
+import {trimPublicCopy} from '../netlify/lib/ncn-public-copy.mjs';
 import {publicCatalog} from '../netlify/lib/ncn-library-api.mjs';
 import {memoryStories} from './fixtures/ncn-stories.mjs';
 
@@ -49,14 +50,39 @@ test('the live homepage keeps the logo and removes redundant copy before inserti
   assert.ok(html.includes(notice));
 });
 test('library source, search, category and page query have matching initial server results',async()=>{
-  const html=renderPublicHTML(await read('public/thu-vien/index.html'),mergeNews(rows,news),{query:new URLSearchParams('source=genk&page=2'),now});
+  const html=renderPublicHTML(await read('public/tin-tuc-cong-nghe/index.html'),mergeNews(rows,news),{query:new URLSearchParams('source=genk&page=2'),now});
   const content=html.match(/<!-- NCN:results:start -->([\s\S]*?)<!-- NCN:results:end -->/)[1];assert.equal((content.match(/class="ncn-article-card"/g)||[]).length,12);assert.equal((content.match(/data-ncn-source="genk"/g)||[]).length,12);assert.ok(html.includes('40 nội dung'));assert.ok(html.includes('Trang 2 / 4'));
   assert.equal(html.includes('id="ncn-library-prev" disabled'),false);
-  const empty=renderPublicHTML(await read('public/thu-vien/index.html'),mergeNews(rows,news),{query:new URLSearchParams('q=%3Cscript%3E&source=ncn'),now});assert.ok(empty.includes('0 nội dung phù hợp'));assert.ok(empty.includes('value="&lt;script&gt;"'));
+  const empty=renderPublicHTML(await read('public/tin-tuc-cong-nghe/index.html'),mergeNews(rows,news),{query:new URLSearchParams('q=%3Cscript%3E&source=ncn'),now});assert.ok(empty.includes('0 nội dung phù hợp'));assert.ok(empty.includes('value="&lt;script&gt;"'));
+});
+test('technology news navigation is consistent while article content and admin routes stay intact',async()=>{
+  const handler=createLibraryPageHandler({seed,state:async()=>({catalog:rows}),homeShell:()=>read('public/index.html'),indexShell:()=>read('public/tin-tuc-cong-nghe/index.html')});
+  for(const path of ['/','/tin-tuc-cong-nghe/']){
+    const response=await handler(new Request('https://ncn.test'+path)),html=await response.text();
+    assert.equal(response.status,200);
+    assert.match(html,/<a\b[^>]*href="\/tin-tuc-cong-nghe\/"[^>]*>[\s\S]*?Tin tức công nghệ/);
+    assert.doesNotMatch(html,/href="\/thu-vien(?:\/|[?"#])/);
+    if(path!=='/'){
+      assert.match(html,/<title>Tin tức công nghệ<\/title>/);
+      assert.match(html,/<h1>Tin tức công nghệ<\/h1>/);
+      assert.match(html,/rel="canonical" href="https:\/\/nguyencongnghe.com\/tin-tuc-cong-nghe\/"/);
+    }
+  }
+  const copy='<a href="/thu-vien/?q=pin#results">Xem Thư viện ↗</a><a href="/admin/thu-vien/">Quản trị</a><p>Bộ thư viện C++</p>';
+  assert.equal(trimPublicCopy(copy),'<a href="/tin-tuc-cong-nghe/?q=pin#results">Xem Tin tức công nghệ ↗</a><a href="/admin/thu-vien/">Quản trị</a><p>Bộ thư viện C++</p>');
+});
+test('legacy news URLs redirect with search filters before reading public state',async()=>{
+  const handler=createLibraryPageHandler({state:async()=>{throw Error('Redirects must not wait for public state');}});
+  for(const method of ['GET','HEAD'])for(const path of ['/thu-vien','/thu-vien/','/thu-vien/index.html','/tin-tuc-cong-nghe','/tin-tuc-cong-nghe/index.html']){
+    const response=await handler(new Request('https://ncn.test'+path+'?q=pin&source=genk&page=2',{method}));
+    assert.equal(response.status,301);
+    assert.equal(response.headers.get('Location'),'/tin-tuc-cong-nghe/?q=pin&source=genk&page=2');
+    assert.equal(await response.text(),'');
+  }
 });
 test('public library and featured cards include discoverable VIP tools before login',async()=>{
   const vipRows=['/in-event/','/in-gvgs/index.html'].map((link,i)=>({link,title:'Private VIP '+i,labels:['Private VIP'],featured:true,datetime:'2026-11-01T00:00:00Z'}));
-  const html=renderPublicHTML(await read('public/thu-vien/index.html'),[...vipRows,...rows],{query:new URLSearchParams('q=Private+VIP')});
+  const html=renderPublicHTML(await read('public/tin-tuc-cong-nghe/index.html'),[...vipRows,...rows],{query:new URLSearchParams('q=Private+VIP')});
   for(const name of ['results','labels'])assert.match(html.match(new RegExp('<!-- NCN:'+name+':start -->([\\s\\S]*?)<!-- NCN:'+name+':end -->'))[1],/Private VIP/);
   assert.ok(html.includes('2 nội dung phù hợp'));
 });

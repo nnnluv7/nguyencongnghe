@@ -1517,8 +1517,8 @@ window.CG_CATALOG = [
     "isPage": true
   },
   {
-    "title": "Thư viện",
-    "link": "/thu-vien/",
+    "title": "Tin tức công nghệ",
+    "link": "/tin-tuc-cong-nghe/",
     "thumbnail": {
       "src": "/assets/ncn-theme/logo.png",
       "type": "image"
@@ -1529,7 +1529,7 @@ window.CG_CATALOG = [
     "datetime": "",
     "summary": "Tra cứu bài viết, hướng dẫn và công cụ hiện có.",
     "labels": [],
-    "category": "Thư viện",
+    "category": "Tin tức công nghệ",
     "isPage": true
   },
   {
