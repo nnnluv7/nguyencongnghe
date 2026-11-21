@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {quizProfile} from '../public/assets/ncn-account.js';
 import {canUseVip,isVipToolURL} from '../public/assets/ncn-vip-access.js';
+import {startAccountPrefetch,takeAccountPrefetch} from '../public/assets/ncn-account-prefetch.js';
 
 test('VIP visibility requires a verified direct grant and excludes old account and payment grants',()=>{
   for(const user of [null,{}, {id:'ordinary'}, {id:'old',vip:true}, {id:'old',vip:true,vipSource:'account'}, {id:'paid',vip:true,vipSource:'payment'}, {vip:true,vipSource:'manual'}, {id:'revoked',vip:false,vipSource:'manual'}])assert.equal(canUseVip(user),false);
@@ -49,4 +50,37 @@ test('logout removes the display hint and blocked storage never creates a sessio
   const blocked={getItem(){throw Error('blocked');},setItem(){throw Error('blocked');},removeItem(){throw Error('blocked');}};
   assert.doesNotThrow(()=>saveDisplayProfile(blocked,{id:'a',email:'a@example.test'},now));
   assert.equal(readDisplayProfile(blocked,cookie('a'),now),null);
+});
+
+const currentCookie=(subject='prefetch-member',expires=Date.now()+3600000)=>'nf_jwt=fixture.'+Buffer.from(JSON.stringify({sub:subject,exp:Math.floor(expires/1000)})).toString('base64url')+'.fixture';
+const prefetchWindow=(fetcher,hash='')=>({fetch:fetcher,location:{hash},atob,AbortSignal});
+test('the early server check is reused exactly once and never stores an authenticated profile',async()=>{
+  let calls=0;
+  const response=Response.json({user:{id:'verified-on-server'}});
+  const win=prefetchWindow((url,options)=>{
+    calls++;assert.equal(url,'/.netlify/functions/ncn-billing?route=me');
+    assert.equal(options.credentials,'same-origin');assert.equal(options.cache,'no-store');
+    return Promise.resolve(response);
+  }),doc={cookie:currentCookie()};
+  // The head script is serialized, so it must have no module-scope dependencies.
+  const start=Function('return ('+startAccountPrefetch.toString()+')')();
+  start(win,doc);start(win,doc);assert.equal(calls,1);
+  assert.deepEqual(Object.keys(win.NCNAccountPrefetch).sort(),['response','token']);
+  assert.equal(await takeAccountPrefetch(win,doc),response);
+  assert.equal(takeAccountPrefetch(win,doc),null);assert.equal(win.NCNAccountPrefetch,undefined);
+});
+test('guests, expiring sessions and account callbacks do not start an early account request',()=>{
+  let calls=0;
+  for(const [cookie,hash] of [['',''],['nf_jwt=broken',''],[currentCookie('expired',Date.now()-1000),''],[currentCookie('near-expiry',Date.now()+30000),''],[currentCookie(),'#recovery_token=fixture']]){
+    const win=prefetchWindow(()=>{calls++;return Promise.resolve(Response.json({}));},hash);
+    startAccountPrefetch(win,{cookie});assert.equal(win.NCNAccountPrefetch,undefined);
+  }
+  assert.equal(calls,0);
+});
+test('logout or a changed session discards the earlier account response',()=>{
+  for(const cookie of ['',currentCookie('other')]){
+    const win=prefetchWindow(()=>Promise.resolve(Response.json({user:{id:'old-user'}}))),doc={cookie:currentCookie()};
+    startAccountPrefetch(win,doc);doc.cookie=cookie;
+    assert.equal(takeAccountPrefetch(win,doc),null);assert.equal(win.NCNAccountPrefetch,undefined);
+  }
 });

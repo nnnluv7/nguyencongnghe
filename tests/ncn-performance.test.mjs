@@ -13,6 +13,8 @@ const html='<html><head><link rel="stylesheet" href="/base.css?v=1"><link rel="s
 const manifest={styles:{[stylesheetKey(html)]:'/assets/ncn-built/styles/hash.css'},classic:{'/legacy.js':'/assets/ncn-built/legacy-hash.js'},modules:{'/theme.js':'/assets/ncn-built/theme-hash.js'},imports:{'/account.js':'/assets/ncn-built/account-hash.js','/account.js?v=old':'/assets/ncn-built/account-hash.js'},dependencies:{'/assets/ncn-built/theme-hash.js':['/assets/ncn-built/common-hash.js']}};
 test('optimized HTML discovers dependency preloads up front, retains the editor and ordered classic execution',()=>{
   const result=optimizePublicHTML(html,manifest);
+  assert.equal((result.match(/id="ncn-account-prefetch"/g)||[]).length,1);
+  assert.ok(result.indexOf('id="ncn-account-prefetch"')<result.indexOf('rel="modulepreload"'));
   assert.ok(result.includes('<div id="editor">Original input</div>'));
   assert.match(result,/<script defer src="\/assets\/ncn-built\/legacy-hash.js"/);
   assert.equal((result.match(/rel="stylesheet"/g)||[]).length,1);

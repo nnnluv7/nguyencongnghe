@@ -71,12 +71,31 @@ try{
    assert.deepEqual(geometry[1],geometry[0],theme+' '+width+' account action geometry changed');
   }baseline=false;
  });
- await check('the photographed ERP field gains a fractional shaded edge, while cash table cells stay flat',async()=>{
+ await check('ERP and all denomination inputs have a shaded edge without changing their geometry',async()=>{
   const boxes=[];
   for(const old of [true,false]){baseline=old;const ctx=await context(390,2),p=await open(ctx,'/2024/02/kiem-quy.html');await paint(p);const s=await style(p,'#cq-erp');boxes.push(await p.locator('#cq-erp').boundingBox());assert.equal(s.radius,'12px');assert.equal(s.outlineStyle,'none');
-   if(!old){assert.match(s.shadow,/0\.5px/);assert.match(s.shadow,/rgba\(24, 44, 64, 0\.18\)/);assert.equal((await style(p,'.cq-qty')).shadow,'none');assert.equal((await style(p,'.cq-qty')).borderWidth,'0px');}
+   if(!old){assert.match(s.shadow,/0\.5px/);assert.match(s.shadow,/rgba\(24, 44, 64, 0\.18\)/);for(const input of await p.locator('.cq-qty').all()){const shadow=await input.evaluate(el=>getComputedStyle(el).boxShadow);assert.match(shadow,/inset/);assert.match(shadow,/0\.5px/);}assert.equal((await style(p,'.cq-qty')).borderWidth,'0px');assert.equal((await style(p,'.cq-qty')).radius,'8px');}
    await p.locator('.cq-simple-erp').screenshot({path:out+'/cash-ERP-'+(old?'before':'after')+'.png'});if(!old)await p.screenshot({path:out+'/cash-phone.jpg',fullPage:true,quality:85});await ctx.close();
   }baseline=false;assert.deepEqual(boxes[1],boxes[0]);
+ });
+ await check('cash fund, audio and calculator fields share the same edge in both themes and widths',async()=>{
+  const fields=[
+   ['/tien-quy-sieu-thi/','#ncn-cash-fund-app :is(input,select,textarea)'],
+   ['/thu-audio/','#ncn-audio-app :is(input,select,textarea)'],
+   ['/2025/05/tu-van.html','#ncn-insurance-app :is(input[type=text],select)'],
+   ['/2024/04/qrcode-generator-tao-ma-qrcode.html','#ncn-qr-app input[type=text]']
+  ];
+  for(const width of [1280,390]){const ctx=await context(width);
+   for(const [path,selector] of fields){const p=await open(ctx,path);
+    for(const theme of ['light','dark']){
+     await p.evaluate(theme=>document.documentElement.dataset.ncnTheme=theme,theme);
+     const controls=p.locator(selector+':not([type=hidden]):not([type=checkbox]):not([type=radio]):not([type=file]):not(:focus)');
+     assert.ok(await controls.count()>0,path+' has form fields');
+     for(const control of await controls.all())assert.notEqual(await control.evaluate(el=>getComputedStyle(el).boxShadow),'none',path+' '+theme+' '+await control.getAttribute('name'));
+     assert.ok(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),path+' '+width);
+    }await p.close();
+   }await ctx.close();
+  }
  });
  await check('keyboard focus and selected states remain clear while text actions and inputs gain no extra frame',async()=>{
   const ctx=await context(),p=await open(ctx,'/2024/01/in-fifo.html');await p.keyboard.press('Tab');await p.locator('#fifo-scan').focus();const focused=await style(p,'#fifo-scan');assert.equal(focused.width,'3px');assert.equal(focused.offset,'3px');await p.locator('#fifo-scan').blur();await p.mouse.move(0,0);
