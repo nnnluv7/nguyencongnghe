@@ -15,6 +15,7 @@ export function attachPrintViewport({stage,frame,sheet,controls,doc=document,win
   if(!stage||(!frame&&!sheet)||stage.dataset.ncnViewport)return;
   const originalWidth=sheet?Math.max(sheet.scrollWidth,sheet.offsetWidth,parseFloat(win.getComputedStyle(sheet).width)||0):0;
   stage.dataset.ncnViewport='true';
+  if(frame)stage.dataset.ncnFrameViewport='true';
   const canvas=frame?(stage.querySelector('.ncn-print-canvas')||doc.createElement('div')):sheet.parentElement;
   canvas.classList.add('ncn-print-canvas');
   if(frame&&!canvas.contains(frame)){stage.append(canvas);canvas.append(frame);}
@@ -33,10 +34,11 @@ export function attachPrintViewport({stage,frame,sheet,controls,doc=document,win
     stage.dataset.ncnZoomed=String(zoom>1);
     if(frame){
       if(!naturalWidth)measureFrame();
-      const width=naturalWidth+18; // Reserve the iframe's vertical scrollbar without clipping the paper.
-      const ratio=stage.clientWidth/width*zoom;
+      const width=Math.ceil(naturalWidth+18); // Reserve the iframe's vertical scrollbar without clipping the paper.
+      const renderedWidth=Math.floor(stage.clientWidth*zoom);
+      const ratio=renderedWidth/width;
       const height=stage.clientHeight||600;
-      canvas.style.width=width*ratio+'px';canvas.style.height=height+'px';
+      canvas.style.width=renderedWidth+'px';canvas.style.height=height+'px';
       frame.style.width=width+'px';frame.style.height=height/ratio+'px';frame.style.transform=`scale(${ratio})`;
     }else{
       if(!naturalWidth)naturalWidth=Math.max(sheet.scrollWidth,sheet.offsetWidth,parseFloat(win.getComputedStyle(sheet).width)||0)||794;
@@ -54,7 +56,7 @@ export function attachPrintViewport({stage,frame,sheet,controls,doc=document,win
   const add=(text,label,action)=>{const button=doc.createElement('button');button.type='button';button.textContent=text;button.setAttribute('aria-label',label);button.addEventListener('click',action);toolbar.append(button);handlers.push(()=>button.removeEventListener('click',action));return button;};
   const less=add('−','Thu nhỏ bản in',()=>{zoom=Math.max(1,zoom-.25);scale();});
   const more=add('+','Phóng to bản in',()=>{zoom=Math.min(4,zoom+.25);scale();});
-  const fit=add('Vừa trang','Xem vừa trang',()=>{zoom=1;scale();});
+  const fit=add('Vừa trang','Xem vừa trang',()=>{zoom=1;scale();stage.scrollLeft=0;});
   if(!controls)stage.before(toolbar);
   let position={x:0,y:0},restoring=false,scrollWindow=null;
   const remember=()=>{if(!restoring&&scrollWindow)position={x:scrollWindow.scrollX,y:scrollWindow.scrollY};};
