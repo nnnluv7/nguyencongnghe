@@ -80,24 +80,24 @@ if(typeof window!=='undefined'&&typeof document!=='undefined')installAppearance(
 <div id="outer-wrapper">
 
 <main id="feed-view" class="ncn-ui">
-  <div id="ncn-cash-fund-app">
+  <div id="ncn-cash-fund-app" data-ncn-access-phase="pending" data-ncn-access-endpoint="/.netlify/functions/ncn-cash-fund">
     <h1>Tiền quỹ Siêu Thị</h1>
 
-    <section id="cf-access" class="cf-panel cf-access" aria-label="Truy cập sổ quỹ">
-      <p id="cf-access-message" role="status">Đang kiểm tra quyền xem sổ quỹ…</p>
+    <section id="cf-access" class="cf-panel cf-access" hidden aria-label="Truy cập sổ quỹ">
+      <p id="cf-access-message" role="status" hidden></p>
       <button type="button" id="cf-login" class="cf-primary" data-ncn-account-open="login" hidden>Đăng nhập</button>
       <button type="button" id="cf-retry" class="cf-primary" hidden>Thử lại</button>
     </section>
 
-    <div id="cf-ledger" hidden>
+    <div id="cf-ledger" inert>
       <section class="cf-panel cf-summary" aria-labelledby="cf-balance-label">
         <div>
           <h2 id="cf-balance-label">Số dư quỹ</h2>
-          <output id="cf-balance" aria-labelledby="cf-balance-label"></output>
+          <output id="cf-balance" aria-labelledby="cf-balance-label">—</output>
         </div>
         <div class="cf-actions">
-          <button type="button" class="cf-primary" data-cf-receipt="in"><span aria-hidden="true">+</span> Thu tiền quỹ</button>
-          <button type="button" class="cf-secondary" data-cf-receipt="out"><span aria-hidden="true">−</span> Chi tiền quỹ</button>
+          <button type="button" class="cf-primary" data-cf-receipt="in" disabled><span aria-hidden="true">+</span> Thu tiền quỹ</button>
+          <button type="button" class="cf-secondary" data-cf-receipt="out" disabled><span aria-hidden="true">−</span> Chi tiền quỹ</button>
         </div>
       </section>
 
@@ -111,7 +111,7 @@ if(typeof window!=='undefined'&&typeof document!=='undefined')installAppearance(
             <option value="in">Thu tiền quỹ</option>
             <option value="out">Chi tiền quỹ</option>
           </select></label>
-          <button type="submit" class="cf-primary">Tìm</button>
+          <button type="submit" class="cf-primary" disabled>Tìm</button>
         </form>
         <p id="cf-history-message" class="cf-message" role="status" hidden></p>
         <table id="cf-history" aria-labelledby="cf-history-title" hidden>

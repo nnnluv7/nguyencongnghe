@@ -1,6 +1,8 @@
 import { ensureSession, onAuthChange } from '../ncn-identity-client.js';
 import { CASH_FUND_TYPES, NOTE_MAX_LENGTH, vietnamDate } from './shared.js';
 import { erpInputText } from '../ncn-cash/core.js';
+import { setAccessView } from '../ncn-access-view.js';
+import { takeToolPrefetch } from '../ncn-account-prefetch.js';
 
 const endpoint = '/.netlify/functions/ncn-cash-fund';
 const formatter = new Intl.NumberFormat('vi-VN');
@@ -97,6 +99,7 @@ function mount() {
     entries.replaceChildren();
     $('balance').textContent = '';
     history.hidden = more.hidden = ledger.hidden = true;
+    setAccessView({root,gate:access,content:ledger},'blocked');
     access.hidden = !text;
     message('access-message', text);
     $('login').hidden = action !== 'login';
@@ -111,7 +114,8 @@ function mount() {
   async function request(scope, { query, receipt } = {}) {
     const url = new URL(endpoint, location.origin);
     if (query) url.search = query.toString();
-    const response = await fetch(url, {
+    const prefetched = !receipt && query && ![...query.values()].some(Boolean) && takeToolPrefetch(window,document,endpoint);
+    const response = await (prefetched || fetch(url, {
       credentials: 'same-origin', cache: 'no-store',
       signal: AbortSignal.any([scope.controller.signal, AbortSignal.timeout(18000)]),
       ...(receipt ? {
@@ -119,7 +123,7 @@ function mount() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(receipt)
       } : {})
-    });
+    }));
     const data = await response.json().catch(() => null);
     if (!response.ok || !data) {
       throw Object.assign(new Error(data?.error || connectionError), { status: response.status });
@@ -179,6 +183,7 @@ function mount() {
       if (!append) scope.filters = query;
       access.hidden = true;
       ledger.hidden = false;
+      setAccessView({root,gate:access,content:ledger},'ready');
       const empty = query.get('from') || query.get('to') || query.get('type')
         ? 'Chưa có phiếu phù hợp với bộ lọc.' : 'Chưa có phiếu thu chi.';
       message('history-message', saved ? 'Đã lưu phiếu.' : history.hidden ? empty : '');
@@ -199,7 +204,10 @@ function mount() {
   }
 
   async function start() {
-    lock('Đang kiểm tra quyền xem sổ quỹ…');
+    lock('');
+    $('balance').textContent = '—';
+    setHistoryLoading(true);
+    setAccessView({root,gate:access,content:ledger},'pending');
     const scope = { controller: new AbortController(), authorized: false };
     active = scope;
     try {

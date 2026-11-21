@@ -32,7 +32,7 @@ const verify = req => verifyIdentity(req, { url: origin + identity }, async (_ur
   return Response.json(user || {}, { status: user ? 200 : 401 });
 }, { includeCashFund: true });
 const handler = createCashFundHandler({ production: () => true, store: () => store, verify });
-let dropNextSave = false;
+let dropNextSave = false, ledgerHold = null;
 
 async function openPage(viewport) {
   const ctx = await browser.newContext({ viewport });
@@ -59,6 +59,7 @@ async function openPage(viewport) {
     if (url.pathname === identity + 'logout') return reply({});
     if (url.pathname === endpoint) {
       const method = request.method();
+      if (method === 'GET' && ledgerHold) { ledgerHold.started(); await ledgerHold.wait; }
       const response = await handler(new Request(url, { headers, method, ...(body ? { body } : {}) }));
       if (dropNextSave && method === 'POST' && response.status === 201) {
         dropNextSave = false;
@@ -109,8 +110,19 @@ try {
   assert.equal(await desktop.locator('#ncn-navigation [data-ncn-tool="cash-fund"]').evaluate(link =>
     link.previousElementSibling.dataset.ncnTool), 'cash');
   await desktop.getByRole('link', { name: 'Tiền quỹ Siêu Thị', exact: true }).click();
-  await login(desktop, 'quy-st');
-  await desktop.locator('#cf-ledger').waitFor();
+  let release, started;
+  ledgerHold = {wait:new Promise(resolve=>release=resolve),started:()=>started()};
+  const requested = new Promise(resolve=>started=resolve);
+  try {
+    await login(desktop, 'quy-st'); await requested;
+    assert.equal(await desktop.locator('#cf-ledger').isVisible(), true);
+    assert.equal(await desktop.locator('#cf-access').isVisible(), false);
+    assert.equal(await desktop.locator('#cf-balance').innerText(), '—');
+    assert.equal(await desktop.locator('#cf-entries tr').count(), 0);
+    assert.equal(await desktop.locator('[data-cf-receipt="in"]').isDisabled(), true);
+    assert.doesNotMatch(await desktop.locator('main').innerText(), /Đang kiểm tra quyền/);
+  } finally { release(); ledgerHold = null; }
+  await desktop.locator('#ncn-cash-fund-app[data-ncn-access-phase="ready"]').waitFor();
   assert.match(await desktop.locator('#cf-balance').innerText(), /0\s*₫/);
   await desktop.locator('[data-cf-receipt="in"]').click();
   const form = desktop.locator('#cf-receipt-form');

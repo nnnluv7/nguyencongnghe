@@ -1105,15 +1105,28 @@ body.ncn-modern .st-card-sizes button:focus-visible{outline: 3px solid #2563b8; 
  html[data-ncn-theme=dark] #ncn-account-message.ncn-account-error{color:#ffbbc9}
  #ncn-billing-app:not([data-ncn-account-panel=ready]) #pay-auth{display:none!important}
  html:not([data-ncn-account-state]) #pay-email,html:not([data-ncn-account-state]) #pay-entitlement{visibility:hidden}
- #vip-gate:not([data-ncn-gate-state])>:not(h2):not(.ev-kicker),#vip-gate[data-ncn-gate-state=loading]>:not(h2):not(.ev-kicker):not(.ncn-gate-loading){display:none!important}
- #vip-gate:not([data-ncn-gate-state])::after{content:'Mở công cụ của bạn';display:block;margin:18px 0;color:var(--ncn-muted,#5e7088);font-size:13px}
- #vip-gate .ncn-gate-loading{display:none;padding-top:4px}
- #vip-gate[data-ncn-gate-state=loading] .ncn-gate-loading{display:grid;gap:10px}
- .ncn-gate-loading p{margin:0 0 4px;color:var(--ncn-muted,#5e7088);font-size:13px}
- .ncn-gate-loading span{display:block;height:38px;border:1px solid var(--ncn-rim,#ffffff80);border-radius:13px;background:var(--ncn-glass-soft,#eef5ff)}
- .ncn-gate-loading span:last-child{width:68%}
+ #vip-gate:not([data-ncn-gate-state]),#vip-gate[data-ncn-gate-state=loading]{display:none!important}
  @media(prefers-reduced-transparency:reduce),(prefers-contrast:more),(forced-colors:active){.ncn-account-dialog{background:var(--ncn-surface,#fff);-webkit-backdrop-filter:none;backdrop-filter:none}.ncn-account-dialog .ncn-account-primary,#ncn-account-host [data-ncn-account-open=login]{background:var(--ncn-accent,#2769b3)!important}}
 }
+
+/* Public tool layouts paint immediately; authorization and data load in the background. */
+@media screen {
+ .ncn-access-workspace{color:var(--ncn-ink);padding:8px 0 28px;text-align:left}
+ .ncn-access-workspace>header{margin-bottom:18px}
+ .ncn-access-workspace h2{margin:0;font:750 clamp(24px,3vw,30px)/1.3 var(--body-font);letter-spacing:-.6px}
+ .ncn-access-workspace h3{margin:0 0 18px;font:700 17px/1.4 var(--body-font)}
+ .ncn-access-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(230px,.65fr);gap:18px;align-items:start}
+ .ncn-access-modules{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+ .ncn-access-workspace :is(.ncn-access-layout,.ncn-access-modules)>section{min-width:0;padding:22px;border:1px solid var(--ncn-hairline-soft,var(--ncn-border));border-radius:24px;background:var(--ncn-glass-card);box-shadow:var(--ncn-shadow)}
+ .ncn-access-workspace fieldset{display:grid;gap:14px;margin:0;padding:0;border:0;min-width:0}
+ .ncn-access-workspace label{display:grid;gap:6px;font:650 13px/1.5 var(--body-font)}
+ .ncn-access-workspace :is(input,select,button){min-width:0;max-width:100%;min-height:44px;box-sizing:border-box;padding:9px 12px;border:1px solid var(--ncn-control-rim,var(--ncn-border));border-radius:12px;background:var(--ncn-glass-soft);color:var(--ncn-muted);font:14px/1.5 var(--body-font);box-shadow:var(--ncn-control-shadow)}
+ .ncn-access-actions{display:flex;gap:8px;flex-wrap:wrap}
+ .ncn-access-columns{display:flex;justify-content:space-between;gap:12px;margin-top:24px;padding:12px 0;border-block:1px solid var(--ncn-border);font:650 12px/1.4 var(--body-font);color:var(--ncn-muted)}
+ .ncn-access-paper{max-width:240px;aspect-ratio:210/297;margin:auto;border:1px solid var(--ncn-border);border-radius:5px;background:var(--ncn-surface)}
+ @media(max-width:700px){.ncn-access-layout,.ncn-access-modules{grid-template-columns:minmax(0,1fr)}.ncn-access-workspace :is(.ncn-access-layout,.ncn-access-modules)>section{padding:18px}.ncn-access-paper{max-width:180px}}
+}
+@media print{[data-ncn-public-tool-shell]{display:none!important}}
 
 /* Member profile shares the account dialog and the portal's glass palette. */
 @media screen {
