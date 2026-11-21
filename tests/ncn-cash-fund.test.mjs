@@ -12,6 +12,7 @@ const origin = 'https://ncn.test';
 const now = Date.parse('2026-11-14T17:00:00Z');
 const staff = { id: 'fixture-staff', name: 'Nhân viên thử nghiệm', email: 'staff@example.test', cashFund: true };
 const admin = { id: 'fixture-admin', name: 'Quản trị thử nghiệm', email: 'admin@example.test', admin: true };
+const member = { id: 'fixture-member', name: 'Thành viên thường', email: 'member@example.test' };
 const receipt = (change = {}) => ({
   id: randomUUID(), owner: staff.id, type: 'in', date: '2026-11-15', note: 'Phiếu thử', amount: 500000, ...change
 });
@@ -20,7 +21,7 @@ function fixture({ production = true, store = memoryStories() } = {}) {
   const handler = createCashFundHandler({
     production: () => production,
     store: () => store,
-    verify: async req => ({ staff, admin, vip: { id: 'no-access', vip: true } })[req.headers.get('X-Fixture-User')],
+    verify: async req => ({ staff, admin, member, renamed: { ...staff, name: 'Tên mới', email: 'new@example.test' }, vip: { id: 'fixture-vip', vip: true } })[req.headers.get('X-Fixture-User')],
     now: () => now
   });
   const call = (data, { user = 'staff', query = '', method = data ? 'POST' : 'GET', source = origin } = {}) =>
@@ -32,9 +33,9 @@ function fixture({ production = true, store = memoryStories() } = {}) {
   return { call, store };
 }
 
-test('the shared ledger requires verified roles, stays private and disables preview access', async () => {
+test('every verified member can use a private personal ledger, while guests and previews cannot', async () => {
   const { call, store } = fixture();
-  for (const [user, status] of [['guest', 401], ['vip', 403]]) {
+  for (const [user, status] of [['guest', 401]]) {
     assert.equal((await call(undefined, { user })).status, status);
     assert.equal((await call(receipt(), { user })).status, status);
   }
@@ -44,7 +45,8 @@ test('the shared ledger requires verified roles, stays private and disables prev
   assert.equal(store.entries.size, 0);
   const response = await call(undefined, { user: 'admin' });
   assert.match(response.headers.get('cache-control'), /private, no-store/);
-  assert.deepEqual(await response.json(), { balance: 0, entries: [], next: null });
+  assert.deepEqual(await response.json(), { balance: 0, entries: [], next: null, owner: { id: admin.id, name: admin.name } });
+  for (const user of ['vip', 'member', 'staff']) assert.equal((await call(undefined, { user })).status, 200);
 
   const req = new Request(origin, { headers: { Cookie: 'nf_jwt=fixture' } });
   const verify = roles => verifyIdentity(req, { url: origin }, async () => Response.json({
@@ -68,7 +70,7 @@ test('concurrent receipts update the same balance and retries save a single entr
   }
 
   const payouts = await Promise.all([
-    call(receipt({ owner: admin.id, type: 'out', amount: 400000 }), { user: 'admin' }),
+    call(receipt({ type: 'out', amount: 400000 })),
     call(receipt({ type: 'out', amount: 400000 }))
   ]);
   assert.deepEqual(payouts.map(res => res.status).sort(), [201, 409]);
@@ -78,7 +80,33 @@ test('concurrent receipts update the same balance and retries save a single entr
     [500000, 100000], [0, 500000]
   ]);
   assert.equal((await call({ ...first, amount: 2 })).status, 409);
-  assert.equal((await call({ ...first, owner: admin.id }, { user: 'admin' })).status, 409);
+  assert.equal((await call({ ...first, owner: admin.id })).status, 409);
+});
+
+test('accounts including Admin cannot read or spend each other\'s funds; the old shared ledger is preserved', async () => {
+  const { call, store } = fixture();
+  const oldLedger = { entries: [{ ...receipt(), actorId: staff.id, balanceBefore: 0, balanceAfter: 9000000 }] };
+  await store.setJSON('ledger', oldLedger);
+  const sharedID = receipt().id;
+  assert.equal((await call(receipt({ id: sharedID }))).status, 201);
+  for (const [user, account] of [['admin', admin], ['member', member]]) {
+    const empty = await (await call(undefined, { user, query: '?owner=' + staff.id + '&key=ledger' })).json();
+    assert.equal(empty.balance, 0);
+    assert.deepEqual(empty.entries, []);
+    assert.equal(empty.owner.id, account.id);
+    assert.equal((await call(receipt({ owner: account.id, type: 'out', amount: 1 }), { user })).status, 409);
+    assert.equal((await call(receipt({ owner: staff.id }), { user })).status, 409);
+    assert.equal((await call(receipt({ id: sharedID, owner: account.id, amount: 100 }), { user })).status, 201);
+    const own = await (await call(undefined, { user })).json();
+    assert.equal(own.balance, 100);
+    assert.equal(own.entries.length, 1);
+  }
+  const renamed = await (await call(undefined, { user: 'renamed' })).json();
+  assert.equal(renamed.balance, 500000);
+  assert.equal(renamed.entries.length, 1);
+  assert.equal(renamed.owner.name, 'Tên mới');
+  assert.deepEqual(await store.get('ledger'), oldLedger);
+  assert.equal([...store.entries.keys()].filter(key => key.startsWith('personal/')).length, 3);
 });
 
 test('an interrupted acknowledgment returns the already saved receipt on retry', async () => {

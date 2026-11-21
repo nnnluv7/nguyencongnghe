@@ -1,6 +1,10 @@
+import { createHash } from 'node:crypto';
 import { CASH_FUND_TYPES, NOTE_MAX_LENGTH, vietnamDate } from '../../public/assets/ncn-cash-fund/shared.js';
 
-const LEDGER_KEY = 'ledger';
+// The old shared `ledger` stays untouched. A verified account ID alone selects
+// the personal ledger; request fields, roles and email can never select another.
+const ledgerKey = userId => 'personal/' + createHash('sha256').update(userId).digest('hex');
+const ownerView = user => ({ id: user.id, name: user.name?.trim().slice(0, 100) || 'Tài khoản của bạn' });
 const PAGE_SIZE = 30;
 const BODY_LIMIT = 4096;
 const uuid = /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/;
@@ -82,9 +86,10 @@ async function readReceipt(req, now, userId) {
 }
 
 async function saveReceipt(store, receipt, user, now) {
+  const key = ledgerKey(user.id);
   // An atomic write keeps the receipt, both balances and its retry ID together.
   for (let attempt = 0; attempt < 8; attempt++) {
-    const previous = await store.getWithMetadata(LEDGER_KEY, { type: 'json' });
+    const previous = await store.getWithMetadata(key, { type: 'json' });
     if (previous && (!previous.etag || !Array.isArray(previous.data?.entries))) {
       fail(503, 'Chưa đọc được sổ quỹ. Vui lòng thử lại.');
     }
@@ -107,7 +112,7 @@ async function saveReceipt(store, receipt, user, now) {
       recordedAt: new Date(now).toISOString()
     };
     const condition = previous ? { onlyIfMatch: previous.etag } : { onlyIfNew: true };
-    const saved = await store.setJSON(LEDGER_KEY, { entries: [record, ...entries] }, condition);
+    const saved = await store.setJSON(key, { entries: [record, ...entries] }, condition);
     if (saved.modified) return { record, created: true };
   }
   fail(409, 'Sổ quỹ vừa thay đổi. Vui lòng lưu lại phiếu.');
@@ -124,18 +129,16 @@ export function createCashFundHandler(deps) {
       if (!deps.production()) fail(503, 'Sổ quỹ hoạt động trên website chính thức.');
       const user = await deps.verify(req);
       if (!user?.id) fail(401, 'Đăng nhập để mở sổ quỹ.');
-      if (!user.admin && !user.cashFund) fail(403, 'Tài khoản này cần được Admin cấp quyền quỹ.');
-
       if (req.method === 'GET') {
-        const ledger = await deps.store().get(LEDGER_KEY, { type: 'json' });
+        const ledger = await deps.store().get(ledgerKey(user.id), { type: 'json' });
         if (ledger && !Array.isArray(ledger.entries)) fail(503, 'Chưa đọc được sổ quỹ. Vui lòng thử lại.');
-        return Response.json(history(ledger?.entries ?? [], url.searchParams), { headers });
+        return Response.json({ ...history(ledger?.entries ?? [], url.searchParams), owner: ownerView(user) }, { headers });
       }
 
       const now = deps.now?.() ?? Date.now();
       const receipt = await readReceipt(req, now, user.id);
       const { record, created } = await saveReceipt(deps.store(), receipt, user, now);
-      return Response.json({ entry: entryView(record) }, { headers, status: created ? 201 : 200 });
+      return Response.json({ entry: entryView(record), owner: ownerView(user) }, { headers, status: created ? 201 : 200 });
     } catch (error) {
       const message = error.status ? error.message : 'Chưa kết nối được sổ quỹ. Vui lòng thử lại.';
       return Response.json({ error: message }, { headers, status: error.status || 503 });
