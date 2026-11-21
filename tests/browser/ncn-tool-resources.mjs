@@ -24,7 +24,9 @@ const root=resolve('dist'),origin='https://ncn-tool-resources.test',out=resolve(
 const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.png':'image/png','.webp':'image/webp','.jpg':'image/jpeg','.svg':'image/svg+xml','.woff2':'font/woff2','.ttf':'font/ttf'};
 const actor={id:'fixture-tool-admin',email:'tools@example.test',name:'Kiểm tra công cụ',admin:true,vip:true};
 const jwt=Buffer.from('{"alg":"fixture"}').toString('base64url')+'.'+Buffer.from(JSON.stringify({sub:actor.id,email:actor.email,exp:Math.floor(Date.now()/1000)+3600})).toString('base64url')+'.fixture';
-const stores={event:memoryStore(),gvgs:memoryStore()},browser=await chromium.launch();let context,page,signedUser,excelRequests=0,printRequests=0,failOnce=false;
+// Keep classic scrollbars visible, as on Windows; hiding them masks preview
+// resize loops when the iframe's old minimum height forces a second scrollbar.
+const stores={event:memoryStore(),gvgs:memoryStore()},browser=await chromium.launch({ignoreDefaultArgs:['--hide-scrollbars']});let context,page,signedUser,excelRequests=0,printRequests=0,failOnce=false;
 const openingRequests=[];
 const handlers=Object.fromEntries(Object.keys(printCores).map(name=>[name,createHandler({
  production:()=>true,
@@ -56,6 +58,34 @@ async function check(name,fn){await fn();results.push({name,ok:true});console.lo
 function workbook(rows){const book=XLSX.utils.book_new();XLSX.utils.book_append_sheet(book,XLSX.utils.aoa_to_sheet(rows),'NCN');return Buffer.from(XLSX.write(book,{type:'buffer',bookType:'xlsx'}));}
 async function opened(path){await page.goto(origin+path);await page.waitForFunction(()=>window.NCNAccount?.state.ready);assert.equal(await page.evaluate(()=>!!window.XLSX),false);}
 try{
+ for(const name of ['event','gvgs'])await check(name+' preview stays stable while zooming and scrolling with Windows-style scrollbars',async()=>{
+  await stores[name].setJSON('campaign-fixture',{id:'fixture',name:'Chương trình thử',version:'fixture-1',updatedAt:'2026-11-21T00:00:00Z',items:[
+   {code:'001234',name:'Sản phẩm thử xem trước',originalPrice:1000000,eventPrice:500000}
+  ]});
+  await fixture({role:'vip',width:1280});await page.setViewportSize({width:1280,height:720});await opened('/in-'+name+'/');
+  await page.locator('#ev-shared-info').filter({hasText:'Cập nhật'}).waitFor();
+  await page.locator('#ev-search').fill('001234');await page.locator('#ev-search').press('Enter');
+  await page.locator('#ev-rows input').first().fill('12');await page.locator('#ev-preview').click();
+  await page.locator('#ev-dialog[open]').waitFor();const frame=page.locator('#ev-preview-frame');
+  await page.frameLocator('#ev-preview-frame').locator('.sheet,.ncn-sheet').first().waitFor({state:'attached'});
+  await frame.evaluate(async frame=>{await frame.contentDocument.fonts.ready;});
+  const calls=printRequests;
+  for(let i=0;i<4;i++)await page.getByRole('button',{name:'Phóng to bản in',exact:true}).click();
+  const stable=async()=>{
+   const samples=await page.evaluate(()=>new Promise(resolve=>{
+    const samples=[];let ticks=0;function sample(){const frame=document.getElementById('ev-preview-frame'),stage=frame.closest('.ncn-print-stage');
+     if(++ticks>15)samples.push([stage.clientWidth,stage.clientHeight,frame.style.transform,frame.clientHeight,parseFloat(frame.style.height)]);
+     if(ticks<45)requestAnimationFrame(sample);else resolve(samples);
+    }sample();
+   }));
+   assert.equal(new Set(samples.map(x=>JSON.stringify(x))).size,1,'The preview must stop resizing instead of toggling scrollbars');
+   assert.ok(Math.abs(samples[0][3]-samples[0][4])<1,'An old minimum height must not override the zoomed iframe height');
+  };
+  await stable();const box=await frame.boundingBox();await page.mouse.move(box.x+150,box.y+150);await page.mouse.wheel(0,360);
+  await page.waitForFunction(()=>document.getElementById('ev-preview-frame').contentWindow.scrollY>0);await stable();
+  await page.getByRole('button',{name:'Xem vừa trang',exact:true}).click();await stable();
+  assert.equal(printRequests,calls,'Zooming and scrolling do not generate or charge another print');
+ });
  for(const [name,path,id,prefix]of [['ncn-sticker','/sticker/','ncn-sticker-app','st'],['ncn-popup','/popup-a7/','ncn-popup-app','st'],['ncn-store-tools','/ban-hang/','ncn-store-app','nt']])await check('Excel loads only on import and keeps real rows: '+path,async()=>{
   await fixture();const data=JSON.parse(await readFile('public/assets/'+name+'/catalogue.json','utf8')),core=await import('../../public/assets/'+name+'/core.js'),model=data.models.find(x=>(name!=='ncn-store-tools'||x.section==='sales')&&data.layouts.find(l=>l.id===x.variants[0].layout).fields.length),layout=data.layouts.find(x=>x.id===model.variants[0].layout);
   await opened(path+'?mau='+model.id);await page.locator('#'+id+'[data-ready=true]').waitFor();const before=excelRequests;
