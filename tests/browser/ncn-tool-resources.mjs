@@ -84,6 +84,19 @@ try{
   await stable();const box=await frame.boundingBox();await page.mouse.move(box.x+150,box.y+150);await page.mouse.wheel(0,360);
   await page.waitForFunction(()=>document.getElementById('ev-preview-frame').contentWindow.scrollY>0);await stable();
   await page.getByRole('button',{name:'Xem vừa trang',exact:true}).click();await stable();
+  // Fractional geometry models browser/display scaling, where rounded client
+  // sizes can be slightly larger than the actual CSS viewport on Windows.
+  for(const [zoom,fraction]of [[1.1,.4],[1.25,.2],[1.5,0],[1.75,.8],[2,.6]]){
+   await page.evaluate(({zoom,fraction})=>{
+    document.documentElement.style.zoom=String(zoom);
+    const dialog=document.getElementById('ev-dialog');
+    dialog.style.setProperty('width',(1050+fraction)+'px','important');
+    dialog.style.setProperty('height',(650+fraction)+'px','important');
+   },{zoom,fraction});
+   await stable();
+  }
+  await page.evaluate(()=>{document.documentElement.style.removeProperty('zoom');const dialog=document.getElementById('ev-dialog');dialog.style.removeProperty('width');dialog.style.removeProperty('height');});
+  await stable();
   assert.equal(printRequests,calls,'Zooming and scrolling do not generate or charge another print');
  });
  for(const [name,path,id,prefix]of [['ncn-sticker','/sticker/','ncn-sticker-app','st'],['ncn-popup','/popup-a7/','ncn-popup-app','st'],['ncn-store-tools','/ban-hang/','ncn-store-app','nt']])await check('Excel loads only on import and keeps real rows: '+path,async()=>{
