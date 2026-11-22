@@ -39,14 +39,16 @@ try{
     await page.evaluate(()=>new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done))));
     const state=await page.locator('#ncn-insurance-app').evaluate((app,zoom)=>{
       const rect=app.getBoundingClientRect();
-      return {width:rect.width/zoom,viewport:innerWidth,content:document.documentElement.scrollWidth,
+      return {width:rect.width/zoom,height:rect.height/zoom,viewport:innerWidth,content:document.documentElement.scrollWidth,
         fields:[...app.querySelectorAll('input[type=text],select')].filter(el=>el.getClientRects().length).map(el=>{const s=getComputedStyle(el),r=el.getBoundingClientRect();return {id:el.id,height:r.height/zoom,radius:parseFloat(s.borderRadius),inside:r.left>=rect.left-1&&r.right<=rect.right+1,border:s.borderColor,shadow:s.boxShadow};}),
         choices:[...app.querySelectorAll('.ncn-insurance-options label')].map(el=>{const s=getComputedStyle(el),r=el.getBoundingClientRect();return {height:r.height/zoom,inside:r.left>=rect.left-1&&r.right<=rect.right+1,shadow:s.boxShadow};}),
+        radioLabels:[...app.querySelectorAll('td>label:has(input[type=radio])')].filter(el=>el.getClientRects().length).map(el=>{const r=el.getBoundingClientRect(),cell=el.closest('td').getBoundingClientRect();return {height:r.height/zoom,inside:r.top>=cell.top-1&&r.bottom<=cell.bottom+1};}),
         result:getComputedStyle(app.querySelector('#gopmoithang')).borderRadius,resultBorder:getComputedStyle(app.querySelector('#gopmoithang')).borderColor};
     },zoom);
-    assert.ok(state.width<=480.5&&state.content<=state.viewport+1,JSON.stringify(state));
+    assert.ok(state.width<=(baseline?480.5:440.5)&&state.content<=state.viewport+1,JSON.stringify(state));
     for(const field of state.fields){assert.ok(field.inside,JSON.stringify(field));if(!baseline){assert.ok(field.height>=43.5&&field.radius>=12,JSON.stringify(field));assert.equal(field.border,state.resultBorder,JSON.stringify(field));}}
     if(!baseline){for(const choice of state.choices)assert.ok(choice.inside&&choice.height>=43.5&&choice.shadow!=='none',JSON.stringify(choice));assert.ok(parseFloat(state.result)>=12);}
+    for(const radio of state.radioLabels)assert.ok(radio.inside&&radio.height>=43.5,JSON.stringify(radio));
     results.push({width,zoom,theme,state});
     if(zoom===1&&[1280,390].includes(width)){await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:out+'/'+width+'-'+theme+'.png',fullPage:true});}
   }
