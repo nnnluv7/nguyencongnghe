@@ -1,0 +1,15 @@
+# Cron Worker for the three scheduled NCN jobs (see cron.mjs).
+# Deploy with: cd worker && wrangler deploy
+# The cron expressions match the Netlify schedules exactly
+# (ncn-genk-sync */15, ncn-stories-cleanup */5, ncn-visitors-cleanup @hourly).
+# Cloudflare has no @hourly alias; 0 * * * * is the equivalent.
+
+name = "ncn-cron"
+main = "cron.mjs"
+compatibility_date = "2026-11-22"
+
+[triggers]
+crons = ["*/15 * * * *", "*/5 * * * *", "0 * * * *"]
+
+[vars]
+NCN_PAGES_URL = "https://nguyencongnghe.pages.dev"

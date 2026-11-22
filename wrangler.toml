@@ -1,0 +1,52 @@
+# Cloudflare Pages project "nguyencongnghe".
+#
+# BEFORE THE FIRST DEPLOY, finish these steps on the Cloudflare dashboard
+# (see ~/workspace/nguyencongnghe-migration/IMPLEMENTATION.md for the full
+# ordered checklist):
+#  1. Create the D1 database `ncn-blobs` (+ `ncn-blobs-preview` for previews),
+#     apply functions/_cf/schema.sql, and replace the placeholder
+#     database_id values below with the real IDs.
+#  2. Create the R2 bucket (e.g. `ncn-blobs`) and set its name below.
+#  3. Set the SEPAY_WEBHOOK_SECRET secret (wrangler pages secret put, or the
+#     dashboard) — it cannot be copied from Netlify, re-enter it from SePay.
+#  4. Make sure the dashboard build settings still say:
+#     build command `node scripts/build-public.mjs`, output directory `dist`.
+#     (Cloudflare sets CF_PAGES=1 automatically during the build, which makes
+#     the build emit the transformed _redirects and the generated
+#     functions/_cf/private-assets.mjs.)
+#
+# The build command / output directory are NOT set here on purpose: the Pages
+# dashboard settings are authoritative for the deployed project, and this file
+# only configures the Functions runtime (bindings, vars, compatibility).
+
+name = "nguyencongnghe"
+compatibility_date = "2026-11-22"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = "dist"
+
+[[d1_databases]]
+binding = "NCN_DB"
+database_name = "ncn-blobs"
+# TODO: replace the all-zero placeholder with the real D1 database ID after
+# creating it on the dashboard. Deploys fail clearly until this is set.
+database_id = "00000000-0000-0000-0000-000000000000"
+
+[[r2_buckets]]
+binding = "NCN_BUCKET"
+# Create an R2 bucket with exactly this name on the dashboard before deploying.
+bucket_name = "ncn-blobs"
+
+[vars]
+NCN_ENVIRONMENT = "production"
+NCN_IDENTITY_BASE = "https://strong-vacherin-52625e.netlify.app/.netlify/identity"
+
+# Preview deployments get their own database so branch/preview traffic can
+# never touch live data (the Netlify equivalent of getDeployStore).
+[env.preview.vars]
+NCN_ENVIRONMENT = "preview"
+
+[[env.preview.d1_databases]]
+binding = "NCN_DB"
+database_name = "ncn-blobs-preview"
+# TODO: replace the all-zero placeholder with the real preview D1 database ID.
+database_id = "00000000-0000-0000-0000-000000000000"
