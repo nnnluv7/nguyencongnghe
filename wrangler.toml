@@ -41,11 +41,19 @@ NCN_IDENTITY_BASE = "https://strong-vacherin-52625e.netlify.app/.netlify/identit
 
 # Preview deployments get their own database so branch/preview traffic can
 # never touch live data (the Netlify equivalent of getDeployStore).
+# NOTE: preview does NOT inherit top-level [vars] or bindings — everything the
+# preview environment needs must be repeated here (verified 2026-11-23:
+# NCN_IDENTITY_BASE was missing on preview until added below).
 [env.preview.vars]
 NCN_ENVIRONMENT = "preview"
+NCN_IDENTITY_BASE = "https://strong-vacherin-52625e.netlify.app/.netlify/identity"
 
 [[env.preview.d1_databases]]
 binding = "NCN_DB"
 database_name = "ncn-blobs-preview"
 # Created on the dashboard 2026-11-22; schema applied.
 database_id = "d5ad8ec4-aac9-4b76-8d3f-1607aaead072"
+
+[[env.preview.r2_buckets]]
+binding = "NCN_BUCKET"
+bucket_name = "ncn-blobs-preview"
