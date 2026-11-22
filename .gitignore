@@ -4,3 +4,6 @@ artifacts/
 /node_modules
 dist/
 netlify/lib/ncn-shell/assets.generated.json
+functions/_cf/private-assets.mjs
+.dev.vars
+.wrangler/
