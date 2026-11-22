@@ -108,6 +108,26 @@ try{
     assert.equal(await page.locator('#ncn-story-compose').isVisible(),false);
   });
   member=await context();page=await library(member);await login(page,'member@example.test');
+  await check('Story action labels fit on one line and both close controls work at desktop, phone and zoomed sizes',async()=>{
+    for(const [width,height,zoom,theme] of [[1280,900,1,'light'],[1280,900,1.5,'dark'],[390,844,1,'light'],[320,568,1,'dark']]){
+      await page.setViewportSize({width,height});
+      await page.evaluate(({zoom,theme})=>{document.documentElement.style.zoom=zoom;document.documentElement.dataset.ncnTheme=theme;},{zoom,theme});
+      await page.locator('[data-story-add]').click();
+      const dialog=page.locator('#ncn-story-compose');await dialog.waitFor({state:'visible'});
+      const actions=await dialog.locator('.ncn-story-dialog-actions>button').evaluateAll(buttons=>buttons.map(button=>{
+        const range=document.createRange();range.selectNodeContents(button);
+        const rect=button.getBoundingClientRect(),parent=button.closest('dialog').getBoundingClientRect();
+        return {label:button.textContent,lines:new Set([...range.getClientRects()].map(r=>Math.round(r.top))).size,height:rect.height,inside:rect.left>=parent.left&&rect.right<=parent.right,clipped:button.scrollWidth>button.clientWidth};
+      }));
+      assert.equal(actions.length,2);
+      for(const action of actions){assert.equal(action.lines,1,JSON.stringify({width,zoom,...action}));assert.ok(action.inside&&!action.clipped&&action.height<=64*zoom,JSON.stringify(action));}
+      const close=await dialog.locator('header [data-close]').boundingBox();assert.ok(Math.abs(close.width-close.height)<2,'the × control remains circular');
+      await dialog.locator('.ncn-story-dialog-actions [data-close]').click();await dialog.waitFor({state:'hidden'});
+      assert.equal(await page.locator('[data-story-id]').count(),0,'deferring does not publish a Story');
+      await page.locator('[data-story-add]').click();await dialog.locator('header [data-close]').click();await dialog.waitFor({state:'hidden'});
+    }
+    await page.evaluate(()=>{document.documentElement.style.zoom='';document.documentElement.dataset.ncnTheme='light';});await page.setViewportSize({width:1280,height:900});
+  });
   await check('an ordinary non-VIP member can preview and publish a photo with a caption',async()=>{
     assert.equal(await page.evaluate(()=>NCNAccount.state.user.vip),false);await upload(page,'Một góc công việc <script>window.storyXSS=1</script>');
     assert.equal((await page.locator('[data-story-id]').count()),1);assert.equal(await page.evaluate(()=>window.storyXSS),undefined);
