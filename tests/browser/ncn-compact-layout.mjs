@@ -32,6 +32,8 @@ async function context(){
    if(url.pathname.endsWith('ncn-stories'))return url.searchParams.get('route')==='image'?route.fulfill({contentType:'image/png',body:logo}):json({items:state.stories,serverNow:new Date().toISOString()});
    if(url.pathname.endsWith('ncn-billing'))return json({user:null});
    if(url.pathname.endsWith('ncn-audio'))return json({ready:false,samples:[]});
+   // Mount the real member form after first paint, without a live account or writes.
+   if(/\/ncn-(?:event|gvgs)$/.test(url.pathname)&&url.searchParams.get('route')==='app')return json({user:{id:'layout-guest',guest:true},trial:{limit:3,remaining:3},html:await read('netlify/lib/'+(url.pathname.endsWith('ncn-gvgs')?'ncn-gvgs-private':'ncn-event-private')+'/vip.html'),scripts:{core:'',ui:''}});
    return json({online:1,total:1});
   }
   if(url.pathname.startsWith('/.netlify/identity/'))return json({disable_signup:false,external:{email:true}});
@@ -56,14 +58,44 @@ async function geometry(p,label){
  assert.ok(g.filters.every(f=>f.inside&&!f.overlap),label+' filter insets '+JSON.stringify(g));
  return g;
 }
+async function menuGeometry(p,label,scale=1){
+ await p.locator('#ncn-menu-open').click();
+ await p.waitForFunction(()=>getComputedStyle(document.getElementById('ncn-sidebar')).opacity==='1');
+ const m=await p.locator('#ncn-sidebar').evaluate(panel=>{
+  const r=panel.getBoundingClientRect(),bar=document.getElementById('ncn-topbar').getBoundingClientRect(),logo=panel.querySelector('.ncn-brand-image'),l=logo.getBoundingClientRect(),close=panel.querySelector('#ncn-menu-close').getBoundingClientRect(),nav=panel.querySelector('#ncn-navigation'),n=nav.getBoundingClientRect(),footer=panel.querySelector('.ncn-admin-card').getBoundingClientRect();
+  return {x:r.x,barX:bar.x,width:r.width,top:r.top,bottom:r.bottom,viewport:innerHeight,logo:{width:l.width,height:l.height,radius:getComputedStyle(logo).borderRadius},close:close.width,nav:{width:n.width,height:n.height,scroll:nav.scrollHeight,footer:footer.top,bottom:n.bottom},links:[...nav.querySelectorAll('a')].map(a=>{const r=a.getBoundingClientRect(),s=getComputedStyle(a);return {left:r.left,right:r.right,height:r.height,font:parseFloat(s.fontSize),overflow:a.scrollWidth>a.clientWidth+1};})};
+ });
+ assert.ok(Math.abs(m.x-m.barX)<1&&m.width/scale<=289&&m.top>=0&&m.bottom<=m.viewport+1,label+' menu edge '+JSON.stringify(m));
+ assert.ok(m.logo.width===m.logo.height&&m.logo.width===m.close&&m.logo.radius==='50%',label+' round menu logo '+JSON.stringify(m));
+ assert.ok(m.nav.height>40&&m.nav.bottom<=m.nav.footer+1&&m.nav.scroll>m.nav.height,label+' independently scrollable menu '+JSON.stringify(m));
+ assert.ok(m.links.every(a=>a.height/scale>=39.9&&a.height/scale<=62&&!a.overflow&&a.font===13),label+' compact menu links '+JSON.stringify(m));
+ if(label==='/ 1366'||label==='/ 390'){
+  await p.screenshot({path:out+'/menu-'+label.split(' ')[1]+'-light.jpg',type:'jpeg',quality:85});
+  await p.evaluate(()=>document.documentElement.dataset.ncnTheme='dark');
+  await p.waitForFunction(()=>getComputedStyle(document.querySelector('#ncn-navigation a')).color===getComputedStyle(document.getElementById('ncn-sidebar')).color);
+  await p.screenshot({path:out+'/menu-'+label.split(' ')[1]+'-dark.jpg',type:'jpeg',quality:85});
+  await p.evaluate(()=>document.documentElement.dataset.ncnTheme='light');
+ }
+ await p.keyboard.press('Escape');
+ assert.equal(await p.locator('#ncn-menu-open').getAttribute('aria-expanded'),'false');
+ assert.equal(await p.evaluate(()=>document.activeElement?.id),'ncn-menu-open');
+}
+async function typography(p,label,width){
+ const actual=await p.evaluate(()=>{
+  const visible=selector=>[...document.querySelectorAll(selector)].filter(el=>el.getClientRects().length).map(el=>({tag:el.tagName,selector:el.id||el.className,font:parseFloat(getComputedStyle(el).fontSize)}));
+  return {title:visible('#ncn-home-latest h1,#ncn-tools .ncn-section-heading h2,#ncn-library .ncn-library-heading h1,.st-hero h2,.ncn-tool-heading h2,#ncn-audio-app h1,#ncn-cash-fund-app h1,#ncn-fifo-app h1,#ncn-wheel-app h1,#ncn-billing-app h1,#ncn-cash-app .cq-hero h2,#vip-gate h2,#ncn-event-app .ev-heading h2,.ncn-arcade-hero h1'),input:visible('#cq-erp,#cq-qty-500000,#ncn-audio-app input:not([type=checkbox]),#ncn-cash-fund-app input,#ncn-cash-fund-app select,#ncn-insurance-app input[type=text],#ncn-insurance-app select,#ncn-qr-app input[type=text],#ncn-event-app .ev-field select,.st-search input'),card:visible('#ncn-tool-grid h3,.ncn-article-card h3,.st-card strong'),label:visible('#ncn-audio-app label,#ncn-cash-fund-app label,#ncn-event-app .ev-field')};
+ });
+ for(const [role,expected] of [['title',width<=620?21:22],['input',width<=900?16:14],['card',14],['label',13]])assert.ok(actual[role].every(el=>el.font===expected),label+' '+role+' expected '+expected+': '+JSON.stringify(actual[role]));
+}
 const ctx=await context(),metrics=[];
 const paint=()=>page.evaluate(()=>new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done))));
 const targets=['/','/popup-a7/','/sticker/','/ban-hang/','/trang-tri/','/tin-tuc-cong-nghe/','/arcade/','/2024/02/kiem-quy.html','/2025/05/tu-van.html','/tien-quy-sieu-thi/','/2024/04/qrcode-generator-tao-ma-qrcode.html','/2024/01/ban-kiem-ke-san-pham-theo-file-excel.html','/2024/01/in-fifo.html','/thu-audio/','/vong-quay-may-man/','/donate/','/in-event/','/in-gvgs/'];
 try{
- for(const path of targets){
+ for(const path of targets.filter(path=>!process.env.NCN_COMPACT_PATH||path===process.env.NCN_COMPACT_PATH)){
   page=await ctx.newPage();await page.setViewportSize({width:1366,height:768});await page.goto(origin+path,{waitUntil:'domcontentloaded'});
   await page.waitForSelector('body.ncn-scroll-ready');await page.waitForFunction(()=>window.NCNAccount?.state.ready);assert.equal(await page.locator('#ncn-toolbar-clock').count(),0);
   if(path==='/arcade/')await page.waitForSelector('.ncn-arcade-card');else if(['/popup-a7/','/sticker/','/ban-hang/','/trang-tri/'].includes(path))await page.waitForSelector('.st-card');
+  if(['/in-event/','/in-gvgs/'].includes(path))await page.waitForSelector('#vip-app #ncn-event-app');
   if(path==='/sticker/')await page.locator('#st-groups [data-group=all]').click();
   await page.evaluate(()=>document.fonts.ready);await paint();
   const info=await page.evaluate(()=>({height:document.documentElement.scrollHeight,width:document.documentElement.scrollWidth,viewport:innerHeight,
@@ -77,6 +109,8 @@ try{
   await page.evaluate(()=>{const avatar=document.querySelector('.ncn-account-avatar');if(avatar)avatar.replaceChildren(Object.assign(document.createElement('img'),{src:'data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="160" height="80"><rect width="160" height="80" fill="skyblue"/></svg>'),alt:'Ảnh thử tỷ lệ'}));});
   for(const width of [1920,1366,1024,1023,901,900,768,621,620,390,360,320]){
    await page.setViewportSize({width,height:844});await paint();await geometry(page,path+' '+width);
+   await typography(page,path+' '+width,width);
+   if([1366,900,390,320].includes(width))await menuGeometry(page,path+' '+width);
    const mobile=await page.evaluate(()=>{const bar=document.getElementById('ncn-topbar').getBoundingClientRect(),controls=[...document.querySelectorAll('#ncn-menu-open,#ncn-topbar .ncn-brand-image,#ncn-topbar .ncn-top-search,#ncn-theme-toggle,#ncn-topbar .ncn-account-menu summary')].filter(el=>el.getClientRects().length).map(el=>el.getBoundingClientRect().toJSON()).sort((a,b)=>a.left-b.left);return {width:document.documentElement.scrollWidth,height:bar.height,inside:controls.every(r=>r.left>=bar.left&&r.right<=bar.right),overlap:controls.some((r,i)=>i&&r.left<controls[i-1].right-1)};});
    assert.ok(mobile.width<=width+1&&mobile.height<=54&&mobile.inside&&!mobile.overlap,JSON.stringify({path,width,...mobile}));
    const toolbar=await page.evaluate(()=>{
@@ -116,6 +150,7 @@ try{
    await page.evaluate(()=>document.documentElement.style.zoom='1.25');await paint();
    const zoom=await page.evaluate(()=>{const bar=document.getElementById('ncn-topbar').getBoundingClientRect(),footer=document.getElementById('ncn-footer').getBoundingClientRect();return {left:bar.left,right:bar.right,footerLeft:footer.left,footerRight:footer.right};});
    assert.ok(Math.abs(zoom.left-zoom.footerLeft)<1&&Math.abs(zoom.right-zoom.footerRight)<1,'zoomed edges '+JSON.stringify(zoom));
+   await menuGeometry(page,'125% zoomed menu',1.25);
    await page.evaluate(()=>document.documentElement.style.zoom='');
    await page.evaluate(()=>{document.getElementById('ncn-announcement').hidden=true;document.body.classList.remove('ncn-has-announcements');scrollTo(0,0);});await paint();
    const first=await page.evaluate(()=>({heading:document.querySelector('#ncn-home-latest h1').getBoundingClientRect().top,bar:document.getElementById('ncn-topbar').getBoundingClientRect().bottom}));assert.ok(first.heading>=first.bar+8,JSON.stringify(first));
@@ -149,6 +184,7 @@ try{
    await page.goto(origin+route,{waitUntil:'domcontentloaded'});await page.waitForSelector('body.ncn-scroll-ready');
    for(const width of [1280,390]){
     await page.setViewportSize({width,height:800});await paint();await geometry(page,route+' '+width);
+    await menuGeometry(page,route+' '+width);
     await page.evaluate(()=>{const spacer=document.createElement('div');spacer.style.height='1000px';document.body.append(spacer);scrollTo(0,300);});await paint();
     const state=await page.evaluate(()=>{const bar=document.getElementById('ncn-topbar')||document.getElementById('ncn-game-topbar'),rect=bar?.getBoundingClientRect();return {hidden:document.body.classList.contains('ncn-chrome-hidden'),top:rect?.top,height:rect?.height,width:document.documentElement.scrollWidth,viewport:innerWidth};});
     assert.ok(!state.hidden&&state.top>=0&&state.height<=56&&state.width<=state.viewport+1,file+': '+JSON.stringify(state));

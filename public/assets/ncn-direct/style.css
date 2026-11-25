@@ -8,7 +8,7 @@ body.ncn-modern:has(.ncn-fifo-workbench) :is(#outer-wrapper,#main,.post-inner-ar
 .ncn-print-sidebar{box-sizing:border-box;min-width:0;padding:20px;border:1px solid var(--ncn-rim,#dbe4f0);border-radius:24px;background:var(--ncn-glass-card,#eff6fff2);box-shadow:var(--ncn-shadow,0 8px 28px #18345b12);color:var(--ncn-ink,#22324b);font:13px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}
 .ncn-print-sidebar h2{font-size:19px;margin:0 0 14px;line-height:1.4;overflow-wrap:anywhere}
 .ncn-print-actions{display:grid;gap:10px;margin-bottom:18px}
-body.ncn-modern .ncn-print-primary,dialog.ncn-print-dialog .ncn-print-primary{display:flex!important;align-items:center;justify-content:center;gap:8px;width:100%!important;max-width:none!important;min-height:50px!important;padding:12px 16px!important;border:1px solid #ffffff80!important;border-radius:999px!important;background:linear-gradient(140deg,#3185d5,#1556a2)!important;box-shadow:0 5px 16px #165c9e24,inset 0 1px 0 #ffffff70!important;color:#fff!important;font:700 17px/1.4 -apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif!important;cursor:pointer}
+body.ncn-modern .ncn-print-primary,dialog.ncn-print-dialog .ncn-print-primary{display:flex!important;align-items:center;justify-content:center;gap:8px;width:100%!important;max-width:none!important;min-height:50px!important;padding:12px 16px!important;border:1px solid #ffffff80!important;border-radius:999px!important;background:linear-gradient(140deg,#3185d5,#1556a2)!important;box-shadow:0 5px 16px #165c9e24,inset 0 1px 0 #ffffff70!important;color:#fff!important;font:700 var(--ncn-font-control,13px)/1.4 var(--body-font,sans-serif)!important;cursor:pointer}
 body.ncn-modern .ncn-print-secondary,dialog.ncn-print-dialog .ncn-print-secondary{display:flex;align-items:center;justify-content:center;width:100%!important;max-width:none!important;min-height:40px;padding:9px 12px;border:1px solid var(--ncn-border,#d5dfea);border-radius:999px;background:var(--ncn-glass-soft,#ffffff80);color:inherit;font:600 12px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;cursor:pointer}
 .ncn-print-sidebar button:disabled{opacity:.45;cursor:default}
 .ncn-print-sidebar :is(button,summary,input,select):focus-visible{outline:3px solid #78a8e0;outline-offset:3px}
@@ -96,7 +96,7 @@ body.ncn-legacy-print :is(.feed-share,.primary-nav,.comments-section,.below-ads,
  .ncn-direct-editor .ncn-print-summary{grid-column:1/-1}
  .ncn-direct-editor .ncn-direct-heading{display:none}
  .ncn-direct-editor.ncn-editing .st-work-top{flex-direction:row!important;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:12px}
- .ncn-direct-editor.ncn-editing .st-work-top h3{font-size:20px!important;line-height:1.3}
+ .ncn-direct-editor.ncn-editing .st-work-top h3{font-size:var(--ncn-font-title,22px)!important;line-height:1.3}
  .ncn-direct-editor.ncn-editing .st-work-top>button{flex:none;font-size:11px;white-space:nowrap}
  .ncn-direct-editor .ncn-direct-controls button:disabled,.ncn-direct-editor [aria-label="Xem kích thước thật"]{display:none}
  .ncn-direct-editor .ncn-direct-toolbar{margin-bottom:0}
@@ -114,7 +114,7 @@ body.ncn-legacy-print :is(.feed-share,.primary-nav,.comments-section,.below-ads,
  body.ncn-modern dialog.ncn-print-dialog{padding:10px!important;border-radius:20px!important}
  dialog.ncn-print-dialog .ev-close{right:18px;top:17px}
 }
-@media(max-width:420px){.ncn-direct-editor .ncn-print-sidebar .st-settings{grid-template-columns:1fr!important}.ncn-print-zoom button,.ncn-direct-controls button{min-height:42px}.ncn-print-primary{font-size:16px!important}}
+@media(max-width:420px){.ncn-direct-editor .ncn-print-sidebar .st-settings{grid-template-columns:1fr!important}.ncn-print-zoom button,.ncn-direct-controls button{min-height:42px}.ncn-print-primary{font-size:var(--ncn-font-control,13px)!important}}
 }
 @media print{
  .ncn-print-sidebar,.ncn-print-zoom,dialog.ncn-print-dialog{display:none!important}
@@ -143,7 +143,7 @@ body.ncn-legacy-print :is(.feed-share,.primary-nav,.comments-section,.below-ads,
  .ncn-workspace-paper .ncn-mobile-sheet-viewport{height:auto!important;min-height:0;max-height:none!important;border-radius:0;overscroll-behavior-y:auto;background:#fff}
  .ncn-workspace-paper :is(.st-panel-heading,.st-preview-note),.ncn-workspace-paper>p.st-note,.ncn-workspace-paper>h2{display:none!important}
  .ncn-direct-editor.ncn-editing .st-work-top{display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:space-between;gap:12px;margin:0 0 12px!important;padding:0!important;border:0!important}
- .ncn-direct-editor.ncn-editing .st-work-top h3{font-size:20px!important;margin:0!important;line-height:1.4}
+ .ncn-direct-editor.ncn-editing .st-work-top h3{font-size:var(--ncn-font-title,22px)!important;margin:0!important;line-height:1.4}
  .ncn-direct-editor.ncn-editing .st-work-top :is(.st-eyebrow,.st-kicker){display:none!important}
  .ncn-workspace-preview-controls{margin:10px 0}
  .ncn-direct-editor .ncn-workspace-preview-controls .ncn-direct-heading{display:block;font-size:12px}
@@ -161,7 +161,7 @@ body.ncn-legacy-print :is(.feed-share,.primary-nav,.comments-section,.below-ads,
  @media(max-width:959px){
   .ncn-workspace-focus>.ncn-workspace-bar{grid-column:1;grid-row:1;position:sticky;top:var(--ncn-chrome-offset,100px);z-index:20;gap:8px;padding:7px;border:1px solid var(--ncn-rim);border-radius:18px;background:var(--ncn-glass-strong)}
   .ncn-workspace-switch{display:flex}
-  body.ncn-modern .ncn-workspace-bar>.ncn-print-primary{width:auto!important;min-width:92px;min-height:40px!important;padding:8px 14px!important;font-size:14px!important}
+  body.ncn-modern .ncn-workspace-bar>.ncn-print-primary{width:auto!important;min-width:92px;min-height:40px!important;padding:8px 14px!important;font-size:var(--ncn-font-control,13px)!important}
   .ncn-direct-editor .st-editor-grid.ncn-workspace-focus>.ncn-workspace-paper,.ncn-legacy-print .ncn-print-workspace.ncn-workspace-focus>.ncn-workspace-paper,.ncn-fifo-workbench.ncn-workspace-focus>.ncn-workspace-paper{grid-column:1;grid-row:2;position:static;display:block;height:auto;min-height:0}
   .ncn-direct-editor .st-editor-grid.ncn-workspace-focus>.ncn-workspace-fields,.ncn-legacy-print .ncn-print-workspace.ncn-workspace-focus>.ncn-workspace-fields,.ncn-fifo-workbench.ncn-workspace-focus>.ncn-workspace-fields{grid-column:1;grid-row:2;position:static;max-height:none;overflow:visible;border-left:0;padding:14px}
   .ncn-workspace-focus[data-ncn-pane=paper]>.ncn-workspace-fields,.ncn-workspace-focus[data-ncn-pane=fields]>.ncn-workspace-paper{display:none!important}
