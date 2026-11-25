@@ -38,7 +38,7 @@ export function installAnnouncements({doc=document,win=window,call=callAnnouncem
   async function refresh(){
     if(pending||doc.hidden)return;pending=true;
     try{
-      const {items}=await call('list'),text=(Array.isArray(items)?items:[]).filter(x=>typeof x.text==='string').map(x=>x.text).join('     •     ');
+      const {items}=await call('list'),text=(Array.isArray(items)?items:[]).filter(x=>typeof x.text==='string').map(x=>x.text.trim()).filter(Boolean).join('     •     ');
       // textContent keeps all Admin text as text, including HTML-like content.
       const changed=text!==last;
       if(changed){copy.textContent=text;last=text;}

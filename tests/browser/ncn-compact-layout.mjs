@@ -49,11 +49,15 @@ async function geometry(p,label){
   const outer=document.getElementById('outer-wrapper'),o=outer.getBoundingClientRect(),s=getComputedStyle(outer),bar=document.getElementById('ncn-topbar').getBoundingClientRect(),footer=document.getElementById('ncn-footer')?.getBoundingClientRect(),notice=document.getElementById('ncn-announcement');
   const left=o.left+parseFloat(s.paddingLeft),right=o.right-parseFloat(s.paddingRight);
   const filters=[...document.querySelectorAll('#ncn-home-filters,.st-tabs')].filter(el=>el.getClientRects().length).map(el=>{const r=el.getBoundingClientRect(),buttons=[...el.querySelectorAll('button')].filter(b=>b.getClientRects().length).map(b=>b.getBoundingClientRect());return {x:r.x,right:r.right,width:r.width,inside:buttons.every(b=>b.left>=r.left+3&&b.right<=r.right-3&&b.top>=r.top+3&&b.bottom<=r.bottom-3),overlap:buttons.some((b,i)=>buttons.some((c,j)=>i!==j&&b.left<c.right-1&&b.right>c.left+1&&b.top<c.bottom-1&&b.bottom>c.top+1))};});
-  return {outer:o.toJSON(),left,right,bar:bar.toJSON(),footer:footer?.toJSON(),notice:notice?.hidden?null:notice?.getBoundingClientRect().toJSON(),viewport:document.documentElement.clientWidth,filters};
+  const groups=[...document.querySelectorAll('#ncn-topbar .ncn-topbar-left,#ncn-topbar .ncn-topbar-right')].map(el=>el.getBoundingClientRect().toJSON());
+  return {outer:o.toJSON(),left,right,bar:bar.toJSON(),groups,footer:footer?.toJSON(),notice:notice?.hidden?null:notice?.getBoundingClientRect().toJSON(),viewport:document.documentElement.clientWidth,mobile:matchMedia('(max-width:620px)').matches,filters};
  });
  assert.ok(Math.abs(g.bar.left-g.left)<1&&Math.abs(g.bar.right-g.right)<1,label+' toolbar edges '+JSON.stringify(g));
  if(g.footer)assert.ok(Math.abs(g.footer.left-g.left)<1&&Math.abs(g.footer.right-g.right)<1,label+' footer edges '+JSON.stringify(g));
- if(g.notice)assert.ok(Math.abs(g.notice.left-g.left)<1&&Math.abs(g.notice.right-g.right)<1,label+' ticker edges '+JSON.stringify(g));
+ if(g.notice){
+  if(g.mobile)assert.ok(Math.abs(g.notice.left-g.left)<1&&Math.abs(g.notice.right-g.right)<1&&g.notice.top>=g.bar.bottom+3,label+' mobile ticker row '+JSON.stringify(g));
+  else assert.ok(g.notice.left>=g.groups[0].right+9&&g.notice.right<=g.groups[1].left-9&&Math.abs((g.notice.top+g.notice.bottom)-(g.bar.top+g.bar.bottom))<1,label+' ticker between toolbar groups '+JSON.stringify(g));
+ }
  assert.ok(Math.abs(g.left-(g.viewport-g.right))<1,label+' equal side margins '+JSON.stringify(g));
  assert.ok(g.filters.every(f=>f.inside&&!f.overlap),label+' filter insets '+JSON.stringify(g));
  return g;
@@ -152,8 +156,24 @@ try{
    assert.ok(Math.abs(zoom.left-zoom.footerLeft)<1&&Math.abs(zoom.right-zoom.footerRight)<1,'zoomed edges '+JSON.stringify(zoom));
    await menuGeometry(page,'125% zoomed menu',1.25);
    await page.evaluate(()=>document.documentElement.style.zoom='');
-   await page.evaluate(()=>{document.getElementById('ncn-announcement').hidden=true;document.body.classList.remove('ncn-has-announcements');scrollTo(0,0);});await paint();
+   const notices=state.notices;
+   async function updateNotices(items){state.notices=items;await Promise.all([page.waitForResponse(response=>new URL(response.url()).pathname.endsWith('/ncn-announcements')),page.evaluate(()=>dispatchEvent(new Event('ncn-announcements-changed')))]);await paint();}
+   for(const width of [1280,390]){
+    await page.setViewportSize({width,height:844});await paint();
+    await updateNotices([]);assert.equal(await page.locator('#ncn-announcement').isVisible(),false);assert.equal(await page.locator('body.ncn-has-announcements').count(),0);
+    const empty=await page.evaluate(()=>parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ncn-chrome-space')));
+    await updateNotices([{text:'   '}]);assert.equal(await page.locator('#ncn-announcement').isVisible(),false);
+    await updateNotices([{text:'Thông báo kiểm tra'}]);assert.equal(await page.locator('#ncn-announcement').isVisible(),true);await geometry(page,'notice reappeared '+width);
+    const shown=await page.locator('#ncn-announcement').evaluate(el=>{const s=getComputedStyle(el),fade=getComputedStyle(el,'::before');return {font:parseFloat(s.fontSize),border:s.borderTopWidth,mask:fade.maskImage,space:parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ncn-chrome-space'))};});
+    assert.equal(shown.font,14);assert.equal(shown.border,'0px');assert.match(shown.mask,/linear-gradient/);assert.ok(Math.abs(shown.space-empty-(width<=620?36:0))<1,JSON.stringify(shown));
+    await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:out+'/announcement-'+width+'.jpg',type:'jpeg',quality:85});
+    const account=page.locator('#ncn-topbar .ncn-account-menu>summary');await account.click();
+    assert.ok(await page.locator('.ncn-account-dropdown').evaluate(el=>{const r=el.getBoundingClientRect(),hit=document.elementFromPoint(r.left+20,r.top+15);return el.contains(hit);}), 'Account dropdown must remain above the mobile ticker');await account.click();
+    await page.locator('#ncn-announcement-pause').click();assert.equal(await page.locator('#ncn-announcement-pause').getAttribute('aria-pressed'),'true');await page.locator('#ncn-announcement-pause').click();
+   }
+   await page.setViewportSize({width:1280,height:900});await updateNotices([]);await page.evaluate(()=>scrollTo(0,0));await paint();
    const first=await page.evaluate(()=>({heading:document.querySelector('#ncn-home-latest h1').getBoundingClientRect().top,bar:document.getElementById('ncn-topbar').getBoundingClientRect().bottom}));assert.ok(first.heading>=first.bar+8,JSON.stringify(first));
+   await updateNotices(notices);
   }
   if(path==='/')assert.equal(await page.locator('#ncn-articles .ncn-article-card').count(),5);
   if(path==='/tin-tuc-cong-nghe/'){
