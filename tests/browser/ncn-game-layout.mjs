@@ -41,7 +41,7 @@ try{
    const samples=[];
    for(const [width,height]of [[320,568],[390,844],[820,900],[1024,768],[1280,800],[1440,900],[1920,1080]]){
     await page.setViewportSize({width,height});await page.clock.runFor(150);
-    const sample=await page.evaluate(({app,board})=>{const r=selector=>{const el=document.querySelector(selector),b=el.getBoundingClientRect();return {x:b.x,y:b.y,width:b.width,height:b.height};};return {width:innerWidth,height:innerHeight,scrollWidth:document.documentElement.scrollWidth,desktop:matchMedia('(min-width:1024px)').matches,columns:getComputedStyle(document.querySelector(app)).gridTemplateColumns,app:r(app),board:r(board)};},{app,board});
+    const sample=await page.evaluate(({app,board})=>{const r=selector=>{const el=document.querySelector(selector),b=el.getBoundingClientRect();return {x:b.x,y:b.y,width:b.width,height:b.height};};const outer=document.getElementById('outer-wrapper'),style=getComputedStyle(outer),availableWidth=outer.clientWidth-parseFloat(style.paddingLeft)-parseFloat(style.paddingRight);return {width:innerWidth,availableWidth,height:innerHeight,scrollWidth:document.documentElement.scrollWidth,desktop:matchMedia('(min-width:1024px)').matches,columns:getComputedStyle(document.querySelector(app)).gridTemplateColumns,app:r(app),board:r(board)};},{app,board});
     assert.ok(sample.scrollWidth<=width+1,path+' horizontal overflow: '+JSON.stringify(sample));
     assert.ok(sample.board.width>100&&sample.board.height>120,path+' board collapsed');
     samples.push(sample);
@@ -69,12 +69,12 @@ try{
    if(phase==='after'){
     const desktop=samples.filter(s=>s.width>=1024);
     for(const s of desktop){
-     if(['ran-luot','flappy-bird','ca-lon-nuot-ca-be'].includes(path))assert.ok(s.board.width>=s.width*.82&&s.board.height>=600,path+' desktop arena is too small: '+JSON.stringify(s));
+     if(['ran-luot','flappy-bird','ca-lon-nuot-ca-be'].includes(path))assert.ok(s.board.width>=s.availableWidth*.82&&s.board.height>=600,path+' desktop arena is too small: '+JSON.stringify(s));
      if(path==='xep-hinh')assert.ok(s.board.width>=320&&s.board.height>=640,path+' desktop blocks are too small: '+JSON.stringify(s));
-     if(path==='dao-vang')assert.ok(s.board.width>=Math.min(920,s.width*.8),path+' desktop mine is too small: '+JSON.stringify(s));
-     if(path==='ghep-khoi')assert.ok(s.board.width>=Math.min(620,s.width*.58),path+' desktop grid is too small: '+JSON.stringify(s));
-     if(path==='ban-bong')assert.ok(s.board.width>=Math.min(570,s.width*.48),path+' desktop eggs are too small: '+JSON.stringify(s));
-     if(path==='pikachu')assert.ok(s.board.width>=Math.min(1050,s.width*.68),path+' desktop tiles are too small: '+JSON.stringify(s));
+     if(path==='dao-vang')assert.ok(s.board.width>=Math.min(920,s.availableWidth*.8),path+' desktop mine is too small: '+JSON.stringify(s));
+     if(path==='ghep-khoi')assert.ok(s.board.width>=Math.min(620,s.availableWidth*.58),path+' desktop grid is too small: '+JSON.stringify(s));
+     if(path==='ban-bong')assert.ok(s.board.width>=Math.min(570,s.availableWidth*.48),path+' desktop eggs are too small: '+JSON.stringify(s));
+     if(path==='pikachu')assert.ok(s.board.width>=Math.min(1050,s.availableWidth*.68),path+' desktop tiles are too small: '+JSON.stringify(s));
     }
    }
    assert.deepEqual(errors,[],path+' browser errors');assert.deepEqual(missing,[],path+' missing local resources');
