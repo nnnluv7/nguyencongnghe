@@ -4,7 +4,7 @@
  body.ncn-insurance-page :is(#main,.item-post-wrap){width:100%!important;max-width:none!important}
  body.ncn-insurance-page #ncn-insurance-app{box-sizing:border-box;width:100%;max-width:440px;margin:0 auto;padding:16px;border:1px solid var(--ncn-rim);border-radius:24px;background:var(--ncn-glass-card);box-shadow:var(--ncn-shadow)}
  #ncn-insurance-app .ncn-tool-heading{margin:0 0 14px;padding-bottom:12px;border-bottom:1px solid var(--ncn-border)}
- #ncn-insurance-app .ncn-tool-heading h2{font-size:22px;letter-spacing:-.5px;margin:0;line-height:1.3}
+ #ncn-insurance-app .ncn-tool-heading h2{font-size:var(--ncn-font-title,22px);letter-spacing:-.5px;margin:0;line-height:1.3}
  #ncn-insurance-app .ncn-tool-heading :is(.ncn-tool-eyebrow,p){display:none}
  #ncn-insurance-app .ncn-insurance-grid{display:block}
  body.ncn-insurance-page #postBody #ncn-insurance-app .containerz{padding:0!important;border:0;border-radius:0;background:none;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
@@ -15,7 +15,7 @@
  body.ncn-insurance-page #postBody #ncn-insurance-app .containerz tr:has(input[type=radio])>td{height:44px}
  #ncn-insurance-app td.label{width:46%;padding-right:8px!important}
  #ncn-insurance-app td.label label{cursor:pointer}
- body.ncn-insurance-page #postBody #ncn-insurance-app .containerz :is(input[type=text],select){height:44px!important;padding:9px 10px!important;border-color:var(--ncn-control-rim,var(--ncn-rim))!important;border-radius:14px;font-size:14px!important;background:var(--ncn-glass-soft);box-shadow:var(--ncn-control-shadow,inset 0 1px 0 var(--ncn-highlight))}
+ body.ncn-insurance-page #postBody #ncn-insurance-app .containerz :is(input[type=text],select){height:44px!important;padding:9px 10px!important;border-color:var(--ncn-control-rim,var(--ncn-rim))!important;border-radius:14px;font-size:var(--ncn-font-input,14px)!important;background:var(--ncn-glass-soft);box-shadow:var(--ncn-control-shadow,inset 0 1px 0 var(--ncn-highlight))}
  body.ncn-insurance-page #postBody #ncn-insurance-app .containerz :is(input[type=text],select):focus-visible{border-color:var(--ncn-accent)!important;outline:2px solid var(--ncn-accent);outline-offset:2px}
  #ncn-insurance-app input::placeholder{color:var(--ncn-muted);opacity:1}
  body.ncn-insurance-page #postBody #ncn-insurance-app .ncn-insurance-options{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px!important;margin:0 0 8px!important}
@@ -28,5 +28,5 @@
  body.ncn-insurance-page #postBody #ncn-insurance-app .containerz #gopmoithang{background:var(--ncn-selected)!important;color:var(--ncn-selected-ink)!important;font-size:17px;font-weight:750}
  #ncn-insurance-app .ncn-input-unit>#goi{flex:1}
  #ncn-insurance-app #ghichu:empty{display:none}
- @media(max-width:520px){body.ncn-insurance-page #ncn-insurance-app{padding:14px 12px}body.ncn-insurance-page #postBody #ncn-insurance-app .containerz :is(input[type=text],select){font-size:16px!important}body.ncn-insurance-page #postBody #ncn-insurance-app .ncn-insurance-options{grid-template-columns:repeat(2,minmax(0,1fr))}}
+ @media(max-width:520px){body.ncn-insurance-page #ncn-insurance-app{padding:14px 12px}body.ncn-insurance-page #postBody #ncn-insurance-app .containerz :is(input[type=text],select){font-size:var(--ncn-font-input,16px)!important}body.ncn-insurance-page #postBody #ncn-insurance-app .ncn-insurance-options{grid-template-columns:repeat(2,minmax(0,1fr))}}
 }
