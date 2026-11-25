@@ -55,9 +55,8 @@ test('the chat-compatible NCN PNG is 1200 × 630 and stays below 150 KB',async()
   assert.equal(bytes.subarray(1,4).toString(),'PNG');assert.equal(bytes.readUInt32BE(16),1200);assert.equal(bytes.readUInt32BE(20),630);assert.ok(bytes.length<150000,bytes.length+' bytes');
 });
 
-test('retired barcode loads are absent, actual QR consumers and exam history keep their dependencies',async()=>{
-  for(const file of (await walk('public')).filter(p=>p.endsWith('.html'))){const html=await readFile(file,'utf8');assert.ok(!html.includes('aa6e8dfded6a0c4cb4.js'),file);if(!file.endsWith('/p/lich-su-thi.html'))for(const script of ['82a51e5c929898de8e.js','61f5ec9b240aa960ca.js','0ca0b0d3937c316ea2.js'])assert.ok(!html.includes(script),file);}
+test('retired barcode and quiz loads are absent while actual QR consumers keep their dependencies',async()=>{
+  for(const file of (await walk('public')).filter(p=>p.endsWith('.html'))){const html=await readFile(file,'utf8');assert.ok(!html.includes('aa6e8dfded6a0c4cb4.js'),file);for(const script of ['82a51e5c929898de8e.js','61f5ec9b240aa960ca.js','0ca0b0d3937c316ea2.js'])assert.ok(!html.includes(script),file);}
   for(const path of ['2022/12/qrcode.html','2024/01/ban-kiem-ke-san-pham-theo-file-excel.html','2024/04/qrcode-generator-tao-ma-qrcode.html'])assert.ok((await readFile('public/'+path,'utf8')).includes('8d243afceff6c25537.js'),path);
-  const history=await readFile('public/p/lich-su-thi.html','utf8');assert.ok(history.includes('0ca0b0d3937c316ea2.js'));assert.ok(history.includes('b638b6b6b0e4f4118c.js'));
   const lookup=JSON.parse(await readFile('public/assets/asset-map.json','utf8'));for(const path of new Set(Object.values(lookup)))assert.ok((await stat('public'+path)).isFile(),path);
 });

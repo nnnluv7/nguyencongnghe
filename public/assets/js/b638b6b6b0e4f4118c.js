@@ -7,7 +7,6 @@ window.QuizSystem = {
         "ctkm": ["https://docs.google.com/spreadsheets/d/e/2PACX-1vQKmfueT0R0ELPYhZzeKb6ImZZswds30NhDbPlbAHizp5BaxS_IIzzhIltMhFpZ9iVWAqc01SASit26/pub?output=csv"]
     },
     API_URL: window.CG_CONFIG.apiUrl,
-    HISTORY_URL: "/p/lich-su-thi.html",
     
     // 2. Biến dùng chung
     user: null, root: null,

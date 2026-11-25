@@ -122,7 +122,7 @@ export function mountAccount({doc=document,win=window,identity=identityClient,fe
         const status=!verified?'Tài khoản':verified.admin?'ADMIN':verified.vipSource==='payment'?'Thành viên ủng hộ':'Thành viên';info.append(node('span',status,'ncn-account-badge'));
         if(verified?.vipExpiresAt)info.append(node('small','Hạn VIP: '+new Date(verified.vipExpiresAt).toLocaleDateString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh'})));
         target.append(info);
-        if(verified){const manage=node('button','Quản lý tài khoản','auth-btn btn-login');manage.type='button';manage.dataset.ncnAccountOpen='profile';target.append(manage);const details=node('button','Thông tin VIP','auth-btn btn-login');details.type='button';details.dataset.ncnAccountOpen='vip';target.append(details);const history=node('a','Lịch sử thi','auth-btn btn-login');history.href='/p/lich-su-thi.html';target.append(history);}
+        if(verified){const manage=node('button','Quản lý tài khoản','auth-btn btn-login');manage.type='button';manage.dataset.ncnAccountOpen='profile';target.append(manage);const details=node('button','Thông tin VIP','auth-btn btn-login');details.type='button';details.dataset.ncnAccountOpen='vip';target.append(details);}
         const donate=node('a','Donate · Gia hạn VIP','auth-btn btn-login');donate.href='/donate/#reg';target.append(donate);
         if(verified?.admin){const admin=node('a','Quản trị Admin','auth-btn btn-login');admin.href='/admin/';target.append(admin);}
         const out=node('button','Đăng xuất','auth-btn btn-login');out.type='button';out.dataset.ncnAccountSignout='';out.disabled=state.busy;target.append(out);
