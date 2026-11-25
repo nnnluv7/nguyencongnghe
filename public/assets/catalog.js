@@ -1370,22 +1370,6 @@ window.CG_CATALOG = [
     "isPage": true
   },
   {
-    "title": "Lịch sử thi",
-    "link": "/p/lich-su-thi.html",
-    "thumbnail": {
-      "src": "/assets/vendor/b16e8a70d63d2035d4.png",
-      "type": "image"
-    },
-    "author": "Unknown",
-    "authorimage": "",
-    "date": "16 tháng 1",
-    "datetime": "2026-01-16T09:21:05.463+07:00",
-    "summary": "Đang tải dữ liệu... full-width",
-    "labels": [],
-    "category": "nguyencongnghe.com",
-    "isPage": true
-  },
-  {
     "title": "Chính sách sử dụng Cookies",
     "link": "/p/cookies-consent.html",
     "thumbnail": {

@@ -58,8 +58,8 @@ try{
     baseline=old;const ctx=await context(width,2);await ctx.addCookies([{name:'nf_jwt',value:adminToken,url:base}]);
     const p=await open(ctx,'/');assert.equal(await p.evaluate(()=>NCNAccount.state.user?.admin),true);
     await p.evaluate(theme=>document.documentElement.dataset.ncnTheme=theme,theme);await p.locator('.ncn-account-menu>summary').click();await p.mouse.move(0,0);await paint(p);
-    const actions=p.locator('#ncn-account-host .auth-btn');assert.equal(await actions.count(),6);
-    assert.deepEqual(await actions.allTextContents(),['Quản lý tài khoản','Thông tin VIP','Lịch sử thi','Donate · Gia hạn VIP','Quản trị Admin','Đăng xuất']);
+    const actions=p.locator('#ncn-account-host .auth-btn');assert.equal(await actions.count(),5);
+    assert.deepEqual(await actions.allTextContents(),['Quản lý tài khoản','Thông tin VIP','Donate · Gia hạn VIP','Quản trị Admin','Đăng xuất']);
     geometry.push(await actions.evaluateAll(els=>els.map(el=>{const s=getComputedStyle(el);return {text:el.textContent,box:el.getBoundingClientRect().toJSON(),radius:s.borderRadius,border:s.borderWidth};})));
     if(!old){
      for(const el of await actions.all()){const s=await el.evaluate(el=>{const s=getComputedStyle(el);return {shadow:s.boxShadow,radius:s.borderTopLeftRadius,width:s.outlineWidth};});assert.equal(s.radius,'999px');assert.equal(s.width,'0px');assert.match(s.shadow,/0\.5px/);assert.ok(s.shadow.includes(theme==='light'?'24, 44, 64':'0, 10, 23'),JSON.stringify(s));}

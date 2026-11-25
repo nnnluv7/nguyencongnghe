@@ -1,3 +1,8 @@
+# Retired exam history links return to the homepage.
+/p/lich-su-thi.html  /  301!
+/p/lich-su-thi  /  301!
+/p/lich-su-thi/  /  301!
+
 # BEGIN NCN LIBRARY CMS: enforce article state before returning HTML.
 /  /.netlify/functions/ncn-library-page?view=home  200!
 /index.html  /.netlify/functions/ncn-library-page?view=home  200!
@@ -315,9 +320,6 @@
 /in-gvgs/index.html  /.netlify/functions/ncn-site-page?page=in-gvgs%2Findex.html  200!
 /in-gvgs/  /.netlify/functions/ncn-site-page?page=in-gvgs%2Findex.html  200!
 /in-gvgs  /.netlify/functions/ncn-site-page?page=in-gvgs%2Findex.html  200!
-/p/lich-su-thi.html  /.netlify/functions/ncn-site-page?page=p%2Flich-su-thi.html  200!
-/p/lich-su-thi  /.netlify/functions/ncn-site-page?page=p%2Flich-su-thi.html  200!
-/p/lich-su-thi/  /.netlify/functions/ncn-site-page?page=p%2Flich-su-thi.html  200!
 /pikachu/index.html  /.netlify/functions/ncn-site-page?page=pikachu%2Findex.html  200!
 /pikachu/  /.netlify/functions/ncn-site-page?page=pikachu%2Findex.html  200!
 /pikachu  /.netlify/functions/ncn-site-page?page=pikachu%2Findex.html  200!

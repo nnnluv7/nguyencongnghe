@@ -15,7 +15,7 @@ for(const file of pages){
   const executable=html.replace(/<script\b[^>]*src=["'][^"']*["'][^>]*><\/script>/gi,'')+'\n'+(await Promise.all(sources.filter(s=>s.startsWith('/assets/')&&![qr,barcode].includes(s)).map(s=>readFile('public'+s,'utf8')))).join('\n');
   const needsQR=/\bnew\s+QRCode\b|\bQRCode\./.test(executable);
   const needsBarcode=/\bJsBarcode\s*\(/.test(executable);
-  const needsQuiz=html.includes('id="history-page-container"')||/\binitQuizModule\s*\(/.test(html);
+  const needsQuiz=/\binitQuizModule\s*\(/.test(html);
   const needsDate=sources.some(s=>!s.endsWith('/b9891f589cc0f98f96.js')&&/\/7dae16256c6f0c31eb\.js$/.test(s));
   html=html.replace(/<script\b[^>]*src=["']([^"'?#]+)[^"']*["'][^>]*><\/script>/gi,(tag,src)=>{
     if(src===barcode&&!needsBarcode||src===qr&&!needsQR||quiz.includes(src)&&!needsQuiz||src==='/assets/js/b9891f589cc0f98f96.js'&&!needsDate){removedScripts[src]=(removedScripts[src]||0)+1;return '';}

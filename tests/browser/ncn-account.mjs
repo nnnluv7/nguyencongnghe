@@ -205,6 +205,7 @@ try{
       window.restoreSessionStorageWriter=()=>{Storage.prototype.setItem=original;};
     });
     await login(home);
+    assert.equal(await home.locator('a[href="/p/lich-su-thi.html"]').count(),0);
     const publications=await home.evaluate(()=>{window.restoreSessionStorageWriter();return window.loginCookiePublications;});
     assert.ok(publications.length>0);assert.ok(publications.every(Boolean),'A session cookie must exist before cross-tab login publication');
     await home.reload();await home.waitForFunction(()=>window.NCNAccount?.state.ready&&NCNAccount.state.user?.vip);assert.equal(await home.evaluate(()=>NCNAccount.state.user.id),existing.id);
