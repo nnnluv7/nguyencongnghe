@@ -1,5 +1,4 @@
-/* Compact navigation stays visible; only its measured space and clock update. */
-import {installToolbarClock} from './clock.js?v=20261025-toolbar-1';
+/* Compact navigation stays visible and reserves its measured space. */
 import {installToolbarLayout} from './toolbar.js';
 const controllers=new WeakMap();
 export function installScrollUI({doc=document,win=window}={}){
@@ -8,7 +7,7 @@ export function installScrollUI({doc=document,win=window}={}){
   installToolbarLayout(doc);
   const chrome=[...doc.querySelectorAll('#ncn-announcement,#ncn-topbar,#ncn-menu-open,#ncn-game-topbar,#ncn-game-menu')];
   if(!chrome.length)return;
-  const clock=installToolbarClock({doc,win}),listeners=[];
+  const listeners=[];
   let frame=0,destroyed=false,space=0,hasNotice=body.classList.contains('ncn-has-announcements');
   const show=()=>{if(body.classList.contains('ncn-chrome-hidden'))body.classList.remove('ncn-chrome-hidden');};
   function measure(){
@@ -35,7 +34,7 @@ export function installScrollUI({doc=document,win=window}={}){
   const notice=doc.getElementById('ncn-announcement');if(notice)observer?.observe(notice,{attributes:true,attributeFilter:['hidden']});
   const resize=win.ResizeObserver?new win.ResizeObserver(schedule):null;chrome.forEach(node=>resize?.observe(node));
   show();body.classList.add('ncn-scroll-ready');measure();
-  const api={show,destroy(){destroyed=true;clock?.destroy();listeners.forEach(remove=>remove());observer?.disconnect();resize?.disconnect();win.cancelAnimationFrame(frame);body.classList.remove('ncn-chrome-hidden','ncn-scroll-ready');root.style.removeProperty('--ncn-chrome-space');controllers.delete(doc);}};
+  const api={show,destroy(){destroyed=true;listeners.forEach(remove=>remove());observer?.disconnect();resize?.disconnect();win.cancelAnimationFrame(frame);body.classList.remove('ncn-chrome-hidden','ncn-scroll-ready');root.style.removeProperty('--ncn-chrome-space');controllers.delete(doc);}};
   controllers.set(doc,api);return api;
 }
 if(typeof document!=='undefined'){

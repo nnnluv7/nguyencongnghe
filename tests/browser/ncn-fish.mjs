@@ -52,7 +52,7 @@ try{
     for(const width of [1440,1280,820,640,390,360,320]){
       await page.setViewportSize({width,height:width<640?844:1050});await tick(150);
       const fit=await page.evaluate(()=>{const stage=document.getElementById('ff-stage').getBoundingClientRect(),start=document.getElementById('ff-start').getBoundingClientRect();return {w:innerWidth,scroll:document.documentElement.scrollWidth,stage:stage.toJSON(),start:start.toJSON(),clock:!!document.getElementById('ncn-toolbar-clock')};});
-      assert.ok(fit.scroll<=width+1,JSON.stringify(fit));assert.ok(fit.start.left>=fit.stage.left&&fit.start.right<=fit.stage.right&&fit.start.top>fit.stage.top&&fit.start.bottom<fit.stage.bottom,JSON.stringify(fit));assert.equal(fit.clock,true);
+      assert.ok(fit.scroll<=width+1,JSON.stringify(fit));assert.ok(fit.start.left>=fit.stage.left&&fit.start.right<=fit.stage.right&&fit.start.top>fit.stage.top&&fit.start.bottom<fit.stage.bottom,JSON.stringify(fit));assert.equal(fit.clock,false);
       if(width===1440)await shot('welcome-desktop');if(width===390)await shot('welcome-phone');
     }
   });
