@@ -1,5 +1,5 @@
 import {escapeHTML} from '../../public/assets/ncn-library/content.js';
-import {articleCardHTML,libraryLabelName,libraryLabels,latestArticles,featuredArticles} from '../../public/assets/ncn-theme/catalogue.js';
+import {articleCardHTML,libraryLabelName,libraryLabels,latestArticles,featuredArticles,LIBRARY_PAGE_SIZE} from '../../public/assets/ncn-theme/catalogue.js';
 import {preparePublicTools} from './ncn-public-copy.mjs';
 
 const json=value=>JSON.stringify(value).replace(/</g,'\\u003c').replace(/\u2028/g,'\\u2028').replace(/\u2029/g,'\\u2029');
@@ -22,8 +22,8 @@ export function renderPublicHTML(html,catalog,{notices=[],stories=null,now=Date.
     const labels=[...new Set(rows.flatMap(libraryLabels))].sort((a,b)=>a.localeCompare(b,'vi'));
     const q=query.get('q')||'',wanted=libraryLabelName(query.get('label')),label=labels.includes(wanted)?wanted:'',source=['ncn','genk'].includes(query.get('source'))?query.get('source'):'';
     const result=rows.filter(row=>(!label||libraryLabels(row).includes(label))&&(!source||(source==='genk')===(row.source==='GenK'))&&fold(row.title+' '+(row.summary||'')+' '+libraryLabels(row).join(' ')).includes(fold(q)));
-    const pages=Math.max(1,Math.ceil(result.length/12)),page=Math.max(1,Math.min(Number(query.get('page'))||1,pages));
-    html=region(html,'results',result.slice((page-1)*12,page*12).map(card).join('')||'<p class="ncn-empty">Không tìm thấy nội dung. Thử bỏ bộ lọc hoặc đổi từ khóa.</p>');
+    const pages=Math.max(1,Math.ceil(result.length/LIBRARY_PAGE_SIZE)),page=Math.max(1,Math.min(Number(query.get('page'))||1,pages));
+    html=region(html,'results',result.slice((page-1)*LIBRARY_PAGE_SIZE,page*LIBRARY_PAGE_SIZE).map(card).join('')||'<p class="ncn-empty">Không tìm thấy nội dung. Thử bỏ bộ lọc hoặc đổi từ khóa.</p>');
     html=region(html,'count',result.length+' nội dung'+(q?' phù hợp':''));html=region(html,'page','Trang '+page+' / '+pages);
     html=region(html,'labels','<option value="">Tất cả</option>'+labels.map(x=>'<option value="'+escapeHTML(x)+'"'+(x===label?' selected':'')+'>'+escapeHTML(x)+'</option>').join(''));
     html=html.replace(/(<input id="ncn-library-query"[^>]*)(>)/,(_,start,end)=>start.replace(/ value="[^"]*"/g,'')+' value="'+escapeHTML(q)+'"'+end);

@@ -1,4 +1,4 @@
-import {articleCardHTML,libraryLabelName,libraryLabels,latestArticles,featuredArticles} from './catalogue.js?v=20261025-sync-1';
+import {articleCardHTML,libraryLabelName,libraryLabels,latestArticles,featuredArticles,LIBRARY_PAGE_SIZE} from './catalogue.js?v=20261025-sync-1';
 import '../ncn-account.js?v=20261027-photo-save-1';
 import {installAppearance} from './appearance.js?v=20261017-mobile-dark-1';
 // A metrics request must never delay or prevent the actual interface.
@@ -209,7 +209,7 @@ export function createTheme({doc=document,win=window,config,catalog=win.CG_CATAL
   }
   renderFeatured();
   let page=1,libraryQuery='',libraryLabel='',librarySource='';
-  const PAGE_SIZE=12;
+  const PAGE_SIZE=LIBRARY_PAGE_SIZE;
   function renderLibrary() {
     const result=visibleRows(sortedRows).filter(row=>matches({...row,labels:libraryLabels(row)},libraryQuery)&&(!libraryLabel||libraryLabels(row).includes(libraryLabel))&&(!librarySource||(librarySource==='genk')===(row.source==='GenK')));
     const pages=Math.max(1,Math.ceil(result.length/PAGE_SIZE));page=Math.max(1,Math.min(page,pages));

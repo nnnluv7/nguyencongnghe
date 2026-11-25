@@ -3,6 +3,7 @@ import {AUDIO_MIC,AUDIO_TOOL,withAudioTool} from '../../public/assets/ncn-audio/
 import {homeCardArt} from '../../public/assets/ncn-theme/home-card-art.js';
 import {POPUP_TOOL,withMergedPopup} from '../../public/assets/ncn-theme/popup-tool.js';
 import {CASH_FUND_ICON,CASH_FUND_TOOL,withCashFundTool} from '../../public/assets/ncn-theme/cash-fund-tool.js';
+import {toolbarHTML} from '../../public/assets/ncn-theme/toolbar.js';
 
 // The retained pages share these fragments. Remove them before rendering
 // catalogue entries, notices, stories or managed article text.
@@ -73,6 +74,7 @@ function addCashFundTool(html){
 }
 
 export function preparePublicTools(html){
+  html=toolbarHTML(html);
   html=addCashFundTool(addAudioTool(html));
   // Keep the first paint and every retained public shell linked to Donate.
   html=html.replace(/(<nav id="ncn-(?:navigation|game-nav)"[^>]*>)([\s\S]*?)(<\/nav>)/g,(_,open,inside,close)=>open+inside+(inside.includes('href="/donate/#reg"')?'':'<a class="ncn-nav-link" href="/donate/#reg"><span>Donate · Thành viên ủng hộ</span></a>')+close);
