@@ -42,6 +42,20 @@ async function context(){
  });return ctx;
 }
 async function check(name,fn){try{await fn();results.push({name,ok:true});console.log('PASS '+name);}catch(error){results.push({name,ok:false,error:error.message});await page?.screenshot({path:out+'/failure-'+results.length+'.jpg',type:'jpeg',quality:80}).catch(()=>{});throw error;}}
+async function geometry(p,label){
+ const g=await p.evaluate(()=>{
+  const outer=document.getElementById('outer-wrapper'),o=outer.getBoundingClientRect(),s=getComputedStyle(outer),bar=document.getElementById('ncn-topbar').getBoundingClientRect(),footer=document.getElementById('ncn-footer')?.getBoundingClientRect(),notice=document.getElementById('ncn-announcement');
+  const left=o.left+parseFloat(s.paddingLeft),right=o.right-parseFloat(s.paddingRight);
+  const filters=[...document.querySelectorAll('#ncn-home-filters,.st-tabs')].filter(el=>el.getClientRects().length).map(el=>{const r=el.getBoundingClientRect(),buttons=[...el.querySelectorAll('button')].filter(b=>b.getClientRects().length).map(b=>b.getBoundingClientRect());return {x:r.x,right:r.right,width:r.width,inside:buttons.every(b=>b.left>=r.left+3&&b.right<=r.right-3&&b.top>=r.top+3&&b.bottom<=r.bottom-3),overlap:buttons.some((b,i)=>buttons.some((c,j)=>i!==j&&b.left<c.right-1&&b.right>c.left+1&&b.top<c.bottom-1&&b.bottom>c.top+1))};});
+  return {outer:o.toJSON(),left,right,bar:bar.toJSON(),footer:footer?.toJSON(),notice:notice?.hidden?null:notice?.getBoundingClientRect().toJSON(),viewport:document.documentElement.clientWidth,filters};
+ });
+ assert.ok(Math.abs(g.bar.left-g.left)<1&&Math.abs(g.bar.right-g.right)<1,label+' toolbar edges '+JSON.stringify(g));
+ if(g.footer)assert.ok(Math.abs(g.footer.left-g.left)<1&&Math.abs(g.footer.right-g.right)<1,label+' footer edges '+JSON.stringify(g));
+ if(g.notice)assert.ok(Math.abs(g.notice.left-g.left)<1&&Math.abs(g.notice.right-g.right)<1,label+' ticker edges '+JSON.stringify(g));
+ assert.ok(Math.abs(g.left-(g.viewport-g.right))<1,label+' equal side margins '+JSON.stringify(g));
+ assert.ok(g.filters.every(f=>f.inside&&!f.overlap),label+' filter insets '+JSON.stringify(g));
+ return g;
+}
 const ctx=await context(),metrics=[];
 const paint=()=>page.evaluate(()=>new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done))));
 const targets=['/','/popup-a7/','/sticker/','/ban-hang/','/trang-tri/','/tin-tuc-cong-nghe/','/arcade/','/2024/02/kiem-quy.html','/2025/05/tu-van.html','/tien-quy-sieu-thi/','/2024/04/qrcode-generator-tao-ma-qrcode.html','/2024/01/ban-kiem-ke-san-pham-theo-file-excel.html','/2024/01/in-fifo.html','/thu-audio/','/vong-quay-may-man/','/donate/','/in-event/','/in-gvgs/'];
@@ -55,14 +69,14 @@ try{
   const info=await page.evaluate(()=>({height:document.documentElement.scrollHeight,width:document.documentElement.scrollWidth,viewport:innerHeight,
    columns:[...document.querySelectorAll('#ncn-tool-grid,#ncn-articles,#ncn-featured-results,#ncn-library-results,.st-cards,.ncn-arcade-grid')].filter(el=>el.getClientRects().length).map(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length),
    cards:document.querySelectorAll('.st-card').length,cardWidths:[...document.querySelectorAll('#ncn-articles,#ncn-tool-grid,#ncn-featured-results,#ncn-library-results,.st-cards')].filter(el=>el.getClientRects().length&&el.firstElementChild).map(el=>el.firstElementChild.getBoundingClientRect().width),bar:document.getElementById('ncn-topbar').getBoundingClientRect().toJSON()}));
-  metrics.push({path,...info});console.log(JSON.stringify({path,...info}));
-  assert.ok(info.columns.every(n=>n===5),JSON.stringify(info));assert.ok(info.cardWidths.every(width=>Math.abs(width-(1366-48-48)/5)<1),JSON.stringify(info));assert.ok(info.bar.height<=54);assert.ok(info.width<=1366);
+  await geometry(page,path);metrics.push({path,...info});console.log(JSON.stringify({path,...info}));
+  assert.ok(info.columns.every(n=>n===5),JSON.stringify(info));assert.ok(info.cardWidths.every(width=>Math.abs(width-(1040-48-48)/5)<1),JSON.stringify(info));assert.ok(info.bar.height<=54);assert.ok(info.width<=1366);
   if(['/', '/popup-a7/','/sticker/','/tin-tuc-cong-nghe/'].includes(path))await page.screenshot({path:out+'/'+(path==='/'?'home':path.split('/')[1])+'.jpg',fullPage:true,type:'jpeg',quality:80});
   await page.evaluate(()=>{const spacer=document.createElement('div');spacer.id='test-scroll-spacer';spacer.style.height='1800px';document.body.append(spacer);scrollTo(0,500);});await paint();
   const fixed=await page.locator('#ncn-topbar').boundingBox();assert.ok(Math.abs(fixed.y-info.bar.y)<1);assert.equal(await page.locator('body.ncn-chrome-hidden').count(),0);await page.evaluate(()=>document.getElementById('test-scroll-spacer')?.remove());
   await page.evaluate(()=>{const avatar=document.querySelector('.ncn-account-avatar');if(avatar)avatar.replaceChildren(Object.assign(document.createElement('img'),{src:'data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="160" height="80"><rect width="160" height="80" fill="skyblue"/></svg>'),alt:'Ảnh thử tỷ lệ'}));});
-  for(const width of [1920,1366,1024,900,768,390,320]){
-   await page.setViewportSize({width,height:844});await paint();
+  for(const width of [1920,1366,1024,1023,901,900,768,621,620,390,360,320]){
+   await page.setViewportSize({width,height:844});await paint();await geometry(page,path+' '+width);
    const mobile=await page.evaluate(()=>{const bar=document.getElementById('ncn-topbar').getBoundingClientRect(),controls=[...document.querySelectorAll('#ncn-menu-open,#ncn-topbar .ncn-brand-image,#ncn-topbar .ncn-top-search,#ncn-theme-toggle,#ncn-topbar .ncn-account-menu summary')].filter(el=>el.getClientRects().length).map(el=>el.getBoundingClientRect().toJSON()).sort((a,b)=>a.left-b.left);return {width:document.documentElement.scrollWidth,height:bar.height,inside:controls.every(r=>r.left>=bar.left&&r.right<=bar.right),overlap:controls.some((r,i)=>i&&r.left<controls[i-1].right-1)};});
    assert.ok(mobile.width<=width+1&&mobile.height<=54&&mobile.inside&&!mobile.overlap,JSON.stringify({path,width,...mobile}));
    const toolbar=await page.evaluate(()=>{
@@ -96,6 +110,16 @@ try{
     for(const group of sizes){assert.ok(group.buttons.length);group.buttons.forEach((button,i)=>{assert.ok(button.inside&&!button.overflow&&Math.abs(button.width-group.width)<1&&button.width>button.height,JSON.stringify({path,width,group}));if(i)assert.ok(button.y>=group.buttons[i-1].y+group.buttons[i-1].height+4,JSON.stringify(group));});}
    }
   }
+  if(path==='/'){
+   await page.setViewportSize({width:1280,height:900});
+   await page.addStyleTag({content:'html{overflow-y:scroll;scrollbar-gutter:stable both-edges}'});await paint();await geometry(page,'classic scrollbar');
+   await page.evaluate(()=>document.documentElement.style.zoom='1.25');await paint();
+   const zoom=await page.evaluate(()=>{const bar=document.getElementById('ncn-topbar').getBoundingClientRect(),footer=document.getElementById('ncn-footer').getBoundingClientRect();return {left:bar.left,right:bar.right,footerLeft:footer.left,footerRight:footer.right};});
+   assert.ok(Math.abs(zoom.left-zoom.footerLeft)<1&&Math.abs(zoom.right-zoom.footerRight)<1,'zoomed edges '+JSON.stringify(zoom));
+   await page.evaluate(()=>document.documentElement.style.zoom='');
+   await page.evaluate(()=>{document.getElementById('ncn-announcement').hidden=true;document.body.classList.remove('ncn-has-announcements');scrollTo(0,0);});await paint();
+   const first=await page.evaluate(()=>({heading:document.querySelector('#ncn-home-latest h1').getBoundingClientRect().top,bar:document.getElementById('ncn-topbar').getBoundingClientRect().bottom}));assert.ok(first.heading>=first.bar+8,JSON.stringify(first));
+  }
   if(path==='/')assert.equal(await page.locator('#ncn-articles .ncn-article-card').count(),5);
   if(path==='/tin-tuc-cong-nghe/'){
    assert.equal(await page.locator('#ncn-library-results .ncn-article-card').count(),15);
@@ -124,7 +148,7 @@ try{
    page=await ctx.newPage();let route='/'+file.slice(7);if(route==='/tin-tuc-cong-nghe/index.html')route='/tin-tuc-cong-nghe/';
    await page.goto(origin+route,{waitUntil:'domcontentloaded'});await page.waitForSelector('body.ncn-scroll-ready');
    for(const width of [1280,390]){
-    await page.setViewportSize({width,height:800});await paint();
+    await page.setViewportSize({width,height:800});await paint();await geometry(page,route+' '+width);
     await page.evaluate(()=>{const spacer=document.createElement('div');spacer.style.height='1000px';document.body.append(spacer);scrollTo(0,300);});await paint();
     const state=await page.evaluate(()=>{const bar=document.getElementById('ncn-topbar')||document.getElementById('ncn-game-topbar'),rect=bar?.getBoundingClientRect();return {hidden:document.body.classList.contains('ncn-chrome-hidden'),top:rect?.top,height:rect?.height,width:document.documentElement.scrollWidth,viewport:innerWidth};});
     assert.ok(!state.hidden&&state.top>=0&&state.height<=56&&state.width<=state.viewport+1,file+': '+JSON.stringify(state));

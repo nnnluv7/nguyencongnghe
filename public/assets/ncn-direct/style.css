@@ -76,7 +76,7 @@ body.ncn-modern .ncn-fifo-workbench .ncn-fifo-input h3{font-size:13px;margin:10p
 .ncn-fifo-workbench .ncn-print-zoom{margin:12px 0}
 .ncn-fifo-workbench .ncn-print-zoom span{font-size:12px;width:100%}
 /* Older print routes keep their own form nodes and exact print sheet. */
-body.ncn-legacy-print #outer-wrapper{max-width:1392px!important;background:transparent!important;box-shadow:none!important;border:0!important}
+body.ncn-legacy-print #outer-wrapper{max-width:var(--ncn-page-max,1040px)!important;background:transparent!important;box-shadow:none!important;border:0!important}
 body.ncn-legacy-print :is(.item-post-wrap,.post-inner-area,.post-body){padding:0!important;background:transparent!important;box-shadow:none!important;border:0!important}
 body.ncn-legacy-print :is(.feed-share,.primary-nav,.comments-section,.below-ads,#ncn-page-actions){display:none!important}
 .ncn-legacy-print .ncn-print-workspace{display:grid;grid-template-columns:minmax(0,1fr) 310px;gap:24px;align-items:start}

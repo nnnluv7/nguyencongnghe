@@ -45,7 +45,7 @@ html[data-ncn-theme=dark] :is(.ncn-arcade-nav,.ncn-scoreboard,.ncn-arcade-dialog
 /* Desktop play uses the available page width. Keep the original board ratios,
    mobile layouts and print rules; never magnify a canvas with a CSS transform. */
 @media screen and (min-width:1024px){
- body.ncn-modern.ncn-game-page #outer-wrapper{max-width:1760px!important}
+ body.ncn-modern.ncn-game-page #outer-wrapper{max-width:var(--ncn-page-max,1040px)!important}
  body.ncn-modern.ncn-game-page #feed-view{padding:0;max-width:none}
  .ncn-game-page :is(.pk-app,.xh-app){max-width:none}
  .ncn-game-page :is(.gm-page,.bn-page){max-width:none;padding:0 0 54px}
