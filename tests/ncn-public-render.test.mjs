@@ -8,11 +8,24 @@ import {createLibraryPageHandler} from '../netlify/lib/ncn-library-page.mjs';
 import {trimPublicCopy} from '../netlify/lib/ncn-public-copy.mjs';
 import {publicCatalog} from '../netlify/lib/ncn-library-api.mjs';
 import {memoryStories} from './fixtures/ncn-stories.mjs';
+import {toolbarHTML} from '../public/assets/ncn-theme/toolbar.js';
 
 const read=path=>readFile(path,'utf8'),seed=JSON.parse(await read('netlify/lib/ncn-library/seed.json')),news=JSON.parse(await read('netlify/lib/ncn-news/genk-seed.json')),rows=publicCatalog(seed);
 const item=(slug='tin-moi',extra='')=>'<item><title><![CDATA[Tin mới &amp; công nghệ]]></title><link>https://genk.vn/'+slug+'.chn?utm_source=rss</link><description><![CDATA[<a href="https://genk.vn/'+slug+'.chn"><img src="https://genk.mediacdn.vn/a.jpg"></a><br>Mô tả ngắn về công nghệ.]]></description><pubDate>Sun, 25 Oct 2026 12:00:00 +0700</pubDate>'+extra+'</item>';
 const rss=items=>'<?xml version="1.0"?><rss version="2.0"><channel>'+items+'</channel></rss>';
 const now=Date.parse('2026-10-25T06:00:00Z');
+
+test('every public toolbar has two groups at first paint and can be normalized repeatedly',async()=>{
+  const pages=JSON.parse(await read('netlify/lib/ncn-shell/pages.json'));
+  for(const path of new Set(['index.html','tin-tuc-cong-nghe/index.html',...Object.values(pages),'../netlify/lib/ncn-library/article-shell.html'])){
+    const source=await read('public/'+path),html=toolbarHTML(source);
+    if(!source.includes('id="ncn-topbar"'))continue;
+    assert.match(html,/<div class="ncn-topbar-left"><button id="ncn-menu-open"/);
+    assert.match(html,/<div class="ncn-topbar-right"><button[^>]*class="ncn-top-search"[^>]*aria-label="Tìm công cụ, bài viết"/);
+    assert.equal((html.match(/id="ncn-menu-open"/g)||[]).length,1,path);
+    assert.equal(toolbarHTML(html),html,path);
+  }
+});
 
 test('official RSS becomes dated, deduplicated source links and short passive previews',()=>{
   const items=parseGenkRSS(rss(item()+item()+item('tin-khac')),now);assert.equal(items.length,2);assert.equal(items[0].title,'Tin mới & công nghệ');assert.equal(items[0].source,'GenK');assert.equal(items[0].datetime,'2026-10-25T05:00:00.000Z');assert.ok(items.every(x=>x.link.startsWith('https://genk.vn/')&&!x.link.includes('?')));assert.equal(items[0].thumbnail.src,'https://genk.mediacdn.vn/a.jpg');assert.equal(items[0].summary.includes('<'),false);
@@ -35,9 +48,9 @@ test('a concurrent feed sync cannot overwrite a newer successful snapshot',async
   const store=memoryStories();await store.setJSON('genk',{items:[]});store.beforeWrite=async()=>store.setJSON('genk',{items:news,etag:'newer'});
   const result=await syncGenkNews(store,{now,fetcher:async()=>new Response(rss(item()),{headers:{'Content-Type':'text/xml'}})});assert.equal(result.updated,false);assert.equal(store.entries.get('genk').data.etag,'newer');
 });
-test('homepage sends four final article cards and notice geometry before any client code executes',async()=>{
+test('homepage sends five final article cards and notice geometry before any client code executes',async()=>{
   const html=renderPublicHTML(await read('public/index.html'),mergeNews(rows,news),{notices:[{text:'Tin mới <script>alert(1)</script>'}],now});
-  const section=html.slice(html.indexOf('id="ncn-home-latest"'),html.indexOf('id="ncn-favorites-section"'));assert.equal((section.match(/class="ncn-article-card"/g)||[]).length,4);assert.ok(section.includes('data-ncn-source="genk"'));assert.ok(html.includes('class="ncn-has-announcements '));assert.ok(html.includes('&lt;script&gt;alert(1)&lt;/script&gt;'));assert.equal(html.includes('>Tin mới <script>'),false);
+  const section=html.slice(html.indexOf('id="ncn-home-latest"'),html.indexOf('id="ncn-favorites-section"'));assert.equal((section.match(/class="ncn-article-card"/g)||[]).length,5);assert.ok(section.includes('data-ncn-source="genk"'));assert.ok(html.includes('class="ncn-has-announcements '));assert.ok(html.includes('&lt;script&gt;alert(1)&lt;/script&gt;'));assert.equal(html.includes('>Tin mới <script>'),false);
 });
 test('the live homepage keeps the logo and removes redundant copy before inserting notices',async()=>{
   const notice='NCN Arcade · Giải đấu hôm nay';
@@ -51,7 +64,7 @@ test('the live homepage keeps the logo and removes redundant copy before inserti
 });
 test('library source, search, category and page query have matching initial server results',async()=>{
   const html=renderPublicHTML(await read('public/tin-tuc-cong-nghe/index.html'),mergeNews(rows,news),{query:new URLSearchParams('source=genk&page=2'),now});
-  const content=html.match(/<!-- NCN:results:start -->([\s\S]*?)<!-- NCN:results:end -->/)[1];assert.equal((content.match(/class="ncn-article-card"/g)||[]).length,12);assert.equal((content.match(/data-ncn-source="genk"/g)||[]).length,12);assert.ok(html.includes('40 nội dung'));assert.ok(html.includes('Trang 2 / 4'));
+  const content=html.match(/<!-- NCN:results:start -->([\s\S]*?)<!-- NCN:results:end -->/)[1];assert.equal((content.match(/class="ncn-article-card"/g)||[]).length,15);assert.equal((content.match(/data-ncn-source="genk"/g)||[]).length,15);assert.ok(html.includes('40 nội dung'));assert.ok(html.includes('Trang 2 / 3'));
   assert.equal(html.includes('id="ncn-library-prev" disabled'),false);
   const empty=renderPublicHTML(await read('public/tin-tuc-cong-nghe/index.html'),mergeNews(rows,news),{query:new URLSearchParams('q=%3Cscript%3E&source=ncn'),now});assert.ok(empty.includes('0 nội dung phù hợp'));assert.ok(empty.includes('value="&lt;script&gt;"'));
 });

@@ -1,9 +1,11 @@
 /* Compact navigation stays visible; only its measured space and clock update. */
 import {installToolbarClock} from './clock.js?v=20261025-toolbar-1';
+import {installToolbarLayout} from './toolbar.js';
 const controllers=new WeakMap();
 export function installScrollUI({doc=document,win=window}={}){
   if(controllers.has(doc))return controllers.get(doc);
   const body=doc.body,root=doc.documentElement;if(!body)return;
+  installToolbarLayout(doc);
   const chrome=[...doc.querySelectorAll('#ncn-announcement,#ncn-topbar,#ncn-menu-open,#ncn-game-topbar,#ncn-game-menu')];
   if(!chrome.length)return;
   const clock=installToolbarClock({doc,win}),listeners=[];

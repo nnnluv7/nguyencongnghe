@@ -74,7 +74,7 @@ try{
   blocked=true;page=await ctx.newPage();await page.goto(origin+path,{waitUntil:'commit'});await page.locator(path==='/'?'#ncn-tool-grid':'#ncn-library-results').waitFor();await paint(page);
   const ids=path==='/'?['ncn-home-latest','ncn-tools']:['ncn-library-featured','ncn-stories','ncn-library-count'];
   const before=await page.evaluate(ids=>Object.fromEntries(ids.map(id=>[id,document.getElementById(id).getBoundingClientRect().toJSON()])),ids);
-  assert.equal(await page.locator(path==='/'?'#ncn-articles a':'#ncn-library-results a').count(),path==='/'?4:12);
+  assert.equal(await page.locator(path==='/'?'#ncn-articles a':'#ncn-library-results a').count(),path==='/'?5:15);
   assert.equal(await page.locator('#ncn-announcement').isVisible(),true);
   if(path==='/tin-tuc-cong-nghe/')assert.equal(await page.locator('[data-story-id]').count(),1);
   else{
@@ -140,7 +140,7 @@ try{
  });
  await page.goto(origin+'/tin-tuc-cong-nghe/',{waitUntil:'domcontentloaded'});
  await check('GenK entries participate in library source filters, searching and persistent query URLs',async()=>{
-  await page.selectOption('#ncn-library-source','genk');assert.match(await page.locator('#ncn-library-count').innerText(),/^40 nội dung/);assert.equal(await page.locator('#ncn-library-results a[data-ncn-source=genk]').count(),12);
+  await page.selectOption('#ncn-library-source','genk');assert.match(await page.locator('#ncn-library-count').innerText(),/^40 nội dung/);assert.equal(await page.locator('#ncn-library-results a[data-ncn-source=genk]').count(),15);
   await page.locator('#ncn-library-next').click();assert.ok(page.url().includes('page=2'));await page.reload({waitUntil:'domcontentloaded'});assert.match(await page.locator('#ncn-library-page').innerText(),/Trang 2/);
   const title=news[0].title;await page.locator('#ncn-library-query').fill(title);assert.equal(await page.locator('#ncn-library-results a').count(),1);assert.equal(await page.locator('#ncn-library-results a').getAttribute('href'),news[0].link);assert.equal(await page.locator('#ncn-library-results a').getAttribute('target'),'_blank');
  });

@@ -8,10 +8,10 @@ body.ncn-cash-page :is(.entry-title,.post-footer,.feed-share,.primary-nav,.label
 #ncn-cash-app *{box-sizing:border-box}
 #ncn-cash-app [hidden]{display:none!important}
 #ncn-cash-app .cq-direct-print{display:none}
-body.ncn-modern #ncn-cash-app[data-layout=simple]{width:100%;max-width:480px;margin:0 auto}
-body.ncn-modern #ncn-cash-app[data-layout=simple] .cq-screen{padding:20px;border:1px solid var(--ncn-rim);border-radius:24px;background:var(--ncn-glass-card);box-shadow:var(--ncn-shadow)}
-body.ncn-modern #ncn-cash-app[data-layout=simple] .cq-hero{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0 0 22px;padding:0 0 16px}
-body.ncn-modern #ncn-cash-app[data-layout=simple] h2{margin:0;font-size:24px;line-height:1.3;letter-spacing:-.5px}
+body.ncn-modern #ncn-cash-app[data-layout=simple]{width:100%;max-width:440px;margin:0 auto}
+body.ncn-modern #ncn-cash-app[data-layout=simple] .cq-screen{padding:16px;border:1px solid var(--ncn-rim);border-radius:24px;background:var(--ncn-glass-card);box-shadow:var(--ncn-shadow)}
+body.ncn-modern #ncn-cash-app[data-layout=simple] .cq-hero{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 16px;padding:0 0 12px}
+body.ncn-modern #ncn-cash-app[data-layout=simple] h2{margin:0;font-size:22px;line-height:1.3;letter-spacing:-.5px}
 body.ncn-modern #ncn-cash-app[data-layout=simple] .cq-actions{display:flex;gap:6px;flex-wrap:wrap}
 #ncn-cash-app button,#ncn-cash-app input{font:inherit}
 #ncn-cash-app button{cursor:pointer}
@@ -20,7 +20,7 @@ body.ncn-modern #ncn-cash-app[data-layout=simple] .cq-button{display:inline-flex
 #ncn-cash-app .cq-button svg{width:16px;height:16px}
 body.ncn-modern #ncn-cash-app[data-layout=simple] .cq-button.cq-secondary{background:var(--ncn-glass-soft);color:var(--cq-ink)}
 body.ncn-modern #ncn-cash-app[data-layout=simple] .cq-compact-grid{display:block;max-width:400px;margin-inline:auto}
-#ncn-cash-app .cq-simple-summary{display:grid;gap:12px;margin-bottom:18px}
+#ncn-cash-app .cq-simple-summary{display:grid;gap:9px;margin-bottom:14px}
 #ncn-cash-app .cq-simple-summary p{margin:0;font-size:15px;line-height:1.6;color:var(--cq-ink)}
 #ncn-cash-app .cq-simple-total strong{font-weight:650;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
 #ncn-cash-app .cq-simple-erp{display:flex;align-items:center;gap:6px 10px;flex-wrap:wrap;max-width:100%;font-size:15px;line-height:1.6}
@@ -64,9 +64,9 @@ body.ncn-modern #ncn-cash-app[data-layout=simple] .cq-text-button{border:1px sol
 #ncn-cash-app #cq-copy-text{width:100%;height:260px;resize:vertical;border:1px solid var(--cq-border);background:var(--cq-bg);color:var(--cq-ink);border-radius:8px;padding:12px;font:12px/1.7 monospace;margin-bottom:16px}
 @media(prefers-contrast:more),(forced-colors:active){body.ncn-modern #ncn-cash-app[data-layout=simple] .cq-qty:not(:focus-visible){box-shadow:none;outline:1px solid var(--ncn-control-rim);outline-offset:-1px}}
 @media(max-width:620px){
- body.ncn-modern #ncn-cash-app[data-layout=simple] .cq-screen{padding:16px 14px}
- body.ncn-modern #ncn-cash-app[data-layout=simple] .cq-hero{align-items:flex-start;flex-direction:column;gap:12px;margin-bottom:18px;padding-bottom:14px}
- body.ncn-modern #ncn-cash-app[data-layout=simple] h2{font-size:23px}
+ body.ncn-modern #ncn-cash-app[data-layout=simple] .cq-screen{padding:14px 12px}
+ body.ncn-modern #ncn-cash-app[data-layout=simple] .cq-hero{align-items:flex-start;flex-direction:column;gap:9px;margin-bottom:14px;padding-bottom:14px}
+ body.ncn-modern #ncn-cash-app[data-layout=simple] h2{font-size:21px}
  body.ncn-modern #ncn-cash-app[data-layout=simple] .cq-actions{gap:6px}
  body.ncn-modern #ncn-cash-app[data-layout=simple] .cq-button{min-height:38px;padding:8px 12px;font-size:11px}
  body.ncn-modern #ncn-cash-app[data-layout=simple] .cq-table :is(th,td){height:36px;padding:4px 7px;font-size:13px}

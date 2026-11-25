@@ -96,7 +96,7 @@ try{
   guest=await context();page=await library(guest);
   await check('Library presents five cards per desktop row with featured content and Story before the count',async()=>{
     assert.equal(await page.locator('#ncn-library-results').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length),5);
-    assert.equal(await page.locator('#ncn-featured-results a').count(),3);
+    assert.equal(await page.locator('#ncn-featured-results a').count(),5);
     assert.equal(await page.locator('[data-story-rail]').evaluate(el=>getComputedStyle(el).display),'flex');
     assert.equal(Math.round((await page.locator('[data-story-add]').boundingBox()).height),124);
     const order=await page.evaluate(()=>['ncn-library-featured','ncn-stories','ncn-library-count'].map(id=>document.getElementById(id).getBoundingClientRect().top));assert.ok(order[0]<order[1]&&order[1]<order[2]);
@@ -148,7 +148,7 @@ try{
   await check('phone and dark layouts fit, with a horizontally scrollable photo rail',async()=>{
     await page.setViewportSize({width:390,height:844});await page.evaluate(()=>document.documentElement.dataset.ncnTheme='dark');await fits(page);
     assert.equal(Math.round((await page.locator('[data-story-id]').first().boundingBox()).height),178);
-    assert.equal(await page.locator('#ncn-library-results').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length),1);
+    assert.equal(await page.locator('#ncn-library-results').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length),2);
     await page.locator('#ncn-stories').scrollIntoViewIfNeeded();await page.screenshot({path:out+'/stories-phone-dark.jpg',type:'jpeg',quality:85});await page.locator('[data-story-id]').first().click();await fits(page);await page.screenshot({path:out+'/viewer-phone-dark.jpg',type:'jpeg',quality:85});await page.keyboard.press('Escape');
   });
   await check('owner confirmation permanently removes the selected photo and its thumbnail',async()=>{
