@@ -105,7 +105,7 @@ try{
     await check('library page '+(index+1)+'/'+pages.length+': '+row.link,async()=>{
       if(!await open(row.link,{publishedOnly:true}))return;await fits();
       assert.equal(await page.locator('#ncn-site-shell').count(),1,'one shared navigation shell');
-      await page.locator('#ncn-toolbar-clock').waitFor();assert.equal(await page.locator('#ncn-toolbar-clock').count(),1,'one live toolbar clock on every Library page');
+      assert.equal(await page.locator('#ncn-toolbar-clock').count(),0,'the compact toolbar has no clock');
       const path=new URL(row.link,base).pathname,file=root+path+(path.endsWith('/')?'index.html':'');
       let source;try{source=await readFile(file,'utf8');}catch(error){if(!production||!path.startsWith('/bai-viet/'))throw error;source=await readFile('netlify/lib/ncn-library/article-shell.html','utf8');}
       const changed=/class="[^"]*ncn-library-page\b/.test(source);

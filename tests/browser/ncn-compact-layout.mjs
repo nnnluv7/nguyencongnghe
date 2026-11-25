@@ -44,11 +44,11 @@ async function context(){
 async function check(name,fn){try{await fn();results.push({name,ok:true});console.log('PASS '+name);}catch(error){results.push({name,ok:false,error:error.message});await page?.screenshot({path:out+'/failure-'+results.length+'.jpg',type:'jpeg',quality:80}).catch(()=>{});throw error;}}
 const ctx=await context(),metrics=[];
 const paint=()=>page.evaluate(()=>new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done))));
-const targets=['/','/popup-a7/','/sticker/','/ban-hang/','/trang-tri/','/tin-tuc-cong-nghe/','/arcade/','/2024/02/kiem-quy.html','/2025/05/tu-van.html','/tien-quy-sieu-thi/'];
+const targets=['/','/popup-a7/','/sticker/','/ban-hang/','/trang-tri/','/tin-tuc-cong-nghe/','/arcade/','/2024/02/kiem-quy.html','/2025/05/tu-van.html','/tien-quy-sieu-thi/','/2024/04/qrcode-generator-tao-ma-qrcode.html','/2024/01/ban-kiem-ke-san-pham-theo-file-excel.html','/2024/01/in-fifo.html','/thu-audio/','/vong-quay-may-man/','/donate/','/in-event/','/in-gvgs/'];
 try{
  for(const path of targets){
   page=await ctx.newPage();await page.setViewportSize({width:1366,height:768});await page.goto(origin+path,{waitUntil:'domcontentloaded'});
-  await page.waitForSelector('body.ncn-scroll-ready');await page.waitForFunction(()=>window.NCNAccount?.state.ready);
+  await page.waitForSelector('body.ncn-scroll-ready');await page.waitForFunction(()=>window.NCNAccount?.state.ready);assert.equal(await page.locator('#ncn-toolbar-clock').count(),0);
   if(path==='/arcade/')await page.waitForSelector('.ncn-arcade-card');else if(['/popup-a7/','/sticker/','/ban-hang/','/trang-tri/'].includes(path))await page.waitForSelector('.st-card');
   if(path==='/sticker/')await page.locator('#st-groups [data-group=all]').click();
   await page.evaluate(()=>document.fonts.ready);await paint();
@@ -57,13 +57,13 @@ try{
    cards:document.querySelectorAll('.st-card').length,cardWidths:[...document.querySelectorAll('#ncn-articles,#ncn-tool-grid,#ncn-featured-results,#ncn-library-results,.st-cards')].filter(el=>el.getClientRects().length&&el.firstElementChild).map(el=>el.firstElementChild.getBoundingClientRect().width),bar:document.getElementById('ncn-topbar').getBoundingClientRect().toJSON()}));
   metrics.push({path,...info});console.log(JSON.stringify({path,...info}));
   assert.ok(info.columns.every(n=>n===5),JSON.stringify(info));assert.ok(info.cardWidths.every(width=>Math.abs(width-(1366-48-48)/5)<1),JSON.stringify(info));assert.ok(info.bar.height<=54);assert.ok(info.width<=1366);
-  if(['/', '/popup-a7/','/tin-tuc-cong-nghe/'].includes(path))await page.screenshot({path:out+'/'+(path==='/'?'home':path.split('/')[1])+'.jpg',fullPage:true,type:'jpeg',quality:80});
+  if(['/', '/popup-a7/','/sticker/','/tin-tuc-cong-nghe/'].includes(path))await page.screenshot({path:out+'/'+(path==='/'?'home':path.split('/')[1])+'.jpg',fullPage:true,type:'jpeg',quality:80});
   await page.evaluate(()=>{const spacer=document.createElement('div');spacer.id='test-scroll-spacer';spacer.style.height='1800px';document.body.append(spacer);scrollTo(0,500);});await paint();
   const fixed=await page.locator('#ncn-topbar').boundingBox();assert.ok(Math.abs(fixed.y-info.bar.y)<1);assert.equal(await page.locator('body.ncn-chrome-hidden').count(),0);await page.evaluate(()=>document.getElementById('test-scroll-spacer')?.remove());
   await page.evaluate(()=>{const avatar=document.querySelector('.ncn-account-avatar');if(avatar)avatar.replaceChildren(Object.assign(document.createElement('img'),{src:'data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="160" height="80"><rect width="160" height="80" fill="skyblue"/></svg>'),alt:'Ảnh thử tỷ lệ'}));});
   for(const width of [1920,1366,1024,900,768,390,320]){
    await page.setViewportSize({width,height:844});await paint();
-   const mobile=await page.evaluate(()=>{const bar=document.getElementById('ncn-topbar').getBoundingClientRect(),controls=[...document.querySelectorAll('#ncn-menu-open,#ncn-topbar .ncn-brand-image,#ncn-toolbar-clock,#ncn-topbar .ncn-top-search,#ncn-theme-toggle,#ncn-topbar .ncn-account-menu summary')].filter(el=>el.getClientRects().length).map(el=>el.getBoundingClientRect().toJSON()).sort((a,b)=>a.left-b.left);return {width:document.documentElement.scrollWidth,height:bar.height,inside:controls.every(r=>r.left>=bar.left&&r.right<=bar.right),overlap:controls.some((r,i)=>i&&r.left<controls[i-1].right-1)};});
+   const mobile=await page.evaluate(()=>{const bar=document.getElementById('ncn-topbar').getBoundingClientRect(),controls=[...document.querySelectorAll('#ncn-menu-open,#ncn-topbar .ncn-brand-image,#ncn-topbar .ncn-top-search,#ncn-theme-toggle,#ncn-topbar .ncn-account-menu summary')].filter(el=>el.getClientRects().length).map(el=>el.getBoundingClientRect().toJSON()).sort((a,b)=>a.left-b.left);return {width:document.documentElement.scrollWidth,height:bar.height,inside:controls.every(r=>r.left>=bar.left&&r.right<=bar.right),overlap:controls.some((r,i)=>i&&r.left<controls[i-1].right-1)};});
    assert.ok(mobile.width<=width+1&&mobile.height<=54&&mobile.inside&&!mobile.overlap,JSON.stringify({path,width,...mobile}));
    const toolbar=await page.evaluate(()=>{
     const bar=document.getElementById('ncn-topbar'),left=bar.querySelector('.ncn-topbar-left'),right=bar.querySelector('.ncn-topbar-right');
@@ -75,6 +75,8 @@ try{
    assert.equal(toolbar.background,'rgba(0, 0, 0, 0)');
    assert.ok(toolbar.groups.every(value=>value.startsWith('rgba(')));
    assert.ok(toolbar.controls.every(rect=>Math.abs(rect.width-rect.height)<.1&&Math.abs(rect.y-toolbar.controls[0].y)<.1),JSON.stringify({path,width,toolbar}));
+   const round=await page.locator('#ncn-menu-open,#ncn-topbar .ncn-brand-image').evaluateAll(nodes=>nodes.map(node=>{const r=node.getBoundingClientRect(),s=getComputedStyle(node);return {width:r.width,height:r.height,radius:s.borderRadius,text:node.textContent.trim()};}));
+   assert.equal(round.length,2);assert.equal(round[0].text,'');assert.ok(round.every(rect=>Math.abs(rect.width-rect.height)<.1&&Math.abs(rect.width-toolbar.controls[0].width)<.1&&rect.radius==='50%'),JSON.stringify({width,round,toolbar}));
    if(toolbar.avatar)assert.ok(Math.abs(toolbar.avatar.width-toolbar.avatar.height)<.1,JSON.stringify(toolbar.avatar));
    const avatarImage=await page.locator('.ncn-account-avatar img').evaluateAll(images=>images.map(el=>{const r=el.getBoundingClientRect();return {width:r.width,height:r.height,fit:getComputedStyle(el).objectFit};}));
    assert.ok(avatarImage.every(rect=>Math.abs(rect.width-rect.height)<.1&&rect.fit==='cover'),JSON.stringify(avatarImage));
@@ -84,8 +86,15 @@ try{
    await page.locator('#ncn-theme-toggle').click();
    const art=await page.locator('#ncn-tool-grid .ncn-tool-art').first().evaluateAll(items=>items.map(el=>{const s=getComputedStyle(el,'::before');return {width:parseFloat(s.width),height:parseFloat(s.height)};}));
    assert.ok(art.every(rect=>Math.abs(rect.width-rect.height)<1),JSON.stringify({width,art}));
-   if(width===390&&['/','/tin-tuc-cong-nghe/','/2024/02/kiem-quy.html'].includes(path)){await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:out+'/'+(path==='/'?'home':path.split('/').filter(Boolean).pop())+'-mobile.jpg',fullPage:true,type:'jpeg',quality:80});}
+   if(width===390&&['/','/sticker/','/tin-tuc-cong-nghe/','/2024/02/kiem-quy.html'].includes(path)){await page.evaluate(()=>scrollTo(0,0));await page.screenshot({path:out+'/'+(path==='/'?'home':path.split('/').filter(Boolean).pop())+'-mobile.jpg',fullPage:true,type:'jpeg',quality:80});}
 
+  }
+  if(['/sticker/','/popup-a7/','/ban-hang/','/trang-tri/'].includes(path)){
+   for(const width of [1366,390,320]){
+    await page.setViewportSize({width,height:844});await paint();
+    const sizes=await page.locator('.st-card-sizes').evaluateAll(groups=>groups.filter(group=>group.getClientRects().length).map(group=>{const parent=group.getBoundingClientRect();return {width:parent.width,buttons:[...group.querySelectorAll('button')].map(el=>{const rect=el.getBoundingClientRect();return {x:rect.x,y:rect.y,width:rect.width,height:rect.height,right:rect.right,inside:rect.left>=parent.left-1&&rect.right<=parent.right+1,overflow:el.scrollWidth>el.clientWidth};})};}));
+    for(const group of sizes){assert.ok(group.buttons.length);group.buttons.forEach((button,i)=>{assert.ok(button.inside&&!button.overflow&&Math.abs(button.width-group.width)<1&&button.width>button.height,JSON.stringify({path,width,group}));if(i)assert.ok(button.y>=group.buttons[i-1].y+group.buttons[i-1].height+4,JSON.stringify(group));});}
+   }
   }
   if(path==='/')assert.equal(await page.locator('#ncn-articles .ncn-article-card').count(),5);
   if(path==='/tin-tuc-cong-nghe/'){

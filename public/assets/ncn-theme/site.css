@@ -1451,8 +1451,8 @@ body.ncn-modern .st-card-sizes button:focus-visible{outline: 3px solid #2563b8; 
  body.ncn-modern .st-card-visual::before{width:auto;height:100%;max-width:100%;aspect-ratio:1}
  body.ncn-modern :is(#ncn-popup-app,#ncn-sticker-app,#ncn-store-app[data-section]) .st-card strong{font-size:14px;line-height:1.45;margin:2px 0 7px}
  body.ncn-modern :is(#ncn-popup-app,#ncn-sticker-app,#ncn-store-app[data-section]) .st-card-description{font-size:12px;line-height:1.5}
- body.ncn-modern .st-card-sizes{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
- body.ncn-modern :is(#ncn-popup-app,#ncn-sticker-app,#ncn-store-app[data-section]) .st-card-sizes button{flex:1 1 52px;min-height:36px;font-size:11px;padding:6px;width:auto}
+ body.ncn-modern .st-card-sizes{display:grid;grid-template-columns:minmax(0,1fr);gap:6px;margin-top:10px;width:100%;align-self:stretch}
+ body.ncn-modern :is(#ncn-popup-app,#ncn-sticker-app,#ncn-store-app[data-section]) .st-card-sizes button{width:100%;min-width:0;max-width:100%;min-height:40px;font-size:12px;line-height:1.4;padding:8px 10px;border-radius:999px;white-space:normal;word-break:normal;overflow-wrap:normal}
  body.ncn-modern .st-card-peek{min-height:32px;font-size:11px;padding:5px 8px;margin-top:5px}
  /* Avatars must not shrink with the padding or available width of a flex button. */
  body.ncn-modern .ncn-account-avatar{flex:0 0 32px;min-width:32px;max-width:32px;width:32px;height:32px;aspect-ratio:1;border-radius:50%;overflow:hidden}
@@ -1515,4 +1515,34 @@ body.ncn-modern .st-card-sizes button:focus-visible{outline: 3px solid #2563b8; 
  body.ncn-modern #ncn-home .ncn-tool-card :is(h3,p,.ncn-card-open){margin-inline:10px}
  body.ncn-modern #ncn-home .ncn-pin{width:40px;height:40px;padding:11px;top:3px;right:3px}
  body.ncn-modern :is(#ncn-popup-app,#ncn-sticker-app,#ncn-store-app[data-section]) .st-card-sizes button{min-height:44px}
+}
+
+/* Compact screen forms share the cash counter's spacing, preserving their grids. */
+@media screen {
+ body.ncn-modern :is(#ncn-audio-app,#ncn-cash-fund-app,#ncn-qr-app,#ncn-inventory-app,#ncn-wheel-app,#ncn-billing-app){max-width:960px;margin-inline:auto}
+ body.ncn-modern #ncn-fifo-app{width:100%;max-width:1120px;margin-inline:auto}
+ body.ncn-modern :is(.ncn-tool-heading,.fifo-heading){gap:14px;margin-bottom:16px}
+ body.ncn-modern :is(.ncn-tool-heading h2,.fifo-heading h1,#ncn-audio-app h1,#ncn-cash-fund-app h1,#ncn-wheel-app .lw-heading h2,#ncn-billing-app h1){font-size:24px;line-height:1.25;margin-top:0;margin-bottom:8px}
+ body.ncn-modern :is(.ncn-glass-panel,.fifo-card,.ncn-print-sidebar),
+ body.ncn-modern #ncn-audio-app .au-panel,body.ncn-modern #ncn-cash-fund-app .cf-panel,
+ body.ncn-modern #ncn-wheel-app .lw-panel,body.ncn-modern #ncn-billing-app .pay-panel,
+ body.ncn-modern #ncn-event-app .ev-panel{padding:16px}
+ body.ncn-modern :is(.ncn-qr-layout,.ncn-inventory-source,.ncn-inventory-result,.fifo-workbench,.fifo-column){gap:16px}
+ body.ncn-modern .ncn-tool-page h3{font-size:16px;margin-bottom:12px}
+ body.ncn-modern .ncn-tool-actions{gap:8px;margin-top:12px}
+ body.ncn-modern .ncn-tool-note{margin-top:10px}
+ body.ncn-modern :is(.fifo-card-head,.ncn-tool-heading){margin-bottom:12px}
+ body.ncn-modern :is(#ncn-sticker-app,#ncn-popup-app,#ncn-store-app) .st-panel:not(.st-preview-panel){padding:16px}
+ body.ncn-modern #vip-gate{max-width:440px;padding:18px;margin-block:8px 16px}
+ body.ncn-modern #vip-gate h2{font-size:22px}
+ body.ncn-modern #ncn-wheel-app .lw-heading{gap:14px;margin-bottom:16px}
+ body.ncn-modern #ncn-cash-fund-app h2,body.ncn-modern #ncn-audio-app h2{font-size:18px;margin-bottom:10px}
+ @media(max-width:620px){
+  body.ncn-modern :is(.ncn-glass-panel,.fifo-card,.ncn-print-sidebar),
+  body.ncn-modern #ncn-audio-app .au-panel,body.ncn-modern #ncn-cash-fund-app .cf-panel,
+  body.ncn-modern #ncn-wheel-app .lw-panel,body.ncn-modern #ncn-billing-app .pay-panel,
+  body.ncn-modern #ncn-event-app .ev-panel{padding:14px}
+  body.ncn-modern :is(.ncn-tool-heading h2,.fifo-heading h1,#ncn-audio-app h1,#ncn-cash-fund-app h1,#ncn-wheel-app .lw-heading h2,#ncn-billing-app h1){font-size:22px}
+  body.ncn-modern :is(#ncn-sticker-app,#ncn-popup-app,#ncn-store-app) .st-panel:not(.st-preview-panel){padding:12px}
+ }
 }
