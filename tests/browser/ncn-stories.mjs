@@ -94,11 +94,11 @@ async function upload(p,text){await p.locator('[data-story-add]').click();await 
 let guest,member,other,admin;
 try{
   guest=await context();page=await library(guest);
-  await check('Library presents four cards per desktop row with featured content and Story before the count',async()=>{
-    assert.equal(await page.locator('#ncn-library-results').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length),4);
+  await check('Library presents five cards per desktop row with featured content and Story before the count',async()=>{
+    assert.equal(await page.locator('#ncn-library-results').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length),5);
     assert.equal(await page.locator('#ncn-featured-results a').count(),3);
     assert.equal(await page.locator('[data-story-rail]').evaluate(el=>getComputedStyle(el).display),'flex');
-    assert.equal(Math.round((await page.locator('[data-story-add]').boundingBox()).height),196);
+    assert.equal(Math.round((await page.locator('[data-story-add]').boundingBox()).height),124);
     const order=await page.evaluate(()=>['ncn-library-featured','ncn-stories','ncn-library-count'].map(id=>document.getElementById(id).getBoundingClientRect().top));assert.ok(order[0]<order[1]&&order[1]<order[2]);
     assert.equal(await page.locator('#ncn-library-count').innerText(),publicCatalog(seed).length+' nội dung');await fits(page);await page.screenshot({path:out+'/library-desktop-empty.jpg',fullPage:true,type:'jpeg',quality:80});
   });

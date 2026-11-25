@@ -91,7 +91,7 @@ async function scrollChrome(){
   await page.evaluate(()=>{document.activeElement?.blur();scrollTo(0,0);});
   await page.waitForTimeout(100);
   await page.evaluate(()=>scrollTo(0,350));
-  await page.waitForFunction(()=>document.body.classList.contains('ncn-chrome-hidden'));
+  await page.waitForFunction(()=>!document.body.classList.contains('ncn-chrome-hidden'));
   await page.evaluate(()=>scrollBy(0,-80));
   await page.waitForFunction(()=>!document.body.classList.contains('ncn-chrome-hidden'));
   await page.waitForTimeout(300);
@@ -168,25 +168,25 @@ try{
     await noOverflow();
     await shot('print-desktop');
   });
-  await check('pointer focus, iframe gestures and measurement resize cannot pin the header',async()=>{
+  await check('pointer focus, iframe gestures and resize keep the compact header visible',async()=>{
     await page.evaluate(()=>scrollTo(0,0));
     await page.locator('#ncn-announcement-pause').click();
     const paper=await page.locator('.ncn-direct-stage').boundingBox();
     await page.mouse.move(paper.x+100,paper.y+100);
     await page.mouse.wheel(0,160);
-    await page.waitForFunction(()=>document.body.classList.contains('ncn-chrome-hidden'));
+    await page.waitForFunction(()=>!document.body.classList.contains('ncn-chrome-hidden'));
     await page.evaluate(()=>dispatchEvent(new Event('resize')));
     await page.waitForTimeout(350);
-    assert.equal(await page.locator('body.ncn-chrome-hidden').count(),1);
+    assert.equal(await page.locator('body.ncn-chrome-hidden').count(),0);
     await page.mouse.wheel(0,-60);
     await page.waitForFunction(()=>!document.body.classList.contains('ncn-chrome-hidden'));
     await page.mouse.wheel(0,100);
-    await page.waitForFunction(()=>document.body.classList.contains('ncn-chrome-hidden'));
+    await page.waitForFunction(()=>!document.body.classList.contains('ncn-chrome-hidden'));
     await shot('scroll-down');
   });
-  await check('keyboard navigation restores hidden header',async()=>{
+  await check('keyboard navigation keeps the compact header visible',async()=>{
     await page.evaluate(()=>{document.activeElement?.blur();scrollBy(0,160);});
-    await page.waitForFunction(()=>document.body.classList.contains('ncn-chrome-hidden'));
+    await page.waitForFunction(()=>!document.body.classList.contains('ncn-chrome-hidden'));
     await page.keyboard.press('Tab');
     await page.waitForFunction(()=>!document.body.classList.contains('ncn-chrome-hidden'));
   });

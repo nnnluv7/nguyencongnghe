@@ -9,7 +9,7 @@
 .ncn-announcement-copy{display:block;flex:none;white-space:pre;padding-right:64px}
 #ncn-announcement-pause{display:grid;place-items:center;flex:0 0 30px;height:30px;min-width:30px;padding:0;border:1px solid #fff9;border-radius:50%;background:#ffffff70;color:inherit;font:700 12px Arial;cursor:pointer}
 #ncn-announcement-pause:focus-visible{outline:3px solid #2864c7;outline-offset:2px}
-.ncn-announcement-paused .ncn-announcement-track,.ncn-chrome-hidden .ncn-announcement-track{animation-play-state:paused}
+.ncn-announcement-paused .ncn-announcement-track{animation-play-state:paused}
 @media(hover:hover){#ncn-announcement:hover .ncn-announcement-track{animation-play-state:paused}}
 @keyframes ncn-ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 body.ncn-has-announcements{--ncn-notice-offset:calc(48px + env(safe-area-inset-top,0px))}
@@ -28,19 +28,30 @@ html[data-ncn-theme=dark] #ncn-announcement-pause{background:#ffffff12;border-co
 @media(prefers-reduced-motion:reduce){.ncn-announcement-track{animation:none}.ncn-announcement-track [aria-hidden=true]{display:none}#ncn-announcement-text{padding:0}.ncn-announcement-window{mask-image:none;overflow-x:auto;scrollbar-width:none}#ncn-announcement-pause{display:none}}
 @media print{#ncn-announcement,.ncn-notice-manager{display:none!important}.ncn-has-announcements #ncn-site-shell,.ncn-has-announcements>.app{margin-top:0!important}}
 
-/* Moving chrome uses translate so existing hover and game transforms stay intact. */
+/* Navigation reserves its actual height and remains visible while scrolling. */
 @media screen{
- body.ncn-scroll-ready{--ncn-chrome-offset:var(--ncn-chrome-space,100px)}
- body.ncn-scroll-ready.ncn-chrome-hidden{--ncn-chrome-offset:12px}
- body.ncn-scroll-ready :is(#ncn-announcement,#ncn-topbar,#ncn-menu-open,#ncn-game-topbar,#ncn-game-menu){
-  transition:translate .26s cubic-bezier(.22,.75,.25,1),opacity .2s ease;
-  will-change:translate;
- }
- body.ncn-scroll-ready.ncn-chrome-hidden :is(#ncn-announcement,#ncn-topbar,#ncn-menu-open,#ncn-game-topbar,#ncn-game-menu){
-  translate:0 calc(-1 * var(--ncn-chrome-hide-distance,180px));opacity:0;pointer-events:none;
- }
- @media(prefers-reduced-motion:reduce){
-  body.ncn-scroll-ready :is(#ncn-announcement,#ncn-topbar,#ncn-menu-open,#ncn-game-topbar,#ncn-game-menu){transition:none!important}
+ body.ncn-scroll-ready{--ncn-chrome-offset:var(--ncn-chrome-space,68px)}
+ #ncn-announcement{height:28px;top:4px;padding:2px 4px;gap:7px;font-size:11px}
+ .ncn-announcement-bell{flex-basis:22px;height:22px}.ncn-announcement-bell svg{width:15px;height:15px}
+ #ncn-announcement-pause{flex-basis:22px;height:22px;min-width:22px;font-size:10px}
+ body.ncn-has-announcements{--ncn-notice-offset:calc(34px + env(safe-area-inset-top,0px))}
+ body.ncn-modern #ncn-topbar,body #ncn-game-topbar{top:6px;height:50px;min-height:50px;border-radius:24px;padding:0 10px;gap:12px}
+ body.ncn-modern #ncn-site-shell{padding-top:64px}
+ body.ncn-modern #ncn-menu-open,body #ncn-game-menu{top:13px;min-height:36px;height:36px;min-width:76px;padding:7px 12px;font-size:12px}
+ body.ncn-modern #ncn-menu-open{left:max(22px,calc((100vw - 1392px)/2 + 10px))}
+ body.ncn-modern #ncn-topbar .ncn-topbar-left{padding-left:88px;gap:8px}
+ body.ncn-modern #ncn-topbar .ncn-brand-image{width:32px;height:32px;padding:3px;border-radius:11px}
+ body.ncn-modern #ncn-topbar .ncn-brand-image img{width:26px;height:26px}
+ body.ncn-modern #ncn-topbar :is(.ncn-top-search,.ncn-icon-button,.ncn-account-menu summary){min-height:36px;height:36px;padding:7px 10px}
+ body.ncn-modern #ncn-topbar :is(.ncn-icon-button,.ncn-account-menu summary){width:36px;min-width:36px;padding:8px}
+ body.ncn-modern #ncn-topbar .ncn-topbar-right{gap:7px}
+ @media(max-width:900px){
+  body.ncn-modern #ncn-topbar,body #ncn-game-topbar{top:4px;height:52px;min-height:52px;left:6px;right:6px;padding:0 8px;gap:6px}
+  body.ncn-modern #ncn-site-shell{padding-top:64px}
+  body.ncn-modern #ncn-menu-open,body #ncn-game-menu{top:8px;left:14px;width:44px;min-width:44px;height:44px;min-height:44px;padding:11px}
+  body.ncn-modern #ncn-topbar .ncn-topbar-left{padding-left:50px;gap:4px}
+  body.ncn-modern #ncn-topbar :is(.ncn-top-search,.ncn-icon-button,.ncn-account-menu summary){height:44px;min-height:44px}
+  body.ncn-modern #ncn-topbar :is(.ncn-icon-button,.ncn-account-menu summary){width:44px;min-width:44px;padding:11px}
  }
 }
 
@@ -67,3 +78,8 @@ html[data-ncn-theme=dark] #ncn-announcement-pause{background:#ffffff12;border-co
   #ncn-topbar .ncn-toolbar-clock time{font-size:10px}
 }
 @media print{.ncn-toolbar-clock{display:none!important}}
+
+@media screen and (min-width:901px){
+ .ncn-toolbar-clock{padding:3px 8px;gap:6px;border-radius:12px}
+ .ncn-toolbar-clock>svg{width:16px;height:16px}.ncn-toolbar-clock time{font-size:11px}.ncn-toolbar-clock [data-clock-date]{font-size:8px}
+}

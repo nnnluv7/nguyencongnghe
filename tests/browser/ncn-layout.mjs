@@ -171,7 +171,7 @@ try{
     await paint(page);
     await page.mouse.move(4,600);
     await page.mouse.wheel(0,140);
-    await page.waitForFunction(()=>scrollY>20&&document.body.classList.contains('ncn-chrome-hidden'),null,{timeout:4000});
+    await page.waitForFunction(()=>scrollY>20&&!document.body.classList.contains('ncn-chrome-hidden'),null,{timeout:4000});
     await page.mouse.wheel(0,-200);
     await page.waitForFunction(()=>scrollY<=8&&!document.body.classList.contains('ncn-chrome-hidden'),null,{timeout:4000});
    }
