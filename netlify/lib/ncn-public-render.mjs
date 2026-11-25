@@ -34,7 +34,7 @@ export function renderPublicHTML(html,catalog,{notices=[],stories=null,now=Date.
     html=region(html,'stories',visible.map(item=>'<button type="button" class="ncn-story-tile" data-story-id="'+escapeHTML(item.id)+'" aria-label="Xem Story của '+escapeHTML(item.name)+'"><img src="/.netlify/functions/ncn-stories?route=image&amp;id='+escapeHTML(item.id)+'&amp;size=thumb" alt="" loading="lazy" width="140" height="196"><span class="ncn-story-tile-copy"><span class="ncn-story-avatar">'+escapeHTML(item.name.slice(0,1).toUpperCase())+'</span><strong>'+escapeHTML(item.name)+'</strong><small>'+escapeHTML(item.caption)+'</small></span></button>').join('')||'<div class="ncn-story-empty"><span class="ncn-story-empty-title">Bắt đầu câu chuyện đầu tiên</span><p>Đăng nhập và chia sẻ bức ảnh của bạn tại đây.</p></div>');
     html=region(html,'story-status',visible.length?visible.length+' khoảnh khắc từ cộng đồng':'Ảnh của thành viên sẽ xuất hiện tại đây.');
   }
-  const text=notices.filter(x=>typeof x.text==='string').map(x=>x.text).join('     •     ');
+  const text=notices.filter(x=>typeof x.text==='string').map(x=>x.text.trim()).filter(Boolean).join('     •     ');
   if(text){html=html.replace(/(<body\b[^>]*class=")/,'$1ncn-has-announcements ').replace(/(<aside id="ncn-announcement"[^>]*?) hidden/,'$1').replace(/(<span id="ncn-announcement-text">)[\s\S]*?<\/span>/,(_,start)=>start+escapeHTML(text)+'</span>');}
   const snapshot='<script>window.NCN_NOTICE_SNAPSHOT='+json({items:notices})+';'+(Array.isArray(stories)&&html.includes('id="ncn-stories"')?'window.NCN_STORIES_SNAPSHOT='+json({items:stories,serverNow:new Date(now).toISOString()})+';':'')+'</script>';
   return html.replace('</head>',snapshot+'</head>');
