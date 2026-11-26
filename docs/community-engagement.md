@@ -14,9 +14,9 @@ Khách chưa đăng nhập đọc được bình luận và số tương tác. K
 
 ## Tin GenK
 
-Theo lựa chọn của chủ website ngày 26/11/2026, chỉ dùng tóm tắt ngắn từ RSS chính thức, giữ ảnh đại diện và ghi nguồn GenK. Nút trên thẻ mở trang tóm tắt nội bộ `/tin-tuc-cong-nghe/?bai=rss-genk-…`, có bình luận, cảm xúc, nút đọc nguyên bài tại GenK và canonical riêng. Không thu thập hay đăng lại toàn văn.
+Theo lựa chọn của chủ website ngày 26/11/2026, hiển thị đầy đủ phần mô tả từ RSS chính thức ở trang đọc bài, giữ ảnh đại diện và ghi nguồn GenK. Thẻ danh sách vẫn dùng đoạn xem trước gọn 180 ký tự. Nút trên thẻ mở trang tóm tắt nội bộ `/tin-tuc-cong-nghe/?bai=rss-genk-…`, có bình luận, cảm xúc, nút đọc nguyên bài tại GenK và canonical riêng. Không thu thập hay đăng lại toàn văn.
 
-Lịch đồng bộ RSS 15 phút hiện có giữ thêm metadata của từng tin đã đăng. Vì vậy liên kết chia sẻ và thảo luận vẫn dùng được khi tin rời danh sách 40 bài mới nhất. Không thêm lịch đồng bộ khác.
+Lịch đồng bộ RSS 15 phút hiện có giữ thêm metadata của từng tin đã đăng. Vì vậy liên kết chia sẻ và thảo luận vẫn dùng được khi tin rời danh sách 40 bài mới nhất. Không thêm lịch đồng bộ khác. Lần đồng bộ đầu sau cập nhật định dạng lấy lại RSS để bổ sung phần mô tả từng bị cắt ngắn và cập nhật metadata lưu trữ cho các bài vẫn còn trong RSS; các lần sau tiếp tục dùng ETag như trước.
 
 ## Chia sẻ
 
