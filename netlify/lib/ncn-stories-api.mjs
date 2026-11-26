@@ -49,17 +49,17 @@ export async function prepareStoryImage(encoded){
     return {photo,thumb,width:info.width,height:info.height};
   }catch(error){if(error.status)throw error;fail(400,'Không đọc được ảnh. Hãy chọn ảnh JPEG, PNG hoặc WebP khác.');}
 }
-async function eraseStoryBytes(store,item){
+async function eraseStoryBytes(store,item,removeCommunity){
   // The index already marks this entry as deleting. Interrupted cleanup can be
   // retried by its owner, an Admin, or the scheduled maintenance function.
   await store.setJSON('gone-'+item.id,{deleted:true},{onlyIfNew:true});
-  await Promise.all([store.delete(item.imageKey),store.delete(item.thumbKey)]);
+  await Promise.all([store.delete(item.imageKey),store.delete(item.thumbKey),removeCommunity?.(item.id)]);
 }
-async function removeStory(store,item){
-  await eraseStoryBytes(store,item);
+async function removeStory(store,item,removeCommunity){
+  await eraseStoryBytes(store,item,removeCommunity);
   await mutate(store,index=>{index.items=index.items.filter(x=>x.id!==item.id);});
 }
-export async function cleanupStories(store,now=Date.now()){
+export async function cleanupStories(store,now=Date.now(),removeCommunity){
   await mutate(store,index=>{
     const expired=index.items.filter(x=>x.state==='active'&&expiry(x)<=now);if(!expired.length)return {unchanged:true};
     expired.forEach(item=>item.state='deleting');
@@ -67,7 +67,7 @@ export async function cleanupStories(store,now=Date.now()){
   let index=await read(store),removed=0;
   const pending=(index?.data.items||[]).filter(x=>x.state==='deleting');
   for(let offset=0;offset<pending.length;offset+=10){
-    const batch=pending.slice(offset,offset+10),results=await Promise.allSettled(batch.map(item=>eraseStoryBytes(store,item)));
+    const batch=pending.slice(offset,offset+10),results=await Promise.allSettled(batch.map(item=>eraseStoryBytes(store,item,removeCommunity)));
     const done=new Set(batch.filter((_,i)=>results[i].status==='fulfilled').map(x=>x.id));
     if(done.size){await mutate(store,value=>{value.items=value.items.filter(x=>!done.has(x.id));});removed+=done.size;}
   }
@@ -108,7 +108,7 @@ export function createStoriesHandler(deps){return async req=>{
         if(item.owner!==user.id&&!user.admin)fail(403,'Bạn chỉ có thể xoá Story của mình.');
         item.state='deleting';return {value:{...item}};
       });
-      if(item){try{await removeStory(store,item);}catch{fail(503,'Story đã ẩn. Bấm Xoá lần nữa để hoàn tất xoá ảnh.');}}
+      if(item){try{await removeStory(store,item,deps.removeCommunity);}catch{fail(503,'Story đã ẩn. Bấm Xoá lần nữa để hoàn tất xoá ảnh.');}}
       return reply({deleted:true,id:data.id});
     }
     if(!uuid.test(data.requestId||'')||typeof data.caption!=='string'||data.caption.trim().length>180||/[\u0000-\u001f\u007f]/.test(data.caption))fail(400,'Chú thích tối đa 180 ký tự, trên một dòng.');

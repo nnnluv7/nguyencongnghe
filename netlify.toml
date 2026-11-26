@@ -97,6 +97,11 @@
   node_bundler = "esbuild"
   external_node_modules = ["@netlify/identity", "@netlify/blobs", "sharp"]
 
+[functions."ncn-engagement"]
+  node_bundler = "esbuild"
+  included_files = ["netlify/lib/ncn-library/seed.json", "netlify/lib/ncn-news/**"]
+  external_node_modules = ["@netlify/identity", "@netlify/blobs"]
+
 [functions."ncn-stories-cleanup"]
   node_bundler = "esbuild"
   external_node_modules = ["@netlify/blobs", "sharp"]

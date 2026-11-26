@@ -1,4 +1,5 @@
 import {articleCardHTML,libraryLabelName,libraryLabels,latestArticles,featuredArticles,LIBRARY_PAGE_SIZE} from './catalogue.js?v=20261025-sync-1';
+import {genkArticleHref} from '../ncn-community/model.js';
 import '../ncn-account.js?v=20261027-photo-save-1';
 import {installAppearance} from './appearance.js?v=20261017-mobile-dark-1';
 // A metrics request must never delay or prevent the actual interface.
@@ -136,7 +137,7 @@ export function createTheme({doc=document,win=window,config,catalog=win.CG_CATAL
   listen($('ncn-tools-toggle'),'click',()=>setDrawer($('ncn-page-tools')?.hidden));
   listen($('ncn-tools-close'),'click',()=>setDrawer(false));
   listen(doc,'click',e=>{const details=doc.querySelector('.ncn-account-menu');if(details&&!details.contains(e.target)) details.open=false;});
-  const buildSearchItems=()=>[...visibleTools().map(t=>({title:t.title,link:t.href,summary:t.description,labels:[groups.find(g=>g.id===t.group)?.name||'Công cụ'],kind:t.access==='vip'?'Công cụ VIP':'Công cụ',icon:t.icon})),...visibleRows().filter(row=>!tools.some(t=>canonicalPath(t.href)===canonicalPath(row.link))).map(row=>({...row,kind:row.isPage?'Trang':'Bài viết',icon:'book'}))];
+  const buildSearchItems=()=>[...visibleTools().map(t=>({title:t.title,link:t.href,summary:t.description,labels:[groups.find(g=>g.id===t.group)?.name||'Công cụ'],kind:t.access==='vip'?'Công cụ VIP':'Công cụ',icon:t.icon})),...visibleRows().filter(row=>!tools.some(t=>canonicalPath(t.href)===canonicalPath(row.link))).map(row=>({...row,link:genkArticleHref(row)||row.link,kind:row.isPage?'Trang':'Bài viết',icon:'book'}))];
   let searchItems=buildSearchItems();
   const matches=(row,query)=>fold(`${row.title} ${row.summary||row.description||''} ${(row.labels||[]).join(' ')}`).includes(fold(query));
   function renderSearch() {
@@ -266,6 +267,13 @@ export async function bootTheme() {
     }
   }
   const result=createTheme({config,preview:window.NCN_THEME_PREVIEW===true});
+  const community=document.getElementById('ncn-article-community');
+  if(community&&!window.NCN_THEME_PREVIEW){
+    import('../ncn-community/engagement.js').then(({mountEngagement})=>{
+      const target=JSON.parse(document.getElementById('ncn-community-target')?.textContent||'null');if(!target)return;
+      const controller=mountEngagement({host:community,target,lazy:true}),destroy=result.destroy;result.destroy=()=>{controller.destroy();destroy();};
+    }).catch(()=>{community.textContent='Chưa tải được bình luận. Vui lòng tải lại trang.';});
+  }
   const stories=document.getElementById('ncn-stories');
   if(stories&&!window.NCN_THEME_PREVIEW){
     import('../ncn-stories/app.js?v=20261025-stories-1').then(({mountStories})=>{

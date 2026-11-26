@@ -27,7 +27,7 @@ export function mergedLibrary(seed,index){
 }
 export function publicCatalog(seed,index){
   return mergedLibrary(seed,index).filter(item=>item.status==='published').map(item=>({
-    title:item.title,link:item.href,thumbnail:item.image?{src:item.image,type:'image'}:null,labels:item.labels,
+    id:item.id,title:item.title,link:item.href,thumbnail:item.image?{src:item.image,type:'image'}:null,labels:item.labels,
     datetime:item.datetime,summary:item.summary,featured:!!item.featured,isPage:!!item.isPage,isArticle:item.kind!=='legacy'||!!item.managedPage&&!item.isPage,author:'NCN',date:''
   }));
 }

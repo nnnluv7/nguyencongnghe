@@ -39,7 +39,11 @@
 .ncn-story-dialog button.ncn-story-primary{background:linear-gradient(145deg,#3689df,#175eaf);color:white;border-color:#ffffff50;box-shadow:inset 0 1px 0 #ffffff80,0 5px 15px #175eaf20}
 .ncn-story-dialog button.ncn-story-danger{background:#b92d3e;color:white;border-color:#ffffff40}
 .ncn-story-dialog .ncn-story-error,#ncn-stories .ncn-story-error{color:#b83444}html[data-ncn-theme=dark] .ncn-story-error{color:#ffabb5!important}
-.ncn-story-viewer{width:min(580px,calc(100vw - 24px));padding:17px}
+.ncn-story-viewer{width:min(940px,calc(100vw - 24px));padding:17px}
+.ncn-story-viewer-body{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);align-items:start;gap:16px}
+.ncn-story-content{min-width:0}
+body.ncn-modern .ncn-story-viewer .ncn-community{margin:0;padding:14px;border-radius:20px;box-shadow:none}
+.ncn-story-viewer .ncn-community-comments{max-height:220px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
 .ncn-story-viewer header{align-items:center;margin:0 0 13px;padding:0 3px}.ncn-story-viewer header strong{display:block;font-size:13px;overflow-wrap:anywhere}.ncn-story-viewer time{display:block;color:var(--ncn-muted);font-size:10px}
 .ncn-story-frame{position:relative;border-radius:19px;overflow:hidden;background:#111c29;touch-action:pan-y}
 .ncn-story-frame img{display:block;width:100%;height:min(60dvh,600px);object-fit:contain}
@@ -52,4 +56,5 @@
 @media(hover:hover){.ncn-story-tile:hover>img{transform:scale(1.05)}#ncn-stories button:hover{border-color:#90b4df}}
 @media(max-width:640px){#ncn-stories{margin-top:27px}.ncn-story-rail{gap:10px}#ncn-stories .ncn-story-add,#ncn-stories .ncn-story-tile{flex-basis:124px;height:178px;min-height:178px;border-radius:21px}.ncn-story-empty{min-height:178px;padding:20px}.ncn-story-empty-title{font-size:15px}.ncn-story-dialog{padding:21px;border-radius:24px}.ncn-story-dialog h2{font-size:21px}.ncn-story-viewer{padding:13px}.ncn-story-frame img{height:56dvh}}
 @media(prefers-reduced-motion:reduce){.ncn-story-tile>img{transition:none}}
+@media(max-width:720px){.ncn-story-viewer-body{grid-template-columns:minmax(0,1fr)}.ncn-story-viewer .ncn-story-frame img{height:42dvh}.ncn-story-viewer .ncn-community-comments{max-height:260px}}
 @media print{#ncn-stories,#ncn-library-featured,.ncn-story-dialog{display:none!important}}

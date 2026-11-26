@@ -3,13 +3,15 @@ import {readFileSync} from 'node:fs';
 import {readFile} from 'node:fs/promises';
 import {join} from 'node:path';
 import {createLibraryPageHandler} from '../lib/ncn-library-page.mjs';
-import {currentPublicState} from '../lib/ncn-public-state.mjs';
+import {currentPublicState,newsSeed} from '../lib/ncn-public-state.mjs';
+import {readGenkArticle} from '../lib/ncn-news.mjs';
 import {optimizePublicResponse} from '../lib/ncn-public-assets.mjs';
 
 const seed=JSON.parse(readFileSync(join(process.cwd(),'netlify/lib/ncn-library/seed.json'),'utf8'));
 const file=path=>readFile(join(process.cwd(),path),'utf8');
 export default async (req,context)=>optimizePublicResponse(await createLibraryPageHandler({
   state:currentPublicState,
+  newsItem:id=>readGenkArticle(getStore({name:'ncn-genk-feed-v1',consistency:'strong'}),id,newsSeed),
   production:()=>context?.deploy?.context==='production',seed,
   store:()=>getStore({name:'ncn-site-library-v1',consistency:'strong'}),
   homeShell:()=>file('public/index.html'),indexShell:()=>file('public/tin-tuc-cong-nghe/index.html'),articleShell:()=>file('netlify/lib/ncn-library/article-shell.html'),

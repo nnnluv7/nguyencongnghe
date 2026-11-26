@@ -8,6 +8,8 @@ import assert from 'node:assert/strict';
 import {createLibraryHandler,publicCatalog} from '../../netlify/lib/ncn-library-api.mjs';
 import {createLibraryPageHandler} from '../../netlify/lib/ncn-library-page.mjs';
 import {optimizePublicResponse} from '../../netlify/lib/ncn-public-assets.mjs';
+import {createEngagementHandler,engagementKey} from '../../netlify/lib/ncn-engagement-api.mjs';
+import {createEngagementResolver} from '../../netlify/lib/ncn-engagement-targets.mjs';
 
 // Synthetic HTTPS origin. Real handlers and the real UI use an isolated memory
 // store; no production Identity, content, payment or external write is possible.
@@ -16,6 +18,7 @@ const origin='https://ncn-stories.test',root=resolve(built?'dist':'public'),out=
 await mkdir(out,{recursive:true});
 const read=path=>readFile(path,'utf8');
 const seed=JSON.parse(await read('netlify/lib/ncn-library/seed.json'));
+const news=JSON.parse(await read('netlify/lib/ncn-news/genk-seed.json'));
 const originalBodies=JSON.parse(await read('netlify/lib/ncn-library/original-markdown.json'));
 const entries=new Map();let serial=0,failDelete=false,losePurgeReply=false;
 const store={async get(key){return structuredClone(entries.get(key)?.data??null);},async getWithMetadata(key){return structuredClone(entries.get(key)??null);},async *list({prefix}){yield {blobs:[...entries.keys()].filter(k=>k.startsWith(prefix)).map(key=>({key}))};},async delete(key){if(failDelete){failDelete=false;throw Error('Fixture cleanup interruption');}entries.delete(key);},async setJSON(key,data,options={}){
@@ -30,9 +33,12 @@ const users=new Map([
 const raw=user=>({id:user.id,email:user.email,confirmed_at:'2026-10-01T00:00:00Z',app_metadata:{roles:user.admin?['admin']:user.vip?['vip']:[]},user_metadata:{full_name:user.name,roles:['admin']}});
 const tokenUser=req=>tokens.get(decodeURIComponent((req.headers.get('cookie')||'').match(/(?:^|;\s*)nf_jwt=([^;]+)/)?.[1]||''))||null;
 const deps={seed,originalBodies,production:()=>true,store:()=>store,verify:async req=>tokenUser(req),app:view=>read('netlify/lib/ncn-library/admin-'+(view==='library'?'library':'hub')+'.html')};
-const handler=createLibraryHandler(deps),pageHandler=createLibraryPageHandler({...deps,homeShell:()=>read('public/index.html'),indexShell:()=>read('public/tin-tuc-cong-nghe/index.html'),articleShell:()=>read('netlify/lib/ncn-library/article-shell.html'),original:path=>read('public/'+path)});
+const handler=createLibraryHandler(deps),pageHandler=createLibraryPageHandler({...deps,newsItem:async id=>news.find(x=>x.id===id),homeShell:()=>read('public/index.html'),indexShell:()=>read('public/tin-tuc-cong-nghe/index.html'),articleShell:()=>read('netlify/lib/ncn-library/article-shell.html'),original:path=>read('public/'+path)});
 let storyNow=null;
-const storyStore=memoryStories(),stories=createStoriesHandler({production:()=>true,store:()=>storyStore,verify:async req=>tokenUser(req),now:()=>storyNow??Date.now()});
+const storyStore=memoryStories(),communityStore=memoryStories(),newsStore=memoryStories();
+const resolver=createEngagementResolver({seed,newsSeed:news,library:()=>store,news:()=>newsStore,stories:()=>storyStore});
+const engagement=createEngagementHandler({production:()=>true,store:()=>communityStore,verify:async req=>tokenUser(req),resolveTarget:resolver,now:()=>storyNow??Date.now()});
+const stories=createStoriesHandler({production:()=>true,store:()=>storyStore,verify:async req=>tokenUser(req),now:()=>storyNow??Date.now(),removeCommunity:id=>communityStore.delete(engagementKey('story',id))});
 const picture=await sharp({create:{width:900,height:1200,channels:3,background:'#689ba8'}}).jpeg().toBuffer();
 const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml','.woff2':'font/woff2','.ttf':'font/ttf'};
 const browser=await chromium.launch(),results=[];let page;
@@ -63,11 +69,13 @@ async function context(){
     if(url.pathname==='/.netlify/functions/ncn-billing')return reply({user});
     if(url.pathname==='/.netlify/functions/ncn-announcements')return reply({items:[],admin:!!user?.admin});
     if(url.pathname==='/.netlify/functions/ncn-stories')return respond(await stories(req));
+    if(url.pathname==='/.netlify/functions/ncn-engagement')return respond(await engagement(req));
     if(url.pathname==='/.netlify/functions/ncn-visitors')return reply({total:1,online:1});
     if(url.pathname.startsWith('/.netlify/functions/'))throw Error('Unexpected function '+url.pathname);
     let query=null;
     if(['/','/index.html'].includes(url.pathname))query='view=home';
     if(['/tin-tuc-cong-nghe/','/tin-tuc-cong-nghe/index.html'].includes(url.pathname))query='view=index';
+    if(query&&url.searchParams.has('bai'))query+='&bai='+encodeURIComponent(url.searchParams.get('bai'));
     const article=url.pathname.match(/^\/bai-viet\/([^/]+)\/?$/);if(article)query='slug='+encodeURIComponent(article[1]);
     const original=seed.find(x=>x.managedPage&&[x.href,x.href.replace(/\.html$/,''),x.href.replace(/\.html$/,'/')].includes(url.pathname));if(original)query='legacy='+original.id;
     if(query){const response=await pageHandler(new Request(origin+'/.netlify/functions/ncn-library-page?'+query,{headers}));return respond(built?await optimizePublicResponse(response):response);}
@@ -158,6 +166,30 @@ try{
     page=await library(guest);await page.locator('[data-story-id]').click();await page.waitForFunction(()=>document.querySelector('#ncn-story-viewer img').naturalWidth>0);
     assert.equal(await page.locator('#ncn-story-viewer [data-author]').textContent(),'Thành viên NCN thử');assert.equal(await page.locator('#ncn-story-viewer [data-delete]').isVisible(),false);assert.equal(await page.evaluate(()=>window.storyXSS),undefined);await page.keyboard.press('Escape');
   });
+  await check('guest Story reactions open the shared account dialog without writing engagement',async()=>{
+    await page.locator('[data-story-id]').click();const panel=page.locator('#ncn-story-viewer [data-story-community]');
+    await panel.locator('[data-refresh]:enabled').waitFor();assert.equal(await panel.locator('[data-reaction]').count(),4);
+    await panel.locator('[data-reaction=love]').click();await page.locator('#ncn-account-dialog').waitFor({state:'visible'});
+    assert.equal([...communityStore.entries.keys()].filter(x=>x.startsWith('thread-')).length,0);
+    await page.keyboard.press('Escape');await page.keyboard.press('Escape');
+  });
+  page=await library(member);
+  await check('ordinary members post safe Story comments and switch a single persistent reaction',async()=>{
+    await page.locator('[data-story-id]').click();const panel=page.locator('#ncn-story-viewer [data-story-community]');await panel.locator('[data-refresh]:enabled').waitFor();
+    await panel.locator('textarea').fill('Cảm nhận <img src=x onerror="window.commentXSS=1">');await panel.locator('[type=submit]').click();await panel.locator('[data-community-status]').filter({hasText:'Đã đăng bình luận.'}).waitFor();
+    assert.equal(await panel.locator('[data-comment-count]').textContent(),'1');assert.equal(await page.evaluate(()=>window.commentXSS),undefined);
+    await panel.locator('[data-reaction=like]').click();await panel.locator('[data-reaction=like][aria-pressed=true]').waitFor();
+    await panel.locator('[data-reaction=love]').click();await panel.locator('[data-reaction=love][aria-pressed=true]').waitFor();
+    assert.equal(await panel.locator('[data-reaction-count=like]').textContent(),'0');assert.equal(await panel.locator('[data-reaction-count=love]').textContent(),'1');
+    const position=await page.locator('[data-position]').textContent();await panel.locator('textarea').fill('Di chuyển con trỏ');await panel.locator('textarea').press('ArrowLeft');assert.equal(await page.locator('[data-position]').textContent(),position);
+    await page.keyboard.press('Escape');
+  });
+  await check('a shared Story URL reopens its photo and public discussion after a fresh navigation',async()=>{
+    const id=storyStore.entries.get('index').data.items[0].id;page=await open(guest,'/tin-tuc-cong-nghe/?story='+id);
+    await page.locator('#ncn-story-viewer').waitFor({state:'visible'});const panel=page.locator('[data-story-community]');await panel.locator('[data-refresh]:enabled').waitFor();
+    assert.equal(await panel.locator('[data-comment-count]').textContent(),'1');assert.equal(await panel.locator('[data-reaction-count=love]').textContent(),'1');
+    assert.equal(await panel.locator('[data-reaction=love]').getAttribute('aria-pressed'),'false');assert.equal(await panel.locator('[data-delete-comment]').count(),0);await page.keyboard.press('Escape');
+  });
   other=await context();page=await library(other);await login(page,'other@example.test');
   await check('another member cannot delete the first photo and can post their own',async()=>{
     await page.locator('[data-story-id]').click();assert.equal(await page.locator('[data-delete]').isVisible(),false);await page.keyboard.press('Escape');await upload(page,'Khoảnh khắc thứ hai');assert.equal(await page.locator('[data-story-id]').count(),2);
@@ -172,6 +204,49 @@ try{
     assert.equal(await page.locator('#ncn-library-results').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length),2);
     await page.locator('#ncn-stories').scrollIntoViewIfNeeded();await page.screenshot({path:out+'/stories-phone-dark.jpg',type:'jpeg',quality:85});await page.locator('[data-story-id]').first().click();await fits(page);await page.screenshot({path:out+'/viewer-phone-dark.jpg',type:'jpeg',quality:85});await page.keyboard.press('Escape');
   });
+  await check('Story discussion and every reaction/share control fit phone, tablet and desktop sizes',async()=>{
+    for(const width of [320,390,720,820,1280])for(const theme of ['light','dark']){
+      await page.setViewportSize({width,height:844});await page.evaluate(theme=>document.documentElement.dataset.ncnTheme=theme,theme);await page.locator('[data-story-id]').first().click();
+      const viewer=page.locator('#ncn-story-viewer'),panel=viewer.locator('[data-story-community]');await panel.locator('[data-refresh]:enabled').waitFor();
+      const surface=await panel.evaluate(el=>{const input=el.querySelector('textarea'),r=input.getBoundingClientRect();return {border:getComputedStyle(el).borderTopStyle,display:getComputedStyle(el.querySelector('.ncn-community-reactions')).display,textareaWidth:r.width,panelWidth:el.clientWidth};});
+      assert.equal(surface.border,'solid');assert.equal(surface.display,'grid');assert.ok(surface.textareaWidth>surface.panelWidth-40,JSON.stringify(surface));
+      const geometry=await viewer.evaluate(el=>{const r=el.getBoundingClientRect();return {x:r.left,right:r.right,viewport:innerWidth,scroll:el.scrollWidth,client:el.clientWidth};});
+      assert.ok(geometry.x>=0&&geometry.right<=geometry.viewport+1&&geometry.scroll<=geometry.client+1,JSON.stringify({width,geometry}));
+      for(const selector of ['[data-reaction]','[data-share]'])for(const button of await panel.locator(selector).all()){
+        const box=await button.boundingBox();assert.ok(box.width>=40&&box.height>=35,JSON.stringify({width,selector,box}));
+        const clipped=await button.evaluate(el=>el.scrollWidth>el.clientWidth+1);assert.equal(clipped,false);
+      }
+      if([390,1280].includes(width)){await panel.scrollIntoViewIfNeeded();await page.screenshot({path:out+'/community-story-'+width+'-'+theme+'.jpg',type:'jpeg',quality:85});}
+      await page.keyboard.press('Escape');
+    }
+  });
+  await check('TikTok and Instagram sharing offer honest native/copy flows without publishing',async()=>{
+    await page.setViewportSize({width:1280,height:900});await page.locator('[data-story-id]').first().click();const panel=page.locator('[data-story-community]');await panel.locator('[data-refresh]:enabled').waitFor();
+    await page.evaluate(()=>Object.defineProperty(navigator,'share',{configurable:true,value:undefined}));
+    await panel.locator('[data-share=tiktok]').click();assert.equal(await panel.locator('[data-share-help]').isVisible(),true);assert.equal(await panel.locator('[data-open-app]').getAttribute('href'),'https://www.tiktok.com/');
+    assert.match(await panel.locator('[data-share-link]').inputValue(),/\?story=story-/);await panel.locator('[data-close-share]').click();
+    await page.evaluate(()=>Object.defineProperty(navigator,'share',{configurable:true,value:async data=>{window.fixtureNativeShare=data;}}));
+    await panel.locator('[data-share=instagram]').click();assert.match(await page.evaluate(()=>window.fixtureNativeShare.url),/\?story=story-/);
+    await page.evaluate(()=>Object.defineProperty(navigator,'share',{configurable:true,value:async()=>{throw new DOMException('Cancelled','AbortError');}}));
+    await panel.locator('[data-share=instagram]').click();assert.equal(await panel.locator('[data-share-help]').isVisible(),true);assert.equal(await panel.locator('[data-open-app]').getAttribute('href'),'https://www.instagram.com/');await panel.locator('[data-close-share]').click();
+    for(const platform of ['facebook','threads']){
+      const request=page.context().waitForEvent('request',{predicate:req=>new URL(req.url()).hostname===(platform==='facebook'?'www.facebook.com':'www.threads.com')});
+      const popup=page.waitForEvent('popup');await panel.locator('[data-share='+platform+']').click();const sent=new URL((await request).url());
+      assert.match(sent.searchParams.get(platform==='facebook'?'u':'url'),/\?story=story-/);await (await popup).close();
+    }
+    await page.keyboard.press('Escape');
+  });
+  await check('local GenK summaries retain attribution and allow member discussion without copying the full article',async()=>{
+    page=await open(member,'/tin-tuc-cong-nghe/?bai='+news[0].id);const panel=page.locator('#ncn-article-community');await panel.scrollIntoViewIfNeeded();await panel.locator('[data-refresh]:enabled').waitFor();
+    assert.equal(await panel.evaluate(el=>getComputedStyle(el).borderTopStyle),'solid');
+    assert.equal(await page.locator('.ncn-news-original').getAttribute('href'),news[0].link);assert.equal(await page.locator('.ncn-news-source>span').textContent(),'TÓM TẮT TỪ GENK');
+    await panel.locator('textarea').fill('Bình luận về công nghệ');await panel.locator('[type=submit]').click();await panel.locator('[data-community-status]').filter({hasText:'Đã đăng bình luận.'}).waitFor();
+    await panel.locator('[data-reaction=angry]').click();await panel.locator('[data-reaction=angry][aria-pressed=true]').waitFor();
+    for(const width of [320,390,820,1280]){await page.setViewportSize({width,height:844});await fits(page);assert.equal(await panel.evaluate(el=>el.scrollWidth<=el.clientWidth+1),true);}
+    await page.screenshot({path:out+'/community-genk-desktop.jpg',fullPage:true,type:'jpeg',quality:85});
+    await page.reload();await panel.scrollIntoViewIfNeeded();await panel.locator('[data-refresh]:enabled').waitFor();assert.equal(await panel.locator('[data-comment-count]').textContent(),'1');assert.equal(await panel.locator('[data-reaction=angry]').getAttribute('aria-pressed'),'true');
+  });
+  page=await library(other);
   await check('owner confirmation permanently removes the selected photo and its thumbnail',async()=>{
     await page.locator('[data-story-id]').first().click();await page.locator('[data-delete]').click();await page.locator('[data-confirm-delete]').click();await page.locator('#ncn-story-viewer').waitFor({state:'hidden'});
     assert.equal(await page.locator('[data-story-id]').count(),1);assert.equal([...storyStore.entries.keys()].filter(x=>x.startsWith('image-')).length,2);
@@ -182,6 +257,11 @@ try{
     await page.evaluate(()=>NCNAccount.signOut());await page.locator('#ncn-story-compose').waitFor({state:'hidden'});assert.equal(await page.locator('#ncn-story-compose img').getAttribute('src'),null);
   });
   admin=await context();page=await library(admin);await login(page,'admin@example.test');
+  await check('Admin can moderate another member comment in the Story viewer',async()=>{
+    await page.locator('[data-story-id]').click();const panel=page.locator('[data-story-community]');await panel.locator('[data-refresh]:enabled').waitFor();
+    assert.equal(await panel.locator('[data-comment-count]').textContent(),'1');await panel.locator('[data-delete-comment]').click();await panel.locator('[data-confirm-comment]').click();
+    await panel.locator('[data-community-status]').filter({hasText:'Đã xoá bình luận.'}).waitFor();assert.equal(await panel.locator('[data-comment-count]').textContent(),'0');await page.keyboard.press('Escape');
+  });
   await check('Admin can remove a member Story through the public viewer',async()=>{
     await page.locator('[data-story-id]').click();await page.locator('[data-delete]').click();await page.locator('[data-confirm-delete]').click();await page.locator('#ncn-story-viewer').waitFor({state:'hidden'});assert.equal(await page.locator('[data-story-id]').count(),0);assert.equal([...storyStore.entries.keys()].filter(x=>x.startsWith('image-')).length,0);
   });
