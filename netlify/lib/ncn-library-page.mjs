@@ -4,6 +4,8 @@ import {renderPublicHTML} from './ncn-public-render.mjs';
 import {publicPageHeaders} from './ncn-public-cache.mjs';
 import {normalizeSocialMetadata} from './ncn-social-meta.mjs';
 import {trimPublicCopy} from './ncn-public-copy.mjs';
+import {withArticleCommunity,genkSummaryHTML} from './ncn-community-render.mjs';
+import {genkArticleHref,isGenkArticle} from '../../public/assets/ncn-community/model.js';
 
 const headers={'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','Netlify-CDN-Cache-Control':'no-store','X-Content-Type-Options':'nosniff'};
 const json=value=>JSON.stringify(value).replace(/</g,'\\u003c').replace(/\u2028/g,'\\u2028').replace(/\u2029/g,'\\u2029');
@@ -15,9 +17,9 @@ function metadata(html,item){
   html=html.replace(/<title>[\s\S]*?<\/title>/,()=>'<title>'+escapeHTML(item.title)+'</title>');
   return normalizeSocialMetadata(html,{title:item.title,description:item.summary,image:item.image||'',url:'https://nguyencongnghe.com'+item.href,type:'article'});
 }
-export async function articleHTML(deps,item,body,catalog){
+export async function articleHTML(deps,item,body,catalog,{renderedBody}={}){
   let html=trimPublicCopy(await deps.articleShell());
-  const rendered=renderMarkdown(body),hasCover=item.image&&!rendered.includes('src="'+escapeHTML(item.image)+'"');
+  const rendered=renderedBody??renderMarkdown(body),hasCover=item.image&&!rendered.includes('src="'+escapeHTML(item.image)+'"');
   const tokens={TITLE:escapeHTML(item.title),SUMMARY:escapeHTML(item.summary),BODY:rendered,DATE:escapeHTML(dateLabel(item.datetime)),DATETIME:escapeHTML(item.datetime),ID:escapeHTML(item.id),IMAGE:hasCover?'<img class="ncn-managed-cover" src="'+escapeHTML(item.image)+'" alt="">':'',URL:escapeHTML('https://nguyencongnghe.com'+item.href)};
   html=html.replace(/@@(TITLE|SUMMARY|BODY|DATE|DATETIME|ID|IMAGE|URL)@@/g,(_,name)=>tokens[name]);
   return injectCatalog(metadata(html,item),catalog);
@@ -33,13 +35,30 @@ export function createLibraryPageHandler(deps){return async req=>{
     if(!['GET','HEAD'].includes(req.method))return new Response('Method not allowed',{status:405,headers});
     const url=new URL(req.url);
     if(['/thu-vien','/thu-vien/','/thu-vien/index.html','/tin-tuc-cong-nghe','/tin-tuc-cong-nghe/index.html'].includes(url.pathname))return new Response(null,{status:301,headers:{...headers,Location:'/tin-tuc-cong-nghe/'+url.search}});
-    const initial=deps.state?await deps.state({stories:url.pathname==='/tin-tuc-cong-nghe/'||url.searchParams.get('view')==='index'}):{},old=!deps.state&&deps.production()?await readLibrary(deps.store()):null,index=initial.index||old?.data,catalog=initial.catalog||publicCatalog(deps.seed,index);
+    const initial=deps.state?await deps.state({stories:!url.searchParams.has('bai')&&(url.pathname==='/tin-tuc-cong-nghe/'||url.searchParams.get('view')==='index')}):{},old=!deps.state&&deps.production()?await readLibrary(deps.store()):null,index=initial.index||old?.data,catalog=initial.catalog||publicCatalog(deps.seed,index);
     const render=html=>injectCatalog(renderPublicHTML(trimPublicCopy(html),catalog,{...initial,query:url.searchParams}),catalog);
     const internal=url.pathname==='/.netlify/functions/ncn-library-page';
     const originalRoute=deps.seed.find(x=>x.managedPage&&[x.href,x.href.replace(/\.html$/,''),x.href.replace(/\.html$/,'/')].includes(url.pathname));
     const listingHeaders=publicPageHeaders({seconds:15,stories:initial.stories,now:initial.now});
+    if((url.pathname==='/tin-tuc-cong-nghe/'||internal&&url.searchParams.get('view')==='index')&&url.searchParams.has('bai')){
+      const id=url.searchParams.get('bai'),news=catalog.find(x=>x.id===id&&isGenkArticle(x))||(deps.newsItem?await deps.newsItem(id):null);
+      if(!news||!isGenkArticle(news))return new Response(req.method==='HEAD'?null:await statusHTML(deps,catalog,404),{status:404,headers});
+      const item={...news,href:genkArticleHref(news),image:news.thumbnail?.src||''};
+      let html=await articleHTML(deps,item,'',catalog,{renderedBody:genkSummaryHTML(news)});
+      html=html.replace(/<a\b[^>]*data-ncn-admin-only[^>]*>[\s\S]*?<\/a>/,'');
+      return new Response(req.method==='HEAD'?null:renderPublicHTML(withArticleCommunity(html,item),catalog,initial),{headers});
+    }
     if(['/','/index.html'].includes(url.pathname)||internal&&url.searchParams.get('view')==='home')return new Response(req.method==='HEAD'?null:render(await deps.homeShell()),{headers:listingHeaders});
-    if(url.pathname==='/tin-tuc-cong-nghe/'||internal&&url.searchParams.get('view')==='index')return new Response(req.method==='HEAD'?null:render(await deps.indexShell()),{headers:listingHeaders});
+    if(url.pathname==='/tin-tuc-cong-nghe/'||internal&&url.searchParams.get('view')==='index'){
+      let html=render(await deps.indexShell());const id=url.searchParams.get('story');
+      if(/^story-[a-f0-9]{40}$/.test(id||'')){
+        const story=initial.stories?.find(x=>x.id===id&&Date.parse(x.expiresAt)>(initial.now??Date.now()));
+        const title=story?'Story của '+story.name:'Story đã hết hạn',description=story?.caption||'Khoảnh khắc của thành viên · Tự xoá sau 24 giờ.';
+        html=normalizeSocialMetadata(html,{title,description,url:'https://nguyencongnghe.com/tin-tuc-cong-nghe/?story='+id,image:story?'https://nguyencongnghe.com/.netlify/functions/ncn-stories?route=image&id='+id:'',type:'article'});
+        if(!story)html=html.replace('</head>','<meta name="robots" content="noindex"></head>');
+      }
+      return new Response(req.method==='HEAD'?null:html,{headers:listingHeaders});
+    }
     const legacy=originalRoute?.id||(internal?url.searchParams.get('legacy'):null),slug=url.pathname.match(/^\/bai-viet\/([^/]+)\/?$/)?.[1]||(internal?url.searchParams.get('slug'):null);
     const items=mergedLibrary(deps.seed,index),item=legacy?items.find(x=>x.id===legacy&&x.kind==='legacy'&&x.managedPage):items.find(x=>x.kind==='article'&&x.slug===slug);
     if(!item||item.status==='draft')return new Response(req.method==='HEAD'?null:await statusHTML(deps,catalog,404),{status:404,headers});
@@ -54,6 +73,6 @@ export function createLibraryPageHandler(deps){return async req=>{
       const content=await deps.store().get(item.bodyKey,{type:'json'});if(typeof content?.body!=='string')throw Error('Missing content');
       html=await articleHTML(deps,item,content.body,catalog);
     }
-    return new Response(req.method==='HEAD'?null:renderPublicHTML(html,catalog,initial),{headers});
+    return new Response(req.method==='HEAD'?null:renderPublicHTML(withArticleCommunity(html,item),catalog,initial),{headers});
   }catch{return new Response('<!doctype html><html lang="vi"><meta charset="utf-8"><title>Tin tức công nghệ</title><p>Tin tức công nghệ đang kết nối lại. Anh tải lại trang sau ít phút nhé.</p><a href="/">Về trang chủ</a></html>',{status:503,headers});}
 };}

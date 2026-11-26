@@ -1,3 +1,5 @@
+import {mountEngagement} from '../ncn-community/engagement.js';
+
 const API='/.netlify/functions/ncn-stories';
 const validID=/^story-[a-f0-9]{40}$/;
 const imageURL=(id,thumb=false)=>API+'?route=image&id='+encodeURIComponent(id)+(thumb?'&size=thumb':'');
@@ -25,19 +27,20 @@ export function mountStories({host,doc=document,win=window,fetcher=fetch}){
   const $=selector=>host.querySelector(selector),listeners=[];
   const listen=(el,type,fn)=>{el.addEventListener(type,fn);listeners.push(()=>el.removeEventListener(type,fn));};
   const node=(tag,text,cls)=>{const el=doc.createElement(tag);if(text)el.textContent=text;if(cls)el.className=cls;return el;};
-  let items=[],user=null,mine='',busy=false,disposed=false,epoch=0,selected=null,blob=null,previewURL='',requestId='',returnFocus=null,photoEpoch=0,expiryTimer=null,serverOffset=0;
+  let items=[],user=null,mine='',busy=false,disposed=false,epoch=0,selected=null,blob=null,previewURL='',requestId='',returnFocus=null,photoEpoch=0,expiryTimer=null,serverOffset=0,community=null;
+  let deepLink=new URL(win.location.href).searchParams.get('story');if(!validID.test(deepLink||''))deepLink=null;
   const status=(text,error=false)=>{if(disposed)return;const el=$('[data-story-status]');el.textContent=text;el.classList.toggle('ncn-story-error',error);};
   const dialog=node('dialog',null,'ncn-story-dialog ncn-ui');dialog.id='ncn-story-compose';dialog.setAttribute('aria-labelledby','ncn-story-compose-title');
   dialog.innerHTML=`<header><div><small>GÓC THÀNH VIÊN</small><h2 id="ncn-story-compose-title">Chia sẻ một khoảnh khắc</h2></div><button type="button" data-close aria-label="Đóng đăng Story">×</button></header><p>Ảnh và tên hiển thị của bạn sẽ công khai trên Tin tức công nghệ. Story tự xoá sau 24 giờ; bạn hoặc Admin có thể xoá sớm hơn.</p><form><label class="ncn-story-file">Chọn ảnh<input name="photo" type="file" accept="image/jpeg,image/png,image/webp" required><small>JPEG, PNG hoặc WebP · tối đa 10 MB · 5 ảnh / 24 giờ</small></label><img class="ncn-story-preview" alt="Ảnh sắp đăng" hidden><label>Chú thích <span>(không bắt buộc)</span><input name="caption" maxlength="180" placeholder="Kể một chút về bức ảnh…" autocomplete="off"></label><p data-message role="status" aria-live="polite"></p><div class="ncn-story-dialog-actions"><button type="button" data-close>Để sau</button><button type="submit" class="ncn-story-primary" disabled>Đăng Story</button></div></form>`;
   const viewer=node('dialog',null,'ncn-story-dialog ncn-story-viewer ncn-ui');viewer.id='ncn-story-viewer';viewer.setAttribute('aria-label','Xem Story');
-  viewer.innerHTML=`<header><div><strong data-author></strong><time data-time></time></div><button type="button" data-close aria-label="Đóng Story">×</button></header><div class="ncn-story-frame"><img alt=""><button type="button" data-step="-1" aria-label="Story trước">‹</button><button type="button" data-step="1" aria-label="Story tiếp theo">›</button></div><p data-caption></p><div class="ncn-story-viewer-footer"><span data-position></span><button type="button" data-delete hidden>Xoá Story</button></div><p data-message role="status" aria-live="polite"></p><div class="ncn-story-confirm" hidden><p>Xoá vĩnh viễn ảnh này khỏi Story?</p><div class="ncn-story-dialog-actions"><button type="button" data-keep>Giữ lại</button><button type="button" data-confirm-delete class="ncn-story-danger">Xoá ảnh</button></div></div>`;
+  viewer.innerHTML=`<header><div><strong data-author></strong><time data-time></time></div><button type="button" data-close aria-label="Đóng Story">×</button></header><div class="ncn-story-viewer-body"><div class="ncn-story-content"><div class="ncn-story-frame"><img alt=""><button type="button" data-step="-1" aria-label="Story trước">‹</button><button type="button" data-step="1" aria-label="Story tiếp theo">›</button></div><p data-caption></p><div class="ncn-story-viewer-footer"><span data-position></span><button type="button" data-delete hidden>Xoá Story</button></div><p data-message role="status" aria-live="polite"></p><div class="ncn-story-confirm" hidden><p>Xoá vĩnh viễn ảnh này khỏi Story?</p><div class="ncn-story-dialog-actions"><button type="button" data-keep>Giữ lại</button><button type="button" data-confirm-delete class="ncn-story-danger">Xoá ảnh</button></div></div></div><section class="ncn-community" data-story-community aria-label="Bình luận và tương tác Story"></section></div>`;
   doc.body.append(dialog,viewer);
   const form=dialog.querySelector('form'),photo=form.elements.photo,caption=form.elements.caption,submit=form.querySelector('[type=submit]');
   const message=(el,text,error=false)=>{const target=el.querySelector('[data-message]');target.textContent=text;target.classList.toggle('ncn-story-error',error);};
   function controls(){
     $('[data-story-add]').disabled=!win.NCNAccount?.state.ready;
     form.querySelectorAll('input,button').forEach(el=>el.disabled=busy);submit.disabled=busy||!blob||!user;
-    viewer.querySelectorAll('button').forEach(el=>el.disabled=busy);
+    viewer.querySelectorAll('[data-close],[data-step],[data-delete],[data-keep],[data-confirm-delete]').forEach(el=>el.disabled=busy);
     const current=items.find(x=>x.id===selected);viewer.querySelector('[data-delete]').hidden=!current||!(user?.admin||current.authorKey===mine);
   }
   function clearPhoto(preserveInput=false){photoEpoch++;blob=null;if(!preserveInput)photo.value='';photo.required=true;if(previewURL)URL.revokeObjectURL(previewURL);previewURL='';const img=dialog.querySelector('img');img.removeAttribute('src');img.hidden=true;}
@@ -60,6 +63,7 @@ export function mountStories({host,doc=document,win=window,fetcher=fetch}){
     if(!items.length){const empty=node('div',null,'ncn-story-empty');empty.append(node('span','Bắt đầu câu chuyện đầu tiên','ncn-story-empty-title'),node('p','Đăng nhập và chia sẻ bức ảnh của bạn tại đây.'));container.append(empty);}
     status(items.length?items.length+' khoảnh khắc từ cộng đồng':'Ảnh của thành viên sẽ xuất hiện tại đây.');controls();
     $('[data-story-scroll="-1"]').disabled=!items.length;$('[data-story-scroll="1"]').disabled=!items.length;
+    if(deepLink){const id=deepLink;deepLink=null;if(items.some(x=>x.id===id))showStory(id);else status('Story này đã xoá hoặc hết hạn sau 24 giờ.');}
   }
   async function refresh(){
     try{const result=await api('list');if(disposed)return;if(Number.isFinite(Date.parse(result.serverNow)))serverOffset=Date.parse(result.serverNow)-Date.now();items=(Array.isArray(result.items)?result.items:[]).filter(x=>validID.test(x.id)&&x.name&&Number.isFinite(Date.parse(x.createdAt))&&Number.isFinite(Date.parse(x.expiresAt)));render();}
@@ -73,6 +77,7 @@ export function mountStories({host,doc=document,win=window,fetcher=fetch}){
     viewer.querySelector('[data-caption]').textContent=item.caption;viewer.querySelector('[data-position]').textContent=(index+1)+' / '+items.length;
     viewer.querySelector('[data-step="-1"]').hidden=index===0;viewer.querySelector('[data-step="1"]').hidden=index===items.length-1;
     viewer.querySelector('.ncn-story-confirm').hidden=true;message(viewer,'');controls();
+    community?.destroy();community=mountEngagement({host:viewer.querySelector('[data-story-community]'),target:{kind:'story',id,title:item.caption||'Story của '+item.name,url:win.location.origin+'/tin-tuc-cong-nghe/?story='+encodeURIComponent(id)},doc,win,fetcher});
     if(!viewer.open){returnFocus=doc.activeElement;viewer.showModal();viewer.querySelector('[data-close]').focus({preventScroll:true});}
   }
   function step(amount){const index=items.findIndex(x=>x.id===selected);if(!busy&&items[index+amount])showStory(items[index+amount].id);}
@@ -94,7 +99,7 @@ export function mountStories({host,doc=document,win=window,fetcher=fetch}){
   for(const el of [dialog,viewer]){
     listen(el,'click',event=>{if(!busy&&(event.target===el||event.target.closest('[data-close]')))el.close();});
     listen(el,'cancel',event=>{if(busy)event.preventDefault();});
-    listen(el,'close',()=>{if(el===dialog){clearPhoto();caption.value='';}if(returnFocus?.isConnected)returnFocus.focus({preventScroll:true});});
+    listen(el,'close',()=>{if(el===dialog){clearPhoto();caption.value='';}else{community?.destroy();community=null;}if(returnFocus?.isConnected)returnFocus.focus({preventScroll:true});});
   }
   listen(photo,'change',async()=>{
     const file=photo.files[0];clearPhoto(true);const generation=photoEpoch;message(dialog,'');controls();if(!file)return;
@@ -122,7 +127,7 @@ export function mountStories({host,doc=document,win=window,fetcher=fetch}){
     catch(error){if(generation===epoch)message(viewer,error.message,true);}
     finally{busy=false;if(!disposed)controls();}
   });
-  listen(doc,'keydown',event=>{if(viewer.open&&['ArrowLeft','ArrowRight'].includes(event.key)){event.preventDefault();step(event.key==='ArrowLeft'?-1:1);}});
+  listen(doc,'keydown',event=>{if(viewer.open&&!event.target.closest('input,textarea,[contenteditable="true"],.ncn-community')&&['ArrowLeft','ArrowRight'].includes(event.key)){event.preventDefault();step(event.key==='ArrowLeft'?-1:1);}});
   let touchX=null;const frame=viewer.querySelector('.ncn-story-frame');
   listen(frame,'touchstart',event=>{touchX=event.touches.length===1?event.touches[0].clientX:null;});
   listen(frame,'touchend',event=>{if(touchX===null)return;const delta=event.changedTouches[0].clientX-touchX;touchX=null;if(Math.abs(delta)>60)step(delta>0?-1:1);});
@@ -130,5 +135,5 @@ export function mountStories({host,doc=document,win=window,fetcher=fetch}){
   listen(doc,'visibilitychange',()=>{if(!doc.hidden){render();refresh();}});
   controls();authChanged();
   if(win.NCN_STORIES_SNAPSHOT){const snapshot=win.NCN_STORIES_SNAPSHOT;items=(snapshot.items||[]).filter(x=>validID.test(x.id));if(Number.isFinite(Date.parse(snapshot.serverNow)))serverOffset=Date.parse(snapshot.serverNow)-Date.now();render();}else refresh();
-  return {refresh,destroy(){disposed=true;epoch++;photoEpoch++;win.clearTimeout(expiryTimer);clearPhoto();listeners.forEach(remove=>remove());dialog.remove();viewer.remove();delete host.dataset.mounted;}};
+  return {refresh,destroy(){disposed=true;epoch++;photoEpoch++;community?.destroy();win.clearTimeout(expiryTimer);clearPhoto();listeners.forEach(remove=>remove());dialog.remove();viewer.remove();delete host.dataset.mounted;}};
 }

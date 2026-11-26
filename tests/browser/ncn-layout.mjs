@@ -31,6 +31,7 @@ async function context(){
    if(url.pathname.endsWith('ncn-announcements'))return json({items:state.notices});
    if(url.pathname.endsWith('ncn-stories'))return url.searchParams.get('route')==='image'?route.fulfill({contentType:'image/png',body:logo}):json({items:state.stories,serverNow:new Date().toISOString()});
    if(url.pathname.endsWith('ncn-billing'))return json({user:null});
+   if(url.pathname.endsWith('ncn-engagement'))return json({reactions:{like:0,dislike:0,love:0,angry:0},mine:null,comments:[],commentCount:0,nextCursor:null});
    if(url.pathname.endsWith('ncn-audio'))return json({ready:false,samples:[]});
    return json({online:1,total:1});
   }
@@ -142,7 +143,7 @@ try{
  await check('GenK entries participate in library source filters, searching and persistent query URLs',async()=>{
   await page.selectOption('#ncn-library-source','genk');assert.match(await page.locator('#ncn-library-count').innerText(),/^40 nội dung/);assert.equal(await page.locator('#ncn-library-results a[data-ncn-source=genk]').count(),15);
   await page.locator('#ncn-library-next').click();assert.ok(page.url().includes('page=2'));await page.reload({waitUntil:'domcontentloaded'});assert.match(await page.locator('#ncn-library-page').innerText(),/Trang 2/);
-  const title=news[0].title;await page.locator('#ncn-library-query').fill(title);assert.equal(await page.locator('#ncn-library-results a').count(),1);assert.equal(await page.locator('#ncn-library-results a').getAttribute('href'),news[0].link);assert.equal(await page.locator('#ncn-library-results a').getAttribute('target'),'_blank');
+  const title=news[0].title;await page.locator('#ncn-library-query').fill(title);assert.equal(await page.locator('#ncn-library-results a').count(),1);assert.equal(await page.locator('#ncn-library-results a').getAttribute('href'),'/tin-tuc-cong-nghe/?bai='+news[0].id);assert.equal(await page.locator('#ncn-library-results a').getAttribute('target'),null);
  });
  await page.setViewportSize({width:1280,height:900});await page.goto(origin+'/tin-tuc-cong-nghe/',{waitUntil:'domcontentloaded'});
  await check('library hover eases in and out instead of jumping and respects reduced motion',async()=>{

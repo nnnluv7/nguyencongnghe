@@ -26,19 +26,38 @@ export function parseGenkRSS(xml,now=Date.now()){
 export async function readGenkNews(store,fallback=[]){
   try{const value=await store.get(KEY,{type:'json'});return Array.isArray(value?.items)?value.items.slice(0,MAX):fallback;}catch{return fallback;}
 }
+export async function readGenkArticle(store,id,fallback=[]){
+  if(!/^rss-genk-[a-f0-9]{20}$/.test(id||''))return null;
+  const current=await readGenkNews(store,fallback),item=current.find(x=>x.id===id);
+  if(item)return item;
+  const saved=await store.get('article-'+id,{type:'json'});
+  return saved?.source==='GenK'&&saved.id===id?saved:fallback.find(x=>x.id===id&&x.source==='GenK')||null;
+}
 export function mergeNews(items,news=[]){const links=new Set(items.map(x=>x.link));return [...items,...news.filter(x=>x.source==='GenK'&&!links.has(x.link)&&links.add(x.link))];}
+async function archiveMetadata(store,items){
+  const rows=[...new Map(items.filter(x=>x.source==='GenK'&&/^rss-genk-[a-f0-9]{20}$/.test(x.id||'')).map(x=>[x.id,x])).values()];
+  for(let offset=0;offset<rows.length;offset+=10)await Promise.all(rows.slice(offset,offset+10).map(item=>store.setJSON('article-'+item.id,item,{onlyIfNew:true})));
+}
 export async function syncGenkNews(store,{fetcher=fetch,now=Date.now()}={}){
   const previous=await store.getWithMetadata(KEY,{type:'json'}),old=previous?.data;
   const requestHeaders={Accept:'application/rss+xml, application/xml, text/xml'};
   if(old?.etag)requestHeaders['If-None-Match']=old.etag;if(old?.lastModified)requestHeaders['If-Modified-Since']=old.lastModified;
   // Fixed official URL, no browser-supplied URL and no redirects to other hosts.
   const response=await fetcher(GENK_RSS,{headers:requestHeaders,redirect:'error',signal:AbortSignal.timeout(12000)});
-  if(response.status===304)return {updated:false,count:old?.items?.length||0};
+  if(response.status===304){
+    if(old?.items?.length&&!old.metadataArchived){await archiveMetadata(store,old.items);await store.setJSON(KEY,{...old,metadataArchived:true},{onlyIfMatch:previous.etag});}
+    return {updated:false,count:old?.items?.length||0};
+  }
   if(!response.ok)throw Error('GenK RSS HTTP '+response.status);
   if(!/(?:xml|rss)/i.test(response.headers.get('content-type')||''))throw Error('Unexpected RSS content type');
   if(Number(response.headers.get('content-length')||0)>LIMIT)throw Error('RSS too large');
   const chunks=[],reader=response.body.getReader();let length=0;
   for(;;){const {done,value}=await reader.read();if(done)break;length+=value.byteLength;if(length>LIMIT){await reader.cancel();throw Error('RSS too large');}chunks.push(value);}
-  const items=parseGenkRSS(Buffer.concat(chunks).toString('utf8'),now),next={items,updatedAt:new Date(now).toISOString(),etag:response.headers.get('etag'),lastModified:response.headers.get('last-modified')};
-  const result=await store.setJSON(KEY,next,previous?{onlyIfMatch:previous.etag}:{onlyIfNew:true});return {updated:result.modified,count:items.length};
+  const items=parseGenkRSS(Buffer.concat(chunks).toString('utf8'),now),next={items,updatedAt:new Date(now).toISOString(),etag:response.headers.get('etag'),lastModified:response.headers.get('last-modified'),metadataArchived:true};
+  // Keep published RSS metadata so shared links and their discussions survive
+  // rotation out of the latest 40. No full article is copied from the source.
+  const known=new Set(old?.metadataArchived?(old.items||[]).map(x=>x.id):[]);
+  await archiveMetadata(store,[...(!old?.metadataArchived?old?.items||[]:[]),...items.filter(x=>!known.has(x.id))]);
+  const result=await store.setJSON(KEY,next,previous?{onlyIfMatch:previous.etag}:{onlyIfNew:true});
+  return {updated:result.modified,count:items.length};
 }
