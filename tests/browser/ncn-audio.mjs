@@ -113,7 +113,7 @@ try{
  await message(page,'#ncn-navigation a:first-of-type','NEW');
  await page.locator('#ncn-navigation a').first().click();
  await page.waitForFunction(()=>!document.getElementById('au-submit')?.disabled&&!!document.getElementById('au-submit'));
- await message(page,'.au-prices strong','99.000đ');
+ await message(page,'.au-prices strong','79.000đ');
  await message(page,'.au-prices del','200.000đ');
  await fits(page);await page.setViewportSize({width:320,height:780});await fits(page);
  await page.setViewportSize({width:390,height:844});
@@ -137,8 +137,8 @@ try{
  const code=await page.locator('#au-code').innerText();
  const qr=new URL(await page.locator('#au-qr').getAttribute('src'));
  const description=await page.locator('#au-description').innerText();
- assert.equal(description,'SEVQR '+code);assert.equal(qr.searchParams.get('des'),description);assert.equal(qr.searchParams.get('amount'),'99000');
- const body=JSON.stringify({id:1,gateway:bank.bank,accountNumber:bank.account,transferType:'in',transferAmount:99000,content:description,
+ assert.equal(description,'SEVQR '+code);assert.equal(qr.searchParams.get('des'),description);assert.equal(qr.searchParams.get('amount'),'79000');
+ const body=JSON.stringify({id:1,gateway:bank.bank,accountNumber:bank.account,transferType:'in',transferAmount:79000,content:description,
   transactionDate:new Date(now+7*3600000).toISOString().slice(0,19).replace('T',' '),referenceCode:'fixture-audio'});
  const stamp=String(now/1000),signature=createHmac('sha256',secret).update(stamp+'.'+body).digest('hex');
  const received=await webhook(new Request(origin+'/.netlify/functions/ncn-sepay-webhook',{method:'POST',headers:{'Content-Type':'application/json','X-SePay-Timestamp':stamp,'X-SePay-Signature':'sha256='+signature},body}));

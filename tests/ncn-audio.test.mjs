@@ -46,8 +46,8 @@ test('guest creates one persistent order with a token; public status omits priva
  assert.equal(a.status,201);assert.equal(b.status,201);
  const {order}=await a.json();
  assert.equal(order.code,await codeOf(b));assert.match(order.code,/^NCNAUD[A-F0-9]{16}$/);
- assert.equal(order.amount,99000);assert.equal(order.payment,'pending');
- const qr=new URL(order.qr);assert.equal(order.description,'SEVQR '+order.code);assert.equal(qr.searchParams.get('des'),order.description);assert.equal(qr.searchParams.get('amount'),'99000');assert.equal(qr.searchParams.get('acc'),bankDetails.account);
+ assert.equal(order.amount,79000);assert.equal(order.payment,'pending');
+ const qr=new URL(order.qr);assert.equal(order.description,'SEVQR '+order.code);assert.equal(qr.searchParams.get('des'),order.description);assert.equal(qr.searchParams.get('amount'),'79000');assert.equal(qr.searchParams.get('acc'),bankDetails.account);
  assert.equal([...f.store.entries.keys()].filter(k=>k.startsWith('history-')).length,1);
  const response=await f.call('status',{token}),payload=await response.text();
  assert.equal(response.status,200);assert.match(response.headers.get('cache-control'),/no-store/);
@@ -102,7 +102,7 @@ test('signed incoming transfer settles the exact Audio amount, with replay-safe 
  assert.equal((await f.bank({content:code,transferAmount:100000})).status,200);
  order=await load();assert.equal(order.payment.state,'review');
  assert.equal((await f.bank({content:'CHUYEN TIEN '+code,id:992,referenceCode:'fixture-992'})).status,200);
- order=await load();assert.equal(order.payment.state,'paid');assert.equal(order.payment.amount,99000);
+ order=await load();assert.equal(order.payment.state,'paid');assert.equal(order.payment.amount,79000);
  const version=order.version;
  assert.equal((await f.bank({content:'CHUYEN TIEN '+code,id:992,referenceCode:'fixture-992'})).status,200);
  assert.equal((await load()).version,version);
