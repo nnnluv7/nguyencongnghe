@@ -4,7 +4,7 @@ export const libraryLabels=row=>[...new Set((row.labels||[]).filter(label=>!/^(F
 const path=value=>{try{return new URL(value,'https://nguyencongnghe.com').pathname.replace(/\/$/,'');}catch{return '';}};
 export const LIBRARY_PAGE_SIZE=15;
 export const latestArticles=(rows,tools=[])=>rows.filter(row=>row.isArticle!==false&&!row.isPage&&!tools.some(t=>path(t.href)===path(row.link))).slice(0,5);
-export const featuredArticles=(rows,tools=[])=>{const pinned=rows.filter(row=>row.featured===true);return (pinned.length?pinned:latestArticles(rows,tools)).slice(0,5);};
+export const featuredArticles=(rows,tools=[])=>{const pinned=rows.filter(row=>row.featured===true);return (pinned.length?pinned:latestArticles(rows,tools)).slice(0,4);};
 export function articleCardHTML(row,{logo='/assets/ncn-theme/logo.png',imageURL=value=>value,icon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M3 4h7l2 2 2-2h7v16h-7l-2 2-2-2H3zM12 6v16"/></svg>'}={}){
   const href=safeURL(row.link);if(!href)return '';
   let image=safeURL(row.thumbnail?.src),date='';if(image.startsWith('https://i.ibb.co/'))image=safeURL(logo);if(image)image=imageURL(image);

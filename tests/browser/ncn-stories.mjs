@@ -7,10 +7,12 @@ import {resolve,extname,sep} from 'node:path';
 import assert from 'node:assert/strict';
 import {createLibraryHandler,publicCatalog} from '../../netlify/lib/ncn-library-api.mjs';
 import {createLibraryPageHandler} from '../../netlify/lib/ncn-library-page.mjs';
+import {optimizePublicResponse} from '../../netlify/lib/ncn-public-assets.mjs';
 
 // Synthetic HTTPS origin. Real handlers and the real UI use an isolated memory
 // store; no production Identity, content, payment or external write is possible.
-const origin='https://ncn-stories.test',root=resolve('public'),out=resolve('artifacts/stories');
+const built=!!process.env.NCN_BUILT_TEST;
+const origin='https://ncn-stories.test',root=resolve(built?'dist':'public'),out=resolve('artifacts/stories'+(built?'-built':''));
 await mkdir(out,{recursive:true});
 const read=path=>readFile(path,'utf8');
 const seed=JSON.parse(await read('netlify/lib/ncn-library/seed.json'));
@@ -68,7 +70,7 @@ async function context(){
     if(['/tin-tuc-cong-nghe/','/tin-tuc-cong-nghe/index.html'].includes(url.pathname))query='view=index';
     const article=url.pathname.match(/^\/bai-viet\/([^/]+)\/?$/);if(article)query='slug='+encodeURIComponent(article[1]);
     const original=seed.find(x=>x.managedPage&&[x.href,x.href.replace(/\.html$/,''),x.href.replace(/\.html$/,'/')].includes(url.pathname));if(original)query='legacy='+original.id;
-    if(query)return respond(await pageHandler(new Request(origin+'/.netlify/functions/ncn-library-page?'+query,{headers})));
+    if(query){const response=await pageHandler(new Request(origin+'/.netlify/functions/ncn-library-page?'+query,{headers}));return respond(built?await optimizePublicResponse(response):response);}
     assert.equal(request.method(),'GET','Only fixture APIs can write');
     try{
       let file=resolve(root,'.'+decodeURIComponent(url.pathname));if(file!==root&&!file.startsWith(root+sep))throw Error('Outside public');
@@ -94,13 +96,32 @@ async function upload(p,text){await p.locator('[data-story-add]').click();await 
 let guest,member,other,admin;
 try{
   guest=await context();page=await library(guest);
-  await check('Library presents five cards per desktop row with featured content and Story before the count',async()=>{
+  await check('ordinary news keeps five columns, with one large featured story and three medium stories',async()=>{
     assert.equal(await page.locator('#ncn-library-results').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length),5);
-    assert.equal(await page.locator('#ncn-featured-results a').count(),5);
+    assert.equal(await page.locator('#ncn-featured-results a').count(),4);
+    const cards=await page.locator('#ncn-featured-results>a').evaluateAll(nodes=>nodes.map(el=>el.getBoundingClientRect().toJSON()));
+    assert.ok(Math.abs(cards[0].width-(2*cards[1].width+12))<1,JSON.stringify(cards));
+    assert.ok(cards.every(card=>Math.abs(card.y-cards[0].y)<1&&Math.abs(card.height-cards[0].height)<1),JSON.stringify(cards));
     assert.equal(await page.locator('[data-story-rail]').evaluate(el=>getComputedStyle(el).display),'flex');
     assert.equal(Math.round((await page.locator('[data-story-add]').boundingBox()).height),124);
     const order=await page.evaluate(()=>['ncn-library-featured','ncn-stories','ncn-library-count'].map(id=>document.getElementById(id).getBoundingClientRect().top));assert.ok(order[0]<order[1]&&order[1]<order[2]);
     assert.equal(await page.locator('#ncn-library-count').innerText(),publicCatalog(seed).length+' nội dung');await fits(page);await page.screenshot({path:out+'/library-desktop-empty.jpg',fullPage:true,type:'jpeg',quality:80});
+  });
+  await check('featured cards adapt without squeezed text and the Story add icon stays circular',async()=>{
+    for(const width of [1920,1366,1024,981,980,820,621,620,390,320])for(const theme of ['light','dark']){
+      await page.setViewportSize({width,height:900});await page.evaluate(theme=>document.documentElement.dataset.ncnTheme=theme,theme);
+      const layout=await page.evaluate(()=>{
+        const grid=document.querySelector('#ncn-featured-results').getBoundingClientRect(),cards=[...document.querySelectorAll('#ncn-featured-results>a')].map(el=>el.getBoundingClientRect().toJSON()),button=document.querySelector('[data-story-add]'),b=button.getBoundingClientRect(),icon=button.querySelector(':scope>span'),r=icon.getBoundingClientRect(),label=button.querySelector('strong'),text=document.createRange();text.selectNodeContents(label);
+        return {grid:grid.toJSON(),cards,button:b.toJSON(),icon:{width:r.width,height:r.height,radius:getComputedStyle(icon).borderRadius},lines:new Set([...text.getClientRects()].map(r=>Math.round(r.top))).size,inside:[...button.children].every(el=>{const r=el.getBoundingClientRect();return r.left>=b.left&&r.right<=b.right&&r.top>=b.top&&r.bottom<=b.bottom;})};
+      });
+      assert.ok(layout.cards.every(r=>r.left>=layout.grid.left-1&&r.right<=layout.grid.right+1),JSON.stringify({width,layout}));
+      if(width>980)assert.ok(layout.cards[0].width>layout.cards[1].width*1.9&&layout.cards.every(r=>Math.abs(r.y-layout.cards[0].y)<1),JSON.stringify(layout));
+      else{assert.ok(Math.abs(layout.cards[0].width-layout.grid.width)<1);if(width<=620)assert.ok(layout.cards[0].height>layout.cards[1].height);}
+      assert.ok(Math.abs(layout.icon.width-layout.icon.height)<.1&&layout.icon.radius==='50%'&&layout.icon.width===36,JSON.stringify(layout));
+      assert.ok(layout.inside&&layout.lines===1,JSON.stringify({width,layout}));await fits(page);
+      if([1366,390].includes(width))await page.screenshot({path:out+'/featured-story-'+width+'-'+theme+'.jpg',type:'jpeg',quality:85});
+    }
+    await page.setViewportSize({width:1280,height:900});await page.evaluate(()=>document.documentElement.dataset.ncnTheme='light');
   });
   await check('guest posting uses the single shared login and registration dialog',async()=>{
     await page.locator('[data-story-add]').click();await page.locator('#ncn-account-dialog').waitFor({state:'visible'});assert.equal(await page.locator('#ncn-account-dialog').count(),1);
