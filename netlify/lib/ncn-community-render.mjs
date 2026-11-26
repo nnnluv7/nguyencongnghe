@@ -8,7 +8,7 @@ export function withArticleCommunity(html,item){
   return html.replace('</main>',panel+'</main>').replace('</head>','<script id="ncn-community-target" type="application/json">'+json(target)+'</script></head>');
 }
 export function genkSummaryHTML(item){
-  // RSS metadata is deliberately the only imported text. Keep its short source
-  // excerpt separate from the full article, which remains at GenK.
-  return '<div class="ncn-news-source"><span>TÓM TẮT TỪ GENK</span><p>'+escapeHTML(item.summary||'Mở bài gốc để đọc đầy đủ nội dung.')+'</p><a class="ncn-news-original" href="'+escapeHTML(item.link)+'" target="_blank" rel="noopener noreferrer">Đọc toàn bộ bài trên GenK</a><small>Nguồn: GenK · Nội dung đầy đủ và bản quyền thuộc nguồn xuất bản.</small></div>';
+  // Show the complete RSS description in the reader. The catalogue keeps its
+  // short preview, while the full article remains at the original source.
+  return '<div class="ncn-news-source"><span>TÓM TẮT TỪ GENK</span><p>'+escapeHTML(item.summaryLong||item.summary||'Mở bài gốc để đọc đầy đủ nội dung.')+'</p><a class="ncn-news-original" href="'+escapeHTML(item.link)+'" target="_blank" rel="noopener noreferrer">Đọc toàn bộ bài trên GenK</a><small>Nguồn: GenK · Nội dung đầy đủ và bản quyền thuộc nguồn xuất bản.</small></div>';
 }
