@@ -1,5 +1,6 @@
 import {createHash} from 'node:crypto';
 import {AUDIO_PRICE,earliestAudioDate} from '../../public/assets/ncn-audio/shared.js';
+import {queueAudioPush} from './ncn-push.mjs';
 
 export const AUDIO_STORE='ncn-audio-v1';
 const codePattern='NCNAUD[A-F0-9]{16}';
@@ -44,7 +45,15 @@ export async function createAudioOrder(store,data,now){
  if(!order||order.tokenHash!==hash)failAudio(409,'Chưa tạo được mã đơn. Vui lòng thử lại.');
  // Repair the history pointer on retry if its first write was interrupted.
  await store.setJSON('history-'+String(Date.parse(order.createdAt)).padStart(13,'0')+'-'+code,{code},{onlyIfNew:true});
+ // A notification failure must not prevent booking or checkout. A retry repairs
+ // its idempotent outbox entry just like the history pointer above.
+ try{await queueAudioPush(store,order,'new',now);}catch{}
  return order;
+}
+export async function readStaffAudioOrder(store,code){
+ if(typeof code!=='string'||!validCode.test(code))failAudio(400,'Mã đơn không hợp lệ.');
+ const saved=await store.get(orderKey(code),{type:'json'});if(!saved)failAudio(404,'Không tìm thấy đơn.');
+ const {tokenHash,...order}=saved;return order;
 }
 export async function readAudioOrder(store,token){
  const {hash,code}=identify(token),order=await store.get(orderKey(code),{type:'json'});
@@ -108,5 +117,6 @@ export async function settleAudioOrder(store,code,tx,now){
  });
  if(!result)return {state:'review',reason:'Không tìm thấy đơn đặt thu.'};
  if(result.outcome==='review')return {state:'review',reason:'Đơn đã thanh toán bằng giao dịch khác.'};
+ if(result.order.payment.state==='paid')try{await queueAudioPush(store,result.order,'paid',now);}catch{}
  return {state:result.order.payment.state,reason:result.order.payment.reason||null};
 }

@@ -76,6 +76,14 @@
   node_bundler = "esbuild"
   external_node_modules = ["@netlify/identity", "@netlify/blobs"]
 
+[functions."ncn-push"]
+  node_bundler = "esbuild"
+  external_node_modules = ["@netlify/identity", "@netlify/blobs"]
+
+[functions."ncn-audio-push-dispatch"]
+  node_bundler = "esbuild"
+  external_node_modules = ["@netlify/blobs"]
+
 [functions."ncn-cash-fund"]
   node_bundler = "esbuild"
   external_node_modules = ["@netlify/identity", "@netlify/blobs"]

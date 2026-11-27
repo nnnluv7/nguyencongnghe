@@ -1,6 +1,6 @@
 import {randomUUID} from 'node:crypto';
 import {AUDIO_PRICE,AUDIO_ORIGINAL_PRICE,MAX_AUDIO_SAMPLE_BYTES} from '../../public/assets/ncn-audio/shared.js';
-import {audioText,createAudioOrder,failAudio,listAudioOrders,readAudioOrder,updateAudioWork} from './ncn-audio-orders.mjs';
+import {audioText,createAudioOrder,failAudio,listAudioOrders,readAudioOrder,readStaffAudioOrder,updateAudioWork} from './ncn-audio-orders.mjs';
 import {sepayQR} from './ncn-sepay-qr.mjs';
 
 const samplesKey='published-samples';
@@ -125,6 +125,7 @@ export function createAudioHandler(deps){return async req=>{
   if(!allowed(user))failAudio(403,'Tài khoản cần quyền Audio hoặc Admin.');
   const store=deps.store();
   if(route==='history'&&method==='GET')return json(await listAudioOrders(store,url.searchParams.get('after')));
+  if(route==='order'&&method==='GET')return json({order:await readStaffAudioOrder(store,url.searchParams.get('code'))});
   if(route==='update'&&method==='POST')return json({order:await updateAudioWork(store,await jsonBody(req),user,now)});
   if(route==='add-sample'&&method==='POST')return json({samples:await addSample(store,req,now)},201);
   if(route==='remove-sample'&&method==='POST'){

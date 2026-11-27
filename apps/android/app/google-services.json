@@ -1,0 +1,22 @@
+{
+  "project_info": {
+    "project_number": "716084460139",
+    "project_id": "nguyencongnghe-92793"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:716084460139:android:9c1468a59f9112c41dcf2e",
+        "android_client_info": {
+          "package_name": "com.nguyencongnghe.app"
+        }
+      },
+      "api_key": [
+        {
+          "current_key": "AIzaSyA6AknOkDlQUIlXtWWUwQh2PZN9q9STIxI"
+        }
+      ]
+    }
+  ],
+  "configuration_version": "1"
+}

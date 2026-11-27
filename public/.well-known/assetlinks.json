@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.nguyencongnghe.app",
+      "sha256_cert_fingerprints": [
+        "BA:EB:5F:6D:E3:88:9B:4C:B3:C1:31:74:F9:DF:C6:D7:3C:8D:89:26:D5:0A:4A:CE:B7:D8:D4:4D:A6:D2:B2:1C"
+      ]
+    }
+  }
+]

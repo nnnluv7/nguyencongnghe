@@ -267,6 +267,11 @@ export async function bootTheme() {
     }
   }
   const result=createTheme({config,preview:window.NCN_THEME_PREVIEW===true});
+  if(window.NCNAndroid&&!window.NCN_THEME_PREVIEW){
+    import('../ncn-android/bridge.js').then(({mountAndroidBridge})=>{
+      const controller=mountAndroidBridge(),destroy=result.destroy;result.destroy=()=>{controller?.destroy();destroy();};
+    }).catch(()=>{});
+  }
   const community=document.getElementById('ncn-article-community');
   if(community&&!window.NCN_THEME_PREVIEW){
     import('../ncn-community/engagement.js').then(({mountEngagement})=>{

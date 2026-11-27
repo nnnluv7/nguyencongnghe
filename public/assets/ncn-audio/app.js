@@ -12,6 +12,7 @@ const workLabels={new:'Chờ xử lý',recording:'Đang thu',done:'Hoàn tất'}
 
 export function mountAudio({doc=document,win=window,fetcher=fetch,identity={ensureSession,onAuthChange}}={}){
  const $=id=>doc.getElementById('au-'+id),form=$('order-form'),sampleForm=$('sample-form'),history=doc.getElementById('audio-history');
+ const requestedCode=new URL(win.location.href).searchParams.get('don')||'',focusCode=/^NCNAUD[A-F0-9]{16}$/.test(requestedCode)?requestedCode:'';
  const node=(tag,value,cls)=>{const el=doc.createElement(tag);if(value)el.textContent=value;if(cls)el.className=cls;return el;};
  const message=(id,value)=>{$(id).textContent=value;};
  const fmt=value=>dateTime.format(new Date(value));
@@ -143,6 +144,7 @@ export function mountAudio({doc=document,win=window,fetcher=fetch,identity={ensu
  }
  function orderCard(order){
   const details=node('details','','au-order'),summary=node('summary');
+  details.dataset.orderCode=order.code;
   const {booking,payment,work}=order;
   summary.textContent=booking.name+(booking.urgent?' · Cần thu gấp':'')+' · '+paymentLabels[payment.state]+' · '+workLabels[work.state];
   const content=node('div','','au-order-body'),badges=node('div','','au-order-head');
@@ -186,6 +188,15 @@ export function mountAudio({doc=document,win=window,fetcher=fetch,identity={ensu
    if(more)$('orders').append(...cards);else $('orders').replaceChildren(...cards);
    cursor=result.next;$('more').hidden=!cursor;
    message('history-message',!more&&!cards.length?'Chưa có đơn đặt thu.':'');
+   if(!more&&focusCode){
+    let selected=$('orders').querySelector('[data-order-code="'+focusCode+'"]');
+    if(!selected){
+     const single=await api('order',{query:{code:focusCode},signal:staffRequest.signal});
+     if(generation!==staffGeneration)return;
+     selected=orderCard(single.order);$('orders').prepend(selected);
+    }
+    selected.open=true;selected.scrollIntoView({block:'start'});
+   }
   }catch(error){if(generation===staffGeneration)staffError(error,'history-message');}
   finally{if(generation===staffGeneration){historyBusy=false;$('refresh').disabled=$('more').disabled=false;}}
  }

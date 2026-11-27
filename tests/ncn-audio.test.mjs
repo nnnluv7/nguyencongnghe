@@ -81,6 +81,7 @@ test('only verified Admin and Audio roles can view history or add or remove samp
   const f=fixture({user});
   assert.deepEqual(await (await f.call('access')).json(),{allowed:status===200,signedIn:!!user});
   assert.equal((await f.call('history')).status,status);
+  assert.equal((await f.call('order&code=NCNAUD0123456789ABCDEF')).status,status===200?404:status);
   assert.equal((await f.call('add-sample&title=Mau',fakeMp3)).status,status===200?201:status);
   assert.equal((await f.call('remove-sample',{id:randomUUID()})).status,status===200?200:status);
  }
@@ -93,6 +94,9 @@ test('signed incoming transfer settles the exact Audio amount, with replay-safe 
  const f=fixture({user:staff}),token=randomUUID(),code=await codeOf(await f.call('create',{...initial,token}));
  const load=async()=>{const r=await f.call('history');assert.equal(r.status,200);const {orders}=await r.json();assert.equal(orders.length,1);assert.ok(!('tokenHash' in orders[0]));return orders[0];};
  let order=await load();
+ const detail=await f.call('order&code='+code),detailBody=await detail.json();
+ assert.equal(detail.status,200);assert.equal(detailBody.order.code,code);
+ assert.equal(detailBody.order.booking.script,initial.script);assert.ok(!('tokenHash' in detailBody.order));
  assert.equal(order.booking.script,initial.script);assert.equal(order.booking.phone,'0900123456');
  assert.equal((await f.call('update',{code,version:order.version,state:'recording',note:''})).status,409);
  assert.equal((await f.call('update',{code,version:order.version,state:'new',note:'Chờ chuyển khoản'})).status,200);
