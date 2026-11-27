@@ -45,6 +45,8 @@
 }
 #ncn-audio-app .au-primary{background:#205ab0;color:#fff;border-color:#205ab0}
 #ncn-audio-app .au-secondary{background:var(--ncn-surface);color:var(--ncn-ink)}
+#ncn-audio-app .au-danger{color:#b12e42;border-color:#c3374b66;white-space:nowrap;flex-shrink:0}
+html[data-ncn-theme=dark] #ncn-audio-app .au-danger{color:#ffb3c1;border-color:#ffb3c166}
 #ncn-audio-app button:disabled{opacity:.56;cursor:default}
 #ncn-audio-app :is(button,a,input,textarea,select,summary):focus-visible{outline:3px solid var(--ncn-accent);outline-offset:2px}
 #ncn-audio-app .au-message{margin-top:12px;font-size:13px}

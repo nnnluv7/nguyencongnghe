@@ -1,6 +1,6 @@
 import {randomUUID} from 'node:crypto';
 import {AUDIO_PRICE,AUDIO_ORIGINAL_PRICE,MAX_AUDIO_SAMPLE_BYTES} from '../../public/assets/ncn-audio/shared.js';
-import {audioText,createAudioOrder,failAudio,listAudioOrders,readAudioOrder,readStaffAudioOrder,updateAudioWork} from './ncn-audio-orders.mjs';
+import {audioText,createAudioOrder,deleteAudioOrder,failAudio,listAudioOrders,readAudioOrder,readStaffAudioOrder,updateAudioWork} from './ncn-audio-orders.mjs';
 import {sepayQR} from './ncn-sepay-qr.mjs';
 
 const samplesKey='published-samples';
@@ -120,13 +120,17 @@ export function createAudioHandler(deps){return async req=>{
    return json({order:orderView(await readAudioOrder(deps.store(),token),deps.bank,ready)});
   }
   const user=await deps.verify(req);
-  if(route==='access'&&method==='GET')return json({allowed:allowed(user),signedIn:Boolean(user)});
+  if(route==='access'&&method==='GET')return json({allowed:allowed(user),signedIn:Boolean(user),admin:user?.admin===true});
   if(!user)failAudio(401,'Đăng nhập để xem lịch sử đặt thu.');
   if(!allowed(user))failAudio(403,'Tài khoản cần quyền Audio hoặc Admin.');
   const store=deps.store();
   if(route==='history'&&method==='GET')return json(await listAudioOrders(store,url.searchParams.get('after')));
   if(route==='order'&&method==='GET')return json({order:await readStaffAudioOrder(store,url.searchParams.get('code'))});
   if(route==='update'&&method==='POST')return json({order:await updateAudioWork(store,await jsonBody(req),user,now)});
+  if(route==='delete'&&method==='POST'){
+   if(user.admin!==true)failAudio(403,'Chỉ Admin được xoá đơn đặt thu.');
+   return json(await deleteAudioOrder(store,await jsonBody(req),user,now));
+  }
   if(route==='add-sample'&&method==='POST')return json({samples:await addSample(store,req,now)},201);
   if(route==='remove-sample'&&method==='POST'){
    const {id}=await jsonBody(req);

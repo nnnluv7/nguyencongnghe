@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {createHmac,randomUUID} from 'node:crypto';
 import {readFile} from 'node:fs/promises';
 import {createAudioHandler} from '../netlify/lib/ncn-audio-api.mjs';
+import {createAudioOrder} from '../netlify/lib/ncn-audio-orders.mjs';
 import {createSePayRouter} from '../netlify/lib/ncn-sepay-router.mjs';
 import {verifyIdentity} from '../netlify/lib/ncn-event-api.mjs';
 import {createLibraryPageHandler} from '../netlify/lib/ncn-library-page.mjs';
@@ -79,7 +80,7 @@ test('the earliest delivery date rolls over at midnight in Vietnam, including at
 test('only verified Admin and Audio roles can view history or add or remove samples',async()=>{
  for(const [user,status] of [[null,401],[member,403],[staff,200],[admin,200]]){
   const f=fixture({user});
-  assert.deepEqual(await (await f.call('access')).json(),{allowed:status===200,signedIn:!!user});
+  assert.deepEqual(await (await f.call('access')).json(),{allowed:status===200,signedIn:!!user,admin:user?.admin===true});
   assert.equal((await f.call('history')).status,status);
   assert.equal((await f.call('order&code=NCNAUD0123456789ABCDEF')).status,status===200?404:status);
   assert.equal((await f.call('add-sample&title=Mau',fakeMp3)).status,status===200?201:status);
@@ -89,6 +90,80 @@ test('only verified Admin and Audio roles can view history or add or remove samp
  const verify=roles=>verifyIdentity(req,{url:origin},async()=>Response.json({id:'fixture',email:'fixture@example.test',confirmed_at:'2026-11-13',app_metadata:{roles},user_metadata:{audio:true,roles:['audio','admin']}}),{includeAudio:true});
  assert.equal((await verify(['vip'])).audio,false);
  assert.equal((await verify(['audio'])).audio,true);
+});
+test('only Admin can delete a pending order, with validation and same-origin enforcement',async()=>{
+ for(const [user,expected] of [[null,401],[member,403],[staff,403],[{...staff,user_metadata:{admin:true}},403],[admin,200]]){
+  const f=fixture({user}),code=await codeOf(await f.call('create',{...initial,token:randomUUID()}));
+  assert.equal((await f.call('delete',{code,version:1})).status,expected);
+  assert.equal((await (await f.call('access')).json()).admin,user?.admin===true);
+  assert.equal(Boolean((await f.store.get('order-'+code)).deleted),expected===200);
+ }
+ const f=fixture({user:admin}),code=await codeOf(await f.call('create',{...initial,token:randomUUID()}));
+ for(const data of [{code},{code,version:0},{code,version:'1'},{code:'../order',version:1}])assert.equal((await f.call('delete',data)).status,400);
+ assert.equal((await f.call('delete',{code,version:1},{Origin:'https://elsewhere.test'})).status,403);
+ assert.equal((await f.call('delete',{code,version:2})).status,409);
+ assert.equal((await f.call('delete',{code:'NCNAUD0000000000000000',version:1})).status,404);
+ assert.equal((await (await f.call('history')).json()).orders.length,1);
+});
+test('deleted pending orders disappear, cannot be restored by a stale tab, and keep an audit record',async()=>{
+ const f=fixture({user:admin}),token=randomUUID(),data={...initial,token};
+ const code=await codeOf(await f.call('create',data));
+ const result=await f.call('delete',{code,version:1});
+ assert.equal(result.status,200);assert.deepEqual(await result.json(),{deleted:true,code});
+ const saved=await f.store.get('order-'+code);
+ assert.deepEqual(saved.deleted,{at:new Date(now).toISOString(),by:admin.id});assert.equal(saved.payment.state,'pending');
+ assert.equal((await f.call('delete',{code,version:1})).status,200);
+ assert.equal((await f.store.get('order-'+code)).version,saved.version);
+ assert.deepEqual(await (await f.call('history')).json(),{orders:[],next:null});
+ assert.equal((await f.call('order&code='+code)).status,404);
+ const status=await f.call('status',{token});assert.equal(status.status,410);assert.ok(!('order' in await status.json()));
+ assert.equal((await f.call('create',data)).status,410);
+ assert.equal((await f.call('update',{code,version:saved.version,state:'new',note:'Old tab'})).status,404);
+ assert.equal((await (await f.call('history')).json()).orders.length,0);
+});
+test('paid and review orders cannot be deleted; late transfers on deleted orders reappear for review',async()=>{
+ for(const amount of [AUDIO_PRICE,AUDIO_PRICE+1]){
+  const f=fixture({user:admin}),code=await codeOf(await f.call('create',{...initial,token:randomUUID()}));
+  await f.bank({content:code,transferAmount:amount});
+  const before=await f.store.get('order-'+code);
+  assert.equal((await f.call('delete',{code,version:before.version})).status,409);
+  assert.deepEqual(await f.store.get('order-'+code),before);
+ }
+ const f=fixture({user:admin}),token=randomUUID(),code=await codeOf(await f.call('create',{...initial,token}));
+ await f.call('delete',{code,version:1});
+ assert.deepEqual(await (await f.bank({content:code})).json(),{success:true,review:true});
+ let order=(await (await f.call('history')).json()).orders[0];
+ assert.equal(order.code,code);assert.equal(order.payment.state,'review');assert.equal(order.payment.amount,AUDIO_PRICE);
+ assert.match(order.payment.reason,/xoá.*chuyển khoản/);assert.ok(order.deleted);assert.ok(!('tokenHash' in order));
+ assert.equal((await f.call('delete',{code,version:order.version})).status,409);
+ assert.equal((await f.call('order&code='+code)).status,200);
+ assert.equal((await f.call('status',{token})).status,410);
+ const version=order.version;await f.bank({content:code});
+ order=(await (await f.call('history')).json()).orders[0];assert.equal(order.version,version);
+});
+test('payment and Admin deletion cannot overwrite each other in either order',async()=>{
+ const paid=fixture({user:admin}),paidCode=await codeOf(await paid.call('create',{...initial,token:randomUUID()}));
+ paid.store.beforeWrite=async key=>{assert.equal(key,'order-'+paidCode);assert.equal((await paid.bank({content:paidCode})).status,200);};
+ assert.equal((await paid.call('delete',{code:paidCode,version:1})).status,409);
+ const paidOrder=await paid.store.get('order-'+paidCode);assert.equal(paidOrder.payment.state,'paid');assert.equal(paidOrder.deleted,undefined);
+ const removed=fixture({user:admin}),removedCode=await codeOf(await removed.call('create',{...initial,token:randomUUID()}));
+ const race=async key=>{
+  if(key==='order-'+removedCode)assert.equal((await removed.call('delete',{code:removedCode,version:1})).status,200);
+  else removed.store.beforeWrite=race;
+ };
+ removed.store.beforeWrite=race;
+ assert.deepEqual(await (await removed.bank({content:removedCode})).json(),{success:true,review:true});
+ const removedOrder=await removed.store.get('order-'+removedCode);assert.ok(removedOrder.deleted);assert.equal(removedOrder.payment.state,'review');
+ assert.equal((await (await removed.call('history')).json()).orders.length,1);
+});
+test('history pages stay filled and advance correctly past deleted orders',async()=>{
+ const f=fixture({user:admin}),codes=[];
+ for(let i=0;i<45;i++)codes.push((await createAudioOrder(f.store,{...initial,token:randomUUID()},now+i)).code);
+ for(const code of codes.slice(23))assert.equal((await f.call('delete',{code,version:1})).status,200);
+ const first=await (await f.call('history')).json();assert.equal(first.orders.length,20);assert.ok(first.next);
+ const last=await (await f.call('history&after='+first.next)).json();assert.equal(last.orders.length,3);assert.equal(last.next,null);
+ const actual=[...first.orders,...last.orders].map(order=>order.code);
+ assert.equal(new Set(actual).size,23);assert.deepEqual(actual,codes.slice(0,23).reverse());
 });
 test('signed incoming transfer settles the exact Audio amount, with replay-safe history and work updates',async()=>{
  const f=fixture({user:staff}),token=randomUUID(),code=await codeOf(await f.call('create',{...initial,token}));

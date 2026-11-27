@@ -7,6 +7,7 @@ const codePattern='NCNAUD[A-F0-9]{16}';
 const validCode=new RegExp('^'+codePattern+'$');
 const tokenPattern=/^[\da-f]{8}-[\da-f]{4}-4[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/i;
 const orderKey=code=>'order-'+code;
+const removed=order=>Boolean(order.deleted&&order.payment.state==='pending');
 const historyPattern=new RegExp('^history-\\d{13}-'+codePattern+'$');
 export const failAudio=(status,message)=>{throw Object.assign(new Error(message),{status});};
 const iso=now=>new Date(now).toISOString();
@@ -43,6 +44,7 @@ export async function createAudioOrder(store,data,now){
   order=written.modified?draft:await store.get(key,{type:'json'});
  }
  if(!order||order.tokenHash!==hash)failAudio(409,'Chưa tạo được mã đơn. Vui lòng thử lại.');
+ if(order.deleted)failAudio(410,'Đơn này đã được Admin xoá. Vui lòng đặt đơn mới.');
  // Repair the history pointer on retry if its first write was interrupted.
  await store.setJSON('history-'+String(Date.parse(order.createdAt)).padStart(13,'0')+'-'+code,{code},{onlyIfNew:true});
  // A notification failure must not prevent booking or checkout. A retry repairs
@@ -52,12 +54,13 @@ export async function createAudioOrder(store,data,now){
 }
 export async function readStaffAudioOrder(store,code){
  if(typeof code!=='string'||!validCode.test(code))failAudio(400,'Mã đơn không hợp lệ.');
- const saved=await store.get(orderKey(code),{type:'json'});if(!saved)failAudio(404,'Không tìm thấy đơn.');
+ const saved=await store.get(orderKey(code),{type:'json'});if(!saved||removed(saved))failAudio(404,'Không tìm thấy đơn.');
  const {tokenHash,...order}=saved;return order;
 }
 export async function readAudioOrder(store,token){
  const {hash,code}=identify(token),order=await store.get(orderKey(code),{type:'json'});
  if(!order||order.tokenHash!==hash)failAudio(404,'Không tìm thấy đơn đặt thu này.');
+ if(order.deleted)failAudio(410,'Đơn này đã được Admin xoá. Vui lòng liên hệ Admin nếu đã chuyển khoản hoặc đặt đơn mới.');
  return order;
 }
 export async function listAudioOrders(store,after){
@@ -67,14 +70,17 @@ export async function listAudioOrders(store,after){
   for(const {key} of batch.blobs)if(historyPattern.test(key)&&(!after||key<after))keys.push(key);
  }
  keys.sort().reverse();
- const page=keys.slice(0,20);
- const orders=await Promise.all(page.map(async key=>{
-  const order=await store.get(orderKey(key.slice('history-'.length+14)),{type:'json'});
-  if(!order)return null;
-  const {tokenHash,...result}=order;
-  return result;
- }));
- return {orders:orders.filter(Boolean),next:keys.length>page.length?page.at(-1):null};
+ const orders=[];let scanned=0;
+ while(scanned<keys.length&&orders.length<20){
+  const page=keys.slice(scanned,scanned+20-orders.length);
+  const batch=await Promise.all(page.map(async key=>{
+   const order=await store.get(orderKey(key.slice('history-'.length+14)),{type:'json'});
+   if(!order||removed(order))return null;
+   const {tokenHash,...result}=order;return result;
+  }));
+  scanned+=page.length;orders.push(...batch.filter(Boolean));
+ }
+ return {orders,next:scanned<keys.length?keys[scanned-1]:null};
 }
 async function updateOrder(store,code,now,change){
  for(let attempt=0;attempt<8;attempt++){
@@ -93,6 +99,7 @@ export async function updateAudioWork(store,data,user,now){
  if(typeof data.code!=='string'||!validCode.test(data.code)||!Number.isSafeInteger(data.version)||!['new','recording','done'].includes(data.state))failAudio(400,'Thông tin xử lý đơn không hợp lệ.');
  const note=typeof data.note==='string'&&data.note.trim()?audioText(data.note,600,'Ghi chú tối đa 600 ký tự.'):'';
  const result=await updateOrder(store,data.code,now,order=>{
+  if(removed(order))failAudio(404,'Đơn này đã được Admin xoá.');
   if(data.version!==order.version)failAudio(409,'Đơn vừa thay đổi. Tải lại lịch sử trước khi lưu.');
   if(order.payment.state!=='paid'&&order.work.state!==data.state)failAudio(409,'Đơn cần được xác nhận thanh toán trước khi xử lý.');
   if(order.work.state===data.state&&order.work.note===note)return 'unchanged';
@@ -104,11 +111,28 @@ export async function updateAudioWork(store,data,user,now){
  return order;
 }
 
+export async function deleteAudioOrder(store,data,user,now){
+ if(!user?.id||user.admin!==true)failAudio(403,'Chỉ Admin được xoá đơn đặt thu.');
+ if(typeof data.code!=='string'||!validCode.test(data.code)||!Number.isSafeInteger(data.version)||data.version<1)failAudio(400,'Thông tin xoá đơn không hợp lệ.');
+ const result=await updateOrder(store,data.code,now,order=>{
+  if(removed(order))return 'deleted';
+  if(order.payment.state!=='pending')failAudio(409,'Chỉ xoá được đơn đang chờ chuyển khoản. Tải lại lịch sử để xem trạng thái mới nhất.');
+  if(data.version!==order.version)failAudio(409,'Đơn vừa thay đổi. Tải lại lịch sử trước khi xoá.');
+  // Retain the record and payment code for late SePay transfers and audit.
+  // CAS shares the same order version as settlement, so a paid order cannot
+  // be removed by an Admin working from an older history card.
+  order.deleted={at:iso(now),by:user.id};
+ });
+ if(!result)failAudio(404,'Không tìm thấy đơn.');
+ return {deleted:true,code:data.code};
+}
+
 export async function settleAudioOrder(store,code,tx,now){
  const result=await updateOrder(store,code,now,order=>{
   if(order.payment.state==='paid')return order.payment.id===tx.id?'paid':'review';
   const paidAt=Date.parse(tx.occurredAt),opened=Date.parse(order.createdAt);
-  const reason=tx.amount!==order.amount?'Số tiền nhận được không khớp với đơn.':
+  const reason=order.deleted?'Đơn đã được Admin xoá trước khi nhận chuyển khoản. Cần đối chiếu giao dịch này.':
+   tx.amount!==order.amount?'Số tiền nhận được không khớp với đơn.':
    paidAt<Math.floor(opened/1000)*1000||paidAt>now+300000?'Thời gian giao dịch không khớp với đơn.':'';
   if(reason&&order.payment.id===tx.id&&order.payment.reason===reason)return 'unchanged';
   order.payment=reason
