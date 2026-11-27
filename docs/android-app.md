@@ -28,7 +28,7 @@ Từ thư mục `apps/android`, dùng JDK 17+, Android SDK 35, Gradle 8.11.1:
 gradle --no-daemon :app:assembleRelease :app:testReleaseUnitTest
 ```
 
-Thiết lập `NCN_ANDROID_KEYSTORE`, `NCN_ANDROID_STORE_PASSWORD`, `NCN_ANDROID_KEY_PASSWORD`; alias `ncn`. Giữ bản sao khóa ký riêng để các bản APK tiếp theo cập nhật được ứng dụng đã cài. Tệp `google-services.json` chỉ chứa định danh cấu hình Android công khai của Firebase.
+Thiết lập `NCN_ANDROID_KEYSTORE`, `NCN_ANDROID_STORE_PASSWORD`, `NCN_ANDROID_KEY_PASSWORD`; alias `ncn`. Giữ bản sao khóa ký riêng để các bản APK tiếp theo cập nhật được ứng dụng đã cài. Tải `google-services.json` từ Firebase Console → Project settings → Your apps → NCN rồi đặt vào `apps/android/app/`. Tệp này được bỏ qua bởi Git, vì mã client công khai bị bộ quét của dịch vụ triển khai web nhận nhầm là khóa bí mật. `google-services.example.json` là bản mẫu chỉ chứa định danh và chỗ điền API key Android. Các khóa máy chủ vẫn luôn ở biến môi trường riêng.
 
 App dùng WebView chỉ cho tên miền chính thức; liên kết ngoài mở ứng dụng/trình duyệt tương ứng. Không cho truy cập file, mixed content, bỏ qua lỗi chứng chỉ hoặc cầu nối từ iframe. File upload đi qua trình chọn tệp Android. Với tải tệp blob và một số thao tác in, mở website bằng trình duyệt Android.
 
