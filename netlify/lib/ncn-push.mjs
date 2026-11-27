@@ -64,7 +64,7 @@ export function createPushHandler(deps){return async req=>{
 // The outbox contains only order IDs. Booking text, names and phone numbers
 // stay in the authenticated Audio API and are never sent to FCM.
 export async function queueAudioPush(store,order,kind,now=Date.now()){
- if(!codePattern.test(order?.code||'')||!['new','paid'].includes(kind))return;
+ if(order?.deleted||!codePattern.test(order?.code||'')||!['new','paid'].includes(kind))return;
  const at=Date.parse(kind==='paid'?order.payment.paidAt:order.createdAt);
  if(!Number.isFinite(at)||at<now-48*3600000)return;
  await store.setJSON('push-'+kind+'-'+order.code,{id:kind+'-'+order.code,kind,code:order.code,createdAt:now,state:'queued',attempts:0,nextAttempt:now,delivered:[]},{onlyIfNew:true});
@@ -99,6 +99,8 @@ export async function dispatchAudioPush({audio,devices,credentials,send=sendFCM,
   if(processed>=20||Date.now()>stopAt)break;
   if(!event||event.state==='done'||event.nextAttempt>now||event.leaseUntil>now)continue;
   if(event.createdAt<now-48*3600000){await audio.setJSON(key,{...event,state:'done',expired:true},{onlyIfMatch:old.etag});continue;}
+  const order=await audio.get('order-'+event.code,{type:'json'});
+  if(order?.deleted){await audio.setJSON(key,{...event,state:'done',cancelled:true},{onlyIfMatch:old.etag});continue;}
   const lease=randomUUID();event={...event,state:'sending',lease,leaseUntil:now+120000};
   if(!(await audio.setJSON(key,event,{onlyIfMatch:old.etag})).modified)continue;
   processed++;

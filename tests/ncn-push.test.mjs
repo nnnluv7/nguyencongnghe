@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {randomUUID,generateKeyPairSync,createVerify} from 'node:crypto';
 import {createPushHandler,queueAudioPush,dispatchAudioPush,sendFCM,clearPushToken,pushCredentials,FIREBASE_PROJECT} from '../netlify/lib/ncn-push.mjs';
-import {createAudioOrder,settleAudioOrder,readStaffAudioOrder} from '../netlify/lib/ncn-audio-orders.mjs';
+import {createAudioOrder,deleteAudioOrder,settleAudioOrder,readStaffAudioOrder} from '../netlify/lib/ncn-audio-orders.mjs';
 import {memoryStories} from './fixtures/ncn-stories.mjs';
 
 const origin='https://ncn.test',now=Date.parse('2026-11-27T04:00:00Z'),code='NCNAUD0123456789ABCDEF';
@@ -44,6 +44,17 @@ test('booking and payment enqueue durable, deduplicated events without personal 
 test('an outbox failure does not break checkout',async()=>{
  const store=memoryStories(),write=store.setJSON.bind(store);store.setJSON=(key,...args)=>key.startsWith('push-')?Promise.reject(Error('Outbox unavailable')):write(key,...args);
  const order=await createAudioOrder(store,{token:randomUUID(),name:'Thử',phone:'0900123456',channel:'LINE',date:'2026-11-28',script:'Thử thu',confirm:true},now);assert.equal(order.amount,79000);
+});
+test('deleted Audio orders do not send pending notifications or enqueue new events',async()=>{
+ const audio=memoryStories(),devices=memoryStories();
+ const order=await createAudioOrder(audio,{token:randomUUID(),name:'Thử',phone:'0900123456',channel:'Zalo',date:'2026-11-28',script:'Thử thu',confirm:true},now);
+ await devices.setJSON('device-one',{deviceId:'one',token,active:true,expiresAt:now+1000});
+ await deleteAudioOrder(audio,{code:order.code,version:order.version},{id:'admin',admin:true},now);
+ const deleted=await audio.get('order-'+order.code);await queueAudioPush(audio,deleted,'paid',now);
+ const result=await dispatchAudioPush({audio,devices,credentials:{},send:async()=>{assert.fail('Deleted orders must not notify');},now});
+ assert.equal(result.sent,0);
+ const event=await audio.get('push-new-'+order.code);assert.equal(event.state,'done');assert.equal(event.cancelled,true);
+ assert.equal(await audio.get('push-paid-'+order.code),null);
 });
 test('dispatch claims prevent parallel duplicates, retry only failed devices and skip revoked or expired devices',async()=>{
  const audio=memoryStories(),devices=memoryStories();await queueAudioPush(audio,{code,createdAt:new Date(now).toISOString()},'new',now);

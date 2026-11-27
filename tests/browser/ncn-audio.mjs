@@ -1,6 +1,6 @@
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
-import {createHmac} from 'node:crypto';
+import {createHmac,randomUUID} from 'node:crypto';
 import {readFile,mkdir} from 'node:fs/promises';
 import {extname,resolve} from 'node:path';
 import {createAudioHandler} from '../../netlify/lib/ncn-audio-api.mjs';
@@ -14,7 +14,7 @@ await mkdir(out,{recursive:true});
 const store=memoryStories(),ledger=memoryStories(),now=Math.floor(Date.now()/1000)*1000,secret='isolated-browser-test-key-'.repeat(3);
 const bank={bank:'VietinBank',account:'0000000000',name:'Tai khoan thu nghiem'};
 const users=new Map(),tokens=new Map();
-for(const role of ['audio','vip']){
+for(const role of ['audio','vip','admin']){
  const email=role+'@example.test';
  users.set(email,{id:role,email,confirmed_at:'2026-11-01T00:00:00Z',app_metadata:{roles:[role]},user_metadata:{full_name:'Tài khoản '+role,roles:['audio','admin']}});
 }
@@ -184,6 +184,40 @@ try{
  await buyer.reload();await message(buyer,'#au-samples','Chưa có audio mẫu.');
  await message(buyer,'#au-order-status','Đang thu');
  console.log('PASS Role check, history, audio upload, public playback and removal');
+
+ const waitingToken=randomUUID(),waiting=await audio(new Request(origin+endpoint+'?route=create',{method:'POST',headers:{Origin:origin,'Content-Type':'application/json'},
+  body:JSON.stringify({name:'Đơn thử chờ chuyển khoản',phone:'0900123456',channel:'Zalo',date:tomorrow,script:'Nội dung thử chức năng xoá đơn.',confirm:true,token:waitingToken})}));
+ assert.equal(waiting.status,201);const waitingCode=(await waiting.json()).order.code;
+ const waitingContext=await context({width:390,height:844});
+ await waitingContext.addInitScript(token=>localStorage.setItem('ncn:audio:order:v1',token),waitingToken);
+ const customer=await waitingContext.newPage();await customer.goto(origin+'/thu-audio/');
+ await message(customer,'#au-order-status','Chờ SePay');
+ // Audio staff may process orders, but only Admin can see or use deletion.
+ await page.locator('#au-refresh').click();
+ await page.locator('[data-order-code="'+waitingCode+'"] summary').click();
+ assert.equal(await page.locator('[data-delete-order]').count(),0);
+ const adminContext=await context({width:1280,height:900});
+ page=await adminContext.newPage();await page.goto(origin+'/thu-audio/#audio-history');await login(page,'admin');
+ const pendingCard=page.locator('[data-order-code="'+waitingCode+'"]');
+ await pendingCard.locator('summary').click();
+ const remove=pendingCard.getByRole('button',{name:'Xoá đơn '+waitingCode,exact:true});await remove.waitFor();
+ assert.equal(await page.locator('[data-order-code="'+code+'"] [data-delete-order]').count(),0);
+ await pendingCard.screenshot({path:out+'/delete-admin-desktop.png'});
+ await page.setViewportSize({width:320,height:780});await fits(page);
+ const bounds=await remove.boundingBox();assert.ok(bounds.width>=44&&bounds.height>=44);assert.ok(bounds.x>=0&&bounds.x+bounds.width<=320);
+ await pendingCard.screenshot({path:out+'/delete-admin-mobile.png'});
+ page.once('dialog',dialog=>dialog.dismiss());await remove.click();
+ assert.equal(await pendingCard.count(),1);assert.equal((await store.get('order-'+waitingCode)).deleted,undefined);
+ page.once('dialog',dialog=>dialog.accept());await remove.click();
+ await message(page,'#au-history-message','Đã xoá đơn '+waitingCode);
+ assert.equal(await pendingCard.count(),0);assert.ok((await store.get('order-'+waitingCode)).deleted);
+ await page.locator('#au-refresh').click();
+ await page.locator('[data-order-code="'+code+'"] summary').waitFor();assert.equal(await pendingCard.count(),0);
+ await customer.reload();await customer.locator('#au-order-form').waitFor();
+ await message(customer,'#au-booking-message','Admin xoá');assert.equal(await customer.locator('#au-checkout').isVisible(),false);
+ assert.equal(await customer.locator('#au-qr').getAttribute('src'),null);
+ assert.equal(await customer.evaluate(()=>localStorage.getItem('ncn:audio:order:v1')),null);
+ console.log('PASS Admin-only pending deletion, confirmation, narrow mobile layout and customer recovery');
 }catch(error){
  await page?.screenshot({path:out+'/failure.png',fullPage:true}).catch(()=>{});
  throw error;

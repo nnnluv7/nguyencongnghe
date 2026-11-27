@@ -12,18 +12,23 @@ const workLabels={new:'Chờ xử lý',recording:'Đang thu',done:'Hoàn tất'}
 
 export function mountAudio({doc=document,win=window,fetcher=fetch,identity={ensureSession,onAuthChange}}={}){
  const $=id=>doc.getElementById('au-'+id),form=$('order-form'),sampleForm=$('sample-form'),history=doc.getElementById('audio-history');
- const requestedCode=new URL(win.location.href).searchParams.get('don')||'',focusCode=/^NCNAUD[A-F0-9]{16}$/.test(requestedCode)?requestedCode:'';
+ const requestedCode=new URL(win.location.href).searchParams.get('don')||'';
+ let focusCode=/^NCNAUD[A-F0-9]{16}$/.test(requestedCode)?requestedCode:'';
  const node=(tag,value,cls)=>{const el=doc.createElement(tag);if(value)el.textContent=value;if(cls)el.className=cls;return el;};
  const message=(id,value)=>{$(id).textContent=value;};
  const fmt=value=>dateTime.format(new Date(value));
  const sampleURL=id=>endpoint+'?route=sample&id='+encodeURIComponent(id);
  let token=readToken(),current=null,ready=false,pending=false,poll=0,bookingGeneration=0;
- let staff=false,staffGeneration=0,staffRequest=null,historyBusy=false,cursor=null,samples=[],sampleBusy=false;
+ let staff=false,admin=false,staffGeneration=0,staffRequest=null,historyBusy=false,cursor=null,samples=[],sampleBusy=false;
 
  function readToken(){try{return win.localStorage.getItem(savedKey)||'';}catch{return '';}}
  function saveToken(value){
   token=value;
   try{if(value)win.localStorage.setItem(savedKey,value);else win.localStorage.removeItem(savedKey);}catch{}
+ }
+ function clearCheckout(){
+  ++bookingGeneration;win.clearTimeout(poll);saveToken('');current=null;
+  $('checkout').hidden=true;$('qr').removeAttribute('src');form.hidden=false;
  }
  function syncDeliveryDate(){
   const date=form.elements.date;
@@ -75,6 +80,7 @@ export function mountAudio({doc=document,win=window,fetcher=fetch,identity={ensu
    showOrder(order);message('booking-message','');
   }catch(error){
    if(generation!==bookingGeneration)return;
+   if(error.status===410){clearCheckout();message('booking-message',error.message);return;}
    if(error.status===404&&initial){form.hidden=false;return;}
    if(manual||initial)message('booking-message',error.message);
   }finally{
@@ -93,15 +99,14 @@ export function mountAudio({doc=document,win=window,fetcher=fetch,identity={ensu
    const {order}=await api('create',{data:{...Object.fromEntries(fields),token,urgent:fields.has('urgent'),confirm:fields.has('confirm')}});
    if(generation!==bookingGeneration)return;
    showOrder(order);message('booking-message','');
-  }catch(error){if(generation===bookingGeneration)message('booking-message',error.message);}
+  }catch(error){if(generation===bookingGeneration){if(error.status===410)clearCheckout();message('booking-message',error.message);}}
   finally{pending=false;$('submit').disabled=!ready;}
  });
  $('check').addEventListener('click',()=>refreshStatus({manual:true}));
  $('reset').addEventListener('click',()=>{
   if(pending)return;
   if(current?.payment!=='paid'&&!win.confirm('Đặt đơn mới sẽ bỏ mã theo dõi đơn này trên trình duyệt. Anh/chị đã lưu mã đơn chưa?'))return;
-  ++bookingGeneration;win.clearTimeout(poll);saveToken('');current=null;
-  $('checkout').hidden=true;$('qr').removeAttribute('src');form.hidden=false;form.reset();syncDeliveryDate();
+  clearCheckout();form.reset();syncDeliveryDate();
   message('booking-message','');form.elements.name.focus();
  });
  $('copy').addEventListener('click',async()=>{
@@ -132,7 +137,7 @@ export function mountAudio({doc=document,win=window,fetcher=fetch,identity={ensu
   }
  }
  function clearStaff(){
-  ++staffGeneration;staffRequest?.abort();staffRequest=null;staff=false;historyBusy=false;cursor=null;
+  ++staffGeneration;staffRequest?.abort();staffRequest=null;staff=admin=false;historyBusy=false;cursor=null;
   $('orders').replaceChildren();$('sample-list').replaceChildren();sampleForm.reset();
   $('refresh').hidden=$('more').hidden=$('login').hidden=$('sample-editor').hidden=$('staff-link').hidden=true;
   history.hidden=win.location.hash!=='#audio-history';
@@ -159,13 +164,34 @@ export function mountAudio({doc=document,win=window,fetcher=fetch,identity={ensu
    content.append(node('h3','Lịch sử xử lý'),log);
   }
   const edit=node('form'),status=node('select'),note=node('textarea'),save=node('button','Lưu xử lý','au-primary');
+  const actions=node('div','','au-actions'),remove=admin&&payment.state==='pending'?node('button','Xoá đơn','au-secondary au-danger'):null;
+  let orderBusy=false;
+  const busy=value=>{orderBusy=value;save.disabled=value;if(remove)remove.disabled=value;};
   for(const [key,label] of Object.entries(workLabels)){const option=node('option',label);option.value=key;status.append(option);}
   status.value=work.state;status.disabled=payment.state!=='paid';note.rows=2;note.maxLength=600;note.value=work.note;
   const stateLabel=node('label','Trạng thái xử lý'),noteLabel=node('label','Ghi chú nội bộ');stateLabel.append(status);noteLabel.append(note);save.type='submit';
-  edit.append(stateLabel,noteLabel,save);content.append(edit);
+  actions.append(save);
+  if(remove){
+   remove.type='button';remove.dataset.deleteOrder=order.code;remove.setAttribute('aria-label','Xoá đơn '+order.code);actions.append(remove);
+   remove.addEventListener('click',async()=>{
+    if(!staff||!admin||orderBusy)return;
+    if(!win.confirm('Xoá đơn '+order.code+' đang chờ chuyển khoản? Đơn sẽ được gỡ khỏi lịch sử.'))return;
+    const generation=staffGeneration;busy(true);
+    try{
+     await api('delete',{data:{code:order.code,version:order.version},signal:staffRequest.signal});
+     if(generation!==staffGeneration)return;
+     const target=details.nextElementSibling?.querySelector('summary')||details.previousElementSibling?.querySelector('summary')||$('refresh');
+     details.remove();if(focusCode===order.code)focusCode='';
+     if(current?.code===order.code){clearCheckout();message('booking-message','Đơn này đã được Admin xoá. Có thể đặt đơn mới.');}
+     target.focus({preventScroll:true});message('history-message','Đã xoá đơn '+order.code+'.');
+    }catch(error){if(generation===staffGeneration)staffError(error,'history-message');}
+    finally{busy(false);}
+   });
+  }
+  edit.append(stateLabel,noteLabel,actions);content.append(edit);
   edit.addEventListener('submit',async event=>{
-   event.preventDefault();if(!staff||save.disabled)return;
-   const generation=staffGeneration;save.disabled=true;
+   event.preventDefault();if(!staff||orderBusy)return;
+   const generation=staffGeneration;busy(true);
    try{
     const {order:updated}=await api('update',{data:{code:order.code,version:order.version,state:status.value,note:note.value},signal:staffRequest.signal});
     if(generation!==staffGeneration)return;
@@ -173,7 +199,7 @@ export function mountAudio({doc=document,win=window,fetcher=fetch,identity={ensu
     next.querySelector('summary').focus({preventScroll:true});
     message('history-message','Đã lưu xử lý đơn.');
    }catch(error){if(generation===staffGeneration)staffError(error,'history-message');}
-   finally{save.disabled=false;}
+   finally{busy(false);}
   });
   details.append(summary,content);return details;
  }
@@ -210,7 +236,7 @@ export function mountAudio({doc=document,win=window,fetcher=fetch,identity={ensu
    const access=await api('access',{signal:request.signal});
    if(generation!==staffGeneration)return;
    if(!access.allowed){if(!history.hidden)message('history-message','Tài khoản hiện tại chưa có quyền Audio.');return;}
-   staff=true;history.hidden=$('staff-link').hidden=$('sample-editor').hidden=$('refresh').hidden=false;
+   staff=true;admin=access.admin===true;history.hidden=$('staff-link').hidden=$('sample-editor').hidden=$('refresh').hidden=false;
    $('refresh').disabled=$('more').disabled=false;renderSamples(samples);
    if(win.location.hash==='#audio-history')history.scrollIntoView({block:'start'});
    await loadHistory();
