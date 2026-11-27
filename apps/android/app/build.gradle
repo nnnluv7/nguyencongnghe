@@ -1,0 +1,42 @@
+plugins { id 'com.android.application'; id 'com.google.gms.google-services' }
+android {
+    namespace 'com.nguyencongnghe.app'
+    compileSdk 35
+    defaultConfig { applicationId 'com.nguyencongnghe.app'; minSdk 24; targetSdk 35; versionCode 1; versionName '1.0.0' }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+    buildFeatures { buildConfig true }
+    sourceSets.main.res.srcDir(layout.buildDirectory.dir('generated/ncn-res'))
+    signingConfigs {
+        release {
+            if (System.getenv('NCN_ANDROID_KEYSTORE')) {
+                storeFile file(System.getenv('NCN_ANDROID_KEYSTORE'))
+                storePassword System.getenv('NCN_ANDROID_STORE_PASSWORD')
+                keyAlias 'ncn'
+                keyPassword System.getenv('NCN_ANDROID_KEY_PASSWORD')
+            }
+        }
+    }
+    buildTypes { release { minifyEnabled false; signingConfig signingConfigs.release } }
+}
+tasks.register('prepareNcnIcon') {
+    inputs.file('../../../public/assets/ncn-theme/logo.png')
+    outputs.dir(layout.buildDirectory.dir('generated/ncn-res'))
+    doLast {
+        def folder=layout.buildDirectory.dir('generated/ncn-res/mipmap-xxxhdpi').get().asFile
+        folder.mkdirs()
+        def input=javax.imageio.ImageIO.read(file('../../../public/assets/ncn-theme/logo.png'))
+        def image=new java.awt.image.BufferedImage(192,192,java.awt.image.BufferedImage.TYPE_INT_ARGB)
+        def graphics=image.createGraphics()
+        graphics.setRenderingHint(java.awt.RenderingHints.KEY_INTERPOLATION,java.awt.RenderingHints.VALUE_INTERPOLATION_BICUBIC)
+        graphics.drawImage(input,0,0,192,192,null);graphics.dispose()
+        javax.imageio.ImageIO.write(image,'png',new File(folder,'ic_launcher.png'))
+    }
+}
+tasks.named('preBuild').configure { dependsOn 'prepareNcnIcon' }
+dependencies {
+    implementation 'androidx.core:core:1.15.0'
+    implementation 'androidx.webkit:webkit:1.13.0'
+    implementation platform('com.google.firebase:firebase-bom:34.7.0')
+    implementation 'com.google.firebase:firebase-messaging'
+    testImplementation 'junit:junit:4.13.2'
+}
