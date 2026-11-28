@@ -113,4 +113,9 @@ export function createStoreApp({app,data,doc=document,win=window,fetcher=fetch})
  navigation.start();app.dataset.ready='true';
  return {chooseModel,updatePreview,output,direct,getState:()=>({model,layout,rows,selected,group,paper,previewIndex}),setRows:next=>{rows=normalizeRows(layout,next);selected=0;previewIndex=0;showFields();updatePreview();},destroy:()=>{navigation.destroy();direct.destroy();listeners.forEach(fn=>fn());observer?.disconnect();win.clearTimeout(timer);}};
 }
-if(typeof document!=='undefined'&&document.getElementById('ncn-store-app')&&!window.NCN_STORE_TEST){const app=document.getElementById('ncn-store-app');fetch(catalogueURL('/assets/ncn-store-tools/catalogue.json?v=20261025-print-text-1')).then(r=>{if(!r.ok)throw new Error('Chưa tải được danh mục mẫu.');return r.json();}).then(data=>createStoreApp({app,data:app.dataset.section==='sales'?withReturnsTemplate(withDeliveryTemplate(data)):data})).catch(error=>{const s=document.getElementById('nt-status');s.hidden=false;s.classList.add('st-error');s.textContent=error.message+' Anh tải lại trang bằng Cmd+Shift+R hoặc Ctrl+Shift+R.';});}
+if(typeof document!=='undefined'&&document.getElementById('ncn-store-app')&&!window.NCN_STORE_TEST){const app=document.getElementById('ncn-store-app');fetch(catalogueURL('/assets/ncn-store-tools/catalogue.json?v=20261025-print-text-1')).then(r=>{if(!r.ok)throw new Error('Chưa tải được danh mục mẫu.');return r.json();}).then(async data=>{
+ const controller=createStoreApp({app,data:app.dataset.section==='sales'?withReturnsTemplate(withDeliveryTemplate(data)):data});
+ if(new URL(window.location.href).searchParams.get('sua')==='1'&&controller.getState().model?.id==='sales-doi-tra-bao-hanh'){
+  const {mountReturnsTextEditor}=await import('./returns-editor.js');mountReturnsTextEditor({controller,app});
+ }
+}).catch(error=>{const s=document.getElementById('nt-status');s.hidden=false;s.classList.add('st-error');s.textContent=error.message+' Anh tải lại trang bằng Cmd+Shift+R hoặc Ctrl+Shift+R.';});}
