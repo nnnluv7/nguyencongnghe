@@ -41,8 +41,8 @@ const layout={
         <p>TABLET<br>ĐIỆN THOẠI</p>
       </th>
       <td>
-        <p><strong>Đổi mới miễn phí</strong> khi <strong>lỗi do nhà<br>sản xuất</strong>. (Hư gì đổi nấy)</p>
-        <p><strong>Hoàn tiền</strong> phí <strong>20%</strong> (hàng lỗi<br>hoặc không lỗi).</p>
+        <p><strong>- Đổi mới miễn phí</strong> khi <strong>lỗi do nhà<br>sản xuất</strong>. (Hư gì đổi nấy)<br><br></p>
+        <p><strong>- Nếu Hoàn tiền</strong> trả phí <strong>20%</strong><br>hoá đơn (hàng lỗi hoặc không lỗi).</p>
       </td>
       <td>
         <p>- Nhận <strong>bảo hành có cam kết thời gian</strong>(*)</p>
@@ -68,7 +68,7 @@ const layout={
         <p>- <strong>PHỤ KIỆN GIÁ RẺ</strong>:  <strong>Không bảo hành.</strong> Chỉ đổi trả trong vòng <strong>7 ngày</strong> nếu sản<br>phẩm lỗi kỹ thuật. Sản phẩm chỉ cho trả nếu Lỗi kỹ thuật, Không cho trả Đã sử dụng</p>
       </td>
       <td>
-        <p><strong>Phụ kiện Apple và Beats</strong> áp dụng chính sách<br>riêng theo mã hàng.</p>
+        <p><strong>- Phụ kiện Apple và Beats</strong> áp dụng chính sách<br>riêng theo mã hàng.</p>
         <p>- Một số sản phẩm bảo hành tại chỗ ngay và luôn.</p>
       </td>
     </tr>
@@ -77,21 +77,21 @@ const layout={
         <p>ĐỒNG HỒ<br>(THỜI TRANG VÀ<br>SMARTWATCH)</p>
       </th>
       <td>
-        <p><strong>Smartwatch</strong> Bảo hành cam kết (*)<br>hoặc hoàn tiền trả phí <strong>20%</strong> hoá<br>đơn</p>
-        <p><strong>Thời trang</strong> Bảo hành cam kết</p>
+        <p><strong>- Smartwatch</strong> Bảo hành cam kết (*)<br>hoặc hoàn tiền trả phí <strong>20%</strong> hoá<br>đơn</p>
+        <p><strong>- Thời trang</strong> Bảo hành cam kết</p>
       </td>
       <td class="returns-watch">
-        <p><strong>Smartwatch</strong> Bảo hành cam kết (*) hoặc hoàn<br>tiền trả phí <strong>30%</strong>, mỗi tháng +<strong>10%</strong></p>
-        <p><strong>Thời trang</strong> Bảo hành hoặc đổi lỗi theo hãng.<br><strong>Không áp dụng hoàn tiền</strong>.</p>
+        <p><strong>- Smartwatch</strong> Bảo hành cam kết (*) hoặc hoàn<br>tiền trả phí <strong>30%</strong>, mỗi tháng +<strong>10%</strong></p>
+        <p><strong>- Thời trang</strong> Bảo hành hoặc đổi lỗi theo hãng.<br><strong>Không áp dụng hoàn tiền</strong>.</p>
       </td>
       <td>
-        <p><strong>ÁP DỤNG LỖI KỸ THUẬT DO NHÀ SẢN<br>XUẤT</strong></p>
-        <p><strong>Thời trang</strong> ELIO, EYKI, SKMEI và SMILE<br>KID <strong>đổi 1 lấy 1 miễn phí</strong> trong <strong>6 tháng</strong> khi lỗi<br>do hãng. Hãng khác bảo hành cam kết <strong>12 tháng</strong>.</p>
+        <p><strong>- ÁP DỤNG LỖI KỸ THUẬT DO NHÀ SẢN<br>XUẤT</strong></p>
+        <p><strong>- Thời trang</strong> ELIO, EYKI, SKMEI và SMILE<br>KID <strong>đổi 1 lấy 1 miễn phí</strong> trong <strong>6 tháng</strong> khi lỗi<br>do hãng. Hãng khác bảo hành cam kết <strong>12 tháng</strong>.</p>
       </td>
     </tr>
     <tr>
       <th scope="row">
-        <p>HÀNG ĐÃ SỬ<br>DỤNG / HÀNG<br>TRƯNG BÀY</p>
+        <p>HÀNG ĐÃ SỬ DỤNG<br>HÀNG TRƯNG BÀY</p>
       </th>
       <td>
         <p>Sản Phẩm lỗi kĩ thuật <strong>7 Ngày đầu<br>tiên</strong> :</p>
@@ -101,7 +101,7 @@ const layout={
       <td>
         <p><strong>Từ Ngày thứ 31 trở đi</strong> :</p>
         <p>- <strong>Không áp dụng đổi trả</strong>.</p>
-        <p>- Áp dụng bảo hành hãng nếu sản phẩm còn thời<br>gian bảo hành của hãng và đủ điều kiện bảo hành<br>của hãng</p>
+        <p>- Áp dụng bảo hành hãng nếu sản phẩm còn thời<br>gian bảo hành của hãng và đủ điều kiện bảo hành<br>của hãng.</p>
       </td>
       <td>
         <p>- Sản phẩm lỗi NSX <strong>có thông tin xác nhận từ<br>Hãng</strong></p>
@@ -115,8 +115,8 @@ const layout={
     <tr>
       <td colspan="4">
         <p><strong>(*) Bảo hành cam kết 12 tháng</strong> cho sản phẩm chính đủ điều kiện bảo hành hãng. Siêu thị báo khách nhận máy trong <strong>15 ngày</strong> từ lúc tiếp nhận máy lỗi. Nếu quá<br>hạn hoặc phải bảo hành lại trong <strong>30 ngày</strong> từ khi xử lý xong, giảm <strong>50%</strong> phí đổi hoặc phí hoàn tiền tùy nhóm. Từ <strong>tháng 13</strong>, bảo hành hãng nếu còn hạn.</p>
-        <p><strong>Khi đổi trả,</strong> giữ sản phẩm nguyên vẹn và hoàn đủ phụ kiện, quà tặng theo quy định. Hàng cũ/trưng bày thiếu phụ kiện chịu phí tối đa <strong>5%</strong>. Điện gia dụng, gia<br>dụng lắp đặt, phụ kiện tiện ích và đồng hồ cần <strong>xác thực OTP</strong>.</p>
-        <p><strong>Phí tính trên giá trị hóa đơn</strong>. Các mốc thời gian tính từ ngày mua.</p>
+        <p><strong>- Khi đổi trả,</strong> giữ sản phẩm nguyên vẹn và hoàn đủ phụ kiện, quà tặng theo quy định. Hàng cũ/trưng bày thiếu phụ kiện chịu phí tối đa <strong>5%</strong>. Điện gia dụng, gia<br>dụng lắp đặt, phụ kiện tiện ích và đồng hồ cần <strong>xác thực OTP</strong>. Các sản phẩm tham gia chương trình TRẢ CHẬM phải thanh lý hợp đồng theo quy định. </p>
+        <p><strong>- Phí tính trên giá trị hóa đơn</strong>. Các mốc thời gian tính từ ngày mua.</p>
         <p>Chi tiết và chính sách theo từng mã hàng tại <a href="https://www.dienmayxanh.com/chinh-sach-bao-hanh-san-pham">dienmayxanh.com/chinh-sach-bao-hanh-san-pham</a>  |  Bảo hành <strong>1900 232 465</strong></p>
       </td>
     </tr>
